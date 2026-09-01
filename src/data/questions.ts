@@ -305,7 +305,7 @@ export const questions: Question[] = [
      'dative singular of ferrum', 'perfect passive infinitive of ferō'],
     0,
     'ferrī is ambiguous in form — it is both the genitive of ferrum and the present passive infinitive of ferō — and Pliny’s sentence is a favourite AP trap. Here sonus needs a genitive to complete it, and the ghost is dragging chains, so “of iron” is right. Always let the syntax of the sentence decide between homographs.',
-    { passageId: 'pliny-7-27-b', lineRange: [5, 5], difficulty: 3 },
+    { passageId: 'pliny-7-27-a', lineRange: [5, 5], difficulty: 3 },
   ),
   q(
     'pl727-2', 'grammar-syntax', '1.B', '3',
@@ -315,7 +315,7 @@ export const questions: Question[] = [
      'a purpose clause', 'an indirect question'],
     0,
     'The second person singular subjunctive with an indefinite “you” is a standard way of describing what anyone would experience — “if you listened closely”. It is not contrary to fact: people did listen, and did hear it. Reading it as unreal makes the ghost story report something that never happened, which is the opposite of Pliny’s point.',
-    { passageId: 'pliny-7-27-b', lineRange: [5, 5], difficulty: 3 },
+    { passageId: 'pliny-7-27-a', lineRange: [5, 5], difficulty: 3 },
   ),
   q(
     'pl727-3', 'grammar-syntax', '1.B', '3',
@@ -326,7 +326,7 @@ export const questions: Question[] = [
      'conative, describing attempted actions'],
     0,
     'The whole point of the haunting is that it recurred night after night until the house was abandoned. The iterative imperfect carries that, and English needs “would appear” or “used to appear” to render it. A simple past (“appeared”) reduces a standing haunting to one incident and loses the reason the house stood empty.',
-    { passageId: 'pliny-7-27-b', lineRange: [5, 6] },
+    { passageId: 'pliny-7-27-a', lineRange: [5, 6] },
   ),
   q(
     'pl727-4', 'inference', '3.B', '3',

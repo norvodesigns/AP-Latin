@@ -134,17 +134,36 @@ export function Meter({
   );
 }
 
-export function BackLink({ href, children }: { href: string; children: ReactNode }) {
-  return (
-    <Link
-      href={href}
-      className="inline-flex items-center gap-1.5 text-sm transition-colors hover:underline"
-      style={{ color: 'var(--fg-muted)' }}
-    >
+export function BackLink({
+  href,
+  onClick,
+  children,
+}: {
+  href?: string;
+  onClick?: () => void;
+  children: ReactNode;
+}) {
+  const inner = (
+    <>
       <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
         <path d="M10 3.5L5.5 8l4.5 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
       {children}
+    </>
+  );
+  const cls = 'inline-flex items-center gap-1.5 text-sm transition-colors hover:underline';
+  const style = { color: 'var(--fg-muted)' };
+
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className={cls} style={style}>
+        {inner}
+      </button>
+    );
+  }
+  return (
+    <Link href={href ?? '/'} className={cls} style={style}>
+      {inner}
     </Link>
   );
 }

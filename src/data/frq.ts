@@ -171,8 +171,8 @@ export const PROJECT_ESSAY_RUBRIC: RubricRow[] = [
 export const SHORT_ANSWER_RUBRIC: RubricRow[] = [
   {
     id: 'sa',
-    label: 'Per subquestion',
-    maxPoints: 1,
+    label: 'Subquestions (8 points in total)',
+    maxPoints: 8,
     criteria:
       'Each subquestion is scored independently for accuracy against what it asks: comprehension, translation, scansion, a stylistic feature, or a point of context.',
     decisionRules: [
