@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { coreVocabulary } from '@/data/vocabulary';
-import { allPassages, getPassage } from '@/data/passages';
+import { allPassages, getPassage, passageVocabIds } from '@/data/passages';
 import { useStore, dueVocab, newCard } from '@/store/useStore';
 import { Page, PageHeader, Card, Badge, Meter, Empty } from '@/components/ui';
 import type { VocabEntry, UnitId } from '@/data/types';
@@ -46,14 +46,9 @@ export default function Vocabulary() {
     if (unit !== 'all') list = list.filter((e) => e.units.includes(unit));
     if (passageId !== 'all') {
       const p = getPassage(passageId);
-      if (p?.cedReading) list = list.filter((e) => e.readings.includes(p.cedReading!));
-      else if (p) {
-        // Passage has no CED reading tag (supplementary): match words that
-        // actually occur in its text.
-        const words = new Set(
-          p.lines.flatMap((l) => l.latin.split(/[^A-Za-zÀ-ÿĀ-ſ]+/).map(normalizeWord)).filter(Boolean),
-        );
-        list = list.filter((e) => words.has(normalizeWord(e.headword)));
+      if (p) {
+        const ids = new Set(passageVocabIds(p));
+        list = list.filter((e) => ids.has(e.id));
       }
     }
     return list;

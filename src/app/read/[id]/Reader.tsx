@@ -4,8 +4,9 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Passage } from '@/data/types';
 import { tokenize, lookup, type LookupResult } from '@/lib/latin';
-import { useStore } from '@/store/useStore';
-import { Page, PageHeader, Badge, BackLink, SupplementaryNotice } from '@/components/ui';
+import { useStore, readingCoverage } from '@/store/useStore';
+import { passageVocabIds } from '@/data/passages';
+import { Page, PageHeader, Badge, BackLink, Meter, SupplementaryNotice } from '@/components/ui';
 import AskAboutLine from '@/components/AskAboutLine';
 
 interface Nav {
@@ -36,6 +37,10 @@ export default function Reader({
   const updatePassage = useStore((s) => s.updatePassage);
   const toggleBookmark = useStore((s) => s.toggleBookmark);
   const toggleFlaggedLine = useStore((s) => s.toggleFlaggedLine);
+  const encounterWord = useStore((s) => s.encounterWord);
+  const wordEncounters = useStore((s) => s.wordEncounters);
+  const vocab = useStore((s) => s.vocab);
+  const seedVocab = useStore((s) => s.seedVocab);
   const markStudied = useStore((s) => s.markStudied);
 
   const state = passages[passage.id];
@@ -72,15 +77,23 @@ export default function Reader({
     (e: React.MouseEvent<HTMLButtonElement>, word: string, lineN: number) => {
       if (!glossaryEnabled) return;
       const rect = e.currentTarget.getBoundingClientRect();
+      const results = lookup(word);
       setSel({
         word,
         lineN,
-        results: lookup(word),
+        results,
         x: rect.left + rect.width / 2,
         y: rect.bottom,
       });
+      // Reading is the primary way vocabulary gets tracked here: an exact
+      // dictionary match seeds the word into the SM-2 rotation automatically,
+      // the same way looking a word up in antiq.ai tracks it against the
+      // syllabus rather than a static list. Stem matches are heuristic
+      // guesses (see lib/latin.ts) and are not trusted enough to auto-seed.
+      const top = results[0];
+      if (top?.match === 'exact') encounterWord(top.entry.id, passage.id);
     },
-    [glossaryEnabled],
+    [glossaryEnabled, encounterWord, passage.id],
   );
 
   /* Dismiss the glossary popup on outside click or Escape. */
@@ -121,6 +134,12 @@ export default function Reader({
   }, [passage.id, toggleGlossary, toggleBookmark]);
 
   const isVerse = passage.author === 'vergil';
+
+  const vocabIds = useMemo(() => passageVocabIds(passage), [passage]);
+  const coverage = useMemo(
+    () => readingCoverage(vocabIds, wordEncounters, vocab),
+    [vocabIds, wordEncounters, vocab],
+  );
 
   return (
     <Page wide>
@@ -319,6 +338,36 @@ export default function Reader({
               {passage.context}
             </p>
           </section>
+
+          {vocabIds.length > 0 && (
+            <section className="card p-4">
+              <div className="flex items-center justify-between">
+                <h2 className="eyebrow" style={{ margin: 0 }}>Vocabulary coverage</h2>
+                {mounted && coverage.inRotation < coverage.total && (
+                  <button
+                    type="button"
+                    className="btn btn-ghost px-1.5 py-0.5 text-xs"
+                    onClick={() => seedVocab(vocabIds)}
+                  >
+                    Add all
+                  </button>
+                )}
+              </div>
+              <div className="mt-2">
+                <Meter
+                  value={mounted ? coverage.inRotation : 0}
+                  max={coverage.total}
+                  label="in your rotation"
+                  tone="gilt"
+                />
+              </div>
+              <p className="mt-2 text-xs" style={{ color: 'var(--fg-faint)' }}>
+                {mounted
+                  ? `${coverage.encountered} of ${coverage.total} words in this passage looked up so far. Clicking a word adds it to your Vocabulary rotation automatically.`
+                  : 'Clicking a word adds it to your Vocabulary rotation automatically.'}
+              </p>
+            </section>
+          )}
 
           <section className="card p-4">
             <h2 className="eyebrow">Themes</h2>

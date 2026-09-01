@@ -2,21 +2,34 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { scansionLines } from '@/data/scansion';
-import { useStore } from '@/store/useStore';
+import {
+  useStore,
+  scansionStatsByLine,
+  nextScansionLineId,
+  scansionBadges,
+} from '@/store/useStore';
 import { Page, PageHeader, Card, Badge, Empty } from '@/components/ui';
 import type { ScansionLine } from '@/data/types';
 
 type Mark = 'long' | 'short' | null;
 
+const ALL_LINE_IDS = scansionLines.map((l) => l.id);
+
 export default function ScansionLab() {
   const markStudied = useStore((s) => s.markStudied);
+  const scansionAttempts = useStore((s) => s.scansionAttempts);
+  const recordScansion = useStore((s) => s.recordScansion);
+
   const [index, setIndex] = useState(0);
   const [marks, setMarks] = useState<Mark[]>([]);
   const [checked, setChecked] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
-  const [history, setHistory] = useState<Array<{ id: string; correct: number; total: number }>>([]);
+  const [adaptive, setAdaptive] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   const line: ScansionLine | undefined = scansionLines[index];
+
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     if (!line) return;
@@ -28,6 +41,11 @@ export default function ScansionLab() {
     markStudied();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /** Persistent, cross-session stats — replaces what used to be lost on refresh. */
+  const stats = useMemo(() => scansionStatsByLine(scansionAttempts), [scansionAttempts]);
+  const badges = useMemo(() => scansionBadges(scansionAttempts, ALL_LINE_IDS.length), [scansionAttempts]);
+  const masteredCount = useMemo(() => [...stats.values()].filter((s) => s.mastered).length, [stats]);
 
   /** Indices of syllables that actually count metrically. */
   const metricalIdx = useMemo(
@@ -47,6 +65,16 @@ export default function ScansionLab() {
     return out;
   }, [line, metricalIdx]);
 
+  function goToLineId(id: string | null) {
+    if (!id) return;
+    const i = scansionLines.findIndex((l) => l.id === id);
+    if (i >= 0) setIndex(i);
+  }
+
+  function practiceWeakest() {
+    goToLineId(nextScansionLineId(ALL_LINE_IDS, scansionAttempts));
+  }
+
   if (!line) {
     return (
       <Page>
@@ -57,6 +85,7 @@ export default function ScansionLab() {
   }
 
   const active: ScansionLine = line;
+  const lineStats = mounted ? stats.get(active.id) : undefined;
 
   const result = checked
     ? active.syllables.map((s, i) => {
@@ -66,7 +95,7 @@ export default function ScansionLab() {
     : null;
 
   const scored = checked
-    ? metricalIdx.filter((i) => marks[i] === line.syllables[i].quantity).length
+    ? metricalIdx.filter((i) => marks[i] === active.syllables[i].quantity).length
     : 0;
 
   function cycle(i: number) {
@@ -81,7 +110,18 @@ export default function ScansionLab() {
   function check() {
     setChecked(true);
     const correct = metricalIdx.filter((i) => marks[i] === active.syllables[i].quantity).length;
-    setHistory((h) => [...h, { id: active.id, correct, total: metricalIdx.length }]);
+    recordScansion(active.id, correct, metricalIdx.length);
+  }
+
+  function next() {
+    if (adaptive) {
+      // Exclude the line just finished so a single-line pool doesn't loop on itself.
+      const rest = ALL_LINE_IDS.filter((id) => id !== active.id);
+      const nextId = rest.length > 0 ? nextScansionLineId(rest, scansionAttempts) : active.id;
+      goToLineId(nextId);
+    } else {
+      setIndex((i) => Math.min(i + 1, scansionLines.length - 1));
+    }
   }
 
   const allMarked = metricalIdx.every((i) => marks[i] !== null);
@@ -107,10 +147,65 @@ export default function ScansionLab() {
 
       {showTutorial && <Tutorial />}
 
+      {/* persistent progress */}
+      <Card className="mb-5">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-5">
+            <div>
+              <div className="eyebrow">Mastered</div>
+              <div className="tabular-nums" style={{ fontFamily: 'var(--font-serif)', fontSize: '1.375rem', fontWeight: 600 }}>
+                {mounted ? masteredCount : '—'}
+                <span style={{ color: 'var(--fg-faint)', fontSize: '0.9375rem' }}> / {ALL_LINE_IDS.length}</span>
+              </div>
+            </div>
+            <div>
+              <div className="eyebrow">Attempts</div>
+              <div className="tabular-nums" style={{ fontFamily: 'var(--font-serif)', fontSize: '1.375rem', fontWeight: 600 }}>
+                {mounted ? scansionAttempts.length : '—'}
+              </div>
+            </div>
+            <div>
+              <div className="eyebrow">Badges</div>
+              <div className="tabular-nums" style={{ fontFamily: 'var(--font-serif)', fontSize: '1.375rem', fontWeight: 600 }}>
+                {mounted ? badges.filter((b) => b.earned).length : '—'}
+                <span style={{ color: 'var(--fg-faint)', fontSize: '0.9375rem' }}> / {badges.length}</span>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--fg-muted)' }}>
+              <input
+                type="checkbox"
+                checked={adaptive}
+                onChange={(e) => setAdaptive(e.target.checked)}
+                style={{ accentColor: 'var(--accent)' }}
+              />
+              Adaptive order
+            </label>
+            <button type="button" className="btn text-xs" onClick={practiceWeakest}>
+              Practice weakest line
+            </button>
+          </div>
+        </div>
+
+        {mounted && badges.some((b) => b.earned) && (
+          <div className="mt-3 flex flex-wrap gap-1.5 border-t pt-3" style={{ borderColor: 'var(--rule)' }}>
+            {badges.map((b) => (
+              <span key={b.id} title={b.detail}>
+                <Badge tone={b.earned ? 'gilt' : 'muted'}>
+                  {b.earned ? '★' : '☆'} {b.label}
+                </Badge>
+              </span>
+            ))}
+          </div>
+        )}
+      </Card>
+
       {/* line picker */}
       <div className="mb-5 flex flex-wrap items-center gap-1.5">
         {scansionLines.map((l, i) => {
-          const done = history.find((h) => h.id === l.id);
+          const s = mounted ? stats.get(l.id) : undefined;
+          const tone = s?.mastered ? 'mastered' : s ? 'attempted' : 'new';
           return (
             <button
               key={l.id}
@@ -119,11 +214,11 @@ export default function ScansionLab() {
               aria-current={i === index ? 'true' : undefined}
               className="rounded-md border px-2 py-1 text-xs tabular-nums transition-colors"
               style={{
-                background: i === index ? 'var(--accent)' : done ? 'var(--correct-bg)' : 'transparent',
-                borderColor: i === index ? 'var(--accent)' : done ? 'var(--correct)' : 'var(--rule)',
-                color: i === index ? 'var(--accent-fg)' : done ? 'var(--correct)' : 'var(--fg-faint)',
+                background: i === index ? 'var(--accent)' : tone === 'mastered' ? 'var(--correct-bg)' : tone === 'attempted' ? 'var(--partial-bg)' : 'transparent',
+                borderColor: i === index ? 'var(--accent)' : tone === 'mastered' ? 'var(--correct)' : tone === 'attempted' ? 'var(--partial)' : 'var(--rule)',
+                color: i === index ? 'var(--accent-fg)' : tone === 'mastered' ? 'var(--correct)' : tone === 'attempted' ? 'var(--partial)' : 'var(--fg-faint)',
               }}
-              title={l.citation}
+              title={s ? `${l.citation} — ${Math.round(s.bestAccuracy * 100)}% best, ${s.attempts} attempt(s)` : l.citation}
             >
               {l.citation.split('.')[1]}
             </button>
@@ -133,19 +228,27 @@ export default function ScansionLab() {
 
       <Card className="mb-5">
         <div className="mb-1 flex items-baseline justify-between gap-3">
-          <span className="eyebrow">{line.citation}</span>
+          <span className="eyebrow">{active.citation}</span>
           <span className="text-xs" style={{ color: 'var(--fg-faint)' }}>
             click a syllable to cycle: — → ˘ → blank
           </span>
         </div>
+        {mounted && lineStats && (
+          <div className="mb-2 flex items-center gap-2 text-xs" style={{ color: 'var(--fg-faint)' }}>
+            <span>{lineStats.attempts} attempt{lineStats.attempts === 1 ? '' : 's'}</span>
+            <span aria-hidden="true">·</span>
+            <span>best {Math.round(lineStats.bestAccuracy * 100)}%</span>
+            {lineStats.mastered && <Badge tone="green">mastered</Badge>}
+          </div>
+        )}
 
         {/* the line, syllable by syllable */}
         <div className="flex flex-wrap items-end gap-x-0.5 gap-y-4 py-4">
-          {line.syllables.map((syl, i) => {
+          {active.syllables.map((syl, i) => {
             const footIdx = footStarts.indexOf(i);
             const state = result?.[i];
             const mark = marks[i];
-            const caesura = line.caesurae.find((c) => metricalIdx[c.afterSyllable] === i);
+            const caesura = active.caesurae.find((c) => metricalIdx[c.afterSyllable] === i);
 
             let color = 'var(--fg)';
             if (checked && !syl.elides) {
@@ -216,7 +319,7 @@ export default function ScansionLab() {
             <button
               type="button"
               className="btn"
-              onClick={() => setMarks(new Array(line.syllables.length).fill(null))}
+              onClick={() => setMarks(new Array(active.syllables.length).fill(null))}
             >
               Clear
             </button>
@@ -239,7 +342,7 @@ export default function ScansionLab() {
                 syllables correct
               </span>
               <div className="flex gap-1.5">
-                {line.feet.map((f, i) => (
+                {active.feet.map((f, i) => (
                   <Badge key={i} tone={f === 'dactyl' ? 'accent' : 'neutral'}>
                     {i + 1}. {f === 'dactyl' ? '— ˘ ˘' : '— —'}
                   </Badge>
@@ -251,26 +354,26 @@ export default function ScansionLab() {
             {scored < metricalIdx.length && (
               <ul className="mb-3 flex flex-col gap-1.5">
                 {metricalIdx
-                  .filter((i) => marks[i] !== line.syllables[i].quantity)
+                  .filter((i) => marks[i] !== active.syllables[i].quantity)
                   .map((i) => (
                     <li key={i} className="text-sm" style={{ color: 'var(--fg-muted)' }}>
                       <span style={{ fontFamily: 'var(--font-latin)', fontSize: '1rem', fontWeight: 600 }}>
-                        {line.syllables[i].text}
+                        {active.syllables[i].text}
                       </span>{' '}
-                      is <strong style={{ color: 'var(--correct)' }}>{line.syllables[i].quantity}</strong>
-                      {marks[i] && <> — you marked it {marks[i]}</>}. {explain(line, i)}
+                      is <strong style={{ color: 'var(--correct)' }}>{active.syllables[i].quantity}</strong>
+                      {marks[i] && <> — you marked it {marks[i]}</>}. {explain(active, i)}
                     </li>
                   ))}
               </ul>
             )}
 
             <p className="measure text-sm" style={{ color: 'var(--fg-muted)' }}>
-              {line.notes}
+              {active.notes}
             </p>
-            {line.caesurae.length > 0 && (
+            {active.caesurae.length > 0 && (
               <p className="mt-1.5 text-sm" style={{ color: 'var(--fg-muted)' }}>
                 Caesurae:{' '}
-                {line.caesurae.map((c, i) => (
+                {active.caesurae.map((c, i) => (
                   <span key={c.type}>
                     {i > 0 && ', '}
                     {c.type}
@@ -281,19 +384,14 @@ export default function ScansionLab() {
             )}
 
             <div className="mt-4 flex flex-wrap gap-2">
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => setIndex((i) => Math.min(i + 1, scansionLines.length - 1))}
-                disabled={index >= scansionLines.length - 1}
-              >
-                Next line
+              <button type="button" className="btn btn-primary" onClick={next}>
+                {adaptive ? 'Next (weakest line)' : 'Next line'}
               </button>
               <button
                 type="button"
                 className="btn"
                 onClick={() => {
-                  setMarks(new Array(line.syllables.length).fill(null));
+                  setMarks(new Array(active.syllables.length).fill(null));
                   setChecked(false);
                 }}
               >
@@ -303,19 +401,6 @@ export default function ScansionLab() {
           </div>
         )}
       </Card>
-
-      {history.length > 0 && (
-        <Card>
-          <div className="eyebrow mb-2">This session</div>
-          <div className="flex flex-wrap gap-1.5">
-            {history.map((h, i) => (
-              <Badge key={i} tone={h.correct === h.total ? 'green' : 'neutral'}>
-                {h.id.replace('scan-aen-1-', '1.')} · {h.correct}/{h.total}
-              </Badge>
-            ))}
-          </div>
-        </Card>
-      )}
     </Page>
   );
 }

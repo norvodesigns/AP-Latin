@@ -126,6 +126,28 @@ export interface AiUsageDay {
   byRoute: Record<string, number>;
 }
 
+/** One attempt at scanning a single hexameter, for persistent stats and badges. */
+export interface ScansionAttempt {
+  id: string;
+  lineId: string;
+  at: string;
+  correct: number;
+  total: number;
+}
+
+/**
+ * A word looked up in the Reading Room glossary that resolved to a core
+ * vocabulary entry. Reading is the primary way vocabulary gets tracked —
+ * looking a word up seeds it into the SM-2 rotation automatically, so
+ * coverage reflects what you have actually read rather than a static list.
+ */
+export interface WordEncounter {
+  count: number;
+  lastSeen: string;
+  /** Passage ids the word has been looked up in. */
+  passageIds: string[];
+}
+
 /* ------------------------------------------------------------------ */
 /* Store                                                              */
 /* ------------------------------------------------------------------ */
@@ -154,6 +176,10 @@ export interface StoreState {
   studyDays: string[];
   aiUsage: AiUsageDay[];
 
+  scansionAttempts: ScansionAttempt[];
+  /** vocab id -> how often and where it has been looked up while reading. */
+  wordEncounters: Record<string, WordEncounter>;
+
   /* actions ------------------------------------------------------- */
   setTheme: (t: StoreState['theme']) => void;
   toggleGlossary: () => void;
@@ -164,6 +190,8 @@ export interface StoreState {
 
   reviewVocab: (id: string, quality: number) => void;
   seedVocab: (ids: string[]) => void;
+  /** A word was looked up in the Reading Room and resolved to `vocabId`; seeds it into rotation. */
+  encounterWord: (vocabId: string, passageId: string) => void;
 
   recordQuiz: (a: Omit<QuizAttempt, 'id' | 'at'>) => void;
   clearReviewQueue: () => void;
@@ -179,6 +207,7 @@ export interface StoreState {
   setStudyPlan: (s: Partial<StudyPlanSettings>) => void;
   recordAiCall: (route: string) => void;
 
+  recordScansion: (lineId: string, correct: number, total: number) => void;
   markStudied: () => void;
   exportJSON: () => string;
   importJSON: (json: string) => { ok: true } | { ok: false; error: string };
@@ -215,6 +244,8 @@ const initialState = {
   } as StudyPlanSettings,
   studyDays: [] as string[],
   aiUsage: [] as AiUsageDay[],
+  scansionAttempts: [] as ScansionAttempt[],
+  wordEncounters: {} as Record<string, WordEncounter>,
 };
 
 /**
@@ -329,6 +360,24 @@ export const useStore = create<StoreState>()(
           return { vocab: next };
         }),
 
+      encounterWord: (vocabId, passageId) =>
+        set((s) => {
+          const vocab = s.vocab[vocabId] ? s.vocab : { ...s.vocab, [vocabId]: newCard(vocabId) };
+          const cur = s.wordEncounters[vocabId];
+          const passageIds = cur
+            ? cur.passageIds.includes(passageId)
+              ? cur.passageIds
+              : [...cur.passageIds, passageId]
+            : [passageId];
+          return {
+            vocab,
+            wordEncounters: {
+              ...s.wordEncounters,
+              [vocabId]: { count: (cur?.count ?? 0) + 1, lastSeen: today(), passageIds },
+            },
+          };
+        }),
+
       reviewVocab: (id, quality) =>
         set((s) => {
           const card = s.vocab[id] ?? newCard(id);
@@ -408,6 +457,14 @@ export const useStore = create<StoreState>()(
           return { aiUsage: days.slice(-90) };
         }),
 
+      recordScansion: (lineId, correct, total) =>
+        set((s) => ({
+          scansionAttempts: [
+            ...s.scansionAttempts,
+            { id: uid(), lineId, at: new Date().toISOString(), correct, total },
+          ].slice(-1000),
+        })),
+
       markStudied: () =>
         set((s) => {
           const d = today();
@@ -435,6 +492,8 @@ export const useStore = create<StoreState>()(
             studyPlan: s.studyPlan,
             studyDays: s.studyDays,
             aiUsage: s.aiUsage,
+            scansionAttempts: s.scansionAttempts,
+            wordEncounters: s.wordEncounters,
           },
         };
         return JSON.stringify(payload, null, 2);
@@ -500,4 +559,142 @@ export function dueVocab(vocab: Record<string, VocabCard>, on = today()): VocabC
   return Object.values(vocab)
     .filter((c) => c.due <= on)
     .sort((a, b) => (a.due < b.due ? -1 : a.due > b.due ? 1 : a.ef - b.ef));
+}
+
+/* ------------------------------------------------------------------ */
+/* Scansion stats and badges (hexameter.co-style progress tracking)    */
+/* ------------------------------------------------------------------ */
+
+export interface ScansionLineStats {
+  lineId: string;
+  attempts: number;
+  bestAccuracy: number;
+  lastAccuracy: number;
+  mastered: boolean;
+}
+
+/** Per-line best/last accuracy, most-recent attempt per line wins ties. */
+export function scansionStatsByLine(attempts: ScansionAttempt[]): Map<string, ScansionLineStats> {
+  const map = new Map<string, ScansionLineStats>();
+  for (const a of attempts) {
+    const acc = a.total > 0 ? a.correct / a.total : 0;
+    const cur = map.get(a.lineId);
+    if (!cur) {
+      map.set(a.lineId, { lineId: a.lineId, attempts: 1, bestAccuracy: acc, lastAccuracy: acc, mastered: acc === 1 });
+    } else {
+      cur.attempts += 1;
+      cur.bestAccuracy = Math.max(cur.bestAccuracy, acc);
+      cur.lastAccuracy = acc;
+      cur.mastered = cur.mastered || acc === 1;
+    }
+  }
+  return map;
+}
+
+/**
+ * Picks the next line to practice: lines never attempted come first (in
+ * their given order), then lines not yet mastered ordered by lowest best
+ * accuracy, then mastered lines least recently attempted. This is the
+ * adaptive-difficulty behaviour hexameter.co uses — weakest material surfaces
+ * first — scaled to a fixed pool of lines rather than an infinite generator.
+ */
+export function nextScansionLineId(allLineIds: string[], attempts: ScansionAttempt[]): string | null {
+  if (allLineIds.length === 0) return null;
+  const stats = scansionStatsByLine(attempts);
+  const lastAttemptAt = new Map<string, string>();
+  for (const a of attempts) lastAttemptAt.set(a.lineId, a.at);
+
+  const unattempted = allLineIds.filter((id) => !stats.has(id));
+  if (unattempted.length > 0) return unattempted[0];
+
+  const unmastered = allLineIds
+    .filter((id) => !stats.get(id)!.mastered)
+    .sort((a, b) => stats.get(a)!.bestAccuracy - stats.get(b)!.bestAccuracy);
+  if (unmastered.length > 0) return unmastered[0];
+
+  return [...allLineIds].sort(
+    (a, b) => (lastAttemptAt.get(a) ?? '').localeCompare(lastAttemptAt.get(b) ?? ''),
+  )[0];
+}
+
+export interface ScansionBadge {
+  id: string;
+  label: string;
+  detail: string;
+  earned: boolean;
+}
+
+/** Badge thresholds, evaluated against the full attempt history and pool size. */
+export function scansionBadges(attempts: ScansionAttempt[], poolSize: number): ScansionBadge[] {
+  const stats = scansionStatsByLine(attempts);
+  const masteredCount = [...stats.values()].filter((s) => s.mastered).length;
+  const perfectStreak = (() => {
+    let streak = 0;
+    let best = 0;
+    for (const a of attempts) {
+      if (a.total > 0 && a.correct === a.total) {
+        streak += 1;
+        best = Math.max(best, streak);
+      } else {
+        streak = 0;
+      }
+    }
+    return best;
+  })();
+
+  return [
+    {
+      id: 'first-line',
+      label: 'First scan',
+      detail: 'Scan a line for the first time.',
+      earned: attempts.length > 0,
+    },
+    {
+      id: 'streak-5',
+      label: 'Five in a row',
+      detail: 'Score a perfect line five attempts in a row.',
+      earned: perfectStreak >= 5,
+    },
+    {
+      id: 'half-mastered',
+      label: 'Halfway there',
+      detail: `Master half of the loaded lines (${Math.ceil(poolSize / 2)} of ${poolSize}).`,
+      earned: poolSize > 0 && masteredCount >= Math.ceil(poolSize / 2),
+    },
+    {
+      id: 'all-mastered',
+      label: 'Full mastery',
+      detail: `Score a perfect scansion on every one of the ${poolSize} loaded lines.`,
+      earned: poolSize > 0 && masteredCount >= poolSize,
+    },
+    {
+      id: 'veteran',
+      label: 'Fifty scans',
+      detail: 'Complete fifty scansion attempts in total.',
+      earned: attempts.length >= 50,
+    },
+  ];
+}
+
+/* ------------------------------------------------------------------ */
+/* Reading-driven vocabulary coverage (antiq.ai-style tracked reading) */
+/* ------------------------------------------------------------------ */
+
+/**
+ * How much of a set of vocabulary ids has actually been encountered while
+ * reading (looked up in the Reading Room), vs. merely being in the SM-2
+ * rotation, vs. neither. Powers the per-passage coverage meter.
+ */
+export function readingCoverage(
+  vocabIds: string[],
+  wordEncounters: Record<string, WordEncounter>,
+  vocab: Record<string, VocabCard>,
+): { total: number; encountered: number; inRotation: number } {
+  let encountered = 0;
+  let inRotation = 0;
+  for (const id of vocabIds) {
+    if (wordEncounters[id]) encountered += 1;
+    if (vocab[id]) inRotation += 1;
+  }
+  return { total: vocabIds.length, encountered, inRotation };
 }
