@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { allPassages, UNIT_TITLES } from '@/data/passages';
-import { Page, PageHeader, Badge } from '@/components/ui';
+import { Page, PageHeader, SourceNote } from '@/components/ui';
 import type { UnitId } from '@/data/types';
 
 export const metadata: Metadata = { title: 'Reading Room' };
@@ -29,93 +29,117 @@ export default function ReadIndex() {
         const ps = required.filter((p) => p.unit === u);
         if (ps.length === 0) return null;
         return (
-          <section key={u} className="mb-9">
-            <div className="mb-3 flex items-baseline gap-2.5">
-              <h2 style={{ fontSize: '1.0625rem' }}>Unit {u}</h2>
-              <span className="text-sm" style={{ color: 'var(--fg-faint)' }}>
+          <section key={u} className="mb-12">
+            <div
+              className="mb-1 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b pb-3"
+              style={{ borderColor: 'var(--rule)' }}
+            >
+              <h2 className="rubric">Unit {u}</h2>
+              <span
+                style={{
+                  fontFamily: 'var(--font-latin)',
+                  fontSize: '1.0625rem',
+                  color: 'var(--fg-muted)',
+                }}
+              >
                 {UNIT_TITLES[u]}
               </span>
             </div>
-            <ul className="grid gap-2.5 sm:grid-cols-2">
+            <ul>
               {ps.map((p) => (
-                <PassageCard key={p.id} p={p} />
+                <PassageRow key={p.id} p={p} />
               ))}
             </ul>
           </section>
         );
       })}
 
-      <section className="mb-6">
-        <div className="mb-2 flex items-baseline gap-2.5">
-          <h2 style={{ fontSize: '1.0625rem' }}>Supplementary</h2>
-          <span className="text-sm" style={{ color: 'var(--fg-faint)' }}>
+      <section className="mb-8">
+        <div
+          className="mb-1 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b pb-3"
+          style={{ borderColor: 'var(--rule)' }}
+        >
+          <h2 className="slab" style={{ color: 'var(--gilt)' }}>
+            Supplementary
+          </h2>
+          <span
+            style={{
+              fontFamily: 'var(--font-latin)',
+              fontSize: '1.0625rem',
+              color: 'var(--fg-muted)',
+            }}
+          >
             Not on the 2025 required list
           </span>
         </div>
-        <p className="measure mb-3 text-sm" style={{ color: 'var(--fg-muted)' }}>
+        <p
+          className="measure py-4"
+          style={{
+            fontFamily: 'var(--font-latin)',
+            fontSize: '1.0625rem',
+            lineHeight: 1.55,
+            color: 'var(--ink2)',
+          }}
+        >
           These were required under the previous AP Latin syllabus. They are worth reading for
           context — several sit immediately beside required passages — but they will not appear as
           syllabus reading on the exam.
         </p>
-        <ul className="grid gap-2.5 sm:grid-cols-2">
+        <ul>
           {supplementary.map((p) => (
-            <PassageCard key={p.id} p={p} />
+            <PassageRow key={p.id} p={p} />
           ))}
         </ul>
       </section>
+
+      <SourceNote to="requiredReading">
+        The required list is the CED&rsquo;s own. Latin texts are public domain, from The Latin
+        Library and Perseus; nothing here is paraphrased or reconstructed.
+      </SourceNote>
     </Page>
   );
 }
 
-function PassageCard({ p }: { p: (typeof allPassages)[number] }) {
+/** One entry in the contents: citation, title, and its measurements. */
+function PassageRow({ p }: { p: (typeof allPassages)[number] }) {
   return (
     <li>
       <Link
         href={`/read/${p.id}`}
-        className="card block h-full p-4 transition-[transform,box-shadow] hover:-translate-y-px"
-        style={{ boxShadow: 'var(--shadow-card)' }}
+        className="row-hover -mx-3 flex flex-wrap items-baseline gap-x-5 gap-y-1 border-b px-3 py-4"
+        style={{ borderColor: 'var(--hair)' }}
       >
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div
-              style={{
-                fontFamily: 'var(--font-latin)',
-                fontSize: '1.0625rem',
-                fontWeight: 600,
-                letterSpacing: '0.005em',
-              }}
-            >
-              {p.citation}
-            </div>
-            <div className="mt-0.5 text-sm" style={{ color: 'var(--fg-muted)' }}>
-              {p.title}
-            </div>
-          </div>
-          <div className="flex shrink-0 flex-col items-end gap-1">
-            <Badge tone={p.genre === 'poetry' ? 'accent' : 'neutral'}>{p.genre}</Badge>
-            {p.macronized && (
-              <Badge tone="gilt" title="Source text carries vowel-quantity macrons">
-                macrons
-              </Badge>
-            )}
-          </div>
-        </div>
-        <div
-          className="mt-2.5 flex items-center gap-2 text-xs"
-          style={{ color: 'var(--fg-faint)' }}
+        <span
+          style={{
+            fontFamily: 'var(--font-latin)',
+            fontSize: '1.375rem',
+            lineHeight: 1.2,
+            color: 'var(--fg)',
+            minWidth: '9rem',
+          }}
         >
-          <span className="tabular-nums">{p.wordCount} words</span>
-          <span aria-hidden="true">·</span>
-          <span className="tabular-nums">
-            {p.lines.length} {p.author === 'vergil' ? 'lines' : 'sections'}
+          {p.citation}
+        </span>
+        <span
+          className="min-w-0 flex-1"
+          style={{
+            fontFamily: 'var(--font-latin)',
+            fontSize: '1.125rem',
+            color: 'var(--ink2)',
+          }}
+        >
+          {p.title}
+        </span>
+        <span className="slab-sm flex shrink-0 items-baseline gap-3">
+          {p.macronized && <span style={{ color: 'var(--gilt)' }}>macrons</span>}
+          <span style={{ color: p.genre === 'poetry' ? 'var(--accent)' : undefined }}>
+            {p.genre}
           </span>
-          {p.cedReading && (
-            <>
-              <span aria-hidden="true">·</span>
-              <span>CED {p.cedReading}</span>
-            </>
-          )}
-        </div>
+          <span>
+            {p.lines.length} {p.author === 'vergil' ? 'lines' : '§§'}
+          </span>
+          <span>{p.wordCount} words</span>
+        </span>
       </Link>
     </li>
   );

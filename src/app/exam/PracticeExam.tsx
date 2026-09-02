@@ -190,7 +190,7 @@ export default function PracticeExam() {
                 key={i}
                 type="button"
                 onClick={() => setCursor(i)}
-                className="h-7 w-7 rounded text-xs tabular-nums transition-colors"
+                className="h-7 w-7 text-xs tabular-nums transition-colors"
                 style={{
                   background: i === cursor ? 'var(--accent)' : answered ? 'var(--bg-sunk)' : 'transparent',
                   color: i === cursor ? 'var(--accent-fg)' : answered ? 'var(--fg)' : 'var(--fg-faint)',
@@ -257,7 +257,7 @@ export default function PracticeExam() {
                 <button
                   type="button"
                   onClick={() => setMcqAnswers((a) => ({ ...a, [q.id]: o.id }))}
-                  className="flex w-full items-start gap-3 rounded-lg border px-3.5 py-3 text-left text-sm transition-colors"
+                  className="flex w-full items-start gap-3 border px-3.5 py-3 text-left text-sm transition-colors"
                   style={{
                     background: chosen ? 'var(--bg-sunk)' : 'var(--bg-raised)',
                     borderColor: chosen ? 'var(--accent)' : 'var(--rule)',
@@ -341,7 +341,7 @@ export default function PracticeExam() {
                 </div>
 
                 {passage && (
-                  <div className="mb-3 rounded-lg px-3.5 py-3" style={{ background: 'var(--bg-sunk)' }}>
+                  <div className="mb-3 px-3.5 py-3" style={{ background: 'var(--bg-sunk)' }}>
                     {passage.lines.slice(0, 12).map((l) => (
                       <div key={l.n} className="flex items-baseline gap-3">
                         <span className="w-7 shrink-0 text-right tabular-nums" style={{ fontSize: '0.6875rem', color: 'var(--fg-faint)' }}>
@@ -446,9 +446,9 @@ export default function PracticeExam() {
                       <span style={{ color: 'var(--fg-faint)' }}>({s.correct}/{s.total})</span>
                     </span>
                   </div>
-                  <div className="mt-1 h-1.5 overflow-hidden rounded-full" style={{ background: 'var(--bg-sunk)' }}>
+                  <div className="mt-1 h-1.5 overflow-hidden" style={{ background: 'var(--bg-sunk)' }}>
                     <div
-                      className="h-full rounded-full"
+                      className="h-full"
                       style={{
                         width: `${s.total ? (s.correct / s.total) * 100 : 0}%`,
                         background: 'var(--accent)',

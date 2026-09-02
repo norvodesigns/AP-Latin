@@ -283,7 +283,7 @@ function Workspace({ prompt, onBack }: { prompt: FrqPrompt; onBack: () => void }
 
       {(essayGrader.error || saGrader.error) && (
         <div
-          className="mb-5 rounded-lg border px-3.5 py-2.5 text-sm"
+          className="mb-5 border px-3.5 py-2.5 text-sm"
           style={{
             background: 'var(--partial-bg)',
             borderColor: 'color-mix(in srgb, var(--partial) 34%, transparent)',
@@ -336,7 +336,7 @@ function Workspace({ prompt, onBack }: { prompt: FrqPrompt; onBack: () => void }
                         type="button"
                         aria-pressed={selfScore[row.id] === n}
                         onClick={() => setSelfScore((s) => ({ ...s, [row.id]: n }))}
-                        className="h-8 w-8 rounded-md border text-sm tabular-nums transition-colors"
+                        className="h-8 w-8 border text-sm tabular-nums transition-colors"
                         style={{
                           background: selfScore[row.id] === n ? 'var(--accent)' : 'transparent',
                           borderColor: selfScore[row.id] === n ? 'var(--accent)' : 'var(--rule)',

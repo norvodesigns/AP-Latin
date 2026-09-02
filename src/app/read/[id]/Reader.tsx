@@ -6,7 +6,7 @@ import type { Passage } from '@/data/types';
 import { tokenize, lookup, type LookupResult } from '@/lib/latin';
 import { useStore, readingCoverage } from '@/store/useStore';
 import { passageVocabIds } from '@/data/passages';
-import { Page, PageHeader, Badge, BackLink, Meter, SupplementaryNotice } from '@/components/ui';
+import { BackLink, CedLink, SupplementaryNotice } from '@/components/ui';
 import AskAboutLine from '@/components/AskAboutLine';
 
 interface Nav {
@@ -96,7 +96,7 @@ export default function Reader({
     [glossaryEnabled, encounterWord, passage.id],
   );
 
-  /* Dismiss the glossary popup on outside click or Escape. */
+  /* Dismiss the glossary on outside click or Escape. */
   useEffect(() => {
     if (!sel) return;
     const onDown = (e: MouseEvent) => {
@@ -140,328 +140,445 @@ export default function Reader({
     () => readingCoverage(vocabIds, wordEncounters, vocab),
     [vocabIds, wordEncounters, vocab],
   );
+  const coveragePct =
+    coverage.total > 0 ? Math.round((coverage.inRotation / coverage.total) * 100) : 0;
 
   return (
-    <Page wide>
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <BackLink href="/read">Reading Room</BackLink>
-        <div className="flex items-center gap-1.5">
-          {prev && (
-            <Link href={`/read/${prev.id}`} className="btn btn-ghost px-2 text-xs" title={prev.citation}>
-              ←
-            </Link>
-          )}
-          {next && (
-            <Link href={`/read/${next.id}`} className="btn btn-ghost px-2 text-xs" title={next.citation}>
-              →
-            </Link>
-          )}
+    <div className="mx-auto w-full max-w-[1160px]">
+      {/* ── Running head ── */}
+      <div
+        className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-b px-5 py-4 sm:px-10"
+        style={{ borderColor: 'var(--rule)' }}
+      >
+        <div className="flex min-w-0 items-baseline gap-4">
+          <BackLink href="/read">Reading Room</BackLink>
+          <span
+            className="truncate"
+            style={{ fontFamily: 'var(--font-latin)', fontSize: '1.25rem', color: 'var(--fg)' }}
+          >
+            {passage.citation}
+          </span>
+        </div>
+        <div className="flex items-center gap-4">
+          <span className="slab-sm hidden sm:inline">
+            {passage.work} · Unit {passage.unit}
+          </span>
+          <div className="flex items-center gap-1">
+            {prev && (
+              <Link
+                href={`/read/${prev.id}`}
+                className="btn btn-ghost px-2"
+                title={prev.citation}
+                aria-label={`Previous: ${prev.citation}`}
+              >
+                ←
+              </Link>
+            )}
+            {next && (
+              <Link
+                href={`/read/${next.id}`}
+                className="btn btn-ghost px-2"
+                title={next.citation}
+                aria-label={`Next: ${next.citation}`}
+              >
+                →
+              </Link>
+            )}
+          </div>
         </div>
       </div>
 
-      <PageHeader
-        eyebrow={`${passage.work} · Unit ${passage.unit}${passage.cedReading ? ` · CED ${passage.cedReading}` : ''}`}
-        title={passage.title}
-        lede={
-          <span style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem', color: 'var(--fg)' }}>
-            {passage.citation}
+      <div className="grid lg:grid-cols-[minmax(0,1fr)_1px_366px]">
+        {/* ─────────── The Latin ─────────── */}
+        <article className="min-w-0 px-5 py-10 sm:px-10 sm:py-14 lg:pr-12">
+          <header className="mb-9">
+            <h1 style={{ fontSize: 'clamp(1.625rem, 1.3rem + 1.6vw, 2.25rem)', lineHeight: 1.15 }}>
+              {passage.title}
+            </h1>
             {passage.salutation && (
-              <span className="ml-2" style={{ color: 'var(--fg-faint)', fontSize: '0.9rem' }}>
+              <p
+                className="mt-2"
+                style={{
+                  margin: '0.5rem 0 0',
+                  fontFamily: 'var(--font-latin)',
+                  fontSize: '1.125rem',
+                  color: 'var(--fg-muted)',
+                }}
+              >
                 {passage.salutation}
-              </span>
+              </p>
             )}
-          </span>
-        }
-        actions={
-          <>
-            <button
-              type="button"
-              className={`btn ${!glossaryEnabled ? 'btn-primary' : ''}`}
-              onClick={toggleGlossary}
-              aria-pressed={!glossaryEnabled}
-              title="Hide the glossary and read the Latin cold (c)"
-            >
-              {glossaryEnabled ? 'Cold read' : 'Glossary off'}
-              <span className="kbd ml-0.5" aria-hidden="true">c</span>
-            </button>
-            <button
-              type="button"
-              className="btn"
-              onClick={() => setNotesOpen((v) => !v)}
-              aria-pressed={notesOpen}
-              aria-expanded={notesOpen}
-            >
-              Notes
-              <span className="kbd ml-0.5" aria-hidden="true">n</span>
-            </button>
-            <button
-              type="button"
-              className="btn px-2"
-              onClick={() => toggleBookmark(passage.id)}
-              aria-pressed={mounted ? Boolean(state?.bookmarked) : false}
-              title="Bookmark this passage (b)"
-            >
-              <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"
-                   fill={mounted && state?.bookmarked ? 'var(--gilt)' : 'none'}>
-                <path d="M4 2.5h8v11l-4-3-4 3v-11z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
-              </svg>
-              <span className="sr-only">Bookmark</span>
-            </button>
-          </>
-        }
-      />
+            <div className="mt-5 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                className={`btn ${!glossaryEnabled ? 'btn-primary' : ''}`}
+                onClick={toggleGlossary}
+                aria-pressed={!glossaryEnabled}
+                title="Hide the glossary and read the Latin cold (c)"
+              >
+                {glossaryEnabled ? 'Cold read' : 'Glossary off'}
+                <span className="kbd" aria-hidden="true">c</span>
+              </button>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => setNotesOpen((v) => !v)}
+                aria-pressed={notesOpen}
+                aria-expanded={notesOpen}
+              >
+                Notes
+                <span className="kbd" aria-hidden="true">n</span>
+              </button>
+              <button
+                type="button"
+                className="btn px-3"
+                onClick={() => toggleBookmark(passage.id)}
+                aria-pressed={mounted ? Boolean(state?.bookmarked) : false}
+                title="Bookmark this passage (b)"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 16 16"
+                  aria-hidden="true"
+                  fill={mounted && state?.bookmarked ? 'currentColor' : 'none'}
+                >
+                  <path d="M4 2.5h8v11l-4-3-4 3v-11z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+                </svg>
+                <span className="sr-only">Bookmark</span>
+              </button>
+            </div>
+          </header>
 
-      {!passage.required && (
-        <div className="mb-5">
-          <SupplementaryNotice />
-        </div>
-      )}
+          {!passage.required && (
+            <div className="mb-8">
+              <SupplementaryNotice />
+            </div>
+          )}
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
-        {/* ---------------- Latin ---------------- */}
-        <article>
-          <div
-            className="card px-5 py-6 sm:px-7 sm:py-8"
-            style={{ background: 'var(--bg-raised)' }}
-          >
+          {/* The verse block: a red margin rule with the text ruled off it. */}
+          <div className="verse-block">
             {passage.lines.map((line, li) => {
               const isFlagged = mounted && flagged.has(line.n);
               const tokens = tokenize(line.latin);
               return (
                 <div
                   key={`${line.n}-${li}`}
-                  className="group relative"
-                  style={{ marginBottom: isVerse ? 0 : '1.15rem' }}
+                  className="group relative flex gap-5"
+                  style={{ marginBottom: isVerse ? '0.375rem' : '1.15rem' }}
                 >
-                  <div className="flex items-baseline gap-3">
-                    {/* Line / section number */}
-                    <button
-                      type="button"
-                      onClick={() => toggleFlaggedLine(passage.id, line.n)}
-                      className="w-8 shrink-0 select-none text-right tabular-nums transition-colors"
-                      style={{
-                        fontSize: '0.6875rem',
-                        color: isFlagged ? 'var(--gilt)' : 'var(--fg-faint)',
-                        fontWeight: isFlagged ? 700 : 400,
-                        fontFamily: 'var(--font-sans)',
-                      }}
-                      title={isFlagged ? 'Unflag this line' : 'Flag this line as hard'}
-                      aria-pressed={isFlagged}
-                    >
-                      {line.n}
-                    </button>
+                  <button
+                    type="button"
+                    onClick={() => toggleFlaggedLine(passage.id, line.n)}
+                    className="verse-num transition-colors"
+                    style={{
+                      lineHeight: 2.6,
+                      color: isFlagged ? 'var(--gilt)' : 'var(--fg-faint)',
+                    }}
+                    title={isFlagged ? 'Unflag this line' : 'Flag this line as hard'}
+                    aria-pressed={isFlagged}
+                  >
+                    {line.n}
+                  </button>
 
-                    <p
-                      className={isVerse ? 'latin-verse' : 'latin'}
-                      style={{
-                        margin: 0,
-                        flex: 1,
-                        boxShadow: isFlagged
-                          ? 'inset 0 -0.5em 0 color-mix(in srgb, var(--gilt) 18%, transparent)'
-                          : undefined,
-                      }}
-                    >
-                      {tokens.map((t) =>
-                        t.isWord ? (
-                          <button
-                            key={t.index}
-                            type="button"
-                            className={`word ${
-                              sel?.word === t.text && sel?.lineN === line.n ? 'word-active' : ''
-                            }`}
-                            onClick={(e) => onWord(e, t.text, line.n)}
-                            tabIndex={glossaryEnabled ? 0 : -1}
-                            style={{ cursor: glossaryEnabled ? 'pointer' : 'text' }}
-                          >
-                            {t.text}
-                          </button>
-                        ) : (
-                          <span key={t.index}>{t.text}</span>
-                        ),
-                      )}
-                    </p>
+                  <p
+                    className={isVerse ? 'latin-verse' : 'latin'}
+                    style={{
+                      margin: 0,
+                      flex: 1,
+                      boxShadow: isFlagged
+                        ? 'inset 0 -0.42em 0 color-mix(in srgb, var(--gilt) 22%, transparent)'
+                        : undefined,
+                    }}
+                  >
+                    {tokens.map((t) =>
+                      t.isWord ? (
+                        <button
+                          key={t.index}
+                          type="button"
+                          className={`word ${
+                            sel?.word === t.text && sel?.lineN === line.n ? 'word-active' : ''
+                          }`}
+                          onClick={(e) => onWord(e, t.text, line.n)}
+                          tabIndex={glossaryEnabled ? 0 : -1}
+                          style={{ cursor: glossaryEnabled ? 'pointer' : 'text' }}
+                        >
+                          {t.text}
+                        </button>
+                      ) : (
+                        <span key={t.index}>{t.text}</span>
+                      ),
+                    )}
+                  </p>
 
-                    <button
-                      type="button"
-                      onClick={() => setAskLine({ n: line.n, latin: line.latin })}
-                      className="btn btn-ghost shrink-0 px-1.5 py-0.5 text-[0.6875rem] opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100"
-                      style={{ color: 'var(--fg-faint)' }}
-                      title="Ask about this line"
-                    >
-                      ask
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setAskLine({ n: line.n, latin: line.latin })}
+                    className="slab-sm shrink-0 self-start opacity-0 transition-opacity duration-200 focus-visible:opacity-100 group-hover:opacity-100"
+                    style={{ marginTop: '0.9rem' }}
+                    title="Ask about this line"
+                  >
+                    ask
+                  </button>
                 </div>
               );
             })}
           </div>
 
-          <p className="mt-3 text-xs" style={{ color: 'var(--fg-faint)' }}>
+          <p
+            className="measure mt-10 border-t pt-5"
+            style={{
+              borderColor: 'var(--hair)',
+              fontFamily: 'var(--font-latin)',
+              fontSize: '1rem',
+              lineHeight: 1.5,
+              color: 'var(--fg-muted)',
+            }}
+          >
             Latin text from The Latin Library (public domain).{' '}
             {passage.macronized
               ? 'This passage carries vowel-quantity macrons from the source.'
               : 'This source does not mark vowel quantity; macrons are not shown because they would have to be invented.'}{' '}
-            Click a line number to flag it as hard.
+            Click a line number to flag it as hard. This passage&rsquo;s place on the syllabus is
+            set by the <CedLink to="requiredReading">CED&rsquo;s required reading list</CedLink>.
           </p>
+
+          {notesOpen && (
+            <div className="animate-in mt-8">
+              <div className="mb-3 flex items-baseline justify-between gap-3">
+                <span className="rubric">Your notes · {passage.citation}</span>
+                <span className="slab-sm">saved automatically</span>
+              </div>
+              <textarea
+                value={notesDraft}
+                onChange={(e) => setNotesDraft(e.target.value)}
+                rows={8}
+                className="textarea"
+                style={{ resize: 'vertical' }}
+                placeholder="Grammar you keep tripping on, an argument you want to use in an essay, a line worth memorising…"
+              />
+            </div>
+          )}
         </article>
 
-        {/* ---------------- Sidebar ---------------- */}
-        <aside className="flex flex-col gap-4">
-          <section className="card p-4">
-            <div className="flex items-center justify-between">
-              <h2 className="eyebrow" style={{ margin: 0 }}>English summary</h2>
-              <button
-                type="button"
-                className="btn btn-ghost px-1.5 py-0.5 text-xs"
-                onClick={() => setShowSummary((v) => !v)}
-                aria-expanded={showSummary}
-              >
-                {showSummary ? 'Hide' : 'Reveal'}
-                <span className="kbd ml-1" aria-hidden="true">s</span>
-              </button>
-            </div>
+        {/* The ruling */}
+        <div className="hidden lg:block" style={{ background: 'var(--rule)' }} />
+
+        {/* ─────────── Apparatus ─────────── */}
+        <aside
+          className="flex flex-col gap-8 border-t px-5 py-10 sm:px-10 lg:border-t-0 lg:py-14 lg:pl-9 lg:pr-10"
+          style={{ borderColor: 'var(--rule)' }}
+        >
+          <RailSection title="English summary">
             {showSummary ? (
-              <p className="mt-2 text-sm" style={{ color: 'var(--fg-muted)', lineHeight: 1.65 }}>
+              <p
+                style={{
+                  margin: 0,
+                  fontFamily: 'var(--font-latin)',
+                  fontSize: '1.125rem',
+                  lineHeight: 1.55,
+                  color: 'var(--ink2)',
+                }}
+              >
                 {passage.summary}
               </p>
             ) : (
-              <p className="mt-2 text-sm" style={{ color: 'var(--fg-faint)' }}>
-                Hidden so you can summarise it yourself first — that is skill 1.C, and it carries
-                25–35% of the exam.
-              </p>
+              <>
+                <p
+                  style={{
+                    margin: '0 0 0.875rem',
+                    fontFamily: 'var(--font-latin)',
+                    fontSize: '1.125rem',
+                    fontStyle: 'italic',
+                    color: 'var(--fg-muted)',
+                  }}
+                >
+                  Hidden — construe first.
+                </p>
+                <button type="button" className="btn" onClick={() => setShowSummary(true)}>
+                  Reveal English
+                  <span className="kbd" aria-hidden="true">s</span>
+                </button>
+              </>
             )}
-          </section>
+          </RailSection>
 
-          <section className="card p-4">
-            <h2 className="eyebrow">Context</h2>
-            <p className="mt-2 text-sm" style={{ color: 'var(--fg-muted)', lineHeight: 1.65 }}>
+          <RailSection title="Context notes">
+            <p
+              style={{
+                margin: 0,
+                fontFamily: 'var(--font-latin)',
+                fontSize: '1.125rem',
+                lineHeight: 1.55,
+                color: 'var(--ink2)',
+              }}
+            >
               {passage.context}
             </p>
-          </section>
+          </RailSection>
 
-          {vocabIds.length > 0 && (
-            <section className="card p-4">
-              <div className="flex items-center justify-between">
-                <h2 className="eyebrow" style={{ margin: 0 }}>Vocabulary coverage</h2>
-                {mounted && coverage.inRotation < coverage.total && (
-                  <button
-                    type="button"
-                    className="btn btn-ghost px-1.5 py-0.5 text-xs"
-                    onClick={() => seedVocab(vocabIds)}
-                  >
-                    Add all
-                  </button>
-                )}
-              </div>
-              <div className="mt-2">
-                <Meter
-                  value={mounted ? coverage.inRotation : 0}
-                  max={coverage.total}
-                  label="in your rotation"
-                  tone="gilt"
-                />
-              </div>
-              <p className="mt-2 text-xs" style={{ color: 'var(--fg-faint)' }}>
-                {mounted
-                  ? `${coverage.encountered} of ${coverage.total} words in this passage looked up so far. Clicking a word adds it to your Vocabulary rotation automatically.`
-                  : 'Clicking a word adds it to your Vocabulary rotation automatically.'}
-              </p>
-            </section>
-          )}
-
-          <section className="card p-4">
-            <h2 className="eyebrow">Themes</h2>
-            <div className="mt-2 flex flex-wrap gap-1.5">
+          <RailSection title="Themes">
+            <div className="flex flex-wrap gap-2">
               {passage.themes.map((t) => (
-                <Badge key={t} tone="neutral">{t}</Badge>
+                <span key={t} className="chip chip-accent">
+                  {t}
+                </span>
               ))}
             </div>
-          </section>
+          </RailSection>
+
+          {vocabIds.length > 0 && (
+            <RailSection
+              title="Vocabulary coverage"
+              last={!(mounted && flagged.size > 0)}
+              aside={
+                <span
+                  style={{
+                    fontFamily: 'var(--font-latin)',
+                    fontSize: '1.25rem',
+                    lineHeight: 1,
+                    color: 'var(--fg)',
+                  }}
+                >
+                  {mounted ? `${coveragePct}%` : '—'}
+                </span>
+              }
+            >
+              <div className="meter">
+                <span style={{ width: `${mounted ? coveragePct : 0}%` }} />
+              </div>
+              <p
+                style={{
+                  margin: '0.75rem 0 0',
+                  fontFamily: 'var(--font-latin)',
+                  fontSize: '1rem',
+                  lineHeight: 1.45,
+                  color: 'var(--fg-muted)',
+                }}
+              >
+                {mounted
+                  ? `${coverage.inRotation} of ${coverage.total} words in your known set. Clicking a word adds it automatically.`
+                  : 'Clicking a word adds it to your rotation automatically.'}
+              </p>
+              {mounted && coverage.inRotation < coverage.total && (
+                <button
+                  type="button"
+                  className="btn mt-4"
+                  onClick={() => seedVocab(vocabIds)}
+                >
+                  Add all to deck
+                </button>
+              )}
+            </RailSection>
+          )}
 
           {mounted && flagged.size > 0 && (
-            <section className="card p-4">
-              <h2 className="eyebrow">Flagged {passage.author === 'vergil' ? 'lines' : 'sections'}</h2>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {[...flagged].sort((a, b) => a - b).map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => toggleFlaggedLine(passage.id, n)}
-                    className="tabular-nums"
-                    title="Unflag"
-                  >
-                    <Badge tone="gilt">{n}</Badge>
-                  </button>
-                ))}
+            <RailSection title={`Flagged ${isVerse ? 'lines' : 'sections'}`} last>
+              <div className="flex flex-wrap gap-2">
+                {[...flagged]
+                  .sort((a, b) => a - b)
+                  .map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => toggleFlaggedLine(passage.id, n)}
+                      className="chip chip-gilt"
+                      title="Unflag"
+                    >
+                      {n}
+                    </button>
+                  ))}
               </div>
-            </section>
+            </RailSection>
           )}
         </aside>
       </div>
 
-      {/* ---------------- Notes drawer ---------------- */}
-      {notesOpen && (
-        <div className="animate-in card mt-6 p-4">
-          <div className="mb-2 flex items-center justify-between">
-            <h2 className="eyebrow" style={{ margin: 0 }}>Your notes on {passage.citation}</h2>
-            <span className="text-xs" style={{ color: 'var(--fg-faint)' }}>saved automatically</span>
-          </div>
-          <textarea
-            value={notesDraft}
-            onChange={(e) => setNotesDraft(e.target.value)}
-            rows={8}
-            className="input"
-            style={{ fontFamily: 'var(--font-serif)', lineHeight: 1.7, resize: 'vertical' }}
-            placeholder="Grammar you keep tripping on, an argument you want to use in an essay, a line worth memorising…"
-          />
-        </div>
-      )}
-
-      {/* ---------------- Glossary popup ---------------- */}
+      {/* ─────────── Glossārium ─────────── */}
       {sel && (
         <div
           ref={popRef}
           role="dialog"
           aria-label={`Glossary: ${sel.word}`}
-          className="animate-in fixed z-40 w-[min(22rem,calc(100vw-2rem))] rounded-xl p-3.5"
-          style={{
-            left: Math.min(Math.max(sel.x - 176, 16), (typeof window !== 'undefined' ? window.innerWidth : 400) - 368),
-            top: sel.y + 8,
-            background: 'var(--bg-raised)',
-            border: '1px solid var(--rule-strong)',
-            boxShadow: 'var(--shadow-pop)',
-          }}
+          className="glossary"
+          style={
+            {
+              // Clamped so the slip never runs off the right edge on desktop;
+              // ignored entirely at touch widths, where it docks full-width.
+              '--gx': `${Math.min(
+                Math.max(sel.x - 176, 16),
+                (typeof window !== 'undefined' ? window.innerWidth : 1200) - 368,
+              )}px`,
+              '--gy': `${sel.y + 10}px`,
+            } as React.CSSProperties
+          }
         >
-          <div className="flex items-baseline justify-between gap-2">
-            <span style={{ fontFamily: 'var(--font-latin)', fontSize: '1.25rem', fontWeight: 600 }}>
-              {sel.word}
-            </span>
-            <button type="button" className="btn btn-ghost px-1.5 py-0.5 text-xs" onClick={() => setSel(null)}>
-              esc
+          <div className="mb-3 flex items-baseline justify-between gap-3">
+            <span className="rubric">Glossārium</span>
+            <button type="button" className="slab-sm" onClick={() => setSel(null)}>
+              Close
             </button>
           </div>
 
           {sel.results.length === 0 ? (
-            <p className="mt-2 text-sm" style={{ color: 'var(--fg-muted)' }}>
-              Not in the CED core vocabulary list — which means the exam would gloss it for you.
-              Use <em>ask about this line</em> for a parse in context.
-            </p>
+            <>
+              <div
+                style={{
+                  fontFamily: 'var(--font-latin)',
+                  fontSize: '1.6875rem',
+                  lineHeight: 1.15,
+                  color: 'var(--fg)',
+                }}
+              >
+                {sel.word}
+              </div>
+              <p
+                style={{
+                  margin: '0.75rem 0 0',
+                  fontFamily: 'var(--font-latin)',
+                  fontSize: '1.125rem',
+                  lineHeight: 1.5,
+                  color: 'var(--ink2)',
+                }}
+              >
+                Not in the CED core vocabulary list — which means the exam would gloss it for you.
+              </p>
+            </>
           ) : (
-            <ul className="mt-2.5 flex flex-col gap-2.5">
+            <ul className="flex flex-col gap-5">
               {sel.results.map((r) => (
                 <li key={r.entry.id}>
-                  <div className="flex items-baseline gap-2">
-                    <span style={{ fontFamily: 'var(--font-latin)', fontSize: '1rem', fontWeight: 600 }}>
-                      {r.entry.lemma}
-                    </span>
+                  <div
+                    style={{
+                      fontFamily: 'var(--font-latin)',
+                      fontSize: '1.6875rem',
+                      lineHeight: 1.15,
+                      color: 'var(--fg)',
+                    }}
+                  >
+                    {r.entry.lemma}
+                  </div>
+                  <div
+                    className="mt-2 mb-3"
+                    style={{
+                      fontFamily: 'var(--font-sans)',
+                      fontSize: '0.875rem',
+                      color: 'var(--fg-muted)',
+                    }}
+                  >
+                    {r.entry.pos}
                     {r.match === 'stem' && (
-                      <Badge tone="muted" title="Matched by stem, not an exact form — verify in context">
-                        stem match
-                      </Badge>
+                      <span style={{ color: 'var(--fg-faint)' }}> · stem match, verify in context</span>
                     )}
                   </div>
-                  <div className="text-xs" style={{ color: 'var(--fg-faint)' }}>{r.entry.pos}</div>
-                  <div className="mt-0.5 text-sm" style={{ color: 'var(--fg-muted)' }}>
+                  <div
+                    style={{
+                      fontFamily: 'var(--font-latin)',
+                      fontSize: '1.1875rem',
+                      lineHeight: 1.5,
+                      color: 'var(--fg)',
+                    }}
+                  >
                     {r.entry.definition}
                   </div>
                 </li>
@@ -469,17 +586,34 @@ export default function Reader({
             </ul>
           )}
 
-          <button
-            type="button"
-            className="btn mt-3 w-full text-xs"
-            onClick={() => {
-              const line = passage.lines.find((l) => l.n === sel.lineN);
-              if (line) setAskLine({ n: line.n, latin: line.latin });
-              setSel(null);
-            }}
-          >
-            Parse this word in context
-          </button>
+          <div className="hair-faint my-4" />
+
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <button
+              type="button"
+              className="slab-sm"
+              style={{ color: 'var(--accent)' }}
+              onClick={() => {
+                const top = sel.results[0];
+                if (top) seedVocab([top.entry.id]);
+                setSel(null);
+              }}
+              disabled={sel.results.length === 0}
+            >
+              ＋ Add to deck
+            </button>
+            <button
+              type="button"
+              className="slab-sm"
+              onClick={() => {
+                const line = passage.lines.find((l) => l.n === sel.lineN);
+                if (line) setAskLine({ n: line.n, latin: line.latin });
+                setSel(null);
+              }}
+            >
+              Parse in context
+            </button>
+          </div>
         </div>
       )}
 
@@ -491,6 +625,32 @@ export default function Reader({
           onClose={() => setAskLine(null)}
         />
       )}
-    </Page>
+    </div>
+  );
+}
+
+/** One block of the apparatus, closed off by a hairline unless it is last. */
+function RailSection({
+  title,
+  aside,
+  children,
+  last = false,
+}: {
+  title: string;
+  aside?: React.ReactNode;
+  children: React.ReactNode;
+  last?: boolean;
+}) {
+  return (
+    <section
+      className={last ? undefined : 'border-b pb-7'}
+      style={last ? undefined : { borderColor: 'var(--rule)' }}
+    >
+      <div className="mb-3.5 flex items-baseline justify-between gap-3">
+        <h2 className="slab">{title}</h2>
+        {aside}
+      </div>
+      {children}
+    </section>
   );
 }

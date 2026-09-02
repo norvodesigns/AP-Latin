@@ -108,8 +108,8 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
         role="dialog"
         aria-modal="true"
         aria-label="Search sections and passages"
-        className="animate-in w-full max-w-xl overflow-hidden rounded-xl"
-        style={{ background: 'var(--bg-raised)', border: '1px solid var(--rule-strong)', boxShadow: 'var(--shadow-pop)' }}
+        className="animate-in w-full max-w-xl overflow-hidden"
+        style={{ background: 'var(--bg-raised)', border: '1px solid var(--rule-strong)', boxShadow: '0 12px 30px var(--shadow)' }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-2 border-b px-3.5 py-2.5" style={{ borderColor: 'var(--rule)' }}>

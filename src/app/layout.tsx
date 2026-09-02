@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { EB_Garamond, Literata, Inter } from 'next/font/google';
+import { EB_Garamond, Literata, Inter, Italianno } from 'next/font/google';
 import './globals.css';
 import AppShell from '@/components/AppShell';
 
@@ -25,6 +25,17 @@ const inter = Inter({
   variable: '--font-inter',
 });
 
+/**
+ * Italianno appears in exactly one place — the "Lectio" wordmark. It ships a
+ * single weight and has no macron coverage, which is fine: it never sets Latin.
+ */
+const italianno = Italianno({
+  subsets: ['latin'],
+  weight: '400',
+  display: 'swap',
+  variable: '--font-italianno',
+});
+
 export const metadata: Metadata = {
   title: {
     default: 'Lectio',
@@ -37,7 +48,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#f6f1e6' },
-    { media: '(prefers-color-scheme: dark)', color: '#151310' },
+    { media: '(prefers-color-scheme: dark)', color: '#17140f' },
   ],
   width: 'device-width',
   initialScale: 1,
@@ -61,11 +72,25 @@ const themeScript = `
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    /*
+     * The font variables must live on <html>, not <body>.
+     *
+     * globals.css declares the family stacks on :root — `--font-latin:
+     * var(--font-eb-garamond), …` — and a custom property is substituted at the
+     * element where it is *declared*, not where it is used. With the next/font
+     * classes on <body>, `--font-eb-garamond` was undefined at :root, so every
+     * stack computed to guaranteed-invalid and inherited that way: the whole app
+     * silently rendered in the system UI font. Keep these here.
+     */
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${ebGaramond.variable} ${literata.variable} ${inter.variable} ${italianno.variable}`}
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className={`${ebGaramond.variable} ${literata.variable} ${inter.variable}`}>
+      <body>
         <a href="#main" className="skip-link">
           Skip to content
         </a>

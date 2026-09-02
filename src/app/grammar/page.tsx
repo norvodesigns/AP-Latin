@@ -35,7 +35,7 @@ export default function GrammarPage() {
           <a
             key={t.id}
             href={`#${t.id}`}
-            className="rounded-full border px-2.5 py-1 text-xs transition-colors hover:bg-[var(--bg-sunk)]"
+            className="border px-2.5 py-1 text-xs transition-colors hover:bg-[var(--bg-sunk)]"
             style={{ borderColor: 'var(--rule)', color: 'var(--fg-muted)' }}
           >
             {t.name}

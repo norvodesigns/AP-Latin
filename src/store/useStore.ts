@@ -555,6 +555,26 @@ export function currentStreak(studyDays: string[]): number {
   return n;
 }
 
+/**
+ * The longest unbroken run in the whole history, which is what the dashboard
+ * shows beside the current streak. Days are ISO strings, so sorting them
+ * lexically sorts them chronologically.
+ */
+export function longestStreak(studyDays: string[]): number {
+  if (studyDays.length === 0) return 0;
+  const sorted = [...new Set(studyDays)].sort();
+  let best = 1;
+  let run = 1;
+  for (let i = 1; i < sorted.length; i += 1) {
+    const prev = new Date(sorted[i - 1] + 'T00:00:00');
+    const cur = new Date(sorted[i] + 'T00:00:00');
+    const gapDays = Math.round((cur.getTime() - prev.getTime()) / 86_400_000);
+    run = gapDays === 1 ? run + 1 : 1;
+    if (run > best) best = run;
+  }
+  return best;
+}
+
 export function dueVocab(vocab: Record<string, VocabCard>, on = today()): VocabCard[] {
   return Object.values(vocab)
     .filter((c) => c.due <= on)

@@ -182,7 +182,7 @@ export default function StudyPlan() {
                           : [...plan.activeDays, i].sort(),
                       })
                     }
-                    className="rounded-md border px-2 py-1 text-xs transition-colors"
+                    className="border px-2 py-1 text-xs transition-colors"
                     style={{
                       background: on ? 'var(--accent)' : 'transparent',
                       borderColor: on ? 'var(--accent)' : 'var(--rule)',
@@ -253,7 +253,6 @@ export default function StudyPlan() {
               value={mounted ? new Set(translationAttempts.map((a) => a.drillId)).size : 0}
               max={translationDrills.length}
               label="Translation drills attempted"
-              tone="green"
             />
           </div>
         </Card>

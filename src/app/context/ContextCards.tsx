@@ -58,7 +58,7 @@ function Cards() {
           <a
             key={c.id}
             href={`#${c.id}`}
-            className="rounded-full border px-2.5 py-1 text-xs transition-colors hover:bg-[var(--bg-sunk)]"
+            className="border px-2.5 py-1 text-xs transition-colors hover:bg-[var(--bg-sunk)]"
             style={{ borderColor: 'var(--rule)', color: 'var(--fg-muted)' }}
           >
             {c.title}
@@ -177,7 +177,7 @@ function ContextQuiz() {
                   });
                   markStudied();
                 }}
-                className="flex w-full items-start gap-3 rounded-lg border px-3.5 py-3 text-left text-sm transition-colors"
+                className="flex w-full items-start gap-3 border px-3.5 py-3 text-left text-sm transition-colors"
                 style={{ background: bg, borderColor: bd, cursor: revealed ? 'default' : 'pointer' }}
               >
                 <span className="kbd mt-px shrink-0" aria-hidden="true">{n + 1}</span>

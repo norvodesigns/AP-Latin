@@ -138,7 +138,7 @@ function Index({
 
             {gen.error && (
               <div
-                className="mt-3 rounded-lg border px-3.5 py-2.5 text-sm"
+                className="mt-3 border px-3.5 py-2.5 text-sm"
                 style={{
                   background: 'var(--partial-bg)',
                   borderColor: 'color-mix(in srgb, var(--partial) 34%, transparent)',
@@ -298,7 +298,7 @@ function AttemptShell({
 
       {machineSelected && (
         <div
-          className="mb-5 rounded-lg border px-3.5 py-2.5 text-sm"
+          className="mb-5 border px-3.5 py-2.5 text-sm"
           style={{
             background: 'color-mix(in srgb, var(--gilt) 10%, transparent)',
             borderColor: 'color-mix(in srgb, var(--gilt) 32%, transparent)',
@@ -357,7 +357,7 @@ function AttemptShell({
                         type="button"
                         disabled={submitted}
                         onClick={() => setAnswers((a) => ({ ...a, [q.id]: o.id }))}
-                        className="w-full rounded-lg border px-3 py-2 text-left text-sm transition-colors"
+                        className="w-full border px-3 py-2 text-left text-sm transition-colors"
                         style={{ background: bg, borderColor: bd, cursor: submitted ? 'default' : 'pointer' }}
                       >
                         {o.text}

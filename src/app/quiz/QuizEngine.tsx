@@ -165,7 +165,7 @@ export default function QuizEngine() {
               <div key={qq.id} className="flex items-start gap-2.5 text-sm">
                 <span
                   aria-hidden="true"
-                  className="mt-1 inline-block h-2 w-2 shrink-0 rounded-full"
+                  className="mt-1 inline-block h-2 w-2 shrink-0"
                   style={{ background: r?.correct ? 'var(--correct)' : 'var(--incorrect)' }}
                 />
                 <span style={{ color: 'var(--fg-muted)' }}>
@@ -208,9 +208,9 @@ export default function QuizEngine() {
           </button>
         </div>
 
-        <div className="mb-4 h-1 w-full overflow-hidden rounded-full" style={{ background: 'var(--bg-sunk)' }}>
+        <div className="mb-4 h-1 w-full overflow-hidden" style={{ background: 'var(--bg-sunk)' }}>
           <div
-            className="h-full rounded-full transition-[width] duration-300"
+            className="h-full transition-[width] duration-300"
             style={{ width: `${((index) / session!.length) * 100}%`, background: 'var(--accent)' }}
           />
         </div>
@@ -281,7 +281,7 @@ export default function QuizEngine() {
                   type="button"
                   disabled={revealed}
                   onClick={() => submit(o.id)}
-                  className="flex w-full items-start gap-3 rounded-lg border px-3.5 py-3 text-left text-sm transition-colors"
+                  className="flex w-full items-start gap-3 border px-3.5 py-3 text-left text-sm transition-colors"
                   style={{ background: bg, borderColor: bd, color: fg, cursor: revealed ? 'default' : 'pointer' }}
                 >
                   <span className="kbd mt-px shrink-0" aria-hidden="true">{i + 1}</span>
@@ -469,7 +469,7 @@ export default function QuizEngine() {
                         return { ...f, types: next };
                       })
                     }
-                    className="rounded-full border px-2.5 py-1 text-xs transition-colors"
+                    className="border px-2.5 py-1 text-xs transition-colors"
                     style={{
                       background: on ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'transparent',
                       borderColor: on ? 'color-mix(in srgb, var(--accent) 34%, transparent)' : 'var(--rule)',

@@ -51,7 +51,7 @@ export default function SignUpForm() {
             {ROLES.map((r) => (
               <label
                 key={r.value}
-                className="cursor-pointer rounded-lg border p-3 transition-colors"
+                className="cursor-pointer border p-3 transition-colors"
                 style={{
                   borderColor: role === r.value ? 'var(--accent)' : 'var(--rule)',
                   background: role === r.value ? 'var(--bg-sunk)' : 'transparent',
@@ -121,7 +121,7 @@ export default function SignUpForm() {
         {state.error && (
           <p
             role="alert"
-            className="rounded-lg border px-3 py-2 text-sm"
+            className="border px-3 py-2 text-sm"
             style={{
               background: 'var(--incorrect-bg)',
               borderColor: 'var(--incorrect)',

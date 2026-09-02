@@ -2,15 +2,23 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { NAV, NAV_GROUPS } from '@/lib/nav';
 import { useStore, daysUntilExam } from '@/store/useStore';
 import CommandPalette from './CommandPalette';
 
+/**
+ * The masthead carries only the sections a student moves between constantly.
+ * Everything else lives in the index, one keystroke or one tap away — the
+ * alternative is fourteen uppercase items competing with the wordmark, which
+ * is exactly the crowding this design is trying to avoid.
+ */
+const PRIMARY = ['/', '/read', '/translate', '/scansion', '/vocab', '/quiz'];
+
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [indexOpen, setIndexOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -19,6 +27,23 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => setMounted(true), []);
 
+  /**
+   * The index docks directly beneath the masthead, whose height varies with
+   * the clamped wordmark. Measuring beats hardcoding: the wordmark is fluid,
+   * so any fixed offset would be wrong at most viewport widths.
+   */
+  const headerRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const apply = () =>
+      document.documentElement.style.setProperty('--masthead', `${el.offsetHeight}px`);
+    apply();
+    const ro = new ResizeObserver(apply);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   // Keep the DOM attribute in sync when the store rehydrates from localStorage.
   useEffect(() => {
     if (!mounted) return;
@@ -26,7 +51,18 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     else document.documentElement.setAttribute('data-theme', theme);
   }, [theme, mounted]);
 
-  useEffect(() => setMobileOpen(false), [pathname]);
+  useEffect(() => setIndexOpen(false), [pathname]);
+
+  // The index is a full-screen overlay on touch layouts, so the page beneath
+  // must not scroll under it.
+  useEffect(() => {
+    if (!indexOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [indexOpen]);
 
   /* Keyboard: cmd/ctrl-K opens the palette; `g` then a key jumps to a section. */
   const [gPending, setGPending] = useState(false);
@@ -43,6 +79,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setPaletteOpen((v) => !v);
+        return;
+      }
+      if (e.key === 'Escape' && indexOpen) {
+        setIndexOpen(false);
         return;
       }
       if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
@@ -66,7 +106,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         window.setTimeout(() => setGPending(false), 1600);
       }
     },
-    [gPending, router],
+    [gPending, router, indexOpen],
   );
 
   useEffect(() => {
@@ -75,158 +115,249 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }, [onKey]);
 
   const days = daysUntilExam();
+  const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
 
-  const navList = (
-    <nav aria-label="Sections" className="flex flex-col gap-5">
-      {NAV_GROUPS.map((group) => (
-        <div key={group.id}>
-          <div className="eyebrow px-3 pb-1.5">{group.label}</div>
-          <ul className="flex flex-col gap-px">
-            {NAV.filter((n) => n.group === group.id).map((item) => {
-              const active =
-                item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    aria-current={active ? 'page' : undefined}
-                    className="group flex items-center justify-between rounded-md px-3 py-1.5 text-sm transition-colors"
-                    style={{
-                      background: active ? 'var(--bg-sunk)' : 'transparent',
-                      color: active ? 'var(--fg)' : 'var(--fg-muted)',
-                      fontWeight: active ? 600 : 450,
-                      boxShadow: active ? 'inset 2px 0 0 var(--accent)' : undefined,
-                    }}
-                  >
-                    <span>{item.label}</span>
-                    <span
-                      className="kbd opacity-0 transition-opacity group-hover:opacity-100"
-                      aria-hidden="true"
-                    >
-                      {item.key}
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      ))}
-    </nav>
+  const primaryItems = PRIMARY.map((href) => NAV.find((n) => n.href === href)).filter(
+    (n): n is (typeof NAV)[number] => Boolean(n),
   );
 
   return (
-    <div className="flex min-h-dvh">
-      {/* Desktop sidebar */}
-      <aside
-        className="no-print sticky top-0 hidden h-dvh w-60 shrink-0 flex-col overflow-y-auto border-r px-3 py-4 lg:flex"
-        style={{ background: 'var(--bg-raised)', borderColor: 'var(--rule)' }}
+    <div className="flex min-h-dvh flex-col">
+      <header
+        ref={headerRef}
+        className="no-print sticky top-0 z-30 border-b"
+        style={{
+          borderColor: 'var(--rule)',
+          background: 'color-mix(in srgb, var(--bg) 92%, transparent)',
+          backdropFilter: 'saturate(1.4) blur(8px)',
+        }}
       >
-        <Link href="/" className="mb-5 block px-3">
-          <div
-            className="font-semibold"
-            style={{ fontFamily: 'var(--font-serif)', fontSize: '1.0625rem', letterSpacing: '-0.02em' }}
-          >
-            Lectio
-          </div>
-          <div className="eyebrow mt-0.5" style={{ letterSpacing: '0.06em' }}>
-            AP Latin · Vergil · Pliny
-          </div>
-        </Link>
-
-        {navList}
-
-        <div className="mt-auto pt-5">
-          <div
-            className="rounded-lg px-3 py-2.5"
-            style={{ background: 'var(--bg-sunk)', border: '1px solid var(--rule)' }}
-          >
-            <div className="eyebrow">Exam day</div>
-            <div
-              className="mt-0.5 tabular-nums"
-              style={{ fontFamily: 'var(--font-serif)', fontSize: '1.375rem', fontWeight: 600 }}
+        <div className="mx-auto flex w-full max-w-[1160px] items-center justify-between gap-6 px-5 py-3.5 sm:px-10 sm:py-4">
+          {/* Wordmark */}
+          <Link href="/" className="flex shrink-0 items-baseline gap-5 sm:gap-7">
+            <span
+              className="wordmark"
+              style={{ fontSize: 'clamp(2rem, 1.4rem + 2.4vw, 2.875rem)' }}
             >
-              {mounted ? days : '—'}
-              <span className="ml-1 text-xs font-normal" style={{ color: 'var(--fg-faint)' }}>
-                days
-              </span>
-            </div>
-            <div className="mt-0.5 text-xs" style={{ color: 'var(--fg-faint)' }}>
-              Fri 14 May 2027
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setPaletteOpen(true)}
-            className="btn btn-ghost mt-2 w-full justify-between"
-            style={{ color: 'var(--fg-faint)', fontSize: '0.8125rem' }}
-          >
-            <span>Search</span>
-            <span className="kbd" aria-hidden="true">
-              ⌘K
+              Lectio
             </span>
-          </button>
-        </div>
-      </aside>
-
-      {/* Mobile header */}
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header
-          className="no-print sticky top-0 z-30 flex items-center gap-2 border-b px-3 py-2 backdrop-blur lg:hidden"
-          style={{
-            background: 'color-mix(in srgb, var(--bg-raised) 88%, transparent)',
-            borderColor: 'var(--rule)',
-          }}
-        >
-          <button
-            type="button"
-            className="btn btn-ghost px-2"
-            aria-expanded={mobileOpen}
-            aria-controls="mobile-nav"
-            onClick={() => setMobileOpen((v) => !v)}
-          >
-            <span className="sr-only">{mobileOpen ? 'Close menu' : 'Open menu'}</span>
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-              {mobileOpen ? (
-                <path d="M4 4l10 10M14 4L4 14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-              ) : (
-                <path d="M2.5 5h13M2.5 9h13M2.5 13h13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-              )}
-            </svg>
-          </button>
-          <Link href="/" className="font-semibold" style={{ fontFamily: 'var(--font-serif)' }}>
-            Lectio
+            <span
+              className="hidden border-l pl-5 sm:inline sm:pl-7"
+              style={{
+                borderColor: 'var(--rule)',
+                fontFamily: 'var(--font-sans)',
+                fontSize: '0.75rem',
+                lineHeight: 1,
+                letterSpacing: '0.1em',
+                color: 'var(--fg-muted)',
+              }}
+            >
+              AP LATIN · MMXXVII
+            </span>
           </Link>
-          <div className="ml-auto flex items-center gap-1.5">
-            <span className="tabular-nums text-xs" style={{ color: 'var(--fg-faint)' }}>
-              {mounted ? `${days}d` : ''}
-            </span>
+
+          {/* Desktop nav */}
+          <nav aria-label="Sections" className="hidden items-center gap-7 xl:flex">
+            {primaryItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                data-active={isActive(item.href)}
+                aria-current={isActive(item.href) ? 'page' : undefined}
+                className="nav-item whitespace-nowrap"
+                style={{
+                  fontFamily: 'var(--font-sans)',
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Controls */}
+          <div className="flex shrink-0 items-center gap-2.5 sm:gap-4">
+            <Link
+              href="/plan"
+              className="hidden items-baseline gap-2 md:flex"
+              title="Days until the exam"
+            >
+              <span
+                style={{
+                  fontFamily: 'var(--font-serif)',
+                  fontSize: '1.375rem',
+                  lineHeight: 1,
+                  color: 'var(--fg)',
+                }}
+              >
+                {mounted ? days : '—'}
+              </span>
+              <span className="slab-sm">days</span>
+            </Link>
+
+            <button
+              type="button"
+              onClick={() => setPaletteOpen(true)}
+              className="hidden items-center gap-2 lg:flex"
+              aria-label="Search"
+              title="Search — ⌘K"
+              style={{ color: 'var(--fg-muted)' }}
+            >
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.4" />
+                <path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+              </svg>
+              <span className="kbd" aria-hidden="true">⌘K</span>
+            </button>
+
             <ThemeToggle theme={theme} setTheme={setTheme} mounted={mounted} />
+
+            <button
+              type="button"
+              onClick={() => setIndexOpen((v) => !v)}
+              aria-expanded={indexOpen}
+              aria-controls="section-index"
+              className="flex items-center gap-2.5"
+              style={{ color: 'var(--fg)' }}
+            >
+              <span className="slab-sm hidden sm:inline" style={{ color: 'inherit' }}>
+                {indexOpen ? 'Close' : 'Index'}
+              </span>
+              <svg width="19" height="19" viewBox="0 0 19 19" fill="none" aria-hidden="true">
+                {indexOpen ? (
+                  <path d="M4.5 4.5l10 10M14.5 4.5l-10 10" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                ) : (
+                  <path d="M2.5 5.5h14M2.5 9.5h14M2.5 13.5h14" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                )}
+              </svg>
+              <span className="sr-only">{indexOpen ? 'Close index' : 'Open index of all sections'}</span>
+            </button>
           </div>
-        </header>
+        </div>
+      </header>
 
-        {mobileOpen && (
-          <div
-            id="mobile-nav"
-            className="no-print animate-in border-b px-3 py-3 lg:hidden"
-            style={{ background: 'var(--bg-raised)', borderColor: 'var(--rule)' }}
-          >
-            {navList}
-          </div>
-        )}
+      {indexOpen && (
+        <SectionIndex
+          pathname={pathname}
+          days={days}
+          mounted={mounted}
+          onClose={() => setIndexOpen(false)}
+        />
+      )}
 
-        <main id="main" className="min-w-0 flex-1">
-          {children}
-        </main>
-      </div>
-
-      {/* Desktop theme toggle, floating bottom-right */}
-      <div className="no-print fixed bottom-4 right-4 z-20 hidden lg:block">
-        <ThemeToggle theme={theme} setTheme={setTheme} mounted={mounted} />
-      </div>
+      <main id="main" className="min-w-0 flex-1">
+        {children}
+      </main>
 
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+    </div>
+  );
+}
+
+/**
+ * The full contents. Grouped under rubric headings, each entry carrying its
+ * blurb — this doubles as the app's table of contents rather than being a
+ * bare menu, which is why it gets the whole viewport rather than a dropdown.
+ */
+function SectionIndex({
+  pathname,
+  days,
+  mounted,
+  onClose,
+}: {
+  pathname: string;
+  days: number;
+  mounted: boolean;
+  onClose: () => void;
+}) {
+  const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
+
+  return (
+    <div
+      id="section-index"
+      className="no-print fixed inset-x-0 bottom-0 z-20 overflow-y-auto"
+      style={{
+        top: 'var(--masthead, 64px)',
+        background: 'var(--bg)',
+        animation: 'fade-rise 240ms var(--ease) both',
+      }}
+    >
+      <div className="mx-auto w-full max-w-[1160px] px-5 pb-16 pt-8 sm:px-10 sm:pt-10">
+        <div className="grid gap-x-12 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+          {NAV_GROUPS.map((group) => (
+            <div key={group.id}>
+              <div className="rubric mb-4 border-b pb-3" style={{ borderColor: 'var(--rule)' }}>
+                {group.label}
+              </div>
+              <ul className="flex flex-col">
+                {NAV.filter((n) => n.group === group.id).map((item) => {
+                  const active = isActive(item.href);
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        onClick={onClose}
+                        aria-current={active ? 'page' : undefined}
+                        className="row-hover -mx-3 block border-b px-3 py-3.5"
+                        style={{ borderColor: 'var(--hair)' }}
+                      >
+                        <span className="flex items-baseline justify-between gap-3">
+                          <span
+                            style={{
+                              fontFamily: 'var(--font-latin)',
+                              fontSize: '1.375rem',
+                              lineHeight: 1.2,
+                              color: active ? 'var(--accent)' : 'var(--fg)',
+                            }}
+                          >
+                            {item.label}
+                          </span>
+                          <span className="kbd shrink-0" aria-hidden="true">
+                            {item.key}
+                          </span>
+                        </span>
+                        <span
+                          className="mt-1.5 block"
+                          style={{
+                            fontFamily: 'var(--font-latin)',
+                            fontSize: '1rem',
+                            lineHeight: 1.45,
+                            color: 'var(--fg-muted)',
+                          }}
+                        >
+                          {item.blurb}
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        <div
+          className="mt-12 flex flex-wrap items-baseline justify-between gap-4 border-t pt-6"
+          style={{ borderColor: 'var(--rule)' }}
+        >
+          <p
+            style={{
+              margin: 0,
+              fontFamily: 'var(--font-latin)',
+              fontSize: '1.0625rem',
+              color: 'var(--fg-muted)',
+            }}
+          >
+            Press <span className="kbd">g</span> then a letter to jump from anywhere.
+          </p>
+          <p className="slab-sm">
+            {mounted ? `${days} days to the exam` : ''}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -241,36 +372,43 @@ function ThemeToggle({
   mounted: boolean;
 }) {
   const next = theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light';
-  const label = !mounted ? 'Theme' : theme === 'system' ? 'System theme' : theme === 'dark' ? 'Dark theme' : 'Light theme';
+  const label = !mounted
+    ? 'Theme'
+    : theme === 'system'
+      ? 'System theme'
+      : theme === 'dark'
+        ? 'Dark theme'
+        : 'Light theme';
   return (
     <button
       type="button"
       onClick={() => setTheme(next)}
-      className="btn px-2"
       title={`${label} — click for ${next}`}
       aria-label={`${label}. Switch to ${next}.`}
+      className="transition-transform duration-300 hover:rotate-[24deg]"
+      style={{ color: 'var(--fg-muted)' }}
     >
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <svg width="17" height="17" viewBox="0 0 16 16" fill="none" aria-hidden="true">
         {mounted && theme === 'dark' ? (
           <path
             d="M13.2 9.6A5.6 5.6 0 016.4 2.8a5.6 5.6 0 106.8 6.8z"
             stroke="currentColor"
-            strokeWidth="1.4"
+            strokeWidth="1.3"
             strokeLinejoin="round"
           />
         ) : mounted && theme === 'light' ? (
           <>
-            <circle cx="8" cy="8" r="3" stroke="currentColor" strokeWidth="1.4" />
+            <circle cx="8" cy="8" r="3" stroke="currentColor" strokeWidth="1.3" />
             <path
               d="M8 1.5v1.2M8 13.3v1.2M14.5 8h-1.2M2.7 8H1.5M12.6 3.4l-.85.85M4.25 11.75l-.85.85M12.6 12.6l-.85-.85M4.25 4.25l-.85-.85"
               stroke="currentColor"
-              strokeWidth="1.4"
+              strokeWidth="1.3"
               strokeLinecap="round"
             />
           </>
         ) : (
           <>
-            <circle cx="8" cy="8" r="5.5" stroke="currentColor" strokeWidth="1.4" />
+            <circle cx="8" cy="8" r="5.5" stroke="currentColor" strokeWidth="1.3" />
             <path d="M8 2.5v11a5.5 5.5 0 000-11z" fill="currentColor" />
           </>
         )}

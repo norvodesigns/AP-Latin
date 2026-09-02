@@ -1,28 +1,38 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { scansionLines } from '@/data/scansion';
 import {
   useStore,
   scansionStatsByLine,
   nextScansionLineId,
   scansionBadges,
+  currentStreak,
 } from '@/store/useStore';
-import { Page, PageHeader, Card, Badge, Empty } from '@/components/ui';
+import { Page, PageHeader, Empty, Roman, SourceNote } from '@/components/ui';
 import type { ScansionLine } from '@/data/types';
 
 type Mark = 'long' | 'short' | null;
 
 const ALL_LINE_IDS = scansionLines.map((l) => l.id);
 
+/** A foot and the syllable indices belonging to it, elisions included. */
+interface Foot {
+  index: number;
+  kind: 'dactyl' | 'spondee';
+  syllables: number[];
+}
+
 export default function ScansionLab() {
   const markStudied = useStore((s) => s.markStudied);
   const scansionAttempts = useStore((s) => s.scansionAttempts);
   const recordScansion = useStore((s) => s.recordScansion);
+  const studyDays = useStore((s) => s.studyDays);
 
   const [index, setIndex] = useState(0);
   const [marks, setMarks] = useState<Mark[]>([]);
   const [checked, setChecked] = useState(false);
+  const [selected, setSelected] = useState<number | null>(null);
   const [showTutorial, setShowTutorial] = useState(false);
   const [adaptive, setAdaptive] = useState(true);
   const [mounted, setMounted] = useState(false);
@@ -35,6 +45,7 @@ export default function ScansionLab() {
     if (!line) return;
     setMarks(new Array(line.syllables.length).fill(null));
     setChecked(false);
+    setSelected(null);
   }, [index, line]);
 
   useEffect(() => {
@@ -42,10 +53,16 @@ export default function ScansionLab() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /** Persistent, cross-session stats — replaces what used to be lost on refresh. */
   const stats = useMemo(() => scansionStatsByLine(scansionAttempts), [scansionAttempts]);
-  const badges = useMemo(() => scansionBadges(scansionAttempts, ALL_LINE_IDS.length), [scansionAttempts]);
-  const masteredCount = useMemo(() => [...stats.values()].filter((s) => s.mastered).length, [stats]);
+  const badges = useMemo(
+    () => scansionBadges(scansionAttempts, ALL_LINE_IDS.length),
+    [scansionAttempts],
+  );
+  const masteredCount = useMemo(
+    () => [...stats.values()].filter((s) => s.mastered).length,
+    [stats],
+  );
+  const streak = mounted ? currentStreak(studyDays) : 0;
 
   /** Indices of syllables that actually count metrically. */
   const metricalIdx = useMemo(
@@ -53,17 +70,66 @@ export default function ScansionLab() {
     [line],
   );
 
-  /** Which syllable starts each foot, as an index into `line.syllables`. */
-  const footStarts = useMemo(() => {
+  /**
+   * Group syllables into feet. An elided syllable is carried along with the
+   * foot it sits inside but never counts toward filling it, which is what
+   * lets the brackets line up with what a reader actually hears.
+   */
+  const feet = useMemo<Foot[]>(() => {
     if (!line) return [];
-    const out: number[] = [];
-    let m = 0;
-    for (const f of line.feet) {
-      out.push(metricalIdx[m]);
-      m += f === 'dactyl' ? 3 : 2;
+    const out: Foot[] = [];
+    let footIdx = 0;
+    let need = line.feet[0] === 'dactyl' ? 3 : 2;
+    let filled = 0;
+    let current: Foot | null = null;
+
+    for (let i = 0; i < line.syllables.length; i += 1) {
+      if (!current) {
+        const kind = line.feet[footIdx] ?? 'spondee';
+        current = { index: footIdx, kind, syllables: [] };
+      }
+      current.syllables.push(i);
+      if (!line.syllables[i].elides) filled += 1;
+      if (filled === need) {
+        out.push(current);
+        current = null;
+        footIdx += 1;
+        filled = 0;
+        need = line.feet[footIdx] === 'dactyl' ? 3 : 2;
+      }
     }
+    if (current) out.push(current);
     return out;
-  }, [line, metricalIdx]);
+  }, [line]);
+
+  const setMark = useCallback((i: number, m: Mark) => {
+    setMarks((prev) => {
+      const next = [...prev];
+      next[i] = m;
+      return next;
+    });
+    setSelected(null);
+  }, []);
+
+  /* Keyboard: move with arrows, mark with l/s (or - and u), clear with 0. */
+  useEffect(() => {
+    if (selected === null || checked || !line) return;
+    const onKey = (e: KeyboardEvent) => {
+      const k = e.key.toLowerCase();
+      if (k === 'escape') { setSelected(null); return; }
+      if (k === 'l' || k === '-' || k === '_') { e.preventDefault(); setMark(selected, 'long'); return; }
+      if (k === 's' || k === 'u' || k === 'v') { e.preventDefault(); setMark(selected, 'short'); return; }
+      if (k === '0' || k === 'backspace') { e.preventDefault(); setMark(selected, null); return; }
+      if (k === 'arrowright' || k === 'arrowleft') {
+        e.preventDefault();
+        const pos = metricalIdx.indexOf(selected);
+        const nextPos = k === 'arrowright' ? pos + 1 : pos - 1;
+        if (nextPos >= 0 && nextPos < metricalIdx.length) setSelected(metricalIdx[nextPos]);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [selected, checked, line, metricalIdx, setMark]);
 
   function goToLineId(id: string | null) {
     if (!id) return;
@@ -79,7 +145,10 @@ export default function ScansionLab() {
     return (
       <Page>
         <PageHeader title="Scansion Lab" />
-        <Empty title="No scanned lines loaded" body="Add lines to src/data/scansion.ts — see CONTENT.md." />
+        <Empty
+          title="No scanned lines loaded"
+          body="Add lines to src/data/scansion.ts — see CONTENT.md."
+        />
       </Page>
     );
   }
@@ -98,17 +167,9 @@ export default function ScansionLab() {
     ? metricalIdx.filter((i) => marks[i] === active.syllables[i].quantity).length
     : 0;
 
-  function cycle(i: number) {
-    if (checked) return;
-    setMarks((m) => {
-      const next = [...m];
-      next[i] = next[i] === null ? 'long' : next[i] === 'long' ? 'short' : null;
-      return next;
-    });
-  }
-
   function check() {
     setChecked(true);
+    setSelected(null);
     const correct = metricalIdx.filter((i) => marks[i] === active.syllables[i].quantity).length;
     recordScansion(active.id, correct, metricalIdx.length);
   }
@@ -125,55 +186,325 @@ export default function ScansionLab() {
   }
 
   const allMarked = metricalIdx.every((i) => marks[i] !== null);
+  /** The principal break — penthemimeral where there is one, else the first. */
+  const mainCaesura = active.caesurae.length
+    ? [active.caesurae.find((c) => c.type === 'penthemimeral') ?? active.caesurae[0]]
+    : [];
+  /** The first foot still missing a mark — the one the brackets call out. */
+  const pendingFoot = feet.find((f) =>
+    f.syllables.some((i) => !active.syllables[i].elides && marks[i] === null),
+  );
 
   return (
-    <Page wide>
-      <PageHeader
-        eyebrow="Dactylic hexameter"
-        title="Scansion Lab"
-        lede={
-          <>
-            Mark each syllable long or short, then check. Every line here comes from Aeneid 1.1–33,
-            the one passage whose source text carries macrons — so the quantities are read off the
-            text, not guessed.
-          </>
-        }
-        actions={
-          <button type="button" className="btn" onClick={() => setShowTutorial((v) => !v)} aria-expanded={showTutorial}>
-            {showTutorial ? 'Hide' : 'Rules'} tutorial
+    <div className="mx-auto w-full max-w-[1160px]">
+      {/* ── Running head ── */}
+      <div
+        className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-b px-5 py-4 sm:px-10"
+        style={{ borderColor: 'var(--rule)' }}
+      >
+        <span style={{ fontFamily: 'var(--font-latin)', fontSize: '1.25rem', color: 'var(--fg)' }}>
+          Dactylic hexameter · <em>{active.citation}</em>
+        </span>
+        <div className="flex items-center gap-5">
+          <span className="slab-sm hidden sm:inline">
+            {checked ? 'Reviewed' : 'Mark each syllable'}
+          </span>
+          <button
+            type="button"
+            className="slab-sm"
+            onClick={() => setShowTutorial((v) => !v)}
+            aria-expanded={showTutorial}
+          >
+            {showTutorial ? 'Hide rules' : 'Rules'}
           </button>
-        }
-      />
+        </div>
+      </div>
 
-      {showTutorial && <Tutorial />}
+      <div className="px-5 py-8 sm:px-10 sm:py-10">
+        {showTutorial && <Tutorial />}
 
-      {/* persistent progress */}
-      <Card className="mb-5">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-5">
-            <div>
-              <div className="eyebrow">Mastered</div>
-              <div className="tabular-nums" style={{ fontFamily: 'var(--font-serif)', fontSize: '1.375rem', fontWeight: 600 }}>
-                {mounted ? masteredCount : '—'}
-                <span style={{ color: 'var(--fg-faint)', fontSize: '0.9375rem' }}> / {ALL_LINE_IDS.length}</span>
-              </div>
-            </div>
-            <div>
-              <div className="eyebrow">Attempts</div>
-              <div className="tabular-nums" style={{ fontFamily: 'var(--font-serif)', fontSize: '1.375rem', fontWeight: 600 }}>
-                {mounted ? scansionAttempts.length : '—'}
-              </div>
-            </div>
-            <div>
-              <div className="eyebrow">Badges</div>
-              <div className="tabular-nums" style={{ fontFamily: 'var(--font-serif)', fontSize: '1.375rem', fontWeight: 600 }}>
-                {mounted ? badges.filter((b) => b.earned).length : '—'}
-                <span style={{ color: 'var(--fg-faint)', fontSize: '0.9375rem' }}> / {badges.length}</span>
-              </div>
-            </div>
+        {/* ── Line picker ── */}
+        <div className="mb-9 flex flex-wrap items-center gap-x-2 gap-y-2">
+          <span className="slab-sm mr-2">Aeneid I</span>
+          {scansionLines.map((l, i) => {
+            const s = mounted ? stats.get(l.id) : undefined;
+            const isCurrent = i === index;
+            return (
+              <button
+                key={l.id}
+                type="button"
+                onClick={() => setIndex(i)}
+                aria-current={isCurrent ? 'true' : undefined}
+                className={`chip ${
+                  isCurrent ? 'chip-on' : s?.mastered ? 'chip-gilt' : ''
+                }`}
+                title={
+                  s
+                    ? `${l.citation} — ${Math.round(s.bestAccuracy * 100)}% best, ${s.attempts} attempt(s)`
+                    : l.citation
+                }
+              >
+                {l.citation.split('.')[1]}
+              </button>
+            );
+          })}
+          <button type="button" className="slab-sm ml-2" onClick={practiceWeakest}>
+            ↯ Weakest line
+          </button>
+        </div>
+
+        {/* ── The line ── */}
+        <div className="flex flex-col items-center gap-14 py-6 sm:py-10">
+          <div className="flex w-full flex-wrap items-start justify-center gap-x-7 gap-y-10">
+            {feet.map((foot) => {
+              const isPending = pendingFoot?.index === foot.index;
+              const untouched = foot.syllables.every(
+                (i) => active.syllables[i].elides || marks[i] === null,
+              );
+              return (
+                <div
+                  key={foot.index}
+                  className="flex flex-col items-center transition-opacity duration-300"
+                  style={{ opacity: !checked && untouched && !isPending ? 0.6 : 1 }}
+                >
+                  <div className="flex items-end gap-3">
+                    {foot.syllables.map((i) => {
+                      const syl = active.syllables[i];
+                      const state = result?.[i];
+                      const mark = marks[i];
+                      const isSelected = selected === i;
+                      // Before checking, only the main caesura is drawn: a line
+                      // marked with every possible break is unreadable, and the
+                      // secondary ones are a review point rather than a cue.
+                      const caesura = (checked ? active.caesurae : mainCaesura).find(
+                        (c) => metricalIdx[c.afterSyllable] === i,
+                      );
+
+                      let color = 'var(--fg)';
+                      if (checked && !syl.elides) {
+                        color =
+                          state === 'ok'
+                            ? 'var(--correct)'
+                            : state === 'blank'
+                              ? 'var(--fg-faint)'
+                              : 'var(--incorrect)';
+                      }
+
+                      return (
+                        <div key={i} className="flex items-end gap-3">
+                          <div className="relative flex flex-col items-center">
+                            {/* Quantity mark, hanging above the syllable */}
+                            <span
+                              aria-hidden="true"
+                              key={`${mark}-${checked}`}
+                              style={{
+                                height: '26px',
+                                fontFamily: 'var(--font-sans)',
+                                fontSize: '1.375rem',
+                                lineHeight: 1,
+                                color: isSelected && !mark ? 'var(--fg-faint)' : color === 'var(--fg)' ? 'var(--accent)' : color,
+                                animation: mark ? 'mark-drop 240ms var(--ease) both' : undefined,
+                              }}
+                            >
+                              {syl.elides
+                                ? ''
+                                : mark === 'long'
+                                  ? '—'
+                                  : mark === 'short'
+                                    ? '˘'
+                                    : isSelected
+                                      ? '?'
+                                      : ''}
+                            </span>
+
+                            <button
+                              type="button"
+                              onClick={() => setSelected(isSelected ? null : i)}
+                              disabled={syl.elides || checked}
+                              aria-label={`${syl.text}${syl.elides ? ', elided' : ''}${
+                                mark ? `, marked ${mark}` : ''
+                              }`}
+                              aria-pressed={isSelected}
+                              className="squish transition-colors duration-200"
+                              style={{
+                                fontFamily: 'var(--font-latin)',
+                                fontSize: 'calc(2.125rem * var(--ls))',
+                                lineHeight: 1.2,
+                                color: syl.elides ? 'var(--fg-faint)' : color,
+                                textDecoration: syl.elides ? 'line-through' : undefined,
+                                background: isSelected ? 'var(--redtint)' : 'transparent',
+                                boxShadow: isSelected ? '0 3px 0 var(--accent)' : undefined,
+                                borderRadius: '6px',
+                                padding: '0 5px',
+                                cursor: syl.elides || checked ? 'default' : 'pointer',
+                              }}
+                            >
+                              {syl.text}
+                            </button>
+
+                            {isSelected && !checked && (
+                              <div className="chooser" role="group" aria-label="Mark this syllable">
+                                <button type="button" onClick={() => setMark(i, 'long')}>
+                                  <span
+                                    aria-hidden="true"
+                                    style={{
+                                      fontFamily: 'var(--font-sans)',
+                                      fontSize: '1.25rem',
+                                      lineHeight: 1,
+                                      color: 'var(--fg)',
+                                    }}
+                                  >
+                                    —
+                                  </span>
+                                  <span className="slab-sm">Longa</span>
+                                </button>
+                                <button type="button" onClick={() => setMark(i, 'short')}>
+                                  <span
+                                    aria-hidden="true"
+                                    style={{
+                                      fontFamily: 'var(--font-sans)',
+                                      fontSize: '1.25rem',
+                                      lineHeight: 1,
+                                      color: 'var(--fg)',
+                                    }}
+                                  >
+                                    ˘
+                                  </span>
+                                  <span className="slab-sm">Brevis</span>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          {caesura && (
+                            <span
+                              className="self-end"
+                              style={{
+                                fontFamily: 'var(--font-sans)',
+                                fontSize: '1.875rem',
+                                lineHeight: 1.2,
+                                color: checked ? 'var(--accent)' : 'var(--redborder)',
+                              }}
+                              title={`${caesura.type} caesura`}
+                            >
+                              ‖
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* The bracket beneath the foot */}
+                  <div
+                    className={`foot-bracket ${isPending ? 'foot-bracket-pending' : ''} ${
+                      !checked && untouched && !isPending ? 'foot-bracket-idle' : ''
+                    }`}
+                    aria-hidden="true"
+                  />
+                  <span
+                    className="slab-sm mt-2"
+                    style={{ color: isPending ? 'var(--accent)' : undefined }}
+                  >
+                    {checked
+                      ? foot.kind === 'dactyl'
+                        ? 'Dactyl'
+                        : 'Spondee'
+                      : isPending
+                        ? `Foot ${foot.index + 1} · pending`
+                        : untouched
+                          ? '—'
+                          : `Foot ${foot.index + 1}`}
+                  </span>
+                </div>
+              );
+            })}
           </div>
-          <div className="flex items-center gap-3">
-            <label className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--fg-muted)' }}>
+
+          {/* ── Controls ── */}
+          {!checked ? (
+            <div className="flex flex-wrap items-center justify-center gap-4">
+              <button type="button" className="btn btn-primary" onClick={check} disabled={!allMarked}>
+                Check my scansion
+              </button>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => {
+                  setMarks(new Array(active.syllables.length).fill(null));
+                  setSelected(null);
+                }}
+              >
+                Clear
+              </button>
+              <span className="slab-sm">
+                {allMarked
+                  ? 'every syllable marked'
+                  : `${metricalIdx.filter((i) => marks[i] === null).length} still unmarked`}
+              </span>
+            </div>
+          ) : (
+            <Verdict
+              active={active}
+              marks={marks}
+              metricalIdx={metricalIdx}
+              scored={scored}
+              adaptive={adaptive}
+              onNext={next}
+              onRetry={() => {
+                setMarks(new Array(active.syllables.length).fill(null));
+                setChecked(false);
+              }}
+            />
+          )}
+        </div>
+
+        {/* ── Progress ── */}
+        <div
+          className="mx-auto mt-12 flex w-full max-w-[780px] flex-wrap items-center justify-between gap-6 border-t pt-7"
+          style={{ borderColor: 'var(--rule)' }}
+        >
+          <div className="min-w-[240px] flex-1">
+            <div className="mb-2.5 flex items-baseline justify-between gap-3">
+              <span className="slab">Lines mastered</span>
+              <span
+                style={{
+                  fontFamily: 'var(--font-latin)',
+                  fontSize: '1.1875rem',
+                  lineHeight: 1,
+                  color: 'var(--fg)',
+                }}
+              >
+                {mounted ? masteredCount : '—'} / {ALL_LINE_IDS.length}
+                {mounted && masteredCount > 0 && (
+                  <span style={{ color: 'var(--fg-faint)' }}>
+                    {' · '}
+                    <Roman value={masteredCount} />
+                  </span>
+                )}
+              </span>
+            </div>
+            <div className="meter">
+              <span
+                style={{
+                  width: `${mounted ? Math.round((masteredCount / ALL_LINE_IDS.length) * 100) : 0}%`,
+                }}
+              />
+            </div>
+            {mounted && lineStats && (
+              <p
+                className="slab-sm mt-3"
+                style={{ color: 'var(--fg-faint)' }}
+              >
+                this line · {lineStats.attempts} attempt{lineStats.attempts === 1 ? '' : 's'} ·{' '}
+                best {Math.round(lineStats.bestAccuracy * 100)}%
+                {lineStats.mastered && ' · mastered'}
+              </p>
+            )}
+          </div>
+
+          <div className="flex items-center gap-4">
+            <label className="slab-sm flex cursor-pointer items-center gap-2">
               <input
                 type="checkbox"
                 checked={adaptive}
@@ -182,226 +513,154 @@ export default function ScansionLab() {
               />
               Adaptive order
             </label>
-            <button type="button" className="btn text-xs" onClick={practiceWeakest}>
-              Practice weakest line
-            </button>
+            {mounted && streak > 0 && (
+              <div
+                className="flex items-baseline gap-2.5 border px-4 py-2"
+                style={{ borderColor: 'var(--accent)' }}
+              >
+                <span
+                  style={{
+                    fontFamily: 'var(--font-serif)',
+                    fontSize: '1.375rem',
+                    lineHeight: 1,
+                    color: 'var(--accent)',
+                  }}
+                >
+                  {streak}
+                </span>
+                <span className="slab-sm" style={{ color: 'var(--accent)' }}>
+                  day streak
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
+        {/* ── Badges ── */}
         {mounted && badges.some((b) => b.earned) && (
-          <div className="mt-3 flex flex-wrap gap-1.5 border-t pt-3" style={{ borderColor: 'var(--rule)' }}>
+          <div
+            className="mx-auto mt-7 flex w-full max-w-[780px] flex-wrap gap-2 border-t pt-6"
+            style={{ borderColor: 'var(--hair)' }}
+          >
             {badges.map((b) => (
-              <span key={b.id} title={b.detail}>
-                <Badge tone={b.earned ? 'gilt' : 'muted'}>
-                  {b.earned ? '★' : '☆'} {b.label}
-                </Badge>
+              <span
+                key={b.id}
+                title={b.detail}
+                className={`chip ${b.earned ? 'chip-gilt' : ''}`}
+              >
+                {b.earned ? '★' : '☆'} {b.label}
               </span>
             ))}
           </div>
         )}
-      </Card>
 
-      {/* line picker */}
-      <div className="mb-5 flex flex-wrap items-center gap-1.5">
-        {scansionLines.map((l, i) => {
-          const s = mounted ? stats.get(l.id) : undefined;
-          const tone = s?.mastered ? 'mastered' : s ? 'attempted' : 'new';
-          return (
-            <button
-              key={l.id}
-              type="button"
-              onClick={() => setIndex(i)}
-              aria-current={i === index ? 'true' : undefined}
-              className="rounded-md border px-2 py-1 text-xs tabular-nums transition-colors"
+        <SourceNote to="requiredReading">
+          Quantities are read off the macronized source text of <em>Aeneid</em> 1.1&ndash;33, never
+          guessed. Scansion is examined as part of reading poetry with comprehension.
+        </SourceNote>
+      </div>
+    </div>
+  );
+}
+
+function Verdict({
+  active,
+  marks,
+  metricalIdx,
+  scored,
+  adaptive,
+  onNext,
+  onRetry,
+}: {
+  active: ScansionLine;
+  marks: Mark[];
+  metricalIdx: number[];
+  scored: number;
+  adaptive: boolean;
+  onNext: () => void;
+  onRetry: () => void;
+}) {
+  const wrong = metricalIdx.filter((i) => marks[i] !== active.syllables[i].quantity);
+
+  return (
+    <div
+      className="animate-in mx-auto w-full max-w-[780px] border-t pt-8"
+      style={{ borderColor: 'var(--rule)' }}
+    >
+      <div className="mb-6 flex flex-wrap items-baseline gap-4">
+        <span className="numeral" style={{ fontSize: '2.5rem' }}>
+          {scored} / {metricalIdx.length}
+        </span>
+        <span className="slab">syllables correct</span>
+        <div className="ml-auto flex flex-wrap gap-2">
+          {active.feet.map((f, i) => (
+            <span
+              key={i}
+              className="border px-2.5 py-1"
               style={{
-                background: i === index ? 'var(--accent)' : tone === 'mastered' ? 'var(--correct-bg)' : tone === 'attempted' ? 'var(--partial-bg)' : 'transparent',
-                borderColor: i === index ? 'var(--accent)' : tone === 'mastered' ? 'var(--correct)' : tone === 'attempted' ? 'var(--partial)' : 'var(--rule)',
-                color: i === index ? 'var(--accent-fg)' : tone === 'mastered' ? 'var(--correct)' : tone === 'attempted' ? 'var(--partial)' : 'var(--fg-faint)',
+                borderColor: f === 'dactyl' ? 'var(--redborder)' : 'var(--rule-strong)',
+                color: f === 'dactyl' ? 'var(--accent)' : 'var(--fg-muted)',
+                fontFamily: 'var(--font-sans)',
+                fontSize: '0.75rem',
+                lineHeight: 1,
               }}
-              title={s ? `${l.citation} — ${Math.round(s.bestAccuracy * 100)}% best, ${s.attempts} attempt(s)` : l.citation}
             >
-              {l.citation.split('.')[1]}
-            </button>
-          );
-        })}
+              {i + 1}. {f === 'dactyl' ? '— ˘ ˘' : '— —'}
+            </span>
+          ))}
+        </div>
       </div>
 
-      <Card className="mb-5">
-        <div className="mb-1 flex items-baseline justify-between gap-3">
-          <span className="eyebrow">{active.citation}</span>
-          <span className="text-xs" style={{ color: 'var(--fg-faint)' }}>
-            click a syllable to cycle: — → ˘ → blank
-          </span>
-        </div>
-        {mounted && lineStats && (
-          <div className="mb-2 flex items-center gap-2 text-xs" style={{ color: 'var(--fg-faint)' }}>
-            <span>{lineStats.attempts} attempt{lineStats.attempts === 1 ? '' : 's'}</span>
-            <span aria-hidden="true">·</span>
-            <span>best {Math.round(lineStats.bestAccuracy * 100)}%</span>
-            {lineStats.mastered && <Badge tone="green">mastered</Badge>}
-          </div>
-        )}
-
-        {/* the line, syllable by syllable */}
-        <div className="flex flex-wrap items-end gap-x-0.5 gap-y-4 py-4">
-          {active.syllables.map((syl, i) => {
-            const footIdx = footStarts.indexOf(i);
-            const state = result?.[i];
-            const mark = marks[i];
-            const caesura = active.caesurae.find((c) => metricalIdx[c.afterSyllable] === i);
-
-            let color = 'var(--fg)';
-            if (checked && !syl.elides) {
-              color = state === 'ok' ? 'var(--correct)' : state === 'blank' ? 'var(--fg-faint)' : 'var(--incorrect)';
-            }
-
-            return (
-              <span key={i} className="flex items-end">
-                {footIdx >= 0 && (
-                  <span
-                    className="mr-1 self-stretch"
-                    aria-hidden="true"
-                    style={{ borderLeft: '1px solid var(--rule-strong)', height: '2.6rem' }}
-                  />
-                )}
-                <button
-                  type="button"
-                  onClick={() => cycle(i)}
-                  disabled={syl.elides || checked}
-                  className="relative flex flex-col items-center rounded px-0.5 transition-colors"
-                  style={{ cursor: syl.elides || checked ? 'default' : 'pointer' }}
-                  aria-label={`${syl.text}${syl.elides ? ', elided' : ''}`}
-                >
-                  {/* quantity mark */}
-                  <span
-                    aria-hidden="true"
-                    style={{
-                      height: '1.1rem',
-                      fontSize: '1.25rem',
-                      lineHeight: 1,
-                      color: checked ? color : 'var(--accent)',
-                      fontWeight: 700,
-                    }}
-                  >
-                    {syl.elides ? '' : mark === 'long' ? '—' : mark === 'short' ? '˘' : ''}
-                  </span>
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-latin)',
-                      fontSize: '1.375rem',
-                      color: syl.elides ? 'var(--fg-faint)' : color,
-                      textDecoration: syl.elides ? 'line-through' : undefined,
-                      borderBottom: !checked && !syl.elides ? '1px dotted var(--rule-strong)' : '1px solid transparent',
-                    }}
-                  >
-                    {syl.text}
-                  </span>
-                </button>
-                {caesura && checked && (
-                  <span
-                    className="mx-1 self-center text-lg"
-                    style={{ color: 'var(--gilt)' }}
-                    title={`${caesura.type} caesura`}
-                  >
-                    ‖
-                  </span>
-                )}
-              </span>
-            );
-          })}
-        </div>
-
-        {!checked ? (
-          <div className="flex flex-wrap items-center gap-2 border-t pt-4" style={{ borderColor: 'var(--rule)' }}>
-            <button type="button" className="btn btn-primary" onClick={check} disabled={!allMarked}>
-              Check my scansion
-            </button>
-            <button
-              type="button"
-              className="btn"
-              onClick={() => setMarks(new Array(active.syllables.length).fill(null))}
+      {wrong.length > 0 && (
+        <ul className="mb-6 flex flex-col gap-3">
+          {wrong.map((i) => (
+            <li
+              key={i}
+              style={{
+                fontFamily: 'var(--font-latin)',
+                fontSize: '1.0625rem',
+                lineHeight: 1.5,
+                color: 'var(--ink2)',
+              }}
             >
-              Clear
-            </button>
-            {!allMarked && (
-              <span className="text-sm" style={{ color: 'var(--fg-faint)' }}>
-                {metricalIdx.filter((i) => marks[i] === null).length} syllable(s) still unmarked.
-              </span>
-            )}
-          </div>
-        ) : (
-          <div className="animate-in border-t pt-4" style={{ borderColor: 'var(--rule)' }}>
-            <div className="mb-3 flex flex-wrap items-baseline gap-3">
-              <span
-                className="tabular-nums"
-                style={{ fontFamily: 'var(--font-serif)', fontSize: '1.5rem', fontWeight: 600 }}
-              >
-                {scored} / {metricalIdx.length}
-              </span>
-              <span className="text-sm" style={{ color: 'var(--fg-muted)' }}>
-                syllables correct
-              </span>
-              <div className="flex gap-1.5">
-                {active.feet.map((f, i) => (
-                  <Badge key={i} tone={f === 'dactyl' ? 'accent' : 'neutral'}>
-                    {i + 1}. {f === 'dactyl' ? '— ˘ ˘' : '— —'}
-                  </Badge>
-                ))}
-              </div>
-            </div>
+              <span style={{ color: 'var(--fg)', fontSize: '1.1875rem' }}>
+                {active.syllables[i].text}
+              </span>{' '}
+              is <span style={{ color: 'var(--accent)' }}>{active.syllables[i].quantity}</span>
+              {marks[i] && <> — you marked it {marks[i]}</>}. {explain(active, i)}
+            </li>
+          ))}
+        </ul>
+      )}
 
-            {/* per-syllable explanation of the ones that went wrong */}
-            {scored < metricalIdx.length && (
-              <ul className="mb-3 flex flex-col gap-1.5">
-                {metricalIdx
-                  .filter((i) => marks[i] !== active.syllables[i].quantity)
-                  .map((i) => (
-                    <li key={i} className="text-sm" style={{ color: 'var(--fg-muted)' }}>
-                      <span style={{ fontFamily: 'var(--font-latin)', fontSize: '1rem', fontWeight: 600 }}>
-                        {active.syllables[i].text}
-                      </span>{' '}
-                      is <strong style={{ color: 'var(--correct)' }}>{active.syllables[i].quantity}</strong>
-                      {marks[i] && <> — you marked it {marks[i]}</>}. {explain(active, i)}
-                    </li>
-                  ))}
-              </ul>
-            )}
-
-            <p className="measure text-sm" style={{ color: 'var(--fg-muted)' }}>
-              {active.notes}
-            </p>
-            {active.caesurae.length > 0 && (
-              <p className="mt-1.5 text-sm" style={{ color: 'var(--fg-muted)' }}>
-                Caesurae:{' '}
-                {active.caesurae.map((c, i) => (
-                  <span key={c.type}>
-                    {i > 0 && ', '}
-                    {c.type}
-                  </span>
-                ))}
-                .
-              </p>
-            )}
-
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button type="button" className="btn btn-primary" onClick={next}>
-                {adaptive ? 'Next (weakest line)' : 'Next line'}
-              </button>
-              <button
-                type="button"
-                className="btn"
-                onClick={() => {
-                  setMarks(new Array(active.syllables.length).fill(null));
-                  setChecked(false);
-                }}
-              >
-                Try again
-              </button>
-            </div>
-          </div>
+      <p
+        className="measure"
+        style={{
+          margin: 0,
+          fontFamily: 'var(--font-latin)',
+          fontSize: '1.0625rem',
+          lineHeight: 1.55,
+          color: 'var(--fg-muted)',
+        }}
+      >
+        {active.notes}
+        {active.caesurae.length > 0 && (
+          <>
+            {' '}
+            Caesurae: {active.caesurae.map((c) => c.type).join(', ')}.
+          </>
         )}
-      </Card>
-    </Page>
+      </p>
+
+      <div className="mt-7 flex flex-wrap gap-3">
+        <button type="button" className="btn btn-primary" onClick={onNext}>
+          {adaptive ? 'Next · weakest line' : 'Next line'}
+        </button>
+        <button type="button" className="btn" onClick={onRetry}>
+          Try again
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -419,63 +678,104 @@ function explain(line: ScansionLine, i: number): string {
 }
 
 function Tutorial() {
+  const items: Array<{ title: string; body: React.ReactNode }> = [
+    {
+      title: 'The line',
+      body: (
+        <>
+          Six feet. Each of the first four is either a <strong>dactyl</strong> (— ˘ ˘) or a{' '}
+          <strong>spondee</strong> (— —). The fifth is almost always a dactyl; the sixth is always
+          two syllables, and its last counts long whatever it really is (anceps).
+        </>
+      ),
+    },
+    {
+      title: 'Long by nature',
+      body: (
+        <>
+          A vowel is long by nature if it simply is long — which you cannot see unless the text
+          marks it with a macron. Every <strong>diphthong</strong> (ae, au, ei, eu, oe, ui) is long
+          by nature.
+        </>
+      ),
+    },
+    {
+      title: 'Long by position',
+      body: (
+        <>
+          A short vowel counts long if followed by <strong>two or more consonants</strong>, or by x
+          or z — they may straddle a word boundary. A mute plus a liquid (pr, tr, cl, br…) may leave
+          the syllable short. h never makes position; qu counts as one consonant.
+        </>
+      ),
+    },
+    {
+      title: 'Elision',
+      body: (
+        <>
+          A word ending in a vowel, a diphthong, or a vowel + m loses that final syllable before a
+          word beginning with a vowel or h. Elided syllables are struck through here and do not
+          count toward the feet.
+        </>
+      ),
+    },
+    {
+      title: 'Caesura',
+      body: (
+        <>
+          A word-break inside a foot. The <strong>penthemimeral</strong> (after the first syllable
+          of foot 3) is much the commonest in Vergil; the hephthemimeral falls in foot 4, the
+          trithemimeral in foot 2.
+        </>
+      ),
+    },
+    {
+      title: 'A working method',
+      body: (
+        <>
+          Mark the elisions first, then everything long by position, then the diphthongs. Put a
+          dactyl in the fifth foot and a spondee in the sixth. What remains usually has only one
+          legal solution.
+        </>
+      ),
+    },
+  ];
+
   return (
-    <Card className="animate-in mb-6">
-      <h2 className="mb-3" style={{ fontSize: '1.0625rem' }}>How dactylic hexameter works</h2>
-      <div className="measure-wide grid gap-4 text-sm sm:grid-cols-2" style={{ color: 'var(--fg-muted)', lineHeight: 1.7 }}>
-        <div>
-          <h3 className="eyebrow mb-1.5">The line</h3>
-          <p>
-            Six feet. Each of the first four is either a <strong>dactyl</strong> (— ˘ ˘) or a{' '}
-            <strong>spondee</strong> (— —). The fifth is almost always a dactyl; the sixth is always
-            two syllables, and its last syllable counts long whatever it really is (anceps).
-          </p>
-          <p className="mt-2" style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem', color: 'var(--fg)' }}>
-            — ˘˘ | — ˘˘ | — — | — — | — ˘˘ | — ×
-          </p>
-        </div>
-        <div>
-          <h3 className="eyebrow mb-1.5">Long by nature</h3>
-          <p>
-            A vowel is long by nature if it simply is long — which you cannot see unless the text
-            marks it with a macron. Every <strong>diphthong</strong> (ae, au, ei, eu, oe, ui) is long
-            by nature.
-          </p>
-        </div>
-        <div>
-          <h3 className="eyebrow mb-1.5">Long by position</h3>
-          <p>
-            A short vowel counts long if it is followed by <strong>two or more consonants</strong>,
-            or by x or z — the consonants may straddle a word boundary. A mute plus a liquid (pr, tr,
-            cl, br…) is the exception: it may leave the syllable short. h never makes position, and
-            qu counts as a single consonant.
-          </p>
-        </div>
-        <div>
-          <h3 className="eyebrow mb-1.5">Elision</h3>
-          <p>
-            A word ending in a vowel, a diphthong, or a vowel + m loses that final syllable before a
-            word beginning with a vowel or h. Elided syllables are struck through here and do not
-            count toward the feet.
-          </p>
-        </div>
-        <div>
-          <h3 className="eyebrow mb-1.5">Caesura</h3>
-          <p>
-            A word-break inside a foot. The <strong>penthemimeral</strong> (after the first syllable
-            of foot 3) is much the commonest in Vergil; the hephthemimeral falls in foot 4 and the
-            trithemimeral in foot 2. A break at the end of foot 4 is a bucolic diaeresis.
-          </p>
-        </div>
-        <div>
-          <h3 className="eyebrow mb-1.5">A working method</h3>
-          <p>
-            Mark the elisions first, then everything long by position, then the diphthongs. Put a
-            dactyl in the fifth foot and a spondee in the sixth. What remains usually has only one
-            legal solution.
-          </p>
-        </div>
+    <div
+      className="animate-in mb-10 border-y py-8"
+      style={{ borderColor: 'var(--rule)' }}
+    >
+      <div className="rubric mb-6">How dactylic hexameter works</div>
+      <div className="grid gap-x-10 gap-y-7 sm:grid-cols-2 lg:grid-cols-3">
+        {items.map((it) => (
+          <div key={it.title}>
+            <h3 className="slab-sm mb-2.5">{it.title}</h3>
+            <p
+              style={{
+                margin: 0,
+                fontFamily: 'var(--font-latin)',
+                fontSize: '1.0625rem',
+                lineHeight: 1.55,
+                color: 'var(--ink2)',
+              }}
+            >
+              {it.body}
+            </p>
+          </div>
+        ))}
       </div>
-    </Card>
+      <p
+        className="mt-7"
+        style={{
+          margin: '1.75rem 0 0',
+          fontFamily: 'var(--font-latin)',
+          fontSize: '1.25rem',
+          color: 'var(--fg)',
+        }}
+      >
+        — ˘˘ | — ˘˘ | — — | — — | — ˘˘ | — ×
+      </p>
+    </div>
   );
 }

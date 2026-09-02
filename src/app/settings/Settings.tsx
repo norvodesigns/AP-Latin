@@ -67,7 +67,7 @@ export default function Settings() {
 
       {message && (
         <div
-          className="mb-5 rounded-lg border px-3.5 py-2.5 text-sm"
+          className="mb-5 border px-3.5 py-2.5 text-sm"
           style={{
             background: message.kind === 'ok' ? 'var(--correct-bg)' : 'var(--incorrect-bg)',
             borderColor: message.kind === 'ok' ? 'var(--correct)' : 'var(--incorrect)',

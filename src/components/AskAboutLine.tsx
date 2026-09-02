@@ -113,8 +113,8 @@ export default function AskAboutLine({
         aria-modal="true"
         aria-label={`Ask about line ${lineN}`}
         onClick={(e) => e.stopPropagation()}
-        className="animate-in flex max-h-[85dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-xl sm:rounded-xl"
-        style={{ background: 'var(--bg-raised)', border: '1px solid var(--rule-strong)', boxShadow: 'var(--shadow-pop)' }}
+        className="animate-in flex max-h-[85dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-xl sm:"
+        style={{ background: 'var(--bg-raised)', border: '1px solid var(--rule-strong)', boxShadow: '0 12px 30px var(--shadow)' }}
       >
         <header className="flex items-start justify-between gap-3 border-b px-4 py-3" style={{ borderColor: 'var(--rule)' }}>
           <div className="min-w-0">
@@ -133,7 +133,7 @@ export default function AskAboutLine({
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
           {!ai.loading && !ai.configured && (
             <div
-              className="mb-3 rounded-lg border px-3 py-2 text-sm"
+              className="mb-3 border px-3 py-2 text-sm"
               style={{
                 background: 'color-mix(in srgb, var(--gilt) 9%, transparent)',
                 borderColor: 'color-mix(in srgb, var(--gilt) 30%, transparent)',
@@ -147,7 +147,7 @@ export default function AskAboutLine({
 
           {error && (
             <div
-              className="mb-3 rounded-lg border px-3 py-2 text-sm"
+              className="mb-3 border px-3 py-2 text-sm"
               style={{ background: 'var(--incorrect-bg)', borderColor: 'color-mix(in srgb, var(--incorrect) 30%, transparent)', color: 'var(--fg-muted)' }}
             >
               {error}

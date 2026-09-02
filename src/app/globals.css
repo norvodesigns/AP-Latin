@@ -1,134 +1,194 @@
 @import 'tailwindcss';
 
 /* ==========================================================================
-   AP Latin — design tokens
+   Lectio — "Rubrica"
 
-   A warm parchment/ink palette meant to be read in for hours. Latin text is
-   the hero: it gets the largest optical size, the most generous leading, and
-   a measure capped near 62 characters. Everything else recedes.
+   The interface is manuscript ruling and rubrication, not cards. Hairlines and
+   red marginalia carry every affordance, so nothing boxes the Latin in.
+
+   Three rules follow from that and are worth stating plainly, because most of
+   this file exists to enforce them:
+
+     1. Structure is ruled and square; controls are rounded and soft. The page
+        itself — margins, rules, the verse block, column dividers — keeps the
+        hard geometry of a ruled manuscript. Anything a hand touches (buttons,
+        fields, chips, popovers, the flashcard) is rounded and gives slightly
+        under the press. The split is deliberate: the page is a surface to
+        read, the controls are objects to handle.
+     2. No filled surfaces used as containers. If something needs separating,
+        it gets a hairline, not a box with a shadow. `.panel` is the single
+        exception, reserved for things that genuinely float.
+     3. The Latin is the largest thing on the page and never competes with UI.
+        Everything chrome-like is small, uppercase, widely tracked, and quiet.
    ========================================================================== */
 
 @theme {
-  /* Parchment (light) ---------------------------------------------------- */
-  --color-parchment: #f6f1e6;
-  --color-parchment-raised: #fdfaf3;
-  --color-parchment-sunk: #efe8d9;
-
-  /* Ink ------------------------------------------------------------------ */
-  --color-ink: #221f1a;
-  --color-ink-muted: #5a5346;
-  --color-ink-faint: #8a8172;
-
-  /* Rules and edges ------------------------------------------------------ */
-  --color-rule: #e0d6c2;
-  --color-rule-strong: #cabfa6;
-
-  /* Accents — a restrained Pompeian red and a manuscript gold ------------ */
-  --color-rubric: #93301c;
-  --color-rubric-soft: #b9543f;
-  --color-gilt: #9a7724;
-  --color-verdigris: #3d6b5e;
-
-  /* Semantic ------------------------------------------------------------- */
-  --color-correct: #3f6b45;
-  --color-partial: #8a6a1f;
-  --color-incorrect: #93301c;
-
   /* Type ----------------------------------------------------------------- */
   --font-latin: var(--font-eb-garamond), 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
   --font-serif: var(--font-literata), Charter, Georgia, 'Times New Roman', serif;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-
-  --text-latin: 1.3125rem;
-  --text-latin--line-height: 1.85;
+  --font-script: var(--font-italianno), 'Snell Roundhand', 'Apple Chancery', cursive;
 }
 
-/* Light theme (default) ----------------------------------------------------- */
+/* ==========================================================================
+   Palette
+
+   Light is the design's own parchment. Dark is its companion, and is a real
+   second design rather than an inversion: the reds lighten toward terracotta
+   so they stay legible as marginalia, and the gilt warms rather than dims.
+   ========================================================================== */
+
 :root {
   color-scheme: light;
 
-  --bg: var(--color-parchment);
-  --bg-raised: var(--color-parchment-raised);
-  --bg-sunk: var(--color-parchment-sunk);
-  --fg: var(--color-ink);
-  --fg-muted: var(--color-ink-muted);
-  --fg-faint: var(--color-ink-faint);
-  --rule: var(--color-rule);
-  --rule-strong: var(--color-rule-strong);
-  --accent: var(--color-rubric);
+  --bg: #f6f1e6;          /* parchment */
+  --panel: #fdfbf4;       /* a slip laid on the page — glossary, flashcard */
+  --bg-raised: #fdfbf4;
+  --bg-sunk: #efe8d9;
+
+  --fg: #221f1a;          /* ink */
+  --ink2: #4a443a;        /* secondary prose */
+  --fg-muted: #6d6455;
+  --fg-faint: #8a7c5c;
+
+  --rule: #ddd3bd;        /* the ruling itself */
+  --rule-strong: #c9b998;
+  --rule2: #c0ae8c;       /* scansion brackets — needs to read against parchment */
+  --hair: #e3d9c2;        /* the faintest divider */
+  --track: #e6dcc4;       /* meter troughs */
+
+  --accent: #9d2f24;      /* rubrication red */
   --accent-fg: #ffffff;
-  --gilt: var(--color-gilt);
-  --verdigris: var(--color-verdigris);
+  --redline: #e3cfc9;     /* the red margin rule beside verse */
+  --redtint: #f3e3d8;     /* a word marked under the reader's finger */
+  --redborder: #d9b8b2;
 
-  --correct: #3f6b45;
-  --correct-bg: #e8f0e6;
-  --partial: #8a6a1f;
-  --partial-bg: #f6eed7;
-  --incorrect: #93301c;
-  --incorrect-bg: #f7e6e1;
+  --gilt: #8a6d24;
+  --oninv: #f6f1e6;       /* text on an ink-filled block */
+  --oninv2: #cbc1a8;
 
-  --shadow-card: 0 1px 2px rgb(60 46 20 / 0.05), 0 4px 16px -6px rgb(60 46 20 / 0.10);
-  --shadow-pop: 0 2px 6px rgb(60 46 20 / 0.10), 0 12px 32px -8px rgb(60 46 20 / 0.22);
+  --shadow: rgba(60, 48, 26, 0.16);
+  --shadow2: rgba(60, 48, 26, 0.10);
+
+  /* Semantic — kept for graded work, tuned to sit inside the palette. */
+  --correct: #4a6b3f;
+  --correct-bg: #eaefe2;
+  --partial: #8a6d24;
+  --partial-bg: #f5eed9;
+  --incorrect: #9d2f24;
+  --incorrect-bg: #f3e3d8;
+
+  /* Latin optical scale. Reader and Scansion multiply their type by this so a
+     student can size the Latin without touching the surrounding interface. */
+  --ls: 1;
+
+  /* Motion. One expressive curve and one calm one, so timing stays coherent
+     across the app instead of every component inventing its own feel. */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);      /* settles, slight overshoot feel */
+  --ease-io: cubic-bezier(0.65, 0, 0.35, 1);   /* symmetric, for wipes */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* overshoots — the squish */
+  --dur-1: 140ms;
+  --dur-2: 240ms;
+  --dur-3: 400ms;
+
+  /* Corner radius. The page structure stays ruled and square — a manuscript
+     has no rounded margins — but anything you can press, type into, or pick
+     up is rounded and gives a little under the finger. */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-pill: 999px;
+
+  /* How far a control sinks when pressed. */
+  --squish: 0.96;
 }
 
-/* Dark theme ---------------------------------------------------------------- */
 [data-theme='dark'] {
   color-scheme: dark;
 
-  --bg: #151310;
-  --bg-raised: #1e1b16;
-  --bg-sunk: #100e0c;
-  --fg: #ece4d4;
-  --fg-muted: #a99f8c;
-  --fg-faint: #7d7365;
-  --rule: #322c24;
-  --rule-strong: #4a4237;
-  --accent: #d97c62;
-  --accent-fg: #1a1512;
-  --gilt: #c9a253;
-  --verdigris: #6fa596;
+  --bg: #17140f;
+  --panel: #1e1a14;
+  --bg-raised: #1e1a14;
+  --bg-sunk: #120f0b;
 
-  --correct: #8fbf95;
-  --correct-bg: #1c2a1e;
-  --partial: #d4b264;
+  --fg: #efe7d5;
+  --ink2: #cfc5b0;
+  --fg-muted: #a2967f;
+  --fg-faint: #8a7f6a;
+
+  --rule: #3a3229;
+  --rule-strong: #4c4235;
+  --rule2: #4c4235;
+  --hair: #3a3229;
+  --track: #332c23;
+
+  --accent: #e0796a;
+  --accent-fg: #17140f;
+  --redline: #5a3a33;
+  --redtint: #38241f;
+  --redborder: #6b463d;
+
+  --gilt: #cfa94d;
+  --oninv: #17140f;
+  --oninv2: #5f5745;
+
+  --shadow: rgba(0, 0, 0, 0.55);
+  --shadow2: rgba(0, 0, 0, 0.45);
+
+  --correct: #9dbf8f;
+  --correct-bg: #1f2a1b;
+  --partial: #cfa94d;
   --partial-bg: #2b2416;
-  --incorrect: #e08a72;
-  --incorrect-bg: #2e1a15;
-
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 16px -6px rgb(0 0 0 / 0.5);
-  --shadow-pop: 0 2px 6px rgb(0 0 0 / 0.5), 0 12px 32px -8px rgb(0 0 0 / 0.7);
+  --incorrect: #e0796a;
+  --incorrect-bg: #38241f;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     color-scheme: dark;
 
-    --bg: #151310;
-    --bg-raised: #1e1b16;
-    --bg-sunk: #100e0c;
-    --fg: #ece4d4;
-    --fg-muted: #a99f8c;
-    --fg-faint: #7d7365;
-    --rule: #322c24;
-    --rule-strong: #4a4237;
-    --accent: #d97c62;
-    --accent-fg: #1a1512;
-    --gilt: #c9a253;
-    --verdigris: #6fa596;
+    --bg: #17140f;
+    --panel: #1e1a14;
+    --bg-raised: #1e1a14;
+    --bg-sunk: #120f0b;
 
-    --correct: #8fbf95;
-    --correct-bg: #1c2a1e;
-    --partial: #d4b264;
+    --fg: #efe7d5;
+    --ink2: #cfc5b0;
+    --fg-muted: #a2967f;
+    --fg-faint: #8a7f6a;
+
+    --rule: #3a3229;
+    --rule-strong: #4c4235;
+    --rule2: #4c4235;
+    --hair: #3a3229;
+    --track: #332c23;
+
+    --accent: #e0796a;
+    --accent-fg: #17140f;
+    --redline: #5a3a33;
+    --redtint: #38241f;
+    --redborder: #6b463d;
+
+    --gilt: #cfa94d;
+    --oninv: #17140f;
+    --oninv2: #5f5745;
+
+    --shadow: rgba(0, 0, 0, 0.55);
+    --shadow2: rgba(0, 0, 0, 0.45);
+
+    --correct: #9dbf8f;
+    --correct-bg: #1f2a1b;
+    --partial: #cfa94d;
     --partial-bg: #2b2416;
-    --incorrect: #e08a72;
-    --incorrect-bg: #2e1a15;
-
-    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 16px -6px rgb(0 0 0 / 0.5);
-    --shadow-pop: 0 2px 6px rgb(0 0 0 / 0.5), 0 12px 32px -8px rgb(0 0 0 / 0.7);
+    --incorrect: #e0796a;
+    --incorrect-bg: #38241f;
   }
 }
 
-/* Base ---------------------------------------------------------------------- */
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
 * {
   border-color: var(--rule);
 }
@@ -158,49 +218,53 @@ body {
   min-height: 100dvh;
 }
 
+/* Headings are Literata and set tight — they are display numerals and titles,
+   not running text. Running prose is EB Garamond via `.prose-latin`. */
 h1, h2, h3, h4 {
   font-family: var(--font-serif);
-  font-weight: 600;
-  letter-spacing: -0.011em;
+  font-weight: 400;
+  letter-spacing: -0.015em;
   color: var(--fg);
   text-wrap: balance;
 }
 
-/* Focus — visible, never removed ------------------------------------------- */
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-  border-radius: 3px;
+  border-radius: var(--r-sm);
 }
 :focus:not(:focus-visible) { outline: none; }
 
 ::selection {
-  background: color-mix(in srgb, var(--accent) 24%, transparent);
+  background: var(--redtint);
   color: var(--fg);
 }
 
-/* Scrollbars ---------------------------------------------------------------- */
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--rule-strong) transparent;
 }
-::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar { width: 9px; height: 9px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
   background: var(--rule-strong);
-  border-radius: 6px;
+  border-radius: var(--r-pill);
   border: 3px solid var(--bg);
 }
 
 /* ==========================================================================
-   Component primitives
+   Primitives
    ========================================================================== */
 
 @layer components {
-  /* Latin text — the hero. Optical size up, leading generous, measure capped. */
+
+  /* — Type ————————————————————————————————————————————————————————— */
+
+  /* The Latin itself. Scales with --ls; measure capped so verse never runs
+     past the eye's comfortable return sweep. */
   .latin {
     font-family: var(--font-latin);
-    font-size: var(--text-latin);
+    font-size: calc(1.3125rem * var(--ls));
     line-height: 1.85;
     font-feature-settings: 'liga' 1, 'kern' 1, 'onum' 1;
     letter-spacing: 0.004em;
@@ -208,122 +272,628 @@ h1, h2, h3, h4 {
   }
   .latin-verse {
     font-family: var(--font-latin);
-    font-size: var(--text-latin);
-    line-height: 1.95;
+    font-size: calc(1.3125rem * var(--ls));
+    line-height: 1.85;
     font-feature-settings: 'liga' 1, 'kern' 1, 'onum' 1;
   }
 
-  .measure { max-width: 68ch; }
-  .measure-wide { max-width: 82ch; }
-
-  .card {
-    background: var(--bg-raised);
-    border: 1px solid var(--rule);
-    border-radius: 10px;
-    box-shadow: var(--shadow-card);
+  /* Running prose in the manuscript's own voice — glosses, notes, commentary. */
+  .prose-latin {
+    font-family: var(--font-latin);
+    font-size: 1.125rem;
+    line-height: 1.55;
+    color: var(--ink2);
   }
 
-  /* Small caps label used for section eyebrows and metadata. */
+  /* Display numerals: days remaining, streak counts. Literata, very large,
+     letter-spacing pulled in. */
+  .numeral {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    line-height: 0.85;
+    letter-spacing: -0.02em;
+    color: var(--fg);
+    font-variant-numeric: lining-nums;
+  }
+
+  /* The wordmark. Italianno only ever appears here. */
+  .wordmark {
+    font-family: var(--font-script);
+    font-weight: 400;
+    line-height: 0.7;
+    letter-spacing: 0.01em;
+    color: var(--accent);
+  }
+
+  .measure { max-width: 62ch; }
+  .measure-wide { max-width: 78ch; }
+
+  /* — Labels ———————————————————————————————————————————————————————
+     Two weights of the same idea. `.rubric` is a red heading in the margin;
+     `.slab` is its quiet grey sibling. Both are Inter, uppercase, and tracked
+     wide enough to read as ruling rather than as words. */
+
+  .rubric {
+    font-family: var(--font-sans);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .slab {
+    font-family: var(--font-sans);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+  }
+
+  .slab-sm {
+    font-family: var(--font-sans);
+    font-size: 0.625rem;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+  }
+
+  /* Retained so older markup keeps its shape while sections are converted. */
   .eyebrow {
     font-family: var(--font-sans);
     font-size: 0.6875rem;
-    font-weight: 600;
-    letter-spacing: 0.09em;
+    font-weight: 500;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
-    color: var(--fg-faint);
+    color: var(--fg-muted);
   }
 
+  /* — Structure ————————————————————————————————————————————————————
+     A `.panel` is a slip of paper laid on the page: the glossary popover, a
+     flashcard. It is the only thing allowed a shadow, and even then barely.
+     Everything else separates with `.hair` or a border on one side. */
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--r-lg);
+    box-shadow: 0 12px 30px var(--shadow2);
+  }
+
+  .hair { height: 1px; background: var(--rule); border: 0; }
+  .hair-faint { height: 1px; background: var(--hair); border: 0; }
+
+  /* A section opened by a red margin rule — the Rubrica hero treatment. */
+  .marginal {
+    border-left: 2px solid var(--accent);
+    padding-left: 1.625rem;
+  }
+
+  /* Bordered block used for "study next" and other called-out prompts. It is
+     outlined in red rather than filled, so it marks without shouting. */
+  .called-out {
+    border: 1px solid var(--accent);
+    background: var(--panel);
+    border-radius: var(--r-lg);
+    padding: 1.625rem 1.5rem;
+  }
+
+  /* Kept as a compatibility shim for sections not yet converted: strips the
+     rounding and shadow so nothing renders as a card mid-migration. */
+  .card {
+    background: transparent;
+    border: 0;
+    border-top: 1px solid var(--rule);
+    border-radius: 0;
+    box-shadow: none;
+    padding-top: 1.5rem;
+  }
+
+  /* — Controls —————————————————————————————————————————————————————
+     Rectangles. Uppercase, tracked, no radius.
+
+     Every button inverts on hover: a block of ink wipes across from the left
+     and the label flips to the paper colour, as though the word were being
+     stamped. On leave the ink withdraws to the right rather than reversing,
+     which reads as a stroke completing instead of a mistake being undone.
+     The label sits above the wipe via `isolation`, so no z-index leaks out. */
+
   .btn {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    border-radius: 7px;
-    padding: 0.5rem 0.875rem;
-    font-size: 0.875rem;
+    border-radius: var(--r-pill);
+    padding: 0.6875rem 1.375rem;
+    font-family: var(--font-sans);
+    font-size: 0.6875rem;
     font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
     border: 1px solid var(--rule-strong);
-    background: var(--bg-raised);
+    background: transparent;
     color: var(--fg);
-    transition: background-color 140ms ease, border-color 140ms ease, transform 140ms ease;
     cursor: pointer;
+    transform-origin: center;
+    transition:
+      color var(--dur-2) var(--ease-io),
+      border-color var(--dur-2) var(--ease-io),
+      transform var(--dur-3) var(--ease-spring),
+      opacity var(--dur-1) linear;
   }
-  .btn:hover { background: var(--bg-sunk); }
-  .btn:active { transform: translateY(0.5px); }
-  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--fg);
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform var(--dur-3) var(--ease-io);
+  }
+  .btn:hover::before,
+  .btn:focus-visible::before {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+  .btn:hover,
+  .btn:focus-visible {
+    color: var(--oninv);
+    border-color: var(--fg);
+  }
+  /* The squish. Sinking is fast so it feels immediate; the release runs on
+     the spring curve and overshoots very slightly on the way back, which is
+     what reads as give rather than as a jump. */
+  .btn:active {
+    transform: scale(var(--squish));
+    transition-duration: 90ms;
+    transition-timing-function: var(--ease-io);
+  }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn:disabled::before { transform: scaleX(0); }
+  .btn:disabled:active { transform: none; }
+  .btn:disabled:hover { color: var(--fg); border-color: var(--rule-strong); }
 
+  /* Already ink-filled, so it inverts the other way: red wipes over black. */
   .btn-primary {
-    background: var(--accent);
+    border-color: var(--fg);
+    background: var(--fg);
+    color: var(--oninv);
+  }
+  .btn-primary::before { background: var(--accent); }
+  .btn-primary:hover,
+  .btn-primary:focus-visible {
+    color: #fff;
     border-color: var(--accent);
-    color: var(--accent-fg);
-  }
-  .btn-primary:hover {
-    background: color-mix(in srgb, var(--accent) 88%, black);
-    border-color: color-mix(in srgb, var(--accent) 88%, black);
   }
 
-  .btn-ghost { background: transparent; border-color: transparent; }
-  .btn-ghost:hover { background: var(--bg-sunk); }
+  .btn-rubric {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .btn-rubric::before { background: var(--accent); }
+  .btn-rubric:hover,
+  .btn-rubric:focus-visible {
+    color: #fff;
+    border-color: var(--accent);
+  }
 
+  /* Ghost buttons underline rather than fill — a wipe would be too loud for
+     something that is meant to sit inside running text. */
+  .btn-ghost {
+    border-color: transparent;
+    color: var(--fg-muted);
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    overflow: visible;
+  }
+  .btn-ghost::before {
+    inset: auto 0 0 0;
+    top: auto;
+    height: 1px;
+    background: var(--accent);
+  }
+  .btn-ghost:hover,
+  .btn-ghost:focus-visible {
+    color: var(--accent);
+    border-color: transparent;
+  }
+
+  /* Fields are soft-cornered troughs — something to write into rather than a
+     hard-edged box stamped onto the page. */
   .input {
     width: 100%;
-    background: var(--bg-raised);
+    background: var(--panel);
     border: 1px solid var(--rule-strong);
-    border-radius: 7px;
-    padding: 0.5rem 0.75rem;
+    border-radius: var(--r-md);
+    padding: 0.75rem 1rem;
     color: var(--fg);
-    font-size: 0.9375rem;
+    font-family: var(--font-latin);
+    font-size: 1.125rem;
+    transition:
+      border-color var(--dur-2) var(--ease-io),
+      box-shadow var(--dur-2) var(--ease-io);
   }
-  .input::placeholder { color: var(--fg-faint); }
-  .input:focus { border-color: var(--accent); }
+  .input::placeholder { color: var(--fg-faint); font-family: var(--font-sans); font-size: 0.9375rem; }
+  .input:focus {
+    border-color: var(--accent);
+    outline: none;
+    box-shadow: 0 0 0 3px var(--redtint);
+  }
 
-  /* Keyboard hint chip. */
+  .textarea {
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--r-md);
+    padding: 0.875rem 1.0625rem;
+    color: var(--fg);
+    font-family: var(--font-latin);
+    font-size: 1.125rem;
+    line-height: 1.6;
+    transition:
+      border-color var(--dur-2) var(--ease-io),
+      box-shadow var(--dur-2) var(--ease-io);
+  }
+  .textarea::placeholder { color: var(--fg-faint); font-family: var(--font-sans); font-size: 0.9375rem; }
+  .textarea:focus {
+    border-color: var(--accent);
+    outline: none;
+    box-shadow: 0 0 0 3px var(--redtint);
+  }
+
   .kbd {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     min-width: 1.35rem;
     height: 1.35rem;
-    padding: 0 0.3rem;
+    padding: 0 0.35rem;
     border: 1px solid var(--rule-strong);
-    border-bottom-width: 2px;
-    border-radius: 4px;
-    background: var(--bg-sunk);
+    border-radius: var(--r-sm);
+    background: transparent;
     font-family: var(--font-sans);
-    font-size: 0.6875rem;
-    font-weight: 600;
+    font-size: 0.625rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
     color: var(--fg-muted);
   }
 
-  /* Clickable Latin word in the Reading Room glossary. */
+  /* Press-feedback for anything interactive that is not a `.btn` — grade
+     buttons, chips, syllables, list rows. Pairs with `.row-hover`. */
+  .squish {
+    transition: transform var(--dur-3) var(--ease-spring);
+    transform-origin: center;
+  }
+  .squish:active {
+    transform: scale(var(--squish));
+    transition-duration: 90ms;
+    transition-timing-function: var(--ease-io);
+  }
+  .squish:disabled:active { transform: none; }
+
+  /* A soft-cornered chip: themes, badges, filters, flagged lines. */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--r-pill);
+    padding: 0.375rem 0.875rem;
+    font-family: var(--font-latin);
+    font-size: 1rem;
+    line-height: 1.2;
+    color: var(--fg-muted);
+    transition:
+      border-color var(--dur-2) var(--ease-io),
+      color var(--dur-2) var(--ease-io),
+      background-color var(--dur-2) var(--ease-io),
+      transform var(--dur-3) var(--ease-spring);
+  }
+  button.chip { cursor: pointer; }
+  button.chip:active { transform: scale(var(--squish)); transition-duration: 90ms; }
+  .chip-accent { border-color: var(--redborder); color: var(--accent); }
+  .chip-gilt { border-color: color-mix(in srgb, var(--gilt) 42%, transparent); color: var(--gilt); }
+  .chip-on { border-color: var(--accent); background: var(--redtint); color: var(--accent); }
+
+  /* — Meters ———————————————————————————————————————————————————————
+     Square troughs, 5px. Gilt for progress, red when a skill is the weak one. */
+
+  .meter {
+    height: 5px;
+    background: var(--track);
+    border-radius: var(--r-pill);
+    overflow: hidden;
+  }
+  .meter > span {
+    display: block;
+    height: 100%;
+    background: var(--gilt);
+    border-radius: var(--r-pill);
+    transition: width 500ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .meter-red > span { background: var(--accent); }
+  .meter-thin { height: 3px; }
+
+  /* — Reader ————————————————————————————————————————————————————————
+     A word under the finger is marked with a red underscore and a wash, the
+     way a reader would mark it — never a rounded highlight chip. */
+
   .word {
-    border-radius: 3px;
-    padding: 0 0.055em;
-    margin: 0 -0.055em;
+    border-radius: 5px;
+    padding: 0 0.06em;
+    margin: 0 -0.06em;
     cursor: pointer;
     transition: background-color 110ms ease, box-shadow 110ms ease;
   }
   .word:hover {
-    background: color-mix(in srgb, var(--gilt) 20%, transparent);
-    box-shadow: 0 1px 0 color-mix(in srgb, var(--gilt) 60%, transparent);
+    background: var(--redtint);
+    box-shadow: 0 2px 0 var(--redborder);
   }
   .word-active {
-    background: color-mix(in srgb, var(--accent) 20%, transparent);
-    box-shadow: 0 1px 0 var(--accent);
+    background: var(--redtint);
+    box-shadow: 0 2px 0 var(--accent);
   }
+  /* A word already in the student's deck carries a faint gilt underline. */
   .word-flagged {
-    box-shadow: inset 0 -0.42em 0 color-mix(in srgb, var(--gilt) 26%, transparent);
+    box-shadow: inset 0 -0.09em 0 color-mix(in srgb, var(--gilt) 45%, transparent);
   }
 
-  .animate-in { animation: fade-rise 200ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+  /* The glossary slip.
+
+     On a pointer layout it is a slip of parchment anchored under the tapped
+     word, positioned through --gx/--gy so the component can stay declarative.
+     On a touch layout it un-anchors and docks to the bottom edge as a
+     full-width sheet, which keeps the tapped line visible above the thumb
+     instead of hidden behind a popover. */
+  .glossary {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    max-height: 70dvh;
+    overflow-y: auto;
+    background: var(--panel);
+    border: 0;
+    border-top: 1px solid var(--accent);
+    box-shadow: 0 -12px 34px var(--shadow);
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+    padding: 1.5rem 1.375rem calc(1.375rem + env(safe-area-inset-bottom));
+    animation: sheet-up var(--dur-3) var(--ease) both;
+  }
+  @media (min-width: 1024px) {
+    .glossary {
+      left: var(--gx);
+      top: var(--gy);
+      right: auto;
+      bottom: auto;
+      width: 352px;
+      max-height: none;
+      border: 1px solid var(--rule-strong);
+      border-radius: var(--r-lg);
+      box-shadow: 0 10px 26px var(--shadow);
+      padding: 1.25rem 1.375rem 1.125rem;
+      animation: pop-in var(--dur-2) var(--ease) both;
+    }
+  }
+
+  /* The quantity chooser.
+
+     Anchored above the selected syllable on a pointer layout. On touch it
+     becomes a fixed two-button bar at the thumb line — 56px tall, as the
+     design specifies — so scanning a line never requires reaching for a
+     popover that sits under the hand. */
+  .chooser {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    display: flex;
+    background: var(--panel);
+    border: 0;
+    border-top: 1px solid var(--accent);
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+    box-shadow: 0 -10px 28px var(--shadow);
+    padding-bottom: env(safe-area-inset-bottom);
+    animation: sheet-up var(--dur-2) var(--ease) both;
+  }
+  .chooser > button {
+    flex: 1;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.625rem;
+    transition: background-color var(--dur-1) var(--ease-io);
+  }
+  .chooser > button + button { border-left: 1px solid var(--hair); }
+  .chooser > button:active { background: var(--redtint); }
+
+  @media (min-width: 768px) {
+    .chooser {
+      position: absolute;
+      left: 50%;
+      right: auto;
+      bottom: calc(100% + 8px);
+      transform: translateX(-50%);
+      width: auto;
+      border: 1px solid var(--accent);
+      border-radius: var(--r-lg);
+      box-shadow: 0 8px 20px var(--shadow);
+      padding-bottom: 0;
+      animation: pop-in var(--dur-2) var(--ease) both;
+    }
+    .chooser > button {
+      flex: none;
+      height: auto;
+      flex-direction: column;
+      gap: 0.1875rem;
+      padding: 0.75rem 1.25rem;
+    }
+    .chooser > button:hover { background: var(--redtint); }
+  }
+
+  /* A foot: syllables above, a bottom-open bracket ruled beneath them. */
+  .foot-bracket {
+    width: 100%;
+    height: 9px;
+    margin-top: 10px;
+    border: 1px solid var(--rule2);
+    border-top: none;
+  }
+  .foot-bracket-pending { border-color: var(--accent); }
+  .foot-bracket-idle { border-style: dashed; }
+
+  /* Verse gets a red margin rule and hanging line numbers. */
+  .verse-block {
+    border-left: 1px solid var(--redline);
+    padding-left: 2.125rem;
+    max-width: 62ch;
+  }
+  .verse-num {
+    font-family: var(--font-sans);
+    font-size: 0.8125rem;
+    font-weight: 400;
+    color: var(--fg-faint);
+    width: 14px;
+    text-align: right;
+    flex: none;
+    user-select: none;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* — Motion ———————————————————————————————————————————————————————
+     Restraint is the point. Things enter by rising a few pixels and settling;
+     nothing bounces, spins, or slides a long distance. The reading surface
+     must never feel like it is moving under the eye. */
+
+  .animate-in { animation: fade-rise var(--dur-3) var(--ease) both; }
+
+  /* Children enter in sequence. Depth is capped at ten so a long list does
+     not end up with a visible wave rolling down it. */
+  .stagger > * { animation: fade-rise var(--dur-3) var(--ease) both; }
+  .stagger > *:nth-child(1) { animation-delay: 0ms; }
+  .stagger > *:nth-child(2) { animation-delay: 40ms; }
+  .stagger > *:nth-child(3) { animation-delay: 80ms; }
+  .stagger > *:nth-child(4) { animation-delay: 120ms; }
+  .stagger > *:nth-child(5) { animation-delay: 160ms; }
+  .stagger > *:nth-child(6) { animation-delay: 200ms; }
+  .stagger > *:nth-child(7) { animation-delay: 240ms; }
+  .stagger > *:nth-child(8) { animation-delay: 280ms; }
+  .stagger > *:nth-child(9) { animation-delay: 320ms; }
+  .stagger > *:nth-child(n+10) { animation-delay: 360ms; }
+
+  /* A link that draws its own rule underneath, left to right. */
+  .link-rule {
+    position: relative;
+    color: inherit;
+    text-decoration: none;
+  }
+  .link-rule::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -2px;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform var(--dur-2) var(--ease-io);
+  }
+  .link-rule:hover::after,
+  .link-rule:focus-visible::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+
+  /* Nav items: the active red rule slides in and stays. */
+  .nav-item {
+    position: relative;
+    padding-bottom: 5px;
+    color: var(--fg-muted);
+    transition: color var(--dur-2) var(--ease-io);
+  }
+  .nav-item::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform var(--dur-3) var(--ease);
+  }
+  .nav-item:hover { color: var(--fg); }
+  .nav-item:hover::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+  .nav-item[data-active='true'] { color: var(--fg); }
+  .nav-item[data-active='true']::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+
+  /* Rows that lift a touch and warm as the cursor passes — leaderboard
+     entries, passage lists, deck rows. */
+  .row-hover {
+    transition:
+      background-color var(--dur-2) var(--ease-io),
+      transform var(--dur-2) var(--ease);
+  }
+  .row-hover:hover {
+    background: color-mix(in srgb, var(--redtint) 55%, transparent);
+    transform: translateX(2px);
+  }
+
+  /* A slip that lifts slightly under the pointer. Used for flashcards and
+     anything the student is meant to feel they can pick up. */
+  .lift {
+    transition:
+      transform var(--dur-3) var(--ease),
+      box-shadow var(--dur-3) var(--ease);
+  }
+  .lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 40px var(--shadow);
+  }
 }
 
 @keyframes fade-rise {
-  from { opacity: 0; transform: translateY(4px); }
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: none; }
 }
 
-/* Screen-reader-only utility. */
+/* The glossary and the quantity chooser arrive from the edge they dock to. */
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(4px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Quantity marks land above their syllable rather than fading in place. */
+@keyframes mark-drop {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: none; }
+}
+
 .sr-only {
   position: absolute;
   width: 1px; height: 1px;
@@ -334,7 +904,6 @@ h1, h2, h3, h4 {
   border-width: 0;
 }
 
-/* Skip link. */
 .skip-link {
   position: absolute;
   left: -9999px;
@@ -345,11 +914,10 @@ h1, h2, h3, h4 {
   top: 1rem;
   padding: 0.5rem 0.875rem;
   background: var(--accent);
-  color: var(--accent-fg);
-  border-radius: 6px;
+  color: #fff;
+  border-radius: var(--r-pill);
 }
 
-/* Print — for anyone who wants a passage on paper. */
 @media print {
   .no-print { display: none !important; }
   body { background: white; color: black; }

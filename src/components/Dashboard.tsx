@@ -2,26 +2,29 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { useStore, daysUntilExam, currentStreak, dueVocab, EXAM_DATE } from '@/store/useStore';
-import { requiredPassages, allPassages } from '@/data/passages';
+import {
+  useStore,
+  daysUntilExam,
+  currentStreak,
+  longestStreak,
+  dueVocab,
+  scansionStatsByLine,
+  EXAM_DATE,
+} from '@/store/useStore';
+import { requiredPassages } from '@/data/passages';
 import { coreVocabulary } from '@/data/vocabulary';
-import { questions } from '@/data/questions';
-import { translationDrills } from '@/data/translation';
-import { Page, Card, Badge, Meter } from '@/components/ui';
+import { scansionLines } from '@/data/scansion';
+import { CalledOut, CedLink, Roman, SkillMeter, SourceNote, toRoman } from '@/components/ui';
 import type { SkillCategory } from '@/data/types';
 
 const SKILL_LABELS: Record<SkillCategory, string> = {
-  '1': 'Read and comprehend',
-  '2': 'Describe style and context',
-  '3': 'Analyse with evidence',
+  '1': 'Read & comprehend',
+  '2': 'Style & context',
+  '3': 'Analyze',
 };
 
 /** CED exam weighting by skill category (pp. 227–228). */
-const SKILL_WEIGHT: Record<SkillCategory, string> = {
-  '1': '70%',
-  '2': '11%',
-  '3': '19%',
-};
+const SKILL_WEIGHT: Record<SkillCategory, number> = { '1': 70, '2': 11, '3': 19 };
 
 export default function Dashboard() {
   const [mounted, setMounted] = useState(false);
@@ -34,16 +37,24 @@ export default function Dashboard() {
   const examResults = useStore((s) => s.examResults);
   const studyDays = useStore((s) => s.studyDays);
   const reviewQueue = useStore((s) => s.reviewQueue);
+  const scansionAttempts = useStore((s) => s.scansionAttempts);
 
   const days = daysUntilExam();
   const streak = mounted ? currentStreak(studyDays) : 0;
+  const best = mounted ? longestStreak(studyDays) : 0;
   const due = useMemo(() => (mounted ? dueVocab(vocab) : []), [vocab, mounted]);
 
-  /* ---- mastery ---- */
   const read = useMemo(
     () => requiredPassages.filter((p) => passages[p.id]?.lastOpened).length,
     [passages],
   );
+
+  const linesScanned = useMemo(() => {
+    if (!mounted) return 0;
+    let n = 0;
+    for (const s of scansionStatsByLine(scansionAttempts).values()) if (s.mastered) n += 1;
+    return n;
+  }, [scansionAttempts, mounted]);
 
   const bySkill = useMemo(() => {
     const acc: Record<SkillCategory, { correct: number; total: number }> = {
@@ -60,321 +71,447 @@ export default function Dashboard() {
     return acc;
   }, [quizAttempts]);
 
-  const byUnit = useMemo(() => {
-    const acc = new Map<string, { correct: number; total: number }>();
-    for (const a of quizAttempts) {
-      const cur = acc.get(a.unit) ?? { correct: 0, total: 0 };
-      cur.total += 1;
-      if (a.correct) cur.correct += 1;
-      acc.set(a.unit, cur);
-    }
-    return acc;
-  }, [quizAttempts]);
-
-  /* Segments missed most often across translation attempts. */
-  const weakTags = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const a of translationAttempts) {
-      for (const t of a.missedTags) counts.set(t, (counts.get(t) ?? 0) + 1);
-    }
-    return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6);
-  }, [translationAttempts]);
-
-  const recentQuiz = useMemo(() => quizAttempts.slice(-40), [quizAttempts]);
-  const recentAccuracy =
-    recentQuiz.length > 0
-      ? Math.round((recentQuiz.filter((a) => a.correct).length / recentQuiz.length) * 100)
-      : null;
+  /* The weakest skill drives both the red meter and the study-next prompt. */
+  const weakestSkill = useMemo(() => {
+    const scored = (['1', '2', '3'] as SkillCategory[])
+      .map((c) => ({
+        c,
+        pct: bySkill[c].total > 0 ? Math.round((bySkill[c].correct / bySkill[c].total) * 100) : 0,
+        total: bySkill[c].total,
+      }))
+      .filter((s) => s.total > 0);
+    if (scored.length === 0) return null;
+    return scored.reduce((lo, s) => (s.pct < lo.pct ? s : lo));
+  }, [bySkill]);
 
   const next = nextAction({
-    mounted, read, dueCount: due.length, reviewQueue: reviewQueue.length,
-    quizCount: quizAttempts.length, translationCount: translationAttempts.length,
-    examCount: examResults.length, days,
+    mounted,
+    read,
+    dueCount: due.length,
+    reviewQueue: reviewQueue.length,
+    quizCount: quizAttempts.length,
+    translationCount: translationAttempts.length,
+    examCount: examResults.length,
+    days,
+    weakest: weakestSkill,
   });
 
-  const examDateLabel = new Date(EXAM_DATE + 'T00:00:00').toLocaleDateString(undefined, {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  const exam = new Date(EXAM_DATE + 'T00:00:00');
+  const examDateLabel = exam.toLocaleDateString(undefined, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
   });
 
   return (
-    <Page wide>
-      {/* ---------- Countdown ---------- */}
-      <header className="mb-8">
-        <div className="eyebrow mb-2">AP Latin · Vergil and Pliny · 2025–26 framework</div>
-        <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
-          <div>
-            <div
-              className="tabular-nums leading-none"
-              style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(2.75rem, 2rem + 4vw, 4.25rem)', fontWeight: 600, letterSpacing: '-0.03em' }}
-            >
-              {mounted ? days.toLocaleString() : '—'}
+    <div className="mx-auto w-full max-w-[1160px] px-5 sm:px-10">
+      {/* The 1px middle column is the ruling itself — a real divider that runs
+          the full height of the page rather than a border on either panel. */}
+      <div className="grid lg:grid-cols-[1fr_1px_minmax(360px,430px)]">
+        {/* ────────── Left ────────── */}
+        <div className="flex flex-col gap-11 py-10 lg:py-12 lg:pr-12">
+          {/* Countdown */}
+          <section className="marginal animate-in">
+            <div className="slab mb-4">Diēs ad exāmen · Days to the exam</div>
+            <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
+              <div
+                className="numeral"
+                style={{ fontSize: 'clamp(4.5rem, 3rem + 7vw, 6.75rem)' }}
+              >
+                {mounted ? days : '—'}
+              </div>
+              <div
+                style={{
+                  fontFamily: 'var(--font-latin)',
+                  fontSize: '1.375rem',
+                  lineHeight: 1.35,
+                  color: 'var(--fg-muted)',
+                }}
+              >
+                {examDateLabel}
+                <br />
+                <span style={{ fontSize: '1rem', letterSpacing: '0.06em' }}>
+                  Section I 8:00 · Section II 9:00
+                </span>
+              </div>
             </div>
-            <div className="mt-1 text-sm" style={{ color: 'var(--fg-muted)' }}>
-              days until the exam · {examDateLabel}
-            </div>
-          </div>
-          {mounted && streak > 0 && (
-            <div className="pb-1">
-              <Badge tone="gilt">
-                {streak} day{streak === 1 ? '' : 's'} in a row
-              </Badge>
-            </div>
-          )}
-        </div>
-      </header>
+          </section>
 
-      {/* ---------- What to study next ---------- */}
-      <Card className="mb-6">
-        <div className="eyebrow mb-1.5">What to study next</div>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="measure" style={{ fontFamily: 'var(--font-serif)', fontSize: '1.0625rem', margin: 0 }}>
-            {next.text}
-          </p>
-          <Link href={next.href} className="btn btn-primary shrink-0">
-            {next.cta}
-          </Link>
-        </div>
-      </Card>
-
-      {/* ---------- Coverage ---------- */}
-      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat
-          label="Syllabus passages read"
-          value={mounted ? `${read}/${requiredPassages.length}` : '—'}
-          sub={`${allPassages.length} loaded in total`}
-          meter={{ value: mounted ? read : 0, max: requiredPassages.length }}
-          href="/read"
-        />
-        <Stat
-          label="Vocabulary due"
-          value={mounted ? String(due.length) : '—'}
-          sub={`${Object.keys(vocab).length} of ${coreVocabulary.length} in rotation`}
-          meter={{ value: Object.keys(vocab).length, max: coreVocabulary.length, tone: 'gilt' }}
-          href="/vocab"
-        />
-        <Stat
-          label="Recent MCQ accuracy"
-          value={mounted && recentAccuracy !== null ? `${recentAccuracy}%` : '—'}
-          sub={mounted && recentQuiz.length ? `last ${recentQuiz.length} questions` : `${questions.length} questions available`}
-          meter={recentAccuracy !== null ? { value: recentAccuracy, max: 100, tone: 'green' } : undefined}
-          href="/quiz"
-        />
-        <Stat
-          label="Review queue"
-          value={mounted ? String(reviewQueue.length) : '—'}
-          sub="questions you missed"
-          href="/quiz?mode=review"
-        />
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* ---------- Skill categories ---------- */}
-        <Card>
-          <h2 className="mb-1" style={{ fontSize: '1rem' }}>Mastery by skill category</h2>
-          <p className="mb-4 text-xs" style={{ color: 'var(--fg-faint)' }}>
-            Percentages in brackets are the CED’s exam weightings, not your score.
-          </p>
-          <div className="flex flex-col gap-3.5">
-            {(['1', '2', '3'] as SkillCategory[]).map((c) => {
-              const s = bySkill[c];
-              const pct = s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0;
-              return (
-                <div key={c}>
-                  <div className="mb-1 flex items-baseline justify-between gap-2">
-                    <span className="text-sm">
-                      <span style={{ color: 'var(--fg-faint)' }}>{c}.</span> {SKILL_LABELS[c]}{' '}
-                      <span style={{ color: 'var(--fg-faint)' }}>[{SKILL_WEIGHT[c]}]</span>
-                    </span>
-                    <span className="tabular-nums text-sm" style={{ color: 'var(--fg-muted)' }}>
-                      {mounted && s.total > 0 ? `${pct}%` : '—'}
-                    </span>
-                  </div>
-                  <Meter
-                    value={mounted ? s.correct : 0}
-                    max={Math.max(1, s.total)}
-                    tone={pct >= 75 ? 'green' : pct >= 50 ? 'gilt' : 'accent'}
-                  />
-                  <div className="mt-0.5 text-xs" style={{ color: 'var(--fg-faint)' }}>
-                    {mounted && s.total > 0 ? `${s.correct} of ${s.total} correct` : 'no attempts yet'}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </Card>
-
-        {/* ---------- Units ---------- */}
-        <Card>
-          <h2 className="mb-4" style={{ fontSize: '1rem' }}>Mastery by unit</h2>
-          {!mounted || byUnit.size === 0 ? (
-            <p className="text-sm" style={{ color: 'var(--fg-faint)' }}>
-              Answer some questions in the Quiz Engine and per-unit accuracy appears here.
-            </p>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {[...byUnit.entries()].sort().map(([unit, s]) => {
-                const pct = Math.round((s.correct / s.total) * 100);
+          {/* Mastery */}
+          <section>
+            <div className="rubric mb-6">Mastery by skill</div>
+            <div className="flex flex-col gap-5">
+              {(['1', '2', '3'] as SkillCategory[]).map((c) => {
+                const s = bySkill[c];
+                const pct = s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0;
                 return (
-                  <div key={unit}>
-                    <div className="mb-1 flex items-baseline justify-between text-sm">
-                      <span>Unit {unit}</span>
-                      <span className="tabular-nums" style={{ color: 'var(--fg-muted)' }}>
-                        {pct}% <span style={{ color: 'var(--fg-faint)' }}>({s.total})</span>
-                      </span>
-                    </div>
-                    <Meter value={s.correct} max={s.total} tone={pct >= 75 ? 'green' : pct >= 50 ? 'gilt' : 'accent'} />
-                  </div>
+                  <SkillMeter
+                    key={c}
+                    label={SKILL_LABELS[c]}
+                    pct={mounted ? pct : 0}
+                    weak={mounted && weakestSkill?.c === c}
+                  />
                 );
               })}
             </div>
-          )}
-        </Card>
-
-        {/* ---------- Weak grammar ---------- */}
-        <Card>
-          <h2 className="mb-1" style={{ fontSize: '1rem' }}>Translation segments you keep missing</h2>
-          <p className="mb-3 text-xs" style={{ color: 'var(--fg-faint)' }}>
-            Built from the grammar tags on segments you scored below full credit.
-          </p>
-          {!mounted || weakTags.length === 0 ? (
-            <p className="text-sm" style={{ color: 'var(--fg-faint)' }}>
-              Nothing yet — work a drill in{' '}
-              <Link href="/translate" style={{ color: 'var(--accent)' }}>Translate</Link>{' '}
-              and missed segments are tracked here. {translationDrills.length} drills available.
+            <p
+              className="measure mt-5"
+              style={{
+                margin: '1.25rem 0 0',
+                fontFamily: 'var(--font-latin)',
+                fontSize: '1.0625rem',
+                lineHeight: 1.5,
+                color: 'var(--fg-muted)',
+              }}
+            >
+              {mounted && quizAttempts.length > 0 ? (
+                <>
+                  Your accuracy on {quizAttempts.length} graded question
+                  {quizAttempts.length === 1 ? '' : 's'}. The exam weights these{' '}
+                  {SKILL_WEIGHT['1']}% / {SKILL_WEIGHT['2']}% / {SKILL_WEIGHT['3']}% in the same
+                  order, so a thin bar on the left costs the most.
+                </>
+              ) : (
+                <>
+                  Nothing graded yet. These fill in as you work the Quiz Engine — the exam weights
+                  the three {SKILL_WEIGHT['1']}% / {SKILL_WEIGHT['2']}% / {SKILL_WEIGHT['3']}% in
+                  the order shown.
+                </>
+              )}{' '}
+              <CedLink to="skills" />
             </p>
-          ) : (
-            <ul className="flex flex-wrap gap-1.5">
-              {weakTags.map(([tag, n]) => (
-                <li key={tag}>
-                  <Badge tone={n >= 3 ? 'accent' : 'neutral'}>
-                    {tag.replace(/-/g, ' ')} · {n}
-                  </Badge>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
+          </section>
 
-        {/* ---------- Recent scores ---------- */}
-        <Card>
-          <h2 className="mb-3" style={{ fontSize: '1rem' }}>Recent practice exams</h2>
-          {!mounted || examResults.length === 0 ? (
-            <p className="text-sm" style={{ color: 'var(--fg-faint)' }}>
-              No full exams yet. The{' '}
-              <Link href="/exam" style={{ color: 'var(--accent)' }}>Practice Exam</Link>{' '}
-              runs 52 multiple-choice in 65 minutes, then 5 free-response in 115.
+          {/* Progress ledger */}
+          <section className="border-t pt-9" style={{ borderColor: 'var(--rule)' }}>
+            <div className="mb-6 flex items-baseline justify-between gap-4">
+              <span className="rubric">Ratiō · the ledger</span>
+              <span
+                style={{
+                  fontFamily: 'var(--font-latin)',
+                  fontSize: '0.9375rem',
+                  color: 'var(--fg-muted)',
+                }}
+              >
+                everything counted so far
+              </span>
+            </div>
+            <Ledger
+              rows={[
+                {
+                  label: 'Syllabus passages read',
+                  value: mounted ? read : 0,
+                  max: requiredPassages.length,
+                  href: '/read',
+                },
+                {
+                  label: 'Vocabulary in rotation',
+                  value: mounted ? Object.keys(vocab).length : 0,
+                  max: coreVocabulary.length,
+                  href: '/vocab',
+                },
+                {
+                  label: 'Lines scanned',
+                  value: linesScanned,
+                  max: scansionLines.length,
+                  href: '/scansion',
+                },
+                {
+                  label: 'Practice exams sat',
+                  value: mounted ? examResults.length : 0,
+                  max: 6,
+                  href: '/exam',
+                },
+              ]}
+            />
+          </section>
+
+          <SourceNote to="skills">
+            Every weighting, skill category and reading on this dashboard comes from the College
+            Board&rsquo;s Course and Exam Description for AP Latin, effective Fall 2025. Where this
+            app and the CED disagree, the CED is right.
+          </SourceNote>
+        </div>
+
+        {/* The ruling */}
+        <div className="hidden lg:block" style={{ background: 'var(--rule)' }} />
+
+        {/* ────────── Right ────────── */}
+        <div className="flex flex-col gap-8 border-t py-10 lg:border-t-0 lg:py-12 lg:pl-10" style={{ borderColor: 'var(--rule)' }}>
+          {/* Streak */}
+          <div
+            className="flex items-baseline gap-4 border-b pb-6"
+            style={{ borderColor: 'var(--rule)' }}
+          >
+            <div className="numeral" style={{ fontSize: '3.5rem', lineHeight: 0.9 }}>
+              {mounted ? streak : '—'}
+            </div>
+            <div
+              style={{
+                fontFamily: 'var(--font-latin)',
+                fontSize: '0.9375rem',
+                lineHeight: 1.3,
+                color: 'var(--fg-muted)',
+              }}
+            >
+              <div>
+                days unbroken{mounted && streak > 0 && <> · <Roman value={streak} /></>}
+              </div>
+              <div>
+                longest streak {mounted && best > 0 ? <Roman value={best} /> : '—'}
+              </div>
+            </div>
+          </div>
+
+          {/* Study next */}
+          <CalledOut rubric="Study next">
+            <div
+              style={{
+                fontFamily: 'var(--font-serif)',
+                fontSize: '1.5rem',
+                lineHeight: 1.35,
+                color: 'var(--fg)',
+                marginBottom: '0.75rem',
+              }}
+            >
+              {next.title}
+            </div>
+            <p
+              style={{
+                margin: '0 0 1.25rem',
+                fontFamily: 'var(--font-latin)',
+                fontSize: '1.125rem',
+                lineHeight: 1.55,
+                color: 'var(--ink2)',
+              }}
+            >
+              {next.body}
             </p>
-          ) : (
-            <ul className="flex flex-col gap-2.5">
-              {examResults.slice(-5).reverse().map((r) => (
-                <li key={r.id} className="flex items-baseline justify-between gap-3 text-sm">
-                  <span style={{ color: 'var(--fg-muted)' }}>
-                    {new Date(r.at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
-                  </span>
-                  <span className="tabular-nums">
-                    MCQ {r.mcqCorrect}/{r.mcqTotal}
-                    <span style={{ color: 'var(--fg-faint)' }}> · </span>
-                    FRQ {r.frqPoints}/{r.frqMax}
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <Link href={next.href} className="btn">
+              {next.cta}
+            </Link>
+          </CalledOut>
+
+          {/* Today */}
+          <div className="flex flex-col gap-2.5">
+            <TodayRow label="Cards due today" value={mounted ? due.length : 0} href="/vocab" />
+            <div className="hair" />
+            <TodayRow
+              label="Review queue"
+              value={mounted ? reviewQueue.length : 0}
+              href="/quiz?mode=review"
+            />
+            <div className="hair" />
+            <TodayRow
+              label="Lines scanned"
+              value={`${linesScanned} / ${scansionLines.length}`}
+              href="/scansion"
+            />
+          </div>
+
+          {/* Recent exams */}
+          {mounted && examResults.length > 0 && (
+            <div className="border-t pt-7" style={{ borderColor: 'var(--rule)' }}>
+              <div className="slab mb-4">Recent practice exams</div>
+              <ul className="flex flex-col gap-3">
+                {examResults
+                  .slice(-4)
+                  .reverse()
+                  .map((r) => (
+                    <li key={r.id} className="flex items-baseline justify-between gap-3">
+                      <span
+                        style={{
+                          fontFamily: 'var(--font-latin)',
+                          fontSize: '1.0625rem',
+                          color: 'var(--fg-muted)',
+                        }}
+                      >
+                        {new Date(r.at).toLocaleDateString(undefined, {
+                          day: 'numeric',
+                          month: 'long',
+                        })}
+                      </span>
+                      <span
+                        style={{
+                          fontFamily: 'var(--font-latin)',
+                          fontSize: '1.0625rem',
+                          color: 'var(--fg)',
+                        }}
+                      >
+                        MCQ {r.mcqCorrect}/{r.mcqTotal} · FRQ {r.frqPoints}/{r.frqMax}
+                      </span>
+                    </li>
+                  ))}
+              </ul>
+            </div>
           )}
-        </Card>
+        </div>
       </div>
-    </Page>
+    </div>
   );
 }
 
-function Stat({
-  label, value, sub, meter, href,
+/**
+ * The ledger rows: label, Roman-numbered count, and a hairline meter. Roman
+ * numerals are decorative here — `Roman` keeps the Arabic value for readers.
+ */
+function Ledger({
+  rows,
+}: {
+  rows: Array<{ label: string; value: number; max: number; href: string }>;
+}) {
+  return (
+    <div className="flex flex-col">
+      {rows.map((r, i) => {
+        const pct = r.max > 0 ? Math.min(100, Math.round((r.value / r.max) * 100)) : 0;
+        return (
+          <Link
+            key={r.label}
+            href={r.href}
+            className="row-hover -mx-3 block px-3 py-4"
+            style={{ borderTop: i === 0 ? undefined : '1px solid var(--hair)' }}
+          >
+            <div className="mb-2.5 flex items-baseline justify-between gap-4">
+              <span
+                style={{ fontFamily: 'var(--font-latin)', fontSize: '1.25rem', color: 'var(--fg)' }}
+              >
+                {r.label}
+              </span>
+              <span
+                style={{
+                  fontFamily: 'var(--font-latin)',
+                  fontSize: '1.25rem',
+                  color: 'var(--fg)',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {r.value} / {r.max}
+                {r.value > 0 && (
+                  <span style={{ color: 'var(--fg-faint)' }}> · {toRoman(r.value)}</span>
+                )}
+              </span>
+            </div>
+            <div className="meter meter-thin">
+              <span style={{ width: `${pct}%` }} />
+            </div>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
+function TodayRow({
+  label,
+  value,
+  href,
 }: {
   label: string;
-  value: string;
-  sub: string;
-  meter?: { value: number; max: number; tone?: 'accent' | 'green' | 'gilt' };
+  value: number | string;
   href: string;
 }) {
   return (
-    <Link href={href} className="card block p-4 transition-transform hover:-translate-y-px">
-      <div className="eyebrow">{label}</div>
-      <div
-        className="mt-1 tabular-nums"
-        style={{ fontFamily: 'var(--font-serif)', fontSize: '1.625rem', fontWeight: 600, lineHeight: 1.1 }}
+    <Link href={href} className="row-hover -mx-2 flex items-baseline justify-between gap-3 px-2 py-1">
+      <span
+        style={{ fontFamily: 'var(--font-latin)', fontSize: '1.125rem', color: 'var(--ink2)' }}
       >
+        {label}
+      </span>
+      <span style={{ fontFamily: 'var(--font-latin)', fontSize: '1.125rem', color: 'var(--fg)' }}>
         {value}
-      </div>
-      {meter && (
-        <div className="mt-2">
-          <Meter value={meter.value} max={meter.max} tone={meter.tone} />
-        </div>
-      )}
-      <div className="mt-1.5 text-xs" style={{ color: 'var(--fg-faint)' }}>
-        {sub}
-      </div>
+      </span>
     </Link>
   );
 }
 
 /** Picks the single most useful next action from current state. */
 function nextAction(s: {
-  mounted: boolean; read: number; dueCount: number; reviewQueue: number;
-  quizCount: number; translationCount: number; examCount: number; days: number;
-}): { text: string; cta: string; href: string } {
+  mounted: boolean;
+  read: number;
+  dueCount: number;
+  reviewQueue: number;
+  quizCount: number;
+  translationCount: number;
+  examCount: number;
+  days: number;
+  weakest: { c: SkillCategory; pct: number; total: number } | null;
+}): { title: string; body: string; cta: string; href: string } {
   if (!s.mounted) {
-    return { text: 'Loading your progress…', cta: 'Reading Room', href: '/read' };
+    return {
+      title: 'Loading your progress…',
+      body: 'One moment.',
+      cta: 'Reading Room',
+      href: '/read',
+    };
   }
   if (s.read === 0) {
     return {
-      text: 'Start where the exam starts: read a syllabus passage. Aeneid 1.1–33 is the proem, and it is the one passage in the app that carries macrons.',
+      title: 'Begin with the proem',
+      body: 'Start where the exam starts. Aeneid 1.1–33 is the proem, and it is the passage every other question assumes you know cold.',
       cta: 'Open the proem',
       href: '/read/aen-1-1-33',
     };
   }
   if (s.dueCount > 0) {
     return {
-      text: `${s.dueCount} vocabulary card${s.dueCount === 1 ? ' is' : 's are'} due. Clearing the queue first keeps the spacing intervals honest.`,
+      title: `${s.dueCount} card${s.dueCount === 1 ? '' : 's'} due`,
+      body: 'Clearing the queue before anything else keeps the spacing intervals honest — a card reviewed late teaches the algorithm the wrong thing.',
       cta: 'Review vocabulary',
       href: '/vocab',
     };
   }
   if (s.reviewQueue > 0) {
     return {
-      text: `${s.reviewQueue} question${s.reviewQueue === 1 ? '' : 's'} you missed are waiting in the review queue.`,
-      cta: 'Work the queue',
+      title: 'Work the review queue',
+      body: `${s.reviewQueue} question${s.reviewQueue === 1 ? '' : 's'} you missed are waiting. These are worth more than fresh ones.`,
+      cta: 'Open the queue',
       href: '/quiz?mode=review',
+    };
+  }
+  if (s.weakest && s.weakest.pct < 60 && s.weakest.total >= 5) {
+    return {
+      title: `${SKILL_LABELS[s.weakest.c]} is your thinnest ground`,
+      body: `You are at ${s.weakest.pct}% across ${s.weakest.total} graded questions there, against an exam weighting of ${SKILL_WEIGHT[s.weakest.c]}%.`,
+      cta: 'Drill that skill',
+      href: '/quiz',
     };
   }
   if (s.translationCount === 0) {
     return {
-      text: 'Try a literal translation drill. It is 10% of the exam on its own, and the segment breakdown shows exactly where points go.',
+      title: 'Try a literal translation',
+      body: 'It is 10% of the exam on its own, and the segment breakdown shows exactly where the points go.',
       cta: 'Open Translate',
       href: '/translate',
     };
   }
   if (s.read < 5) {
     return {
-      text: 'Keep working through the required reading — everything else on the exam is built on knowing these passages cold.',
+      title: 'Keep working the required reading',
+      body: 'Everything else on the exam is built on knowing these passages well enough to construe them at speed.',
       cta: 'Reading Room',
       href: '/read',
     };
   }
   if (s.quizCount < 20) {
     return {
-      text: 'Build a practice set in the Quiz Engine, filtered to the passages you have read.',
+      title: 'Build a practice set',
+      body: 'Filter the Quiz Engine to the passages you have already read, so the questions test recall rather than surprise.',
       cta: 'Build a set',
       href: '/quiz',
     };
   }
   if (s.examCount === 0 && s.days < 400) {
     return {
-      text: 'You have enough groundwork to sit a full practice exam. Do it once early so the timing holds no surprises.',
+      title: 'Sit a full practice exam',
+      body: 'You have enough groundwork. Do one early so the timing holds no surprises later.',
       cta: 'Start a practice exam',
       href: '/exam',
     };
   }
   return {
-    text: 'Everything is up to date. Pick a weak spot from the panels below, or read something new.',
+    title: 'Everything is up to date',
+    body: 'Pick a weak spot from the ledger, or read something new.',
     cta: 'Reading Room',
     href: '/read',
   };

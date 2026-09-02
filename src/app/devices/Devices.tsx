@@ -67,7 +67,7 @@ function Reference() {
           <a
             key={d.id}
             href={`#${d.id}`}
-            className="rounded-full border px-2.5 py-1 text-xs transition-colors hover:bg-[var(--bg-sunk)]"
+            className="border px-2.5 py-1 text-xs transition-colors hover:bg-[var(--bg-sunk)]"
             style={{ borderColor: 'var(--rule)', color: 'var(--fg-muted)' }}
           >
             {d.name}
@@ -199,7 +199,7 @@ function SpotTheDevice() {
                   setChosen(optId);
                   setScore((s) => ({ right: s.right + (optId === item.answerId ? 1 : 0), total: s.total }));
                 }}
-                className="w-full rounded-lg border px-3.5 py-2.5 text-left text-sm transition-colors"
+                className="w-full border px-3.5 py-2.5 text-left text-sm transition-colors"
                 style={{ background: bg, borderColor: bd, cursor: revealed ? 'default' : 'pointer' }}
               >
                 {nameOf(optId)}

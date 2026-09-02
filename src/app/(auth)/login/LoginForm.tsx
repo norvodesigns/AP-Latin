@@ -46,7 +46,7 @@ export default function LoginForm({ next }: { next: string }) {
         {state.error && (
           <p
             role="alert"
-            className="rounded-lg border px-3 py-2 text-sm"
+            className="border px-3 py-2 text-sm"
             style={{
               background: 'var(--incorrect-bg)',
               borderColor: 'var(--incorrect)',

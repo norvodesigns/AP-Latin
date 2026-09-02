@@ -127,13 +127,15 @@ export function lookup(word: string): LookupResult[] {
   const w = normalizeWord(word);
   if (w.length < 1) return [];
 
-  const exact = [...(byHeadword.get(w) ?? []), ...(byAnyForm.get(w) ?? [])];
-  const seen = new Set(exact.map((e) => e.id));
-  const results: LookupResult[] = exact.map((entry) => ({
-    entry,
-    match: 'exact' as const,
-    stemLength: w.length,
-  }));
+  // An entry indexed under both its headword and its inflected forms would
+  // otherwise be listed twice — dedupe as we merge, not afterwards.
+  const seen = new Set<string>();
+  const results: LookupResult[] = [];
+  for (const entry of [...(byHeadword.get(w) ?? []), ...(byAnyForm.get(w) ?? [])]) {
+    if (seen.has(entry.id)) continue;
+    seen.add(entry.id);
+    results.push({ entry, match: 'exact' as const, stemLength: w.length });
+  }
 
   // Longest stems first so "amaverunt" prefers `amo` over a short accidental match.
   const stems = stemOf(w).sort((a, b) => b.length - a.length);

@@ -216,7 +216,7 @@ function Drill({ drillId, onBack }: { drillId: string; onBack: () => void }) {
 
       {grader.error && (
         <div
-          className="mb-5 rounded-lg border px-3.5 py-2.5 text-sm"
+          className="mb-5 border px-3.5 py-2.5 text-sm"
           style={{
             background: grader.degraded ? 'var(--partial-bg)' : 'var(--incorrect-bg)',
             borderColor: grader.degraded ? 'color-mix(in srgb, var(--partial) 34%, transparent)' : 'color-mix(in srgb, var(--incorrect) 34%, transparent)',
@@ -273,7 +273,7 @@ function Drill({ drillId, onBack }: { drillId: string; onBack: () => void }) {
                       </div>
                       {v && (
                         <span
-                          className="rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold"
+                          className="px-2 py-0.5 text-[0.6875rem] font-semibold"
                           style={{ background: VERDICT_STYLE[v].bg, color: VERDICT_STYLE[v].fg }}
                         >
                           {VERDICT_STYLE[v].label}
@@ -302,7 +302,7 @@ function Drill({ drillId, onBack }: { drillId: string; onBack: () => void }) {
 
                     {aiSeg && (
                       <div
-                        className="mt-3 rounded-lg px-3 py-2.5 text-sm"
+                        className="mt-3 px-3 py-2.5 text-sm"
                         style={{ background: 'var(--bg-sunk)' }}
                       >
                         <div className="eyebrow mb-1">AI reading of your answer</div>
@@ -326,7 +326,7 @@ function Drill({ drillId, onBack }: { drillId: string; onBack: () => void }) {
                           type="button"
                           aria-pressed={v === verdict}
                           onClick={() => setScores((s) => ({ ...s, [seg.id]: verdict }))}
-                          className="rounded-md border px-2.5 py-1 text-xs font-medium transition-colors"
+                          className="border px-2.5 py-1 text-xs font-medium transition-colors"
                           style={{
                             background: v === verdict ? VERDICT_STYLE[verdict].bg : 'transparent',
                             borderColor: v === verdict ? VERDICT_STYLE[verdict].fg : 'var(--rule)',
