@@ -38,3 +38,6 @@ yarn-error.log*
 
 # generated sight-passage cache (regenerated on demand)
 /.cache/
+
+# Cached source texts for scripts/build-scansion.mjs (re-fetch with --fetch).
+scripts/.cache/

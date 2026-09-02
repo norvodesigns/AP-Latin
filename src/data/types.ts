@@ -240,6 +240,13 @@ export interface ScannedSyllable {
   quantity: 'long' | 'short';
   /** True when this syllable elides into the next. */
   elides?: boolean;
+  /**
+   * The last syllable of the line, which is anceps: it counts long whatever it
+   * really is (brevis in longo). Marked long by convention, but the grader
+   * accepts either answer rather than failing a student who wrote its true
+   * quantity.
+   */
+  anceps?: boolean;
   /** Why it is long: by nature, by position, or both. */
   reason?: string;
 }

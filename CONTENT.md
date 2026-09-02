@@ -191,6 +191,43 @@ demand, the first syllable of every foot long, and the syllables concatenating b
 does not mark macrons, quantity that is not fixed by position is unknowable, and a wrong macron
 teaches a wrong scansion.
 
+### The generated corpus — `public/scansion/`
+
+`src/data/scansion.ts` is no longer the practice pool. It is the **regression fixture**: 22 lines
+of *Aeneid* 1 whose scansion was checked by hand, used to prove the generator is right.
+
+The pool itself is the whole poem, built by `npm run build:scansion`:
+
+```
+scripts/build-scansion.mjs   reads all 12 books, solves each line, writes public/scansion/*.json
+scripts/verify-scansion.mjs  checks the output against the 22 fixture lines — build fails on any
+                             disagreement
+```
+
+The text is unmacronised, so quantity by nature is invisible. The generator therefore does not need
+it. It marks only what bare text actually shows — diphthongs, and syllables closed by two
+consonants — and then searches every dactyl/spondee arrangement of feet 1–5 for those consistent
+with the line's syllable count. **A line is kept only when exactly one arrangement survives**, so
+every published scansion is forced by the metre rather than chosen. Roughly:
+
+| | lines | |
+|---|---:|---|
+| read | 9,883 | the complete *Aeneid* |
+| kept | 6,562 | 66% — exactly one legal scansion |
+| ambiguous | 2,924 | 30% — more than one; **dropped** |
+| no solution | 397 | 4% — syllable count outside 12–17, usually synizesis; **dropped** |
+
+Dropping a third of the poem is the point. Preferring a fifth-foot dactyl, or picking whichever
+reading "looks right", would fill those in at the cost of teaching some wrong scansions.
+
+Files are stored packed — syllables, feet and elisions only, since a dactyl is long-short-short and
+a spondee long-long, so the quantities are reconstructed by `unpackLine` in
+`src/data/scansionCorpus.ts`. That takes the corpus from 6.8 MB to 1.0 MB, one ~80 KB file per book,
+fetched on demand.
+
+The last syllable of each line carries `anceps: true`. It closes the line and counts long whatever
+it really is, so the grader accepts either mark there.
+
 ---
 
 ## Grammar, devices, context

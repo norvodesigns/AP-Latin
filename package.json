@@ -9,7 +9,9 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "verify": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/verify-content.mjs"
+    "verify": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/verify-content.mjs && npm run verify:scansion",
+    "verify:scansion": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/verify-scansion.mjs",
+    "build:scansion": "node scripts/build-scansion.mjs && npm run verify:scansion"
   },
   "dependencies": {
     "@ai-sdk/google": "^1.2.22",

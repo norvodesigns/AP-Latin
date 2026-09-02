@@ -612,17 +612,25 @@ export function scansionStatsByLine(attempts: ScansionAttempt[]): Map<string, Sc
 }
 
 /**
- * Picks the next line to practice: lines never attempted come first (in
- * their given order), then lines not yet mastered ordered by lowest best
- * accuracy, then mastered lines least recently attempted. This is the
- * adaptive-difficulty behaviour hexameter.co uses — weakest material surfaces
- * first — scaled to a fixed pool of lines rather than an infinite generator.
+ * Picks the next line to practise.
+ *
+ * A mastered line is retired: once a student has scanned it perfectly it is
+ * never served again while anything else remains. That is affordable now that
+ * the pool is the whole Aeneid rather than a couple of dozen lines — there is
+ * always fresh material, and re-serving a line someone has already nailed is
+ * just wasting their study time.
+ *
+ * Order within what is left: lines never attempted first, then unmastered
+ * lines weakest-first, so the material a student is worst at keeps surfacing.
+ * Mastered lines come back only when explicitly asked for.
  */
-export function nextScansionLineId(allLineIds: string[], attempts: ScansionAttempt[]): string | null {
+export function nextScansionLineId(
+  allLineIds: string[],
+  attempts: ScansionAttempt[],
+  { includeMastered = false }: { includeMastered?: boolean } = {},
+): string | null {
   if (allLineIds.length === 0) return null;
   const stats = scansionStatsByLine(attempts);
-  const lastAttemptAt = new Map<string, string>();
-  for (const a of attempts) lastAttemptAt.set(a.lineId, a.at);
 
   const unattempted = allLineIds.filter((id) => !stats.has(id));
   if (unattempted.length > 0) return unattempted[0];
@@ -632,9 +640,20 @@ export function nextScansionLineId(allLineIds: string[], attempts: ScansionAttem
     .sort((a, b) => stats.get(a)!.bestAccuracy - stats.get(b)!.bestAccuracy);
   if (unmastered.length > 0) return unmastered[0];
 
+  if (!includeMastered) return null;
+
+  const lastAttemptAt = new Map<string, string>();
+  for (const a of attempts) lastAttemptAt.set(a.lineId, a.at);
   return [...allLineIds].sort(
     (a, b) => (lastAttemptAt.get(a) ?? '').localeCompare(lastAttemptAt.get(b) ?? ''),
   )[0];
+}
+
+/** Ids the student has already scanned perfectly, so they can be skipped. */
+export function masteredLineIds(attempts: ScansionAttempt[]): Set<string> {
+  const out = new Set<string>();
+  for (const [id, s] of scansionStatsByLine(attempts)) if (s.mastered) out.add(id);
+  return out;
 }
 
 export interface ScansionBadge {

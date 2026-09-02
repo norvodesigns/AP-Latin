@@ -13,8 +13,8 @@ import {
 } from '@/store/useStore';
 import { requiredPassages } from '@/data/passages';
 import { coreVocabulary } from '@/data/vocabulary';
-import { scansionLines } from '@/data/scansion';
 import { CalledOut, CedLink, Roman, SkillMeter, SourceNote, toRoman } from '@/components/ui';
+import { loadIndex } from '@/data/scansionCorpus';
 import type { SkillCategory } from '@/data/types';
 
 const SKILL_LABELS: Record<SkillCategory, string> = {
@@ -29,6 +29,15 @@ const SKILL_WEIGHT: Record<SkillCategory, number> = { '1': 70, '2': 11, '3': 19 
 export default function Dashboard() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+
+  // The scansion pool is the whole Aeneid, fetched as an index rather than
+  // bundled — the ledger needs its size, not its contents.
+  const [scansionTotal, setScansionTotal] = useState(0);
+  useEffect(() => {
+    loadIndex()
+      .then((i) => setScansionTotal(i.total))
+      .catch(() => {});
+  }, []);
 
   const passages = useStore((s) => s.passages);
   const vocab = useStore((s) => s.vocab);
@@ -214,7 +223,7 @@ export default function Dashboard() {
                 {
                   label: 'Lines scanned',
                   value: linesScanned,
-                  max: scansionLines.length,
+                  max: scansionTotal,
                   href: '/scansion',
                 },
                 {
@@ -305,7 +314,7 @@ export default function Dashboard() {
             <div className="hair" />
             <TodayRow
               label="Lines scanned"
-              value={`${linesScanned} / ${scansionLines.length}`}
+              value={`${linesScanned} / ${scansionTotal || '—'}`}
               href="/scansion"
             />
           </div>
