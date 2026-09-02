@@ -127,10 +127,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             className="font-semibold"
             style={{ fontFamily: 'var(--font-serif)', fontSize: '1.0625rem', letterSpacing: '-0.02em' }}
           >
-            AP Latin
+            Lectio
           </div>
           <div className="eyebrow mt-0.5" style={{ letterSpacing: '0.06em' }}>
-            Vergil · Pliny · 2027
+            AP Latin · Vergil · Pliny
           </div>
         </Link>
 
@@ -196,7 +196,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </svg>
           </button>
           <Link href="/" className="font-semibold" style={{ fontFamily: 'var(--font-serif)' }}>
-            AP Latin
+            Lectio
           </Link>
           <div className="ml-auto flex items-center gap-1.5">
             <span className="tabular-nums text-xs" style={{ color: 'var(--fg-faint)' }}>

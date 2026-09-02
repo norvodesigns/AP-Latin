@@ -27,11 +27,11 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: 'AP Latin',
-    template: '%s · AP Latin',
+    default: 'Lectio',
+    template: '%s · Lectio',
   },
   description:
-    'A study environment for the AP Latin exam (2025–26 framework): Vergil’s Aeneid and Pliny’s Letters.',
+    'Lectio — a study environment for the AP Latin exam (2025–26 framework): Vergil’s Aeneid and Pliny’s Letters.',
 };
 
 export const viewport: Viewport = {

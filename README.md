@@ -1,7 +1,9 @@
-# AP Latin
+# Lectio
 
 A study environment for the AP Latin exam under the **2025–26 framework** — Vergil's *Aeneid* and
 Pliny the Younger's *Letters*. Built for one student, one exam: **Friday, 14 May 2027**.
+
+Deployed at **lectio.norvodesigns.com**.
 
 Next.js (App Router) · TypeScript · Tailwind v4 · Zustand · Vercel AI SDK.
 

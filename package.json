@@ -1,8 +1,8 @@
 {
-  "name": "ap-latin",
+  "name": "lectio",
   "version": "1.0.0",
   "private": true,
-  "description": "A study environment for the AP Latin exam (2025-26 framework: Vergil + Pliny)",
+  "description": "Lectio — a study environment for the AP Latin exam (2025-26 framework: Vergil + Pliny)",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
