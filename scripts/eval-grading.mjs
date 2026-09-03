@@ -42,6 +42,16 @@ const RUNS = Number(arg('--runs', '1'));
  * runs collapse into 429s partway through.
  */
 const PACING_MS = Number(arg('--pacing', '35000'));
+/**
+ * Optional comma-separated case filter, e.g. `--cases perfect`.
+ *
+ * The token ceiling makes a full fifteen-case pass unreliable in one sitting,
+ * and the cases answer different questions. `perfect` alone measures the false
+ * negative rate — the grader marking correct work wrong — which is the failure
+ * that costs a student standing, so it is the one worth being able to run on
+ * its own.
+ */
+const ONLY = arg('--cases', '').split(',').map((x) => x.trim()).filter(Boolean);
 
 /**
  * The cases.
@@ -151,7 +161,7 @@ console.log(`\n  Grading eval against ${BASE}`);
 console.log(`  ${translationDrills.length} drills × cases × ${RUNS} run(s)\n`);
 
 for (const drill of translationDrills) {
-  for (const testCase of buildCases(drill)) {
+  for (const testCase of buildCases(drill).filter((c) => !ONLY.length || ONLY.includes(c.name))) {
     for (let run = 0; run < RUNS; run += 1) {
       let result;
       try {
