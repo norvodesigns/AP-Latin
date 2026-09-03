@@ -198,6 +198,48 @@ This matters more than anything else in a study app, so:
 - **Machine-generated content is always labelled.** Sight passages produced by the AI generator
   carry a persistent "machine-selected" warning and the model's own confidence rating, because
   nobody has checked them against a printed text.
+- **AI grading is measured, not assumed.** `npm run eval:grading` scores the grader against cases
+  whose outcome is known in advance. See below.
+
+### Measuring the AI grader
+
+AI-graded work counts towards your record, so "it seems to work" is not good enough. A grader that
+marks a correct translation wrong costs you real standing and teaches you to distrust a right
+answer; one that waves errors through teaches nothing. Those two failures are not equally bad, so
+the harness reports them separately.
+
+```bash
+npm run dev                       # in one terminal
+npm run eval:grading              # in another
+npm run eval:grading -- --base http://localhost:3160 --runs 3
+```
+
+Every case is built from the drill data itself, so the expected outcome does not depend on anyone's
+opinion:
+
+| case | submission | what must happen |
+| --- | --- | --- |
+| `perfect` | the drill's own continuous model translation | every segment awarded — any miss is a false negative |
+| `truncated` | only the opening of that translation | the closing segments must fail, the opening ones must still pass |
+| `empty` | an irrelevant sentence | everything must fail |
+
+Two things are worth knowing about this harness.
+
+**Its first version was unsound, and it mattered.** It built "correct" submissions by concatenating
+each segment's accepted literal. For these drills that produces text no honest grader should pass —
+one literal is an ellipsis placeholder (`"I … that you"`), several carry editorial glosses in
+parentheses, and two overlap. It reported a pile of false negatives that were really defects in the
+script. If you extend the harness, derive cases from `modelTranslation`, which is what a student
+actually submits: unlabelled English prose, not a list of segments.
+
+**It waits out the rate limiter rather than bypassing it.** The grading route allows 20 calls per
+10 minutes per IP. Adding a test-only bypass would put an authentication surface into a production
+route for the sake of a script, so the eval simply sleeps when it is told to. A full run therefore
+takes upwards of ten minutes, and the limiter gets exercised too.
+
+Both providers are exercised through the normal fallback path, so check the `[provider]` tag in the
+output. If one provider's quota is exhausted every row will silently read as the other one, and you
+will be measuring a model you did not think you were measuring.
 
 ### Where this app's reading list differs from your notes
 
