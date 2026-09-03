@@ -170,6 +170,55 @@ export function Empty({ title, body, action }: { title: string; body: string; ac
 }
 
 /**
+ * A numbered sequence. Used wherever the app is walking someone through
+ * something for the first time — signing up, joining a first classroom,
+ * creating one. The numeral is the same one the dashboard counts down in,
+ * so a set of steps reads as part of the same ledger rather than as a
+ * generic wizard.
+ */
+export function Steps({
+  items,
+}: {
+  items: Array<{ title: string; body: ReactNode }>;
+}) {
+  return (
+    <ol className="flex flex-col pl-0" style={{ listStyle: 'none' }}>
+      {items.map((step, i) => (
+        <li
+          key={i}
+          className="flex gap-5 border-t pt-5 pb-6"
+          style={{ borderColor: 'var(--rule)' }}
+        >
+          <span
+            className="numeral shrink-0 tabular-nums"
+            style={{ fontSize: '1.75rem', lineHeight: 1, color: 'var(--fg-faint)' }}
+            aria-hidden="true"
+          >
+            {i + 1}
+          </span>
+          <div className="min-w-0">
+            <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.1875rem', lineHeight: 1.3 }}>
+              {step.title}
+            </div>
+            <div
+              className="measure mt-1.5"
+              style={{
+                fontFamily: 'var(--font-latin)',
+                fontSize: '1.0625rem',
+                lineHeight: 1.55,
+                color: 'var(--ink2)',
+              }}
+            >
+              {step.body}
+            </div>
+          </div>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/**
  * A square meter. `tone="red"` is reserved for the skill a student is weakest
  * at — the design uses colour here to point, not to decorate.
  */

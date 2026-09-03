@@ -15,8 +15,15 @@ import AccountMenu from './AccountMenu';
  * Everything else lives in the index, one keystroke or one tap away — the
  * alternative is fourteen uppercase items competing with the wordmark, which
  * is exactly the crowding this design is trying to avoid.
+ *
+ * The dashboard is deliberately absent: the wordmark already links there, and
+ * a "Dashboard" link beside a logo that goes to the same place is a wasted
+ * slot. Same reasoning retired the theme toggle, the search button, the
+ * exam countdown and the tagline from this row — each is either duplicated
+ * elsewhere in the app or belongs in the index, and together they were
+ * crowding out the only thing the header is actually for.
  */
-const PRIMARY = ['/', '/read', '/translate', '/scansion', '/vocab', '/quiz'];
+const PRIMARY = ['/read', '/translate', '/scansion', '/vocab', '/quiz'];
 
 export default function AppShell({
   children,
@@ -154,26 +161,14 @@ export default function AppShell({
         }}
       >
         <div className="mx-auto flex w-full max-w-[1160px] items-center justify-between gap-6 px-5 py-3.5 sm:px-10 sm:py-4">
-          {/* Wordmark */}
-          <Link href="/" className="flex shrink-0 items-baseline gap-5 sm:gap-7">
+          {/* Wordmark — also the link home, which is why no "Dashboard" item
+              appears in the nav beside it. */}
+          <Link href="/" className="shrink-0">
             <span
               className="wordmark"
               style={{ fontSize: 'clamp(2rem, 1.4rem + 2.4vw, 2.875rem)' }}
             >
               Lectio
-            </span>
-            <span
-              className="hidden border-l pl-5 sm:inline sm:pl-7"
-              style={{
-                borderColor: 'var(--rule)',
-                fontFamily: 'var(--font-sans)',
-                fontSize: '0.75rem',
-                lineHeight: 1,
-                letterSpacing: '0.1em',
-                color: 'var(--fg-muted)',
-              }}
-            >
-              AP LATIN · MMXXVII
             </span>
           </Link>
 
@@ -201,42 +196,7 @@ export default function AppShell({
 
           {/* Controls */}
           <div className="flex shrink-0 items-center gap-2.5 sm:gap-4">
-            <Link
-              href="/plan"
-              className="hidden items-baseline gap-2 md:flex"
-              title="Days until the exam"
-            >
-              <span
-                style={{
-                  fontFamily: 'var(--font-serif)',
-                  fontSize: '1.375rem',
-                  lineHeight: 1,
-                  color: 'var(--fg)',
-                }}
-              >
-                {mounted ? days : '—'}
-              </span>
-              <span className="slab-sm">days</span>
-            </Link>
-
-            <button
-              type="button"
-              onClick={() => setPaletteOpen(true)}
-              className="hidden items-center gap-2 lg:flex"
-              aria-label="Search"
-              title="Search — ⌘K"
-              style={{ color: 'var(--fg-muted)' }}
-            >
-              <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.4" />
-                <path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-              </svg>
-              <span className="kbd" aria-hidden="true">⌘K</span>
-            </button>
-
             <AccountMenu profile={profile} accountsEnabled={accountsEnabled} />
-
-            <ThemeToggle theme={theme} setTheme={setTheme} mounted={mounted} />
 
             <button
               type="button"
@@ -267,6 +227,12 @@ export default function AppShell({
           pathname={pathname}
           days={days}
           mounted={mounted}
+          theme={theme}
+          setTheme={setTheme}
+          onOpenPalette={() => {
+            setIndexOpen(false);
+            setPaletteOpen(true);
+          }}
           onClose={() => setIndexOpen(false)}
         />
       )}
@@ -289,11 +255,17 @@ function SectionIndex({
   pathname,
   days,
   mounted,
+  theme,
+  setTheme,
+  onOpenPalette,
   onClose,
 }: {
   pathname: string;
   days: number;
   mounted: boolean;
+  theme: 'light' | 'dark' | 'system';
+  setTheme: (t: 'light' | 'dark' | 'system') => void;
+  onOpenPalette: () => void;
   onClose: () => void;
 }) {
   const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
@@ -362,24 +334,69 @@ function SectionIndex({
           ))}
         </div>
 
+        {/* The controls that used to sit permanently in the masthead. Each is
+            either occasional (theme, search) or already shown large on the
+            page it belongs to (the countdown, on the dashboard and the study
+            plan), so none of them earned a slot on every screen. */}
         <div
-          className="mt-12 flex flex-wrap items-baseline justify-between gap-4 border-t pt-6"
+          className="mt-12 flex flex-wrap items-center gap-x-8 gap-y-5 border-t pt-6"
           style={{ borderColor: 'var(--rule)' }}
         >
-          <p
-            style={{
-              margin: 0,
-              fontFamily: 'var(--font-latin)',
-              fontSize: '1.0625rem',
-              color: 'var(--fg-muted)',
-            }}
+          <button
+            type="button"
+            onClick={onOpenPalette}
+            className="squish inline-flex items-center gap-2.5"
+            style={{ color: 'var(--fg-muted)' }}
           >
-            Press <span className="kbd">g</span> then a letter to jump from anywhere.
-          </p>
-          <p className="slab-sm">
-            {mounted ? `${days} days to the exam` : ''}
-          </p>
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.4" />
+              <path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+            </svg>
+            <span style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem' }}>
+              Search everything
+            </span>
+            <span className="kbd" aria-hidden="true">⌘K</span>
+          </button>
+
+          <div className="inline-flex items-center gap-2.5">
+            <ThemeToggle theme={theme} setTheme={setTheme} mounted={mounted} />
+            <span style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem', color: 'var(--fg-muted)' }}>
+              {!mounted
+                ? 'Theme'
+                : theme === 'system'
+                  ? 'System theme'
+                  : theme === 'dark'
+                    ? 'Dark theme'
+                    : 'Light theme'}
+            </span>
+          </div>
+
+          <Link
+            href="/plan"
+            onClick={onClose}
+            className="squish ml-auto inline-flex items-baseline gap-2"
+            title="Days until the exam"
+          >
+            <span
+              style={{ fontFamily: 'var(--font-serif)', fontSize: '1.375rem', lineHeight: 1, color: 'var(--fg)' }}
+            >
+              {mounted ? days : '—'}
+            </span>
+            <span className="slab-sm">days to the exam</span>
+          </Link>
         </div>
+
+        <p
+          className="mt-6"
+          style={{
+            margin: '1.5rem 0 0',
+            fontFamily: 'var(--font-latin)',
+            fontSize: '1.0625rem',
+            color: 'var(--fg-muted)',
+          }}
+        >
+          Press <span className="kbd">g</span> then a letter to jump from anywhere.
+        </p>
       </div>
     </div>
   );

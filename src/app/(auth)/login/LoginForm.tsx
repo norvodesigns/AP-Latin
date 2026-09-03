@@ -11,13 +11,11 @@ export default function LoginForm({ next }: { next: string }) {
 
   return (
     <Panel>
-      <form action={action} className="flex flex-col gap-4">
+      <form action={action} className="flex flex-col gap-6">
         <input type="hidden" name="next" value={next} />
 
         <label>
-          <span className="mb-1 block text-sm" style={{ color: 'var(--fg-muted)' }}>
-            Email
-          </span>
+          <span className="slab-sm mb-2 block">Email</span>
           <input
             className="input"
             type="email"
@@ -29,9 +27,7 @@ export default function LoginForm({ next }: { next: string }) {
         </label>
 
         <label>
-          <span className="mb-1 block text-sm" style={{ color: 'var(--fg-muted)' }}>
-            Password
-          </span>
+          <span className="slab-sm mb-2 block">Password</span>
           <input
             className="input"
             type="password"
@@ -46,11 +42,14 @@ export default function LoginForm({ next }: { next: string }) {
         {state.error && (
           <p
             role="alert"
-            className="border px-3 py-2 text-sm"
+            className="animate-in rounded-[var(--r-md)] border px-4 py-3"
             style={{
-              background: 'var(--incorrect-bg)',
-              borderColor: 'var(--incorrect)',
-              color: 'var(--fg-muted)',
+              margin: 0,
+              borderColor: 'var(--accent)',
+              background: 'var(--redtint)',
+              fontFamily: 'var(--font-latin)',
+              fontSize: '1.0625rem',
+              color: 'var(--accent)',
             }}
           >
             {state.error}
