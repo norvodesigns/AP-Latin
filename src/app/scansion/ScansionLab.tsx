@@ -1,14 +1,20 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   useStore,
   scansionStatsByLine,
-  nextScansionLineId,
+  masteredLineIds,
   scansionBadges,
   currentStreak,
 } from '@/store/useStore';
-import { AENEID_BOOKS, loadBook, loadIndex, type CorpusIndex } from '@/data/scansionCorpus';
+import {
+  AENEID_BOOKS,
+  loadBook,
+  loadIndex,
+  parseLineId,
+  type CorpusIndex,
+} from '@/data/scansionCorpus';
 import { Page, PageHeader, Empty, Roman, SourceNote } from '@/components/ui';
 import type { ScansionLine, ScannedSyllable } from '@/data/types';
 
@@ -70,18 +76,24 @@ function footNameFrom(marks: Mark[], group: Group, syllables: ScannedSyllable[])
 }
 
 /**
- * How many lines of one book the student has mastered. Counted from the ids
- * rather than the loaded lines, so the book chips can show progress for books
- * that have never been fetched.
+ * Pick a book at random, weighted by how many lines it has, so that every line
+ * in the corpus is equally likely rather than every book. Book 1 has 512 lines
+ * and book 12 has 650; picking a book uniformly would over-serve the short ones.
  */
-function masteredInBook(
-  stats: Map<string, { mastered: boolean }>,
-  book: number,
-): number {
-  const prefix = `scan-aen-${book}-`;
-  let n = 0;
-  for (const [id, s] of stats) if (s.mastered && id.startsWith(prefix)) n += 1;
-  return n;
+function randomBook(books: Array<{ book: number; count: number }>): number {
+  const total = books.reduce((a, b) => a + b.count, 0);
+  if (total === 0) return 1;
+  let r = Math.random() * total;
+  for (const b of books) {
+    r -= b.count;
+    if (r <= 0) return b.book;
+  }
+  return books[books.length - 1].book;
+}
+
+/** A uniformly random element, or null when there is nothing to choose from. */
+function sample<T>(items: T[]): T | null {
+  return items.length ? items[Math.floor(Math.random() * items.length)] : null;
 }
 
 export default function ScansionLab() {
@@ -104,7 +116,6 @@ export default function ScansionLab() {
   const [checked, setChecked] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
   const [showTutorial, setShowTutorial] = useState(false);
-  const [adaptive, setAdaptive] = useState(true);
   const [revisitMastered, setRevisitMastered] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -116,27 +127,26 @@ export default function ScansionLab() {
     loadIndex().then(setCorpus).catch(() => {});
   }, []);
 
-  /* Load the current book. Books are memoised, so switching back is instant. */
+  /* Open on a random line once the index says what the corpus holds. */
+  const started = useRef(false);
   useEffect(() => {
-    let cancelled = false;
+    if (!corpus || started.current) return;
+    started.current = true;
+    const b = randomBook(corpus.books);
     setLoading(true);
     setLoadError(null);
-    loadBook(book)
+    loadBook(b)
       .then((ls) => {
-        if (cancelled) return;
+        setBook(b);
         setLines(ls);
-        setIndex(0);
+        setIndex(Math.floor(Math.random() * ls.length));
         setLoading(false);
       })
       .catch((e: Error) => {
-        if (cancelled) return;
         setLoadError(e.message);
         setLoading(false);
       });
-    return () => {
-      cancelled = true;
-    };
-  }, [book]);
+  }, [corpus]);
 
   /*
    * Restore whatever the student left on this line. Coming back to a line and
@@ -256,21 +266,88 @@ export default function ScansionLab() {
   }
 
   /**
-   * The weakest line still worth practising in this book. Mastered lines are
-   * retired, so when a book is finished this moves on to the next one rather
-   * than re-serving work the student has already got right.
+   * Draw the next line at random from the whole corpus.
+   *
+   * A book is chosen weighted by its line count, so every one of the ~6,500
+   * lines is equally likely; then a line is picked uniformly from the ones the
+   * student has not already mastered. Books are memoised after their first
+   * fetch, so this settles into no network traffic fairly quickly.
    */
-  function advance(exclude?: string) {
-    const pool = exclude ? bookLineIds.filter((id) => id !== exclude) : bookLineIds;
-    const nextId = nextScansionLineId(pool, scansionAttempts, {
-      includeMastered: revisitMastered,
-    });
-    if (nextId && goToLineId(nextId)) return;
-    // Book exhausted: move to the next one that still has unmastered lines.
-    const order = AENEID_BOOKS.filter((b) => b !== book);
-    const nextBook = order.find((b) => b > book) ?? order[0];
-    if (nextBook) setBook(nextBook);
-  }
+  const advance = useCallback(
+    async (exclude?: string) => {
+      const books = corpus?.books ?? [];
+      if (books.length === 0) return;
+
+      const mastered = revisitMastered ? new Set<string>() : masteredLineIds(scansionAttempts);
+      const pickFrom = (ls: ScansionLine[]) =>
+        sample(ls.filter((l) => l.id !== exclude && !mastered.has(l.id)));
+
+      // A few draws is almost always enough; the fallback below covers the
+      // case where the books we happened to draw are fully mastered.
+      for (let attempt = 0; attempt < 4; attempt += 1) {
+        const b = randomBook(books);
+        setLoading(true);
+        try {
+          const ls = await loadBook(b);
+          const chosen = pickFrom(ls);
+          if (chosen) {
+            setBook(b);
+            setLines(ls);
+            setIndex(ls.indexOf(chosen));
+            setLoading(false);
+            return;
+          }
+        } catch {
+          /* try another book */
+        }
+      }
+
+      // Nothing came up: walk the books in order for anything left at all.
+      for (const b of AENEID_BOOKS) {
+        try {
+          const ls = await loadBook(b);
+          const chosen = pickFrom(ls);
+          if (chosen) {
+            setBook(b);
+            setLines(ls);
+            setIndex(ls.indexOf(chosen));
+            setLoading(false);
+            return;
+          }
+        } catch {
+          /* keep looking */
+        }
+      }
+      setLoading(false);
+    },
+    [corpus, scansionAttempts, revisitMastered],
+  );
+
+  /** The weakest line the student has attempted but not yet mastered. */
+  const practiseWeakest = useCallback(async () => {
+    const attempted = [...scansionStatsByLine(scansionAttempts).entries()]
+      .filter(([, st]) => !st.mastered)
+      .sort((a, b) => a[1].bestAccuracy - b[1].bestAccuracy);
+    const target = attempted[0]?.[0];
+    const parsed = target ? parseLineId(target) : null;
+    if (!parsed) {
+      void advance();
+      return;
+    }
+    setLoading(true);
+    try {
+      const ls = await loadBook(parsed.book);
+      const i = ls.findIndex((l) => l.id === target);
+      if (i >= 0) {
+        setBook(parsed.book);
+        setLines(ls);
+        setIndex(i);
+      }
+    } catch {
+      /* fall through */
+    }
+    setLoading(false);
+  }, [scansionAttempts, advance]);
 
   if (loadError) {
     return (
@@ -336,13 +413,7 @@ export default function ScansionLab() {
   }
 
   function next() {
-    if (adaptive) {
-      advance(active.id);
-    } else if (index + 1 < lines.length) {
-      setIndex(index + 1);
-    } else {
-      advance(active.id);
-    }
+    void advance(active.id);
   }
 
   const allMarked = metricalIdx.every((i) => marks[i] !== null);
@@ -395,57 +466,21 @@ export default function ScansionLab() {
       <div className="px-5 py-8 sm:px-10 sm:py-10">
         {showTutorial && <Tutorial />}
 
-        {/* ── Book picker ──
-            Six thousand lines cannot be chips, so the book is the unit of
-            navigation and the adaptive order handles which line comes next. */}
-        <div className="mb-9">
-          <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-            <span className="slab">Aeneid · book</span>
-            <span
-              style={{
-                fontFamily: 'var(--font-latin)',
-                fontSize: '1rem',
-                color: 'var(--fg-muted)',
-              }}
-            >
-              Lines are served weakest-first and never repeat once mastered. Pick a book to
-              practise a particular one.
-            </span>
-          </div>
-          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2">
-          {AENEID_BOOKS.map((b) => {
-            const done = mounted ? masteredInBook(stats, b) : 0;
-            const total = corpus?.books.find((x) => x.book === b)?.count ?? 0;
-            const complete = total > 0 && done >= total;
-            return (
-              <button
-                key={b}
-                type="button"
-                onClick={() => setBook(b)}
-                aria-current={b === book ? 'true' : undefined}
-                className={`chip ${b === book ? 'chip-on' : complete ? 'chip-gilt' : ''}`}
-                title={
-                  total
-                    ? `Aeneid, book ${b} — ${done} of ${total} lines mastered`
-                    : `Aeneid, book ${b}`
-                }
-              >
-                <Roman value={b} />
-                {done > 0 && (
-                  <span
-                    className="slab-sm"
-                    style={{ color: complete ? 'var(--gilt)' : 'var(--fg-faint)' }}
-                  >
-                    {done}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-            <button type="button" className="slab-sm ml-2" onClick={() => advance()}>
-              ↯ Weakest line
-            </button>
-          </div>
+        {/* ── Where this line came from ── */}
+        <div className="mb-9 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
+          <span
+            style={{
+              fontFamily: 'var(--font-latin)',
+              fontSize: '1.0625rem',
+              color: 'var(--fg-muted)',
+            }}
+          >
+            Drawn at random from {corpusTotal ? corpusTotal.toLocaleString() : '6,500+'} lines of
+            the <em>Aeneid</em>. Lines you have mastered never come back.
+          </span>
+          <button type="button" className="slab-sm" onClick={() => void practiseWeakest()}>
+            ↯ Weakest line
+          </button>
         </div>
 
         {/* ── The line ──
@@ -705,7 +740,6 @@ export default function ScansionLab() {
               divisionsRight={divisionsRight}
               divisionCount={correctDivisions.length}
               divisionsHit={divisions.filter((d) => correctDivisions.includes(d)).length}
-              adaptive={adaptive}
               onNext={next}
               onRetry={() => {
                 setMarks(new Array(active.syllables.length).fill(null));
@@ -760,15 +794,6 @@ export default function ScansionLab() {
           </div>
 
           <div className="flex items-center gap-4">
-            <label className="slab-sm flex cursor-pointer items-center gap-2">
-              <input
-                type="checkbox"
-                checked={adaptive}
-                onChange={(e) => setAdaptive(e.target.checked)}
-                style={{ accentColor: 'var(--accent)' }}
-              />
-              Adaptive order
-            </label>
             <label
               className="slab-sm flex cursor-pointer items-center gap-2"
               title="Mastered lines are retired by default. Tick this to see them again."
@@ -843,7 +868,6 @@ function Verdict({
   divisionsRight,
   divisionCount,
   divisionsHit,
-  adaptive,
   onNext,
   onRetry,
 }: {
@@ -854,7 +878,6 @@ function Verdict({
   divisionsRight: boolean;
   divisionCount: number;
   divisionsHit: number;
-  adaptive: boolean;
   onNext: () => void;
   onRetry: () => void;
 }) {
@@ -940,7 +963,7 @@ function Verdict({
 
       <div className="mt-7 flex flex-wrap gap-3">
         <button type="button" className="btn btn-primary" onClick={onNext}>
-          {adaptive ? 'Next · weakest line' : 'Next line'}
+          Next line
         </button>
         <button type="button" className="btn" onClick={onRetry}>
           Try again
