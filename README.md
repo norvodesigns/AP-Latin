@@ -175,6 +175,42 @@ If you are wiring it up from scratch:
    before the first deploy, or redeploy after adding them.
 5. Deploy. Every subsequent push to `main` redeploys; pull requests get preview URLs.
 
+### Pointing `lectio.norvodesigns.com` at it
+
+The subdomain is claimed on Vercel's side first, then proved by one DNS record you add wherever
+`norvodesigns.com`'s nameservers actually point.
+
+1. Vercel project → **Settings → Domains → Add**, and enter `lectio.norvodesigns.com`.
+2. Vercel replies with the record it wants. For a subdomain that is a **CNAME**:
+
+   | Type | Name | Value |
+   | --- | --- | --- |
+   | `CNAME` | `lectio` | `cname.vercel-dns.com` |
+
+   The **Name** is just `lectio`, not the whole hostname — most DNS panels append the apex domain
+   for you. If yours wants it spelled out, use `lectio.norvodesigns.com`. Copy the value Vercel
+   shows rather than the one above if the two ever differ; Vercel is the authority on its own
+   record.
+3. Add that record in the DNS panel for `norvodesigns.com`. **On Cloudflare, set it to DNS only** —
+   the orange proxy cloud intercepts the certificate challenge and the domain never validates.
+4. Back in Vercel, wait for the domain to turn **Valid Configuration**. TLS is issued
+   automatically once it does. A minute or two is normal.
+
+Check it from a terminal, not a browser — browsers cache DNS long past the TTL:
+
+```bash
+dig +short lectio.norvodesigns.com
+```
+
+Two settings to change once it resolves, both easy to forget:
+
+- **Vercel → Settings → Domains** — mark `lectio.norvodesigns.com` as the **primary** domain, so
+  the `.vercel.app` URL redirects to it instead of serving the same site at two addresses.
+- **Supabase → Authentication → URL Configuration** — only if you are running classrooms. Set
+  **Site URL** to `https://lectio.norvodesigns.com` and add it under **Redirect URLs**. Miss this
+  and the confirmation link in every signup email still points at the old host, which is the kind
+  of thing you discover from a student rather than from a test.
+
 ---
 
 ## Classrooms and accounts (optional)
