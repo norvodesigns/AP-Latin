@@ -313,7 +313,9 @@ export default function Dashboard({
             </Link>
           </CalledOut>
 
-          {/* Today */}
+          {/* Today: only things that are actually due today, so the rail stays
+              a to-do list. Cumulative totals — lines scanned included — live in
+              the ledger on the left, where they have a bar to be read against. */}
           <div className="flex flex-col gap-2.5">
             <TodayRow label="Cards due today" value={mounted ? due.length : 0} href="/vocab" />
             <div className="hair" />
@@ -321,12 +323,6 @@ export default function Dashboard({
               label="Review queue"
               value={mounted ? reviewQueue.length : 0}
               href="/quiz?mode=review"
-            />
-            <div className="hair" />
-            <TodayRow
-              label="Lines scanned"
-              value={`${linesScanned} / ${scansionTotal || '—'}`}
-              href="/scansion"
             />
           </div>
 
