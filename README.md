@@ -241,12 +241,19 @@ Both providers are exercised through the normal fallback path, so check the `[pr
 output. If the primary is throttled, every row silently reads as the fallback and you are measuring
 a model you did not think you were measuring.
 
-Expect that to happen. Gemini's free tier allows only **20 requests a minute**, which a grading run
-goes through quickly, and the reply is a 429 that the fallback quietly absorbs. Retrying hard on it
-makes things worse — it pushes the fallback into its own per-minute cap and the run stops measuring
-anything at all. The harness therefore paces itself (`--pacing`, default 4s between requests) and
-distinguishes the two kinds of 429: the route's own limiter reports `retryAfterSeconds` and is
-honoured exactly, while a provider 429 gets a flat minute.
+Expect that to happen, and expect the free tiers to be the limiting factor throughout:
+
+| provider | free-tier ceiling | grading calls it allows |
+| --- | --- | --- |
+| Gemini | 20 requests/minute | a run saturates it in seconds, since every call tries the primary first and the SDK retries |
+| Groq | 8,000 **tokens**/minute | roughly two, because one grading call costs a few thousand tokens |
+
+Groq's is the one that catches people out: the binding constraint is tokens, not requests, so pacing
+by request count does not help. Retrying hard on either makes things worse — it pushes the fallback
+into its own cap and the run stops measuring anything at all. The harness therefore paces itself
+(`--pacing`, default 35s between requests) and distinguishes the two kinds of 429: the route's own
+limiter reports `retryAfterSeconds` and is honoured exactly, while a provider 429 gets a flat
+minute. A full run consequently takes on the order of fifteen minutes.
 
 To measure a single provider rather than the pair, set `GEMINI_MODEL` / `GROQ_MODEL` or unset one
 provider's key for the run.

@@ -31,8 +31,17 @@ const arg = (flag, fallback) => {
 
 const BASE = arg('--base', 'http://localhost:3000');
 const RUNS = Number(arg('--runs', '1'));
-/** Gap between requests, to stay inside the providers' per-minute caps. */
-const PACING_MS = Number(arg('--pacing', '4000'));
+/**
+ * Gap between requests.
+ *
+ * The binding constraint is tokens per minute, not requests per minute. Groq's
+ * free tier allows 8,000 tokens a minute (`x-ratelimit-limit-tokens`), and one
+ * grading call — segment data, vocabulary context, and a fifteen-segment JSON
+ * reply — costs a few thousand. That is roughly two calls a minute, so pace
+ * well under it. Pacing for request count instead is what made three earlier
+ * runs collapse into 429s partway through.
+ */
+const PACING_MS = Number(arg('--pacing', '35000'));
 
 /**
  * The cases.
