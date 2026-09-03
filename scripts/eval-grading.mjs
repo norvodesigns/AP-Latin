@@ -47,16 +47,21 @@ const RUNS = Number(arg('--runs', '1'));
  * reply — costs a few thousand. That is roughly two calls a minute, so pace
  * well under it. Pacing for request count instead is what made three earlier
  * runs collapse into 429s partway through.
+ *
+ * 90s is the first value measured to survive a whole pass: the full fifteen
+ * cases completed on it with no 429 at all, where 35s did not. It is slow on
+ * purpose — a run that finishes is worth more than a fast one that stops
+ * measuring halfway.
  */
-const PACING_MS = Number(arg('--pacing', '35000'));
+const PACING_MS = Number(arg('--pacing', '90000'));
 /**
  * Optional comma-separated case filter, e.g. `--cases perfect`.
  *
- * The token ceiling makes a full fifteen-case pass unreliable in one sitting,
- * and the cases answer different questions. `perfect` alone measures the false
+ * The cases answer different questions, and `perfect` alone measures the false
  * negative rate — the grader marking correct work wrong — which is the failure
- * that costs a student standing, so it is the one worth being able to run on
- * its own.
+ * that costs a student standing. It is also the one to re-run after fixing a
+ * model translation the grader complained about, without paying for a full
+ * pass to confirm it.
  */
 const ONLY = arg('--cases', '').split(',').map((x) => x.trim()).filter(Boolean);
 

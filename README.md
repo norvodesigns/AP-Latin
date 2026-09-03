@@ -296,6 +296,27 @@ npm run eval:grading              # in another
 npm run eval:grading -- --base http://localhost:3160 --runs 3
 ```
 
+#### What it currently measures
+
+Full pass, all fifteen cases, Gemini serving every call:
+
+| | count | share |
+| --- | --- | --- |
+| agreed with the key | 184 / 185 segment judgements | **99.5%** |
+| false negatives — a correct segment marked wrong | 1 | 0.5% |
+| false positives — an error waved through | 0 | **0.0%** |
+
+The single disagreement was not the grader's fault. It marked `pacique imponere morem` wrong in the
+Aeneid 6.847–853 model translation, giving the reason "dative rendered as genitive" — and it was
+right: the model answer read "the custom **of** peace" where `paci` is dative with the compound
+`impono`, which is the exact pitfall that drill warns students about. Correcting the content and
+re-running the `perfect` cases gives **75 / 75, no false negatives**, the corrected line included.
+
+So the grader currently disagrees with nothing it should agree with, and lets nothing through it
+should catch — on five drills. That is a floor, not a guarantee: five drills is a small sample, the
+free tiers can put a different model behind the same call tomorrow, and re-running after any change
+to a model translation is cheap (`-- --cases perfect`).
+
 Every case is built from the drill data itself, so the expected outcome does not depend on anyone's
 opinion:
 
@@ -306,11 +327,13 @@ opinion:
 | `empty` | an irrelevant sentence | everything must fail |
 
 **A `perfect` miss is a question, not a verdict.** The case assumes the model translation is
-correct, and that assumption does not always hold. Running it found three genuine defects in one
-drill's model answer — `pauca` rendered as the adverb "briefly" where the segment requires a neuter
-plural object, `pro` rendered as "about" as though it were `de`, and an "of me" supplied with
-nothing in the Latin behind it. The grader was right and the content was wrong. Read the reason it
-gives before concluding anything about the grader; fixing the content is often the correct response.
+correct, and that assumption does not always hold. Every miss it has ever reported turned out to be
+a defect in this repository's own content, not in the grader — four so far, across two drills:
+`pauca` rendered as the adverb "briefly" where the segment requires a neuter plural object, `pro`
+rendered as "about" as though it were `de`, an "of me" supplied with nothing in the Latin behind
+it, and the dative `paci` rendered as a genitive. Each time the grader was right and the content
+was wrong. Read the reason it gives before concluding anything about the grader; fixing the content
+is usually the correct response.
 
 Two things are worth knowing about this harness.
 
@@ -340,9 +363,9 @@ Expect that to happen, and expect the free tiers to be the limiting factor throu
 Groq's is the one that catches people out: the binding constraint is tokens, not requests, so pacing
 by request count does not help. Retrying hard on either makes things worse — it pushes the fallback
 into its own cap and the run stops measuring anything at all. The harness therefore paces itself
-(`--pacing`, default 35s between requests) and distinguishes the two kinds of 429: the route's own
+(`--pacing`, default 90s between requests — the first value measured to survive a whole pass) and distinguishes the two kinds of 429: the route's own
 limiter reports `retryAfterSeconds` and is honoured exactly, while a provider 429 gets a flat
-minute. A full run consequently takes on the order of fifteen minutes.
+minute. A full run consequently takes a little over twenty minutes; `--cases perfect` alone takes about eight.
 
 To measure a single provider rather than the pair, set `GEMINI_MODEL` / `GROQ_MODEL` or unset one
 provider's key for the run.
