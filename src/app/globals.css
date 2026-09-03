@@ -847,10 +847,24 @@ h1, h2, h3, h4 {
   .stagger > *:nth-child(n+10) { animation-delay: 360ms; }
 
   /* — The section index ————————————————————————————————————————————
-     The panel is docked to the underside of the masthead, so it arrives
+     A panel over the page, not a replacement for it. The scrim is doing the
+     real work here: it dims what is behind, says an overlay is open, and
+     gives the whole area outside the panel a way to dismiss it. Without one
+     the index simply looked like the page had been swapped out. */
+  .index-scrim {
+    background: color-mix(in srgb, var(--bg) 30%, transparent);
+    backdrop-filter: blur(3px);
+    animation: scrim-in var(--dur-2) var(--ease-io) both;
+  }
+  .index-scrim[data-closing='true'] { animation: scrim-out 170ms var(--ease-io) both; }
+
+  /* The panel is docked to the underside of the masthead, so it arrives
      downward, out from behind it. `.animate-in` rises instead, which reads
      as the panel pulling away from the edge it is attached to. */
-  .index-panel { animation: index-down var(--dur-2) var(--ease) both; }
+  .index-panel {
+    transform-origin: top center;
+    animation: index-down var(--dur-2) var(--ease) both;
+  }
   .index-panel[data-closing='true'] {
     animation: index-up 170ms var(--ease-io) both;
     pointer-events: none;
@@ -868,6 +882,20 @@ h1, h2, h3, h4 {
   .index-panel .stagger > *:nth-child(3) { --row-delay: 70ms; }
   .index-panel .stagger > *:nth-child(4) { --row-delay: 105ms; }
   .index-panel .stagger > *:nth-child(n+5) { --row-delay: 140ms; }
+
+  /* An index row fills rather than shifting. The old rule-and-nudge treatment
+     borrowed from list rows made fourteen of them feel restless. */
+  .index-row {
+    transition: background-color var(--dur-2) var(--ease-io);
+  }
+  .index-row:hover { background: color-mix(in srgb, var(--redtint) 70%, transparent); }
+  .index-row[data-active='true'] { background: color-mix(in srgb, var(--redtint) 45%, transparent); }
+
+  /* The narrow nav strip scrolls if five sections ever outgrow the width.
+     Its scrollbar is hidden — it is one row of five, and a bar under it
+     would read as a rule that means something. */
+  .nav-strip { scrollbar-width: none; -ms-overflow-style: none; }
+  .nav-strip::-webkit-scrollbar { display: none; }
 
   /* The masthead button's three rules fold into the cross, rather than one
      icon being swapped for another. transform-box defaults to view-box in
@@ -969,14 +997,26 @@ h1, h2, h3, h4 {
   to { opacity: 1; transform: none; }
 }
 
-/* The index comes out from under the masthead and goes back under it. */
+/* The index unfolds downward from the masthead it is docked to, and folds
+   back up under it. The slight vertical scale is what makes it read as
+   unfolding rather than as a block sliding into place; the origin is the top
+   edge, so the docked edge never moves. */
 @keyframes index-down {
-  from { opacity: 0; transform: translateY(-12px); }
+  from { opacity: 0; transform: translateY(-10px) scaleY(0.97); }
   to { opacity: 1; transform: none; }
 }
 @keyframes index-up {
   from { opacity: 1; transform: none; }
-  to { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 0; transform: translateY(-8px) scaleY(0.98); }
+}
+
+@keyframes scrim-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes scrim-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 /* The glossary and the quantity chooser arrive from the edge they dock to. */

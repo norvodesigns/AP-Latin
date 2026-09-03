@@ -5,17 +5,23 @@ export interface NavItem {
   key: string;
   group: 'study' | 'drill' | 'reference' | 'exam';
   blurb: string;
+  /**
+   * A shorter label for the narrow nav strip, where five sections have to
+   * share a phone's width. Only the sections that appear in that strip carry
+   * one; everything else falls back to `label`.
+   */
+  short?: string;
 }
 
 export const NAV: NavItem[] = [
   { href: '/', label: 'Dashboard', key: 'd', group: 'study', blurb: 'Countdown, mastery, what to study next' },
-  { href: '/read', label: 'Reading Room', key: 'r', group: 'study', blurb: 'Every syllabus passage with glossary and notes' },
-  { href: '/translate', label: 'Translate', key: 't', group: 'drill', blurb: 'Literal translation drills with AP scoring segments' },
+  { href: '/read', label: 'Reading Room', key: 'r', group: 'study', blurb: 'Every syllabus passage with glossary and notes', short: 'Read' },
+  { href: '/translate', label: 'Translate', key: 't', group: 'drill', blurb: 'Literal translation drills with AP scoring segments', short: 'Translate' },
   { href: '/sight', label: 'Sight Reading', key: 'i', group: 'drill', blurb: 'Timed unseen prose and poetry' },
-  { href: '/quiz', label: 'Quiz Engine', key: 'q', group: 'drill', blurb: 'Configurable AP-style multiple choice' },
-  { href: '/vocab', label: 'Vocabulary', key: 'v', group: 'drill', blurb: 'Spaced repetition over the 990-word core list' },
+  { href: '/quiz', label: 'Quiz Engine', key: 'q', group: 'drill', blurb: 'Configurable AP-style multiple choice', short: 'Quiz' },
+  { href: '/vocab', label: 'Vocabulary', key: 'v', group: 'drill', blurb: 'Spaced repetition over the 990-word core list', short: 'Vocab' },
   { href: '/grammar', label: 'Grammar & Syntax', key: 'g', group: 'reference', blurb: 'The constructions AP actually tests' },
-  { href: '/scansion', label: 'Scansion Lab', key: 's', group: 'drill', blurb: 'Mark quantities, elisions and caesurae' },
+  { href: '/scansion', label: 'Scansion Lab', key: 's', group: 'drill', blurb: 'Mark quantities, elisions and caesurae', short: 'Scansion' },
   { href: '/devices', label: 'Literary Devices', key: 'l', group: 'reference', blurb: 'Style reference and spot-the-device drill' },
   { href: '/context', label: 'Context & Culture', key: 'c', group: 'reference', blurb: 'Vergil, Augustan Rome, Pliny’s world' },
   { href: '/frq', label: 'FRQ Workshop', key: 'f', group: 'exam', blurb: 'All five free-response types, timed' },

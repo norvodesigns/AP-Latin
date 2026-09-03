@@ -11,17 +11,15 @@ import CommandPalette from './CommandPalette';
 import AccountMenu from './AccountMenu';
 
 /**
- * The masthead carries only the sections a student moves between constantly.
- * Everything else lives in the index, one keystroke or one tap away — the
- * alternative is fourteen uppercase items competing with the wordmark, which
- * is exactly the crowding this design is trying to avoid.
+ * The five sections a student moves between constantly. These are always on
+ * screen — inline beside the wordmark from `lg` up, and on their own strip
+ * under it below that. Reaching the work should never cost a tap on a menu.
  *
- * The dashboard is deliberately absent: the wordmark already links there, and
- * a "Dashboard" link beside a logo that goes to the same place is a wasted
- * slot. Same reasoning retired the theme toggle, the search button, the
- * exam countdown and the tagline from this row — each is either duplicated
- * elsewhere in the app or belongs in the index, and together they were
- * crowding out the only thing the header is actually for.
+ * Everything else lives in the index. The dashboard is deliberately absent:
+ * the wordmark already links there, and a "Dashboard" link beside a logo that
+ * goes to the same place is a wasted slot. Same reasoning keeps the theme
+ * toggle, the search button, the exam countdown and the tagline out of this
+ * row — each is either duplicated elsewhere or belongs in the index.
  */
 const PRIMARY = ['/read', '/translate', '/scansion', '/vocab', '/quiz'];
 
@@ -214,8 +212,8 @@ export default function AppShell({
             </span>
           </Link>
 
-          {/* Desktop nav */}
-          <nav aria-label="Sections" className="hidden items-center gap-7 xl:flex">
+          {/* Wide nav. Full labels, since there is room for them. */}
+          <nav aria-label="Sections" className="hidden items-center gap-7 lg:flex">
             {primaryItems.map((item) => (
               <Link
                 key={item.href}
@@ -272,6 +270,38 @@ export default function AppShell({
             </button>
           </div>
         </div>
+
+        {/* Narrow nav. The same five sections, on their own strip under the
+            wordmark, using each one's short label so all five fit a phone
+            without scrolling. It scrolls if they ever do not — a section the
+            strip cannot show is still one tap away in the index, but it should
+            never come to that. */}
+        <nav
+          aria-label="Sections"
+          className="nav-strip mx-auto flex w-full max-w-[1160px] items-center gap-4 overflow-x-auto px-5 pb-2.5 sm:gap-7 sm:px-10 lg:hidden"
+        >
+          {primaryItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              data-active={isActive(item.href)}
+              aria-current={isActive(item.href) ? 'page' : undefined}
+              className="nav-item whitespace-nowrap"
+              style={{
+                fontFamily: 'var(--font-sans)',
+                fontSize: '0.75rem',
+                fontWeight: 500,
+                /* Tighter than the wide nav's 0.1em. All five have to clear a
+                   360px phone, and tracking is the cheapest width to give
+                   back before the labels themselves start to suffer. */
+                letterSpacing: '0.055em',
+                textTransform: 'uppercase',
+              }}
+            >
+              {item.short ?? item.label}
+            </Link>
+          ))}
+        </nav>
       </header>
 
       {indexOpen && (
@@ -287,6 +317,7 @@ export default function AppShell({
             setPaletteOpen(true);
           }}
           onClose={closeIndexNow}
+          onDismiss={closeIndex}
         />
       )}
 
@@ -300,20 +331,26 @@ export default function AppShell({
 }
 
 /**
- * The full contents.
+ * The index: everything the app has, one layer above the page rather than
+ * instead of it.
  *
- * On a wide screen this is a table of contents: four columns, every entry
- * carrying its blurb, which is why it takes the viewport rather than being a
- * dropdown. On a phone that same content is a wall — fourteen entries, each
- * three lines tall, is several screens of prose to get to a link. So the
- * narrow layout drops to labels alone.
+ * It used to replace the whole viewport below the masthead — press the button
+ * and the page you were reading simply vanished, with nothing to say an
+ * overlay had opened or how to get back. That is what made it alarming. It is
+ * now a panel: a scrim dims the page behind it (and dismisses it on a click),
+ * the panel is bounded, rounded and shadowed so it reads as something laid on
+ * top, and the page stays visible underneath the whole time.
  *
- * What it drops on mobile is specifically the things a phone cannot use or
- * does not need: the blurbs (the labels are self-explanatory once you have
- * been in the app once) and every keyboard affordance — the per-item shortcut
- * chips, the ⌘K badge, and the "press g then a letter" hint. A touch device
- * has no keyboard to press them on, so on mobile they are decoration that
- * costs height.
+ * Finding things got two fixes. The five sections a student uses constantly
+ * are now in the masthead itself, so this list is no longer the only way to
+ * navigate — it is the overflow. And search leads it, because typing three
+ * letters beats reading fourteen labels whenever you already know what you
+ * want.
+ *
+ * On a wide screen the entries carry their blurbs, four columns of them. On a
+ * phone that same content is a wall, so the narrow layout shows labels alone
+ * and drops every keyboard affordance — the per-item shortcut chips, the ⌘K
+ * badge, the "press g" hint. A touch device has no keyboard to press them on.
  */
 function SectionIndex({
   pathname,
@@ -324,6 +361,7 @@ function SectionIndex({
   closing,
   onOpenPalette,
   onClose,
+  onDismiss,
 }: {
   pathname: string;
   days: number;
@@ -332,140 +370,162 @@ function SectionIndex({
   setTheme: (t: 'light' | 'dark' | 'system') => void;
   closing: boolean;
   onOpenPalette: () => void;
+  /** Instant close, for following a link out of the panel. */
   onClose: () => void;
+  /** Animated close, for dismissing the panel and staying put. */
+  onDismiss: () => void;
 }) {
   const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
 
   return (
-    <div
-      id="section-index"
-      data-closing={closing}
-      className="index-panel no-print fixed inset-x-0 bottom-0 z-20 overflow-y-auto"
-      style={{ top: 'var(--masthead, 64px)', background: 'var(--bg)' }}
-    >
-      <div className="mx-auto w-full max-w-[1160px] px-5 pb-16 pt-6 sm:px-10 sm:pt-10">
-        <div className="grid gap-x-12 gap-y-7 sm:gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
-          {NAV_GROUPS.map((group) => (
-            <div key={group.id}>
-              <div
-                className="rubric mb-1.5 border-b pb-2 sm:mb-4 sm:pb-3"
-                style={{ borderColor: 'var(--rule)' }}
-              >
-                {group.label}
-              </div>
-              <ul className="stagger flex flex-col">
-                {NAV.filter((n) => n.group === group.id).map((item) => {
-                  const active = isActive(item.href);
-                  return (
-                    <li key={item.href}>
-                      <Link
-                        href={item.href}
-                        onClick={onClose}
-                        aria-current={active ? 'page' : undefined}
-                        className="row-hover -mx-3 block border-b px-3 py-2.5 sm:py-3.5"
-                        style={{ borderColor: 'var(--hair)' }}
-                      >
-                        <span className="flex items-baseline justify-between gap-3">
-                          <span
-                            style={{
-                              fontFamily: 'var(--font-latin)',
-                              fontSize: '1.375rem',
-                              lineHeight: 1.2,
-                              color: active ? 'var(--accent)' : 'var(--fg)',
-                            }}
-                          >
-                            {item.label}
-                          </span>
-                          <span className="kbd !hidden shrink-0 sm:!inline-flex" aria-hidden="true">
-                            {item.key}
-                          </span>
-                        </span>
-                        <span
-                          className="mt-1.5 hidden sm:block"
-                          style={{
-                            fontFamily: 'var(--font-latin)',
-                            fontSize: '1rem',
-                            lineHeight: 1.45,
-                            color: 'var(--fg-muted)',
-                          }}
-                        >
-                          {item.blurb}
-                        </span>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ))}
-        </div>
+    <>
+      {/* The scrim is what turns this from a replacement into an overlay. It
+          starts below the masthead so the close button it came from stays lit
+          and reachable. */}
+      <div
+        className="index-scrim no-print fixed inset-x-0 bottom-0 z-20"
+        data-closing={closing}
+        style={{ top: 'var(--masthead, 64px)' }}
+        onClick={onDismiss}
+        aria-hidden="true"
+      />
 
-        {/* The controls that used to sit permanently in the masthead. Each is
-            either occasional (theme, search) or already shown large on the
-            page it belongs to (the countdown, on the dashboard and the study
-            plan), so none of them earned a slot on every screen. */}
-        <div
-          className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4 border-t pt-5 sm:mt-12 sm:gap-y-5 sm:pt-6"
-          style={{ borderColor: 'var(--rule)' }}
-        >
+      <div
+        id="section-index"
+        data-closing={closing}
+        className="index-panel no-print fixed inset-x-0 z-[25] mx-auto w-full max-w-[1160px] overflow-y-auto border-b sm:border-x"
+        style={{
+          top: 'var(--masthead, 64px)',
+          maxHeight: 'calc(100dvh - var(--masthead, 64px) - 1.25rem)',
+          background: 'var(--panel)',
+          borderColor: 'var(--rule)',
+          borderBottomLeftRadius: 'var(--r-lg)',
+          borderBottomRightRadius: 'var(--r-lg)',
+          boxShadow: '0 24px 60px -24px var(--shadow), 0 2px 8px -4px var(--shadow2)',
+        }}
+      >
+        <div className="px-5 pb-8 pt-5 sm:px-9 sm:pb-10 sm:pt-7">
+          {/* Search leads, because it is the fastest route to any of the
+              fourteen things below it. */}
           <button
             type="button"
             onClick={onOpenPalette}
-            className="squish inline-flex items-center gap-2.5"
-            style={{ color: 'var(--fg-muted)' }}
+            className="squish mb-7 flex w-full items-center gap-3 rounded-[var(--r-md)] border px-4 py-3 text-left sm:mb-9"
+            style={{
+              borderColor: 'var(--rule-strong)',
+              background: 'var(--bg)',
+              color: 'var(--fg-muted)',
+              transition: 'border-color var(--dur-2) var(--ease-io)',
+            }}
           >
-            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0">
               <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.4" />
               <path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
             </svg>
             <span style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem' }}>
-              Search everything
+              Search passages, words and drills
             </span>
-            <span className="kbd !hidden sm:!inline-flex" aria-hidden="true">⌘K</span>
+            <span className="kbd !hidden sm:!inline-flex ml-auto" aria-hidden="true">⌘K</span>
           </button>
 
-          <div className="inline-flex items-center gap-2.5">
-            <ThemeToggle theme={theme} setTheme={setTheme} mounted={mounted} />
-            <span style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem', color: 'var(--fg-muted)' }}>
-              {!mounted
-                ? 'Theme'
-                : theme === 'system'
-                  ? 'System theme'
-                  : theme === 'dark'
-                    ? 'Dark theme'
-                    : 'Light theme'}
-            </span>
+          <div className="grid gap-x-10 gap-y-7 sm:gap-y-9 sm:grid-cols-2 lg:grid-cols-4">
+            {NAV_GROUPS.map((group) => (
+              <div key={group.id}>
+                <div
+                  className="rubric mb-1.5 border-b pb-2 sm:mb-3 sm:pb-2.5"
+                  style={{ borderColor: 'var(--rule)' }}
+                >
+                  {group.label}
+                </div>
+                <ul className="stagger flex flex-col">
+                  {NAV.filter((n) => n.group === group.id).map((item) => {
+                    const active = isActive(item.href);
+                    return (
+                      <li key={item.href}>
+                        <Link
+                          href={item.href}
+                          onClick={onClose}
+                          aria-current={active ? 'page' : undefined}
+                          data-active={active}
+                          className="index-row -mx-2.5 block rounded-[var(--r-sm)] px-2.5 py-2.5 sm:py-3"
+                        >
+                          <span className="flex items-baseline justify-between gap-3">
+                            <span
+                              style={{
+                                fontFamily: 'var(--font-latin)',
+                                fontSize: '1.3125rem',
+                                lineHeight: 1.2,
+                                color: active ? 'var(--accent)' : 'var(--fg)',
+                              }}
+                            >
+                              {item.label}
+                            </span>
+                            <span className="kbd !hidden shrink-0 sm:!inline-flex" aria-hidden="true">
+                              {item.key}
+                            </span>
+                          </span>
+                          <span
+                            className="mt-1 hidden sm:block"
+                            style={{
+                              fontFamily: 'var(--font-latin)',
+                              fontSize: '0.9375rem',
+                              lineHeight: 1.45,
+                              color: 'var(--fg-muted)',
+                            }}
+                          >
+                            {item.blurb}
+                          </span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
           </div>
 
-          <Link
-            href="/plan"
-            onClick={onClose}
-            className="squish inline-flex items-baseline gap-2 sm:ml-auto"
-            title="Days until the exam"
+          <div
+            className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4 border-t pt-5 sm:mt-10"
+            style={{ borderColor: 'var(--rule)' }}
           >
-            <span
-              style={{ fontFamily: 'var(--font-serif)', fontSize: '1.375rem', lineHeight: 1, color: 'var(--fg)' }}
-            >
-              {mounted ? days : '—'}
-            </span>
-            <span className="slab-sm">days to the exam</span>
-          </Link>
-        </div>
+            <div className="inline-flex items-center gap-2.5">
+              <ThemeToggle theme={theme} setTheme={setTheme} mounted={mounted} />
+              <span style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem', color: 'var(--fg-muted)' }}>
+                {!mounted
+                  ? 'Theme'
+                  : theme === 'system'
+                    ? 'System theme'
+                    : theme === 'dark'
+                      ? 'Dark theme'
+                      : 'Light theme'}
+              </span>
+            </div>
 
-        {/* Keyboard-only, so it is not shown where there is no keyboard. */}
-        <p
-          className="hidden sm:block"
-          style={{
-            margin: '1.5rem 0 0',
-            fontFamily: 'var(--font-latin)',
-            fontSize: '1.0625rem',
-            color: 'var(--fg-muted)',
-          }}
-        >
-          Press <span className="kbd">g</span> then a letter to jump from anywhere.
-        </p>
+            {/* Keyboard-only, so it is not shown where there is no keyboard. */}
+            <span
+              className="hidden sm:inline"
+              style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem', color: 'var(--fg-muted)' }}
+            >
+              Press <span className="kbd">g</span> then a letter to jump from anywhere.
+            </span>
+
+            <Link
+              href="/plan"
+              onClick={onClose}
+              className="squish inline-flex items-baseline gap-2 sm:ml-auto"
+              title="Days until the exam"
+            >
+              <span
+                style={{ fontFamily: 'var(--font-serif)', fontSize: '1.375rem', lineHeight: 1, color: 'var(--fg)' }}
+              >
+                {mounted ? days : '—'}
+              </span>
+              <span className="slab-sm">days to the exam</span>
+            </Link>
+          </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
