@@ -272,7 +272,7 @@ pro re pauca loquar. neque ego hanc abscondere furto
 speravi (ne finge) fugam, nec coniugis umquam
 praetendi taedas aut haec in foedera veni.`,
     modelTranslation:
-      'At last he replies briefly: "I shall never deny, O queen, that you have deserved well of me in the very many things which you are able to recount in speaking, nor will it irk me to remember Elissa so long as I myself am mindful of myself, so long as breath governs these limbs. I shall say a few things about the matter. I did not hope to conceal this flight by stealth — do not imagine it — nor did I ever hold out a husband\'s torches or come into these compacts."',
+      'At last he replies a few things: "I shall never deny, O queen, that you have deserved well (of me) in the very many things which you are able to recount in speaking, nor will it irk me to remember Elissa so long as I myself am mindful of myself, so long as breath governs these limbs. I shall say a few things on behalf of the matter. I did not hope to conceal this flight by stealth — do not imagine it — nor did I ever hold out a husband\'s torches or come into these compacts."',
     notes:
       'The indirect statement te … promeritam (esse) is the hardest thing here: the participle is doing the work of a whole clause after negabo.',
     segments: [

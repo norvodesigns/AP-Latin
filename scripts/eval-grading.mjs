@@ -10,8 +10,15 @@
  * The cases below have objectively known outcomes, built from the drill data
  * itself rather than from anyone's opinion:
  *
- *   perfect    the drill's own continuous model translation. It is by
- *              definition correct, so the grader must award every segment.
+ *   perfect    the drill's own continuous model translation. It is meant to
+ *              be correct, so a miss is evidence of a false negative — but
+ *              read the grader's reason before believing that. Running this
+ *              found three real defects in one drill's model translation:
+ *              `pauca` rendered as the adverb "briefly" where the segment
+ *              requires a neuter plural object, `pro` rendered as "about" as
+ *              though it were `de`, and an "of me" supplied with nothing in
+ *              the Latin behind it. The grader was right and the content was
+ *              wrong. Treat a `perfect` miss as a question, not a verdict.
  *   truncated  only the opening of that translation. The closing segments are
  *              genuinely absent and must fail; the opening ones must still pass.
  *   empty      nothing relevant submitted. Everything must fail.

@@ -219,9 +219,16 @@ opinion:
 
 | case | submission | what must happen |
 | --- | --- | --- |
-| `perfect` | the drill's own continuous model translation | every segment awarded — any miss is a false negative |
+| `perfect` | the drill's own continuous model translation | every segment awarded — but see the warning below before calling a miss a false negative |
 | `truncated` | only the opening of that translation | the closing segments must fail, the opening ones must still pass |
 | `empty` | an irrelevant sentence | everything must fail |
+
+**A `perfect` miss is a question, not a verdict.** The case assumes the model translation is
+correct, and that assumption does not always hold. Running it found three genuine defects in one
+drill's model answer — `pauca` rendered as the adverb "briefly" where the segment requires a neuter
+plural object, `pro` rendered as "about" as though it were `de`, and an "of me" supplied with
+nothing in the Latin behind it. The grader was right and the content was wrong. Read the reason it
+gives before concluding anything about the grader; fixing the content is often the correct response.
 
 Two things are worth knowing about this harness.
 
