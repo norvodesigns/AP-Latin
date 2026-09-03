@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import { EB_Garamond, Literata, Inter, Italianno } from 'next/font/google';
 import './globals.css';
 import AppShell from '@/components/AppShell';
+import { getCurrentProfile } from '@/lib/supabase/server';
+import { supabaseConfigured } from '@/lib/supabase/config';
 
 /**
  * EB Garamond carries the Latin. The `latin-ext` subset is what supplies the
@@ -70,7 +72,12 @@ const themeScript = `
 })();
 `;
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Read fresh on every render of the layout, which the auth Server Actions
+  // trigger via revalidatePath('/', 'layout') after sign-in/out — see
+  // (auth)/actions.ts. AppShell never fetches this itself.
+  const profile = await getCurrentProfile();
+
   return (
     /*
      * The font variables must live on <html>, not <body>.
@@ -94,7 +101,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <a href="#main" className="skip-link">
           Skip to content
         </a>
-        <AppShell>{children}</AppShell>
+        <AppShell profile={profile} accountsEnabled={supabaseConfigured}>
+          {children}
+        </AppShell>
       </body>
     </html>
   );

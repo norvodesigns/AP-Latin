@@ -30,3 +30,10 @@ export const NAV_GROUPS: Array<{ id: NavItem['group']; label: string }> = [
   { id: 'reference', label: 'Reference' },
   { id: 'exam', label: 'Exam' },
 ];
+
+/** The nav label for an assignable section id (e.g. "read" -> "Reading Room"),
+ *  used wherever a classroom assignment names a section — the teacher's
+ *  assignment form and both the student and teacher classroom views. */
+export function sectionLabel(section: string): string {
+  return NAV.find((n) => n.href === `/${section}`)?.label ?? section;
+}

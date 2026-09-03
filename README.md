@@ -177,6 +177,52 @@ If you are wiring it up from scratch:
 
 ---
 
+## Classrooms and accounts (optional)
+
+Everything above works with zero setup: Lectio runs in **solo mode** — no login, progress lives in
+the browser. Configuring Supabase turns on **classroom mode**: student and teacher accounts, join
+codes, assignments, and a leaderboard — without changing anything about solo mode for anyone who
+never signs in.
+
+### Setting it up
+
+1. Create a project at the [Supabase dashboard](https://supabase.com/dashboard).
+2. **Project Settings → API** and copy the Project URL and anon public key.
+3. **SQL Editor → New query**, and run every file in `supabase/migrations/` **in filename order**
+   (0001, then 0002, then 0003 — each depends on tables or functions the one before it created).
+4. Add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` to `.env.local`, and to Vercel
+   the same way as the AI keys above (Environment Variables, then redeploy). Both are safe to expose
+   to the browser — see the comment above them in `.env.example` for why.
+5. Check Supabase's email confirmation setting matches what you want: **Authentication → Providers →
+   Email**. On by default, meaning a new account cannot sign in until it clicks a confirmation
+   email — worth turning off for a classroom where that friction buys nothing.
+
+### How it works
+
+- A **teacher** account creates a classroom (`/teach`) and gets a six-character join code — the
+  alphabet deliberately avoids vowels and 0/O/1/I/L, so a code read aloud off a whiteboard is never
+  ambiguous.
+- A **student** account redeems the code (`/classroom`) to join.
+- The teacher assigns target minutes on a section (Reading Room, Translate, whichever) with an
+  optional due date and note; each student's own classroom page shows their progress toward it.
+- Time studied and quiz/translation results sync to the server automatically while signed in —
+  nothing to turn on, and nothing about how those features behave signed out.
+- The leaderboard ranks by time studied, not accuracy. A student who has answered three questions
+  perfectly should not outrank one who has done three hundred at 90% — accuracy on a handful of
+  attempts is mostly noise. Accuracy is still shown, just not used to rank.
+
+### What a student cannot see about classmates
+
+Nobody's raw activity reaches another student's browser. `study_sessions` and `activity_stats` rows
+are protected by row-level security scoped to their own owner; the leaderboard and roster are
+separate database functions (`classroom_leaderboard`, `classroom_section_time`) that return only
+aggregates and a display name, and only after confirming the caller actually belongs to that
+classroom. The policies themselves are commented in `supabase/migrations/0001_init.sql` and
+`0002_rpc.sql` — the database enforces this, not application code, so a mistake in a query cannot
+leak one classroom's data into another.
+
+---
+
 ## Accuracy
 
 This matters more than anything else in a study app, so:
@@ -283,9 +329,16 @@ context. They just will not appear on the exam as syllabus reading.
 
 ## Data and privacy
 
-There is no account, no database and no server-side storage of anything you write. Progress lives in
-`localStorage` under `ap-latin-store`. **Clearing your browser data deletes it**, so use the export
-button in Settings periodically — that JSON file is your only backup, and Import restores it.
+In solo mode — no Supabase configured, which is the default — there is no account, no database and
+no server-side storage of anything you write. Progress lives in `localStorage` under
+`ap-latin-store`. **Clearing your browser data deletes it**, so use the export button in Settings
+periodically — that JSON file is your only backup, and Import restores it.
+
+Classroom mode does add server-side storage, but only of what a teacher's dashboard needs: your
+display name and role, which classrooms you belong to, minutes studied per section per day, and
+correct/total counts for graded work. It never stores your translations, essays, or anything you
+wrote — those stay local, exactly as in solo mode. See **Classrooms and accounts** above for what a
+classmate can and cannot see of that data.
 
 ---
 

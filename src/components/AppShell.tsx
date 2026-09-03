@@ -5,7 +5,10 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { NAV, NAV_GROUPS } from '@/lib/nav';
 import { useStore, daysUntilExam } from '@/store/useStore';
+import { useStudyTimeSync } from '@/hooks/useStudyTimeSync';
+import type { Profile } from '@/lib/supabase/types';
 import CommandPalette from './CommandPalette';
+import AccountMenu from './AccountMenu';
 
 /**
  * The masthead carries only the sections a student moves between constantly.
@@ -15,9 +18,27 @@ import CommandPalette from './CommandPalette';
  */
 const PRIMARY = ['/', '/read', '/translate', '/scansion', '/vocab', '/quiz'];
 
-export default function AppShell({ children }: { children: React.ReactNode }) {
+export default function AppShell({
+  children,
+  profile,
+  accountsEnabled,
+}: {
+  children: React.ReactNode;
+  profile: Profile | null;
+  accountsEnabled: boolean;
+}) {
   const pathname = usePathname();
   const router = useRouter();
+  const setAuthUserId = useStore((s) => s.setAuthUserId);
+
+  // The store's authUserId always tracks the server-rendered profile — see
+  // the comment on RootLayout for why this is a plain effect rather than a
+  // client-side auth listener.
+  useEffect(() => {
+    setAuthUserId(profile?.id ?? null);
+  }, [profile?.id, setAuthUserId]);
+
+  useStudyTimeSync();
   const [indexOpen, setIndexOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -212,6 +233,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               </svg>
               <span className="kbd" aria-hidden="true">⌘K</span>
             </button>
+
+            <AccountMenu profile={profile} accountsEnabled={accountsEnabled} />
 
             <ThemeToggle theme={theme} setTheme={setTheme} mounted={mounted} />
 

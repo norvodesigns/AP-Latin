@@ -151,6 +151,14 @@ export interface Database {
         Args: { cid: string; since?: string | null };
         Returns: SectionTimeRow[];
       };
+      bump_study_seconds: {
+        Args: { p_section: string; p_day: string; p_delta: number };
+        Returns: undefined;
+      };
+      bump_activity_stats: {
+        Args: { p_day: string; p_source: GradingSource; p_correct: number; p_total: number };
+        Returns: undefined;
+      };
     };
     Enums: { [_ in never]: never };
     CompositeTypes: { [_ in never]: never };
