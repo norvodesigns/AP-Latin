@@ -14,6 +14,7 @@ import {
 import { requiredPassages } from '@/data/passages';
 import { coreVocabulary } from '@/data/vocabulary';
 import { CalledOut, CedLink, Roman, SkillMeter, SourceNote, toRoman } from '@/components/ui';
+import { useRevealChildren } from '@/hooks/useRevealChildren';
 import { loadIndex } from '@/data/scansionCorpus';
 import { sectionLabel } from '@/lib/nav';
 import type { SkillCategory } from '@/data/types';
@@ -124,15 +125,22 @@ export default function Dashboard({
     year: 'numeric',
   });
 
+  const leftColumn = useRevealChildren<HTMLDivElement>();
+  const rightRail = useRevealChildren<HTMLDivElement>();
+
   return (
     <div className="mx-auto w-full max-w-[1160px] px-5 sm:px-10">
       {/* The 1px middle column is the ruling itself — a real divider that runs
           the full height of the page rather than a border on either panel. */}
       <div className="grid lg:grid-cols-[1fr_1px_minmax(360px,430px)]">
         {/* ────────── Left ────────── */}
-        <div className="flex flex-col gap-11 py-10 lg:py-12 lg:pr-12">
+        {/* The dashboard lays out its own columns rather than using `Page`, so
+            the entrance and scroll-reveal behaviour is attached per column —
+            revealing the columns themselves would animate the layout instead
+            of its contents. */}
+        <div ref={leftColumn} className="flex flex-col gap-11 py-10 lg:py-12 lg:pr-12">
           {/* Countdown */}
-          <section className="marginal animate-in">
+          <section className="marginal">
             <div className="slab mb-4">Diēs ad exāmen · Days to the exam</div>
             <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
               <div
@@ -258,7 +266,7 @@ export default function Dashboard({
         <div className="hidden lg:block" style={{ background: 'var(--rule)' }} />
 
         {/* ────────── Right ────────── */}
-        <div className="flex flex-col gap-8 border-t py-10 lg:border-t-0 lg:py-12 lg:pl-10" style={{ borderColor: 'var(--rule)' }}>
+        <div ref={rightRail} className="flex flex-col gap-8 border-t py-10 lg:border-t-0 lg:py-12 lg:pl-10" style={{ borderColor: 'var(--rule)' }}>
           {/* Streak */}
           <div
             className="flex items-baseline gap-4 border-b pb-6"

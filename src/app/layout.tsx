@@ -58,15 +58,28 @@ export const viewport: Viewport = {
 };
 
 /**
- * Applies the stored theme before first paint so there is no flash of the
- * wrong palette. Kept tiny and inlined deliberately.
+ * Runs before first paint. Two jobs, both of which have to happen before
+ * anything is drawn or the reader sees a flash of the wrong thing.
+ *
+ * 1. Applies the stored theme, so there is no flash of the wrong palette.
+ * 2. Sets `data-motion` when JS is running and the reader has not asked for
+ *    reduced motion. Every entrance and scroll-reveal rule in globals.css is
+ *    gated on that attribute, so anything that starts hidden only ever does
+ *    so when something is guaranteed to be there to reveal it. No script, a
+ *    script that throws, or reduced motion, and the rules simply never
+ *    apply — the page renders plainly, fully visible.
  */
-const themeScript = `
+const bootScript = `
 (function () {
   try {
     var t = localStorage.getItem('ap-latin-theme');
     if (t === 'light' || t === 'dark') {
       document.documentElement.setAttribute('data-theme', t);
+    }
+  } catch (e) {}
+  try {
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      document.documentElement.setAttribute('data-motion', 'on');
     }
   } catch (e) {}
 })();
@@ -95,7 +108,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       className={`${ebGaramond.variable} ${literata.variable} ${inter.variable} ${italianno.variable}`}
     >
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <script dangerouslySetInnerHTML={{ __html: bootScript }} />
       </head>
       <body>
         <a href="#main" className="skip-link">

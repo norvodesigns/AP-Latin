@@ -16,6 +16,7 @@ import {
   type CorpusIndex,
 } from '@/data/scansionCorpus';
 import { Page, PageHeader, Empty, Roman, SourceNote } from '@/components/ui';
+import { useRevealChildren } from '@/hooks/useRevealChildren';
 import type { ScansionLine, ScannedSyllable } from '@/data/types';
 
 type Mark = 'long' | 'short' | null;
@@ -97,6 +98,9 @@ function sample<T>(items: T[]): T | null {
 }
 
 export default function ScansionLab() {
+  // Declared with the other hooks: this component returns early while the
+  // corpus loads, and a hook after that would not run on every render.
+  const content = useRevealChildren<HTMLDivElement>();
   const markStudied = useStore((s) => s.markStudied);
   const scansionAttempts = useStore((s) => s.scansionAttempts);
   const recordScansion = useStore((s) => s.recordScansion);
@@ -452,7 +456,9 @@ export default function ScansionLab() {
         </div>
       </div>
 
-      <div className="px-5 py-8 sm:px-10 sm:py-10">
+      {/* Scansion builds its own toolbar-plus-content layout rather than
+          using `Page`, so the reveal ref goes on the content column. */}
+      <div ref={content} className="px-5 py-8 sm:px-10 sm:py-10">
         {showTutorial && <Tutorial />}
 
         {/* ── Where this line came from ── */}
