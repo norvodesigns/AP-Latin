@@ -127,6 +127,21 @@ export interface AiUsageDay {
 }
 
 /** One attempt at scanning a single hexameter, for persistent stats and badges. */
+/**
+ * A line in progress: the marks and foot boundaries a student has set but not
+ * yet checked. Kept so that navigating away from a line and coming back does
+ * not throw the work away — with 6,500 lines it is easy to move around, and
+ * losing a half-scanned line to a stray click is infuriating.
+ */
+export interface ScansionDraft {
+  /** One entry per syllable, including elided ones. */
+  marks: Array<'long' | 'short' | null>;
+  /** Metrical indices after which the student placed a foot boundary. */
+  divisions: number[];
+  /** Set once the line has been checked, so the review state can be restored. */
+  checked?: boolean;
+}
+
 export interface ScansionAttempt {
   id: string;
   lineId: string;
@@ -208,6 +223,8 @@ export interface StoreState {
   recordAiCall: (route: string) => void;
 
   recordScansion: (lineId: string, correct: number, total: number) => void;
+  scansionDrafts: Record<string, ScansionDraft>;
+  saveScansionDraft: (lineId: string, draft: ScansionDraft) => void;
   markStudied: () => void;
   exportJSON: () => string;
   importJSON: (json: string) => { ok: true } | { ok: false; error: string };
@@ -245,6 +262,7 @@ const initialState = {
   studyDays: [] as string[],
   aiUsage: [] as AiUsageDay[],
   scansionAttempts: [] as ScansionAttempt[],
+  scansionDrafts: {} as Record<string, ScansionDraft>,
   wordEncounters: {} as Record<string, WordEncounter>,
 };
 
@@ -465,6 +483,19 @@ export const useStore = create<StoreState>()(
           ].slice(-1000),
         })),
 
+      saveScansionDraft: (lineId, draft) =>
+        set((s) => {
+          // Bound the store: drafts are a convenience, not a record. Keeping
+          // the most recent 300 is far more than anyone revisits, and stops
+          // localStorage growing without limit over a year of study.
+          const next = { ...s.scansionDrafts, [lineId]: draft };
+          const keys = Object.keys(next);
+          if (keys.length > 300) {
+            for (const k of keys.slice(0, keys.length - 300)) delete next[k];
+          }
+          return { scansionDrafts: next };
+        }),
+
       markStudied: () =>
         set((s) => {
           const d = today();
@@ -493,6 +524,7 @@ export const useStore = create<StoreState>()(
             studyDays: s.studyDays,
             aiUsage: s.aiUsage,
             scansionAttempts: s.scansionAttempts,
+            scansionDrafts: s.scansionDrafts,
             wordEncounters: s.wordEncounters,
           },
         };

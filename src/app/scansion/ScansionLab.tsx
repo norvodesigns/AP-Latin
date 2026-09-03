@@ -10,15 +10,63 @@ import {
 } from '@/store/useStore';
 import { AENEID_BOOKS, loadBook, loadIndex, type CorpusIndex } from '@/data/scansionCorpus';
 import { Page, PageHeader, Empty, Roman, SourceNote } from '@/components/ui';
-import type { ScansionLine } from '@/data/types';
+import type { ScansionLine, ScannedSyllable } from '@/data/types';
 
 type Mark = 'long' | 'short' | null;
 
-/** A foot and the syllable indices belonging to it, elisions included. */
-interface Foot {
-  index: number;
-  kind: 'dactyl' | 'spondee';
+/**
+ * A run of syllables between two of the student's foot boundaries. `endsAt` is
+ * the metrical index of its last syllable, which is what a boundary is keyed
+ * on; `closed` means the student has actually ruled a line after it.
+ */
+interface Group {
   syllables: number[];
+  endsAt: number;
+  closed: boolean;
+}
+
+/**
+ * Split the line at the student's boundaries. An elided syllable is carried
+ * along with the foot it sits inside and never counts toward filling it, so a
+ * boundary after a metrical syllable absorbs any elided syllables that follow.
+ */
+function groupsFrom(syllables: ScannedSyllable[], divisions: number[]): Group[] {
+  const cuts = new Set(divisions);
+  const out: Group[] = [];
+  let current: number[] = [];
+  let m = -1;
+
+  for (let i = 0; i < syllables.length; i += 1) {
+    current.push(i);
+    if (syllables[i].elides) continue;
+    m += 1;
+    if (cuts.has(m)) {
+      while (i + 1 < syllables.length && syllables[i + 1].elides) {
+        i += 1;
+        current.push(i);
+      }
+      out.push({ syllables: current, endsAt: m, closed: true });
+      current = [];
+    }
+  }
+  if (current.length) out.push({ syllables: current, endsAt: m, closed: false });
+  return out;
+}
+
+/**
+ * What the student's own marks make this group, if anything. Reading their
+ * work back to them is fair — it is what they would see on paper — whereas
+ * naming the foot before they have marked it would be giving the answer.
+ */
+function footNameFrom(marks: Mark[], group: Group, syllables: ScannedSyllable[]): string | null {
+  const metrical = group.syllables.filter((i) => !syllables[i].elides);
+  if (metrical.some((i) => marks[i] === null)) return null;
+  const shape = metrical.map((i) => marks[i]);
+  if (shape.length === 3 && shape[0] === 'long' && shape[1] === 'short' && shape[2] === 'short') {
+    return 'Dactyl';
+  }
+  if (shape.length === 2 && shape[0] === 'long' && shape[1] === 'long') return 'Spondee';
+  return null;
 }
 
 /**
@@ -40,6 +88,8 @@ export default function ScansionLab() {
   const markStudied = useStore((s) => s.markStudied);
   const scansionAttempts = useStore((s) => s.scansionAttempts);
   const recordScansion = useStore((s) => s.recordScansion);
+  const scansionDrafts = useStore((s) => s.scansionDrafts);
+  const saveScansionDraft = useStore((s) => s.saveScansionDraft);
   const studyDays = useStore((s) => s.studyDays);
 
   const [book, setBook] = useState<number>(1);
@@ -50,6 +100,7 @@ export default function ScansionLab() {
 
   const [index, setIndex] = useState(0);
   const [marks, setMarks] = useState<Mark[]>([]);
+  const [divisions, setDivisions] = useState<number[]>([]);
   const [checked, setChecked] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
   const [showTutorial, setShowTutorial] = useState(false);
@@ -87,17 +138,43 @@ export default function ScansionLab() {
     };
   }, [book]);
 
+  /*
+   * Restore whatever the student left on this line. Coming back to a line and
+   * finding your work gone is the kind of small betrayal that stops people
+   * moving around the corpus at all.
+   */
   useEffect(() => {
     if (!line) return;
-    setMarks(new Array(line.syllables.length).fill(null));
-    setChecked(false);
+    const draft = scansionDrafts[line.id];
+    if (draft && draft.marks.length === line.syllables.length) {
+      setMarks(draft.marks);
+      setDivisions(draft.divisions);
+      setChecked(Boolean(draft.checked));
+    } else {
+      setMarks(new Array(line.syllables.length).fill(null));
+      setDivisions([]);
+      setChecked(false);
+    }
     setSelected(null);
-  }, [index, line]);
+    // Reading the draft store here would re-run this on every keystroke.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [line?.id]);
 
   useEffect(() => {
     markStudied();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /* Save work in progress, debounced so marking a syllable is not a write. */
+  useEffect(() => {
+    if (!line || checked) return;
+    if (marks.every((m) => m === null) && divisions.length === 0) return;
+    const t = window.setTimeout(
+      () => saveScansionDraft(line.id, { marks, divisions }),
+      500,
+    );
+    return () => window.clearTimeout(t);
+  }, [line, marks, divisions, checked, saveScansionDraft]);
 
   const stats = useMemo(() => scansionStatsByLine(scansionAttempts), [scansionAttempts]);
   const corpusTotal = corpus?.total ?? 0;
@@ -119,34 +196,23 @@ export default function ScansionLab() {
   );
 
   /**
-   * Group syllables into feet. An elided syllable is carried along with the
-   * foot it sits inside but never counts toward filling it, which is what
-   * lets the brackets line up with what a reader actually hears.
+   * The foot divisions the STUDENT has drawn, as metrical indices after which
+   * a boundary falls. This is deliberately not derived from the answer: the
+   * app used to draw the feet itself and label them "Dactyl"/"Spondee", which
+   * handed over half the exercise. Dividing the line is the other half of
+   * scanning, so the student does it.
    */
-  const feet = useMemo<Foot[]>(() => {
-    if (!line) return [];
-    const out: Foot[] = [];
-    let footIdx = 0;
-    let need = line.feet[0] === 'dactyl' ? 3 : 2;
-    let filled = 0;
-    let current: Foot | null = null;
+  const groups = useMemo(() => groupsFrom(line?.syllables ?? [], divisions), [line, divisions]);
 
-    for (let i = 0; i < line.syllables.length; i += 1) {
-      if (!current) {
-        const kind = line.feet[footIdx] ?? 'spondee';
-        current = { index: footIdx, kind, syllables: [] };
-      }
-      current.syllables.push(i);
-      if (!line.syllables[i].elides) filled += 1;
-      if (filled === need) {
-        out.push(current);
-        current = null;
-        footIdx += 1;
-        filled = 0;
-        need = line.feet[footIdx] === 'dactyl' ? 3 : 2;
-      }
+  /** The divisions the metre actually requires — used only after checking. */
+  const correctDivisions = useMemo(() => {
+    if (!line) return [];
+    const out: number[] = [];
+    let acc = -1;
+    for (const f of line.feet.slice(0, -1)) {
+      acc += f === 'dactyl' ? 3 : 2;
+      out.push(acc);
     }
-    if (current) out.push(current);
     return out;
   }, [line]);
 
@@ -251,10 +317,22 @@ export default function ScansionLab() {
 
   const scored = checked ? metricalIdx.filter(isCorrect).length : 0;
 
+  /**
+   * Both halves count. Getting every quantity right but dividing the line
+   * wrongly is not a scanned line, so the foot divisions are scored alongside
+   * the syllables rather than treated as decoration.
+   */
   function check() {
     setChecked(true);
     setSelected(null);
-    recordScansion(active.id, metricalIdx.filter(isCorrect).length, metricalIdx.length);
+    const syllablesRight = metricalIdx.filter(isCorrect).length;
+    const boundariesRight = divisions.filter((d) => correctDivisions.includes(d)).length;
+    recordScansion(
+      active.id,
+      syllablesRight + boundariesRight,
+      metricalIdx.length + correctDivisions.length,
+    );
+    saveScansionDraft(active.id, { marks, divisions, checked: true });
   }
 
   function next() {
@@ -268,14 +346,26 @@ export default function ScansionLab() {
   }
 
   const allMarked = metricalIdx.every((i) => marks[i] !== null);
+  const dividedRight = divisions.length === 5;
+  const ready = allMarked && dividedRight;
+
   /** The principal break — penthemimeral where there is one, else the first. */
   const mainCaesura = active.caesurae.length
     ? [active.caesurae.find((c) => c.type === 'penthemimeral') ?? active.caesurae[0]]
     : [];
-  /** The first foot still missing a mark — the one the brackets call out. */
-  const pendingFoot = feet.find((f) =>
-    f.syllables.some((i) => !active.syllables[i].elides && marks[i] === null),
-  );
+
+  /** Toggle a foot boundary after a metrical syllable. */
+  function toggleDivision(m: number) {
+    if (checked) return;
+    setDivisions((prev) =>
+      prev.includes(m) ? prev.filter((x) => x !== m) : [...prev, m].sort((a, b) => a - b),
+    );
+    setSelected(null);
+  }
+
+  const divisionsRight =
+    divisions.length === correctDivisions.length &&
+    divisions.every((d, i) => d === correctDivisions[i]);
 
   return (
     <div className="mx-auto w-full max-w-[1160px]">
@@ -308,8 +398,21 @@ export default function ScansionLab() {
         {/* ── Book picker ──
             Six thousand lines cannot be chips, so the book is the unit of
             navigation and the adaptive order handles which line comes next. */}
-        <div className="mb-9 flex flex-wrap items-center gap-x-2.5 gap-y-2">
-          <span className="slab-sm mr-2">Aeneid</span>
+        <div className="mb-9">
+          <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+            <span className="slab">Aeneid · book</span>
+            <span
+              style={{
+                fontFamily: 'var(--font-latin)',
+                fontSize: '1rem',
+                color: 'var(--fg-muted)',
+              }}
+            >
+              Lines are served weakest-first and never repeat once mastered. Pick a book to
+              practise a particular one.
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2">
           {AENEID_BOOKS.map((b) => {
             const done = mounted ? masteredInBook(stats, b) : 0;
             const total = corpus?.books.find((x) => x.book === b)?.count ?? 0;
@@ -323,182 +426,232 @@ export default function ScansionLab() {
                 className={`chip ${b === book ? 'chip-on' : complete ? 'chip-gilt' : ''}`}
                 title={
                   total
-                    ? `Book ${b} — ${done} of ${total} lines mastered`
-                    : `Book ${b}`
+                    ? `Aeneid, book ${b} — ${done} of ${total} lines mastered`
+                    : `Aeneid, book ${b}`
                 }
               >
                 <Roman value={b} />
+                {done > 0 && (
+                  <span
+                    className="slab-sm"
+                    style={{ color: complete ? 'var(--gilt)' : 'var(--fg-faint)' }}
+                  >
+                    {done}
+                  </span>
+                )}
               </button>
             );
           })}
-          <button type="button" className="slab-sm ml-2" onClick={() => advance()}>
-            ↯ Weakest line
-          </button>
+            <button type="button" className="slab-sm ml-2" onClick={() => advance()}>
+              ↯ Weakest line
+            </button>
+          </div>
         </div>
 
-        {/* ── The line ── */}
-        <div className="flex flex-col items-center gap-14 py-6 sm:py-10">
-          <div className="flex w-full flex-wrap items-start justify-center gap-x-7 gap-y-10">
-            {feet.map((foot) => {
-              const isPending = pendingFoot?.index === foot.index;
-              const untouched = foot.syllables.every(
-                (i) => active.syllables[i].elides || marks[i] === null,
+        {/* ── The line ──
+            Syllables run in one wrapping row. Between each pair sits a hit
+            area: hovering ghosts a boundary in, clicking rules it. The
+            brackets and foot names below are drawn from the student's own
+            divisions and marks, never from the answer. */}
+        <div className="flex flex-col items-center gap-12 py-6 sm:py-10">
+          <div className="flex w-full flex-wrap items-start justify-center gap-y-10">
+            {groups.map((group, gi) => {
+              /*
+               * The end of the line is a foot boundary too — the student never
+               * draws it. So the trailing group counts as a foot as soon as the
+               * other five boundaries are in, and is only "undivided" before
+               * that.
+               */
+              const isLast = gi === groups.length - 1;
+              const isFoot = group.closed || (isLast && divisions.length === 5);
+              const name = footNameFrom(marks, group, active.syllables);
+              const complete = group.syllables.every(
+                (i) => active.syllables[i].elides || marks[i] !== null,
               );
+              const boundaryRight =
+                checked && group.closed ? correctDivisions.includes(group.endsAt) : null;
+
               return (
-                <div
-                  key={foot.index}
-                  className="flex flex-col items-center transition-opacity duration-300"
-                  style={{ opacity: !checked && untouched && !isPending ? 0.6 : 1 }}
-                >
-                  <div className="flex items-end gap-3">
-                    {foot.syllables.map((i) => {
-                      const syl = active.syllables[i];
-                      const state = result?.[i];
-                      const mark = marks[i];
-                      const isSelected = selected === i;
-                      // Before checking, only the main caesura is drawn: a line
-                      // marked with every possible break is unreadable, and the
-                      // secondary ones are a review point rather than a cue.
-                      const caesura = (checked ? active.caesurae : mainCaesura).find(
-                        (c) => metricalIdx[c.afterSyllable] === i,
-                      );
+                <div key={gi} className="flex items-stretch">
+                  <div className="flex min-w-0 flex-col items-center">
+                    <div
+                      className={`flex items-end ${group.closed ? '' : 'flex-wrap justify-center'}`}
+                    >
+                      {group.syllables.map((i, within) => {
+                        const syl = active.syllables[i];
+                        const state = result?.[i];
+                        const mark = marks[i];
+                        const isSelected = selected === i;
+                        // Before checking only the main caesura is drawn: a line
+                        // marked with every possible break is unreadable, and the
+                        // secondary ones are a review point rather than a cue.
+                        const caesura = (checked ? active.caesurae : mainCaesura).find(
+                          (c) => metricalIdx[c.afterSyllable] === i,
+                        );
 
-                      let color = 'var(--fg)';
-                      if (checked && !syl.elides) {
-                        color =
-                          state === 'ok'
-                            ? 'var(--correct)'
-                            : state === 'blank'
-                              ? 'var(--fg-faint)'
-                              : 'var(--incorrect)';
-                      }
+                        // The metrical index of this syllable, for boundaries.
+                        const m = metricalIdx.indexOf(i);
+                        const isLastInGroup = within === group.syllables.length - 1;
+                        const canDivide =
+                          !checked && !syl.elides && m >= 0 && m < metricalIdx.length - 1;
 
-                      return (
-                        <div key={i} className="flex items-end gap-3">
-                          <div className="relative flex flex-col items-center">
-                            {/* Quantity mark, hanging above the syllable */}
-                            <span
-                              aria-hidden="true"
-                              key={`${mark}-${checked}`}
-                              style={{
-                                height: '26px',
-                                fontFamily: 'var(--font-sans)',
-                                fontSize: '1.375rem',
-                                lineHeight: 1,
-                                color: isSelected && !mark ? 'var(--fg-faint)' : color === 'var(--fg)' ? 'var(--accent)' : color,
-                                animation: mark ? 'mark-drop 240ms var(--ease) both' : undefined,
-                              }}
-                            >
-                              {syl.elides
-                                ? ''
-                                : mark === 'long'
-                                  ? '—'
-                                  : mark === 'short'
-                                    ? '˘'
-                                    : isSelected
-                                      ? '?'
-                                      : ''}
-                            </span>
+                        let color = 'var(--fg)';
+                        if (checked && !syl.elides) {
+                          color =
+                            state === 'ok'
+                              ? 'var(--correct)'
+                              : state === 'blank'
+                                ? 'var(--fg-faint)'
+                                : 'var(--incorrect)';
+                        }
 
-                            <button
-                              type="button"
-                              onClick={() => setSelected(isSelected ? null : i)}
-                              disabled={syl.elides || checked}
-                              aria-label={`${syl.text}${syl.elides ? ', elided' : ''}${
-                                mark ? `, marked ${mark}` : ''
-                              }`}
-                              aria-pressed={isSelected}
-                              className="squish transition-colors duration-200"
-                              style={{
-                                fontFamily: 'var(--font-latin)',
-                                fontSize: 'calc(2.125rem * var(--ls))',
-                                lineHeight: 1.2,
-                                color: syl.elides ? 'var(--fg-faint)' : color,
-                                textDecoration: syl.elides ? 'line-through' : undefined,
-                                background: isSelected ? 'var(--redtint)' : 'transparent',
-                                boxShadow: isSelected ? '0 3px 0 var(--accent)' : undefined,
-                                borderRadius: '6px',
-                                padding: '0 5px',
-                                cursor: syl.elides || checked ? 'default' : 'pointer',
-                              }}
-                            >
-                              {syl.text}
-                            </button>
+                        return (
+                          <div key={i} className="flex items-stretch">
+                            <div className="relative flex flex-col items-center px-1.5">
+                              {/* Quantity mark, hanging above the syllable */}
+                              <span
+                                aria-hidden="true"
+                                key={`${mark}-${checked}`}
+                                style={{
+                                  height: '26px',
+                                  fontFamily: 'var(--font-sans)',
+                                  fontSize: '1.375rem',
+                                  lineHeight: 1,
+                                  color:
+                                    isSelected && !mark
+                                      ? 'var(--fg-faint)'
+                                      : color === 'var(--fg)'
+                                        ? 'var(--accent)'
+                                        : color,
+                                  animation: mark ? 'mark-drop 240ms var(--ease) both' : undefined,
+                                }}
+                              >
+                                {syl.elides
+                                  ? ''
+                                  : mark === 'long'
+                                    ? '—'
+                                    : mark === 'short'
+                                      ? '˘'
+                                      : isSelected
+                                        ? '?'
+                                        : ''}
+                              </span>
 
-                            {isSelected && !checked && (
-                              <div className="chooser" role="group" aria-label="Mark this syllable">
-                                <button type="button" onClick={() => setMark(i, 'long')}>
-                                  <span
-                                    aria-hidden="true"
-                                    style={{
-                                      fontFamily: 'var(--font-sans)',
-                                      fontSize: '1.25rem',
-                                      lineHeight: 1,
-                                      color: 'var(--fg)',
-                                    }}
-                                  >
-                                    —
-                                  </span>
-                                  <span className="slab-sm">Longa</span>
-                                </button>
-                                <button type="button" onClick={() => setMark(i, 'short')}>
-                                  <span
-                                    aria-hidden="true"
-                                    style={{
-                                      fontFamily: 'var(--font-sans)',
-                                      fontSize: '1.25rem',
-                                      lineHeight: 1,
-                                      color: 'var(--fg)',
-                                    }}
-                                  >
-                                    ˘
-                                  </span>
-                                  <span className="slab-sm">Brevis</span>
-                                </button>
-                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setSelected(isSelected ? null : i)}
+                                disabled={syl.elides || checked}
+                                aria-label={`${syl.text}${syl.elides ? ', elided' : ''}${
+                                  mark ? `, marked ${mark}` : ''
+                                }`}
+                                aria-pressed={isSelected}
+                                className="squish transition-colors duration-200"
+                                style={{
+                                  fontFamily: 'var(--font-latin)',
+                                  fontSize: 'calc(2.125rem * var(--ls))',
+                                  lineHeight: 1.2,
+                                  color: syl.elides ? 'var(--fg-faint)' : color,
+                                  textDecoration: syl.elides ? 'line-through' : undefined,
+                                  background: isSelected ? 'var(--redtint)' : 'transparent',
+                                  boxShadow: isSelected ? '0 3px 0 var(--accent)' : undefined,
+                                  borderRadius: '6px',
+                                  padding: '0 5px',
+                                  cursor: syl.elides || checked ? 'default' : 'pointer',
+                                }}
+                              >
+                                {syl.text}
+                              </button>
+
+                              {isSelected && !checked && (
+                                <div className="chooser" role="group" aria-label="Mark this syllable">
+                                  <button type="button" onClick={() => setMark(i, 'long')}>
+                                    <span
+                                      aria-hidden="true"
+                                      style={{
+                                        fontFamily: 'var(--font-sans)',
+                                        fontSize: '1.25rem',
+                                        lineHeight: 1,
+                                        color: 'var(--fg)',
+                                      }}
+                                    >
+                                      —
+                                    </span>
+                                    <span className="slab-sm">Longa</span>
+                                  </button>
+                                  <button type="button" onClick={() => setMark(i, 'short')}>
+                                    <span
+                                      aria-hidden="true"
+                                      style={{
+                                        fontFamily: 'var(--font-sans)',
+                                        fontSize: '1.25rem',
+                                        lineHeight: 1,
+                                        color: 'var(--fg)',
+                                      }}
+                                    >
+                                      ˘
+                                    </span>
+                                    <span className="slab-sm">Brevis</span>
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+
+                            {caesura && (
+                              <span
+                                className="self-end px-0.5"
+                                style={{
+                                  fontFamily: 'var(--font-sans)',
+                                  fontSize: '1.875rem',
+                                  lineHeight: 1.2,
+                                  color: checked ? 'var(--accent)' : 'var(--redborder)',
+                                }}
+                                title={`${caesura.type} caesura`}
+                              >
+                                ‖
+                              </span>
+                            )}
+
+                            {/* A place to rule a foot boundary. */}
+                            {!isLastInGroup && canDivide && (
+                              <button
+                                type="button"
+                                className="foot-gap"
+                                onClick={() => toggleDivision(m)}
+                                title="Divide the feet here"
+                                aria-label={`Place a foot boundary after ${syl.text}`}
+                              />
                             )}
                           </div>
+                        );
+                      })}
+                    </div>
 
-                          {caesura && (
-                            <span
-                              className="self-end"
-                              style={{
-                                fontFamily: 'var(--font-sans)',
-                                fontSize: '1.875rem',
-                                lineHeight: 1.2,
-                                color: checked ? 'var(--accent)' : 'var(--redborder)',
-                              }}
-                              title={`${caesura.type} caesura`}
-                            >
-                              ‖
-                            </span>
-                          )}
-                        </div>
-                      );
-                    })}
+                    {/* The bracket the student has drawn under this foot */}
+                    <div
+                      className={`foot-bracket ${!isFoot ? 'foot-bracket-open' : ''} ${
+                        boundaryRight === true ? 'foot-bracket-right' : ''
+                      } ${boundaryRight === false ? 'foot-bracket-wrong' : ''}`}
+                      aria-hidden="true"
+                    />
+                    <span
+                      className="slab-sm mt-2"
+                      style={{ color: name ? undefined : 'var(--fg-faint)' }}
+                    >
+                      {isFoot ? (name ?? (complete ? 'not a foot' : '—')) : 'undivided'}
+                    </span>
                   </div>
 
-                  {/* The bracket beneath the foot */}
-                  <div
-                    className={`foot-bracket ${isPending ? 'foot-bracket-pending' : ''} ${
-                      !checked && untouched && !isPending ? 'foot-bracket-idle' : ''
-                    }`}
-                    aria-hidden="true"
-                  />
-                  <span
-                    className="slab-sm mt-2"
-                    style={{ color: isPending ? 'var(--accent)' : undefined }}
-                  >
-                    {checked
-                      ? foot.kind === 'dactyl'
-                        ? 'Dactyl'
-                        : 'Spondee'
-                      : isPending
-                        ? `Foot ${foot.index + 1} · pending`
-                        : untouched
-                          ? '—'
-                          : `Foot ${foot.index + 1}`}
-                  </span>
+                  {/* The boundary itself — click to remove. */}
+                  {group.closed && !isLast && (
+                    <button
+                      type="button"
+                      className="foot-rule"
+                      onClick={() => toggleDivision(group.endsAt)}
+                      disabled={checked}
+                      title={checked ? undefined : 'Remove this foot boundary'}
+                      aria-label="Remove this foot boundary"
+                    />
+                  )}
                 </div>
               );
             })}
@@ -506,25 +659,42 @@ export default function ScansionLab() {
 
           {/* ── Controls ── */}
           {!checked ? (
-            <div className="flex flex-wrap items-center justify-center gap-4">
-              <button type="button" className="btn btn-primary" onClick={check} disabled={!allMarked}>
-                Check my scansion
-              </button>
-              <button
-                type="button"
-                className="btn"
-                onClick={() => {
-                  setMarks(new Array(active.syllables.length).fill(null));
-                  setSelected(null);
-                }}
-              >
-                Clear
-              </button>
-              <span className="slab-sm">
-                {allMarked
-                  ? 'every syllable marked'
-                  : `${metricalIdx.filter((i) => marks[i] === null).length} still unmarked`}
-              </span>
+            <div className="flex flex-col items-center gap-4">
+              <div className="flex flex-wrap items-center justify-center gap-4">
+                <button type="button" className="btn btn-primary" onClick={check} disabled={!ready}>
+                  Check my scansion
+                </button>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => {
+                    setMarks(new Array(active.syllables.length).fill(null));
+                    setDivisions([]);
+                    setSelected(null);
+                  }}
+                >
+                  Clear
+                </button>
+              </div>
+              {/* Two counters, because there are two halves to the task. */}
+              <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1">
+                <span
+                  className="slab-sm"
+                  style={{ color: allMarked ? 'var(--gilt)' : undefined }}
+                >
+                  {allMarked
+                    ? '✓ every syllable marked'
+                    : `${metricalIdx.filter((i) => marks[i] === null).length} syllables unmarked`}
+                </span>
+                <span
+                  className="slab-sm"
+                  style={{ color: dividedRight ? 'var(--gilt)' : undefined }}
+                >
+                  {dividedRight
+                    ? '✓ six feet'
+                    : `${divisions.length} of 5 divisions — click between syllables`}
+                </span>
+              </div>
             </div>
           ) : (
             <Verdict
@@ -532,6 +702,9 @@ export default function ScansionLab() {
               marks={marks}
               metricalIdx={metricalIdx}
               scored={scored}
+              divisionsRight={divisionsRight}
+              divisionCount={correctDivisions.length}
+              divisionsHit={divisions.filter((d) => correctDivisions.includes(d)).length}
               adaptive={adaptive}
               onNext={next}
               onRetry={() => {
@@ -667,6 +840,9 @@ function Verdict({
   marks,
   metricalIdx,
   scored,
+  divisionsRight,
+  divisionCount,
+  divisionsHit,
   adaptive,
   onNext,
   onRetry,
@@ -675,6 +851,9 @@ function Verdict({
   marks: Mark[];
   metricalIdx: number[];
   scored: number;
+  divisionsRight: boolean;
+  divisionCount: number;
+  divisionsHit: number;
   adaptive: boolean;
   onNext: () => void;
   onRetry: () => void;
@@ -691,6 +870,14 @@ function Verdict({
           {scored} / {metricalIdx.length}
         </span>
         <span className="slab">syllables correct</span>
+        <span
+          className="slab"
+          style={{ color: divisionsRight ? 'var(--gilt)' : 'var(--accent)' }}
+        >
+          {divisionsRight
+            ? '· feet divided correctly'
+            : `· ${divisionsHit} of ${divisionCount} divisions right`}
+        </span>
         <div className="ml-auto flex flex-wrap gap-2">
           {active.feet.map((f, i) => (
             <span

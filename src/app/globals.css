@@ -750,9 +750,73 @@ h1, h2, h3, h4 {
     margin-top: 10px;
     border: 1px solid var(--rule2);
     border-top: none;
+    border-radius: 0 0 var(--r-sm) var(--r-sm);
+    transition: border-color var(--dur-2) var(--ease-io);
   }
-  .foot-bracket-pending { border-color: var(--accent); }
-  .foot-bracket-idle { border-style: dashed; }
+  .foot-bracket-open { border-color: transparent; border-bottom-style: dashed; border-bottom-color: var(--hair); }
+  .foot-bracket-right { border-color: var(--correct); }
+  .foot-bracket-wrong { border-color: var(--incorrect); }
+
+  /* — Dividing the line into feet ———————————————————————————————————
+     The student draws the foot boundaries themselves, the way you would rule
+     them on paper. Between any two syllables sits a hit area; hovering ghosts
+     a bar in, clicking sets it. It is the whole second half of scanning, so
+     the app must not do it for them. */
+
+  .foot-gap {
+    position: relative;
+    align-self: stretch;
+    width: 18px;
+    flex: none;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+  }
+  .foot-gap::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 4px;
+    bottom: 4px;
+    width: 2px;
+    border-radius: var(--r-pill);
+    background: var(--redborder);
+    transform: translateX(-50%) scaleY(0);
+    transform-origin: center;
+    transition: transform var(--dur-2) var(--ease);
+  }
+  .foot-gap:hover::before,
+  .foot-gap:focus-visible::before { transform: translateX(-50%) scaleY(1); }
+  .foot-gap:disabled { cursor: default; }
+  .foot-gap:disabled::before { transform: translateX(-50%) scaleY(0); }
+
+  /* A boundary the student has placed. */
+  .foot-rule {
+    position: relative;
+    align-self: stretch;
+    width: 18px;
+    flex: none;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+  }
+  .foot-rule::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    border-radius: var(--r-pill);
+    background: var(--accent);
+    transform: translateX(-50%);
+    animation: rule-in var(--dur-3) var(--ease-spring) both;
+  }
+  .foot-rule:hover::before { background: var(--incorrect); opacity: 0.55; }
+  .foot-rule:disabled { cursor: default; }
+  .foot-rule:disabled:hover::before { opacity: 1; }
 
   /* Verse gets a red margin rule and hanging line numbers. */
   .verse-block {
@@ -892,6 +956,12 @@ h1, h2, h3, h4 {
 @keyframes mark-drop {
   from { opacity: 0; transform: translateY(5px); }
   to { opacity: 1; transform: none; }
+}
+
+/* A foot boundary is drawn down through the line, like ruling it on paper. */
+@keyframes rule-in {
+  from { transform: translateX(-50%) scaleY(0); }
+  to { transform: translateX(-50%) scaleY(1); }
 }
 
 .sr-only {
