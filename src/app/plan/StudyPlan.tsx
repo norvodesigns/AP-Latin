@@ -6,7 +6,7 @@ import { useStore, daysUntilExam, dueVocab, EXAM_DATE } from '@/store/useStore';
 import { requiredPassages } from '@/data/passages';
 import { coreVocabulary } from '@/data/vocabulary';
 import { translationDrills } from '@/data/translation';
-import { Page, PageHeader, Card, Badge, Meter } from '@/components/ui';
+import { Page, PageHeader, Section, Panel, CalledOut, Meter, SourceNote } from '@/components/ui';
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -80,6 +80,26 @@ function buildPhases(days: number): Phase[] {
   ];
 }
 
+/** A bulleted target line, ruled rather than boxed. */
+function Target({ children }: { children: React.ReactNode }) {
+  return (
+    <li
+      className="flex gap-2.5"
+      style={{
+        fontFamily: 'var(--font-latin)',
+        fontSize: '1rem',
+        lineHeight: 1.6,
+        color: 'var(--ink2)',
+      }}
+    >
+      <span aria-hidden="true" style={{ color: 'var(--accent)' }}>
+        ·
+      </span>
+      <span>{children}</span>
+    </li>
+  );
+}
+
 export default function StudyPlan() {
   const plan = useStore((s) => s.studyPlan);
   const setStudyPlan = useStore((s) => s.setStudyPlan);
@@ -121,38 +141,53 @@ export default function StudyPlan() {
         lede="Built backwards from exam day and from what you have actually covered. Adjust the settings and everything below recalculates."
       />
 
-      {/* today */}
-      <Card className="mb-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
+      <CalledOut
+        rubric={`Today${mounted && !todayIsActive ? ' · a rest day in your schedule' : ''}`}
+        className="mb-12"
+      >
+        <div className="flex flex-wrap items-start justify-between gap-5">
           <div className="min-w-0">
-            <div className="eyebrow mb-1">
-              Today {mounted && !todayIsActive && '· a rest day in your schedule'}
-            </div>
-            <h2 style={{ fontSize: '1.125rem' }}>
-              {!mounted ? '…' : studiedToday ? 'Done for today' : todayIsActive ? `${plan.minutesPerDay} minutes` : 'Rest day'}
+            <h2 style={{ fontSize: '1.375rem', lineHeight: 1.25 }}>
+              {!mounted
+                ? '…'
+                : studiedToday
+                  ? 'Done for today'
+                  : todayIsActive
+                    ? `${plan.minutesPerDay} minutes`
+                    : 'Rest day'}
             </h2>
             {mounted && todayIsActive && !studiedToday && (
-              <ul className="mt-2.5 flex flex-col gap-1 text-sm" style={{ color: 'var(--fg-muted)' }}>
-                {due > 0 && <li>• Clear {Math.min(due, 40)} vocabulary card{due === 1 ? '' : 's'} ({Math.min(15, Math.round(plan.minutesPerDay * 0.35))} min)</li>}
-                <li>• {currentPhase.focus}</li>
-                {read < requiredPassages.length && <li>• Read or re-read one syllabus passage</li>}
+              <ul className="mt-4 flex flex-col gap-1.5 pl-0" style={{ listStyle: 'none' }}>
+                {due > 0 && (
+                  <Target>
+                    Clear {Math.min(due, 40)} vocabulary card{due === 1 ? '' : 's'} (
+                    {Math.min(15, Math.round(plan.minutesPerDay * 0.35))} min)
+                  </Target>
+                )}
+                <Target>{currentPhase.focus}</Target>
+                {read < requiredPassages.length && <Target>Read or re-read one syllabus passage</Target>}
               </ul>
             )}
           </div>
-          <div className="flex shrink-0 gap-2">
-            {due > 0 && <Link href="/vocab" className="btn btn-primary">Vocabulary ({due})</Link>}
-            <Link href="/read" className="btn">Reading Room</Link>
+          <div className="flex shrink-0 flex-wrap gap-2.5">
+            {due > 0 && (
+              <Link href="/vocab" className="btn btn-primary">
+                Vocabulary ({due})
+              </Link>
+            )}
+            <Link href="/read" className="btn">
+              Reading Room
+            </Link>
           </div>
         </div>
-      </Card>
+      </CalledOut>
 
-      {/* settings */}
-      <Card className="mb-6">
-        <h2 className="mb-3" style={{ fontSize: '1rem' }}>Your schedule</h2>
-        <div className="grid gap-5 sm:grid-cols-2">
+      <Section title="Your schedule" className="mb-12">
+        <div className="grid gap-8 sm:grid-cols-2">
           <label>
-            <span className="mb-1.5 block text-sm" style={{ color: 'var(--fg-muted)' }}>
-              Minutes per study day: <strong style={{ color: 'var(--fg)' }}>{plan.minutesPerDay}</strong>
+            <span className="slab-sm mb-3 block">
+              Minutes per study day —{' '}
+              <strong style={{ color: 'var(--accent)' }}>{plan.minutesPerDay}</strong>
             </span>
             <input
               type="range"
@@ -165,9 +200,10 @@ export default function StudyPlan() {
               style={{ accentColor: 'var(--accent)' }}
             />
           </label>
+
           <div>
-            <span className="mb-1.5 block text-sm" style={{ color: 'var(--fg-muted)' }}>Study days</span>
-            <div className="flex flex-wrap gap-1">
+            <span className="slab-sm mb-3 block">Study days</span>
+            <div className="flex flex-wrap gap-1.5">
               {DAY_NAMES.map((d, i) => {
                 const on = plan.activeDays.includes(i);
                 return (
@@ -182,12 +218,7 @@ export default function StudyPlan() {
                           : [...plan.activeDays, i].sort(),
                       })
                     }
-                    className="border px-2 py-1 text-xs transition-colors"
-                    style={{
-                      background: on ? 'var(--accent)' : 'transparent',
-                      borderColor: on ? 'var(--accent)' : 'var(--rule)',
-                      color: on ? 'var(--accent-fg)' : 'var(--fg-faint)',
-                    }}
+                    className={on ? 'chip chip-on squish' : 'chip squish'}
                   >
                     {d}
                   </button>
@@ -198,79 +229,140 @@ export default function StudyPlan() {
         </div>
 
         {mounted && (
-          <p className="mt-4 border-t pt-3.5 text-sm" style={{ borderColor: 'var(--rule)', color: 'var(--fg-muted)' }}>
+          <p
+            className="measure-wide mt-8 border-t pt-6"
+            style={{
+              borderColor: 'var(--rule)',
+              fontFamily: 'var(--font-latin)',
+              fontSize: '1.0625rem',
+              lineHeight: 1.7,
+              color: 'var(--ink2)',
+            }}
+          >
             That is roughly{' '}
-            <strong style={{ color: 'var(--fg)' }}>
-              {Math.round((days / 7) * activeDaysPerWeek * plan.minutesPerDay / 60).toLocaleString()} hours
+            <strong style={{ color: 'var(--accent)' }}>
+              {Math.round((days / 7) * activeDaysPerWeek * plan.minutesPerDay / 60).toLocaleString()}{' '}
+              hours
             </strong>{' '}
             between now and the exam. To finish the required reading you need about{' '}
-            <strong style={{ color: 'var(--fg)' }}>{passagesPerWeek < 0.1 ? 'no' : passagesPerWeek.toFixed(1)}</strong>{' '}
+            <strong style={{ color: 'var(--accent)' }}>
+              {passagesPerWeek < 0.1 ? 'no' : passagesPerWeek.toFixed(1)}
+            </strong>{' '}
             passage{passagesPerWeek === 1 ? '' : 's'} a week, and to get the whole core list into
             rotation about{' '}
-            <strong style={{ color: 'var(--fg)' }}>{Math.max(0, Math.ceil(wordsPerWeek))}</strong> new
-            words a week.
+            <strong style={{ color: 'var(--accent)' }}>
+              {Math.max(0, Math.ceil(wordsPerWeek))}
+            </strong>{' '}
+            new words a week.
           </p>
         )}
-      </Card>
+      </Section>
 
-      {/* phases */}
-      <h2 className="eyebrow mb-3">Phases</h2>
-      <ol className="mb-6 flex flex-col gap-3">
-        {phases.map((p) => {
-          const active = mounted && p.id === currentPhase.id;
-          return (
-            <li key={p.id}>
-              <Card>
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <div className="flex items-baseline gap-2.5">
-                    <h3 style={{ fontSize: '1.0625rem' }}>{p.name}</h3>
-                    {active && <Badge tone="accent">you are here</Badge>}
+      <Section title="Phases" className="mb-12">
+        <ol className="stagger flex flex-col pl-0" style={{ listStyle: 'none' }}>
+          {phases.map((p) => {
+            const active = mounted && p.id === currentPhase.id;
+            return (
+              <li
+                key={p.id}
+                className="border-t pt-6 pb-8"
+                style={{
+                  borderColor: active ? 'var(--accent)' : 'var(--rule)',
+                  borderTopWidth: active ? 2 : 1,
+                }}
+              >
+                <div className="flex flex-wrap items-baseline justify-between gap-3">
+                  <div className="flex flex-wrap items-baseline gap-3">
+                    <h3 style={{ fontSize: '1.1875rem', lineHeight: 1.25 }}>{p.name}</h3>
+                    {active && <span className="chip chip-on">you are here</span>}
                   </div>
-                  <span className="text-xs tabular-nums" style={{ color: 'var(--fg-faint)' }}>
+                  <span className="slab-sm tabular-nums">
                     {p.from}–{p.to} days out
                   </span>
                 </div>
-                <p className="mt-1 text-sm" style={{ color: 'var(--fg)', fontWeight: 500 }}>{p.focus}</p>
-                <ul className="mt-2 flex flex-col gap-1">
+
+                <p
+                  style={{
+                    margin: '0.5rem 0 0',
+                    fontFamily: 'var(--font-latin)',
+                    fontSize: '1.125rem',
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {p.focus}
+                </p>
+
+                <ul className="mt-4 flex flex-col gap-1.5 pl-0" style={{ listStyle: 'none' }}>
                   {p.targets.map((t) => (
-                    <li key={t} className="text-sm" style={{ color: 'var(--fg-muted)' }}>• {t}</li>
+                    <Target key={t}>{t}</Target>
                   ))}
                 </ul>
-              </Card>
-            </li>
-          );
-        })}
-      </ol>
+              </li>
+            );
+          })}
+        </ol>
+      </Section>
 
-      {/* coverage */}
-      <h2 className="eyebrow mb-3">Where you are</h2>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Card>
-          <div className="flex flex-col gap-3.5">
-            <Meter value={mounted ? read : 0} max={requiredPassages.length} label="Required passages opened" />
-            <Meter value={mounted ? inRotation : 0} max={coreVocabulary.length} label="Core vocabulary in rotation" tone="gilt" />
+      <Section title="Where you are">
+        <div className="grid gap-8 sm:grid-cols-2">
+          <div className="flex flex-col gap-5">
+            <Meter
+              value={mounted ? read : 0}
+              max={requiredPassages.length}
+              label="Required passages opened"
+            />
+            <Meter
+              value={mounted ? inRotation : 0}
+              max={coreVocabulary.length}
+              label="Core vocabulary in rotation"
+              tone="gilt"
+            />
             <Meter
               value={mounted ? new Set(translationAttempts.map((a) => a.drillId)).size : 0}
               max={translationDrills.length}
               label="Translation drills attempted"
             />
           </div>
-        </Card>
-        <Card>
-          <div className="eyebrow mb-2">Consistency</div>
-          <div className="tabular-nums" style={{ fontFamily: 'var(--font-serif)', fontSize: '1.75rem', fontWeight: 600 }}>
-            {mounted ? studyDays.length : '—'}
-          </div>
-          <p className="text-sm" style={{ color: 'var(--fg-muted)' }}>
-            days studied since you started
-          </p>
-          <p className="mt-3 text-sm" style={{ color: 'var(--fg-muted)' }}>
-            {mounted && quizAttempts.length > 0
-              ? `${quizAttempts.length} questions answered, ${translationAttempts.length} translations logged.`
-              : 'Nothing logged yet — the plan gets more useful once there is data behind it.'}
-          </p>
-        </Card>
-      </div>
+
+          <Panel>
+            <div className="rubric mb-3">Consistency</div>
+            <div
+              className="tabular-nums"
+              style={{ fontFamily: 'var(--font-serif)', fontSize: '2.5rem', lineHeight: 1, fontWeight: 600 }}
+            >
+              {mounted ? studyDays.length : '—'}
+            </div>
+            <p
+              style={{
+                margin: '0.5rem 0 0',
+                fontFamily: 'var(--font-latin)',
+                fontSize: '1rem',
+                color: 'var(--fg-muted)',
+              }}
+            >
+              days studied since you started
+            </p>
+            <p
+              style={{
+                margin: '1.25rem 0 0',
+                fontFamily: 'var(--font-latin)',
+                fontSize: '1rem',
+                lineHeight: 1.6,
+                color: 'var(--ink2)',
+              }}
+            >
+              {mounted && quizAttempts.length > 0
+                ? `${quizAttempts.length} questions answered, ${translationAttempts.length} translations logged.`
+                : 'Nothing logged yet — the plan gets more useful once there is data behind it.'}
+            </p>
+          </Panel>
+        </div>
+      </Section>
+
+      <SourceNote to="examOverview">
+        The phase weightings follow the exam’s own: reading and comprehension is the largest share of
+        the paper, so most of the time above goes on reading the syllabus rather than on drills.
+      </SourceNote>
     </Page>
   );
 }

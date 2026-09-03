@@ -1,10 +1,10 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type CSSProperties } from 'react';
 import { contextCards, CONTEXT_TOPIC_LABELS } from '@/data/context';
 import { questions, QUESTION_TYPE_LABELS } from '@/data/questions';
 import { useStore } from '@/store/useStore';
-import { Page, PageHeader, Card, Badge } from '@/components/ui';
+import { Page, PageHeader, Section, Panel, Empty, CedLink, SourceNote } from '@/components/ui';
 
 type Tab = 'cards' | 'quiz';
 
@@ -24,19 +24,15 @@ export default function ContextCards() {
           </>
         }
         actions={
-          <div className="flex gap-1.5">
+          <div className="flex gap-1.5" role="tablist" aria-label="View">
             {(['cards', 'quiz'] as Tab[]).map((t) => (
               <button
                 key={t}
                 type="button"
-                aria-pressed={tab === t}
+                role="tab"
+                aria-selected={tab === t}
                 onClick={() => setTab(t)}
-                className="btn"
-                style={
-                  tab === t
-                    ? { background: 'var(--accent)', borderColor: 'var(--accent)', color: 'var(--accent-fg)' }
-                    : undefined
-                }
+                className={tab === t ? 'btn btn-rubric' : 'btn'}
               >
                 {t === 'cards' ? 'Cards' : 'Quiz'}
               </button>
@@ -46,6 +42,12 @@ export default function ContextCards() {
       />
 
       {tab === 'cards' ? <Cards /> : <ContextQuiz />}
+
+      <SourceNote to="skills">
+        Skill category 2 — “Interpret and analyse the cultural, historical, and literary context of
+        Latin texts” — is set out in the official Course and Exam Description. Every card below is
+        written against it.
+      </SourceNote>
     </Page>
   );
 }
@@ -53,44 +55,67 @@ export default function ContextCards() {
 function Cards() {
   return (
     <>
-      <nav aria-label="Jump to topic" className="mb-7 flex flex-wrap gap-1.5">
+      <nav aria-label="Jump to topic" className="mb-9 flex flex-wrap gap-2">
         {contextCards.map((c) => (
-          <a
-            key={c.id}
-            href={`#${c.id}`}
-            className="border px-2.5 py-1 text-xs transition-colors hover:bg-[var(--bg-sunk)]"
-            style={{ borderColor: 'var(--rule)', color: 'var(--fg-muted)' }}
-          >
+          <a key={c.id} href={`#${c.id}`} className="chip squish">
             {c.title}
           </a>
         ))}
       </nav>
 
-      <div className="flex flex-col gap-5">
+      <div className="stagger flex flex-col">
         {contextCards.map((c) => (
-          <Card key={c.id} as="article">
-            <div id={c.id} className="scroll-mt-20" />
-            <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-              <h2 style={{ fontSize: '1.125rem' }}>{c.title}</h2>
-              <Badge tone="muted">{CONTEXT_TOPIC_LABELS[c.topic]}</Badge>
+          <article
+            key={c.id}
+            className="border-t pt-7 pb-9"
+            style={{ borderColor: 'var(--rule)' }}
+          >
+            <div id={c.id} className="scroll-mt-24" />
+            <div className="mb-3 flex flex-wrap items-baseline justify-between gap-3">
+              <h2 style={{ fontSize: '1.25rem', lineHeight: 1.25 }}>{c.title}</h2>
+              <span className="slab-sm">{CONTEXT_TOPIC_LABELS[c.topic]}</span>
             </div>
+
             <p
-              className="measure-wide text-sm"
-              style={{ color: 'var(--fg-muted)', lineHeight: 1.75, fontFamily: 'var(--font-serif)', fontSize: '0.9375rem' }}
+              className="measure-wide"
+              style={{
+                margin: 0,
+                fontFamily: 'var(--font-latin)',
+                fontSize: '1.0625rem',
+                lineHeight: 1.7,
+                color: 'var(--ink2)',
+              }}
             >
               {c.body}
             </p>
-            <div className="mt-4 border-t pt-3.5" style={{ borderColor: 'var(--rule)' }}>
-              <div className="eyebrow mb-2">Worth knowing cold</div>
-              <ul className="flex flex-col gap-1">
+
+            <div className="mt-6">
+              <div className="rubric mb-3">Worth knowing cold</div>
+              <ul className="flex flex-col gap-2 pl-0" style={{ listStyle: 'none' }}>
                 {c.keyFacts.map((f) => (
-                  <li key={f} className="text-sm" style={{ color: 'var(--fg-muted)' }}>
-                    • {f}
+                  <li
+                    key={f}
+                    className="row-hover flex gap-3 rounded-[var(--r-sm)] px-2 py-1.5"
+                    style={{ marginLeft: '-0.5rem' }}
+                  >
+                    <span aria-hidden="true" style={{ color: 'var(--accent)' }}>
+                      ·
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: 'var(--font-latin)',
+                        fontSize: '1rem',
+                        lineHeight: 1.6,
+                        color: 'var(--ink2)',
+                      }}
+                    >
+                      {f}
+                    </span>
                   </li>
                 ))}
               </ul>
             </div>
-          </Card>
+          </article>
         ))}
       </div>
     </>
@@ -111,57 +136,81 @@ function ContextQuiz() {
     [seed],
   );
 
+  const done = i >= pool.length;
   const q = pool[i];
-  if (!q) {
+
+  if (!pool.length) {
     return (
-      <Card>
-        <p className="text-sm" style={{ color: 'var(--fg-muted)', margin: 0 }}>
-          No context questions loaded yet. Add some to <code>src/data/questions.ts</code> with type{' '}
-          <code>context-culture</code> — see CONTENT.md.
-        </p>
-      </Card>
+      <Empty
+        title="No context questions yet"
+        body="Add questions with type context-culture to src/data/questions.ts — the method is written up in CONTENT.md."
+        action={<CedLink to="skills">Read the skill this drills</CedLink>}
+      />
+    );
+  }
+
+  if (done) {
+    const pct = Math.round((right / pool.length) * 100);
+    return (
+      <Section title="Result">
+        <div className="animate-in">
+          <div
+            className="tabular-nums"
+            style={{ fontFamily: 'var(--font-serif)', fontSize: '3rem', lineHeight: 1 }}
+          >
+            {right}
+            <span style={{ color: 'var(--fg-faint)' }}> / {pool.length}</span>
+          </div>
+          <p className="mt-2" style={{ color: 'var(--fg-muted)' }}>
+            {pct}% on context and culture.
+          </p>
+          <button
+            type="button"
+            className="btn btn-primary mt-6"
+            onClick={() => {
+              setSeed((s) => s + 1);
+              setI(0);
+              setRight(0);
+              setChosen(null);
+            }}
+          >
+            Go again
+          </button>
+        </div>
+      </Section>
     );
   }
 
   const revealed = chosen !== null;
-  const done = i >= pool.length;
-
-  if (done) {
-    return (
-      <Card>
-        <div className="tabular-nums" style={{ fontFamily: 'var(--font-serif)', fontSize: '2rem', fontWeight: 600 }}>
-          {right} / {pool.length}
-        </div>
-        <button
-          type="button"
-          className="btn btn-primary mt-4"
-          onClick={() => { setSeed((s) => s + 1); setI(0); setRight(0); setChosen(null); }}
-        >
-          Go again
-        </button>
-      </Card>
-    );
-  }
 
   return (
     <>
-      <div className="mb-4 flex items-center justify-between text-sm" style={{ color: 'var(--fg-muted)' }}>
-        <span className="tabular-nums">{i + 1} / {pool.length}</span>
-        <Badge tone="neutral">{QUESTION_TYPE_LABELS[q.type]}</Badge>
+      <div className="mb-5 flex items-center justify-between">
+        <span className="slab tabular-nums">
+          {i + 1} of {pool.length}
+        </span>
+        <span className="slab-sm">{QUESTION_TYPE_LABELS[q.type]}</span>
       </div>
 
-      <h2 className="measure mb-4" style={{ fontSize: '1.0625rem', fontWeight: 550, lineHeight: 1.45 }}>
+      <h2
+        className="measure mb-6"
+        style={{ fontSize: '1.375rem', lineHeight: 1.35, fontWeight: 550 }}
+      >
         {q.prompt}
       </h2>
 
-      <ul className="mb-5 flex flex-col gap-2">
+      <ul className="mb-6 flex flex-col gap-2.5 pl-0" style={{ listStyle: 'none' }}>
         {q.options.map((o, n) => {
           const isAnswer = o.id === q.answerId;
           const isChosen = o.id === chosen;
-          let bg = 'var(--bg-raised)';
-          let bd = 'var(--rule)';
-          if (revealed && isAnswer) { bg = 'var(--correct-bg)'; bd = 'var(--correct)'; }
-          else if (revealed && isChosen) { bg = 'var(--incorrect-bg)'; bd = 'var(--incorrect)'; }
+          const style: CSSProperties = { borderColor: 'var(--rule-strong)' };
+          if (revealed && isAnswer) {
+            style.borderColor = 'var(--accent)';
+            style.background = 'var(--redtint)';
+          } else if (revealed && isChosen) {
+            style.borderColor = 'var(--rule-strong)';
+            style.opacity = 0.6;
+          }
           return (
             <li key={o.id}>
               <button
@@ -172,16 +221,31 @@ function ContextQuiz() {
                   const correct = o.id === q.answerId;
                   if (correct) setRight((r) => r + 1);
                   recordQuiz({
-                    questionId: q.id, correct, chosenId: o.id, type: q.type,
-                    skillCategory: q.skillCategory, unit: q.unit, passageId: q.passageId,
+                    questionId: q.id,
+                    correct,
+                    chosenId: o.id,
+                    type: q.type,
+                    skillCategory: q.skillCategory,
+                    unit: q.unit,
+                    passageId: q.passageId,
                   });
                   markStudied();
                 }}
-                className="flex w-full items-start gap-3 border px-3.5 py-3 text-left text-sm transition-colors"
-                style={{ background: bg, borderColor: bd, cursor: revealed ? 'default' : 'pointer' }}
+                className="squish row-hover flex w-full items-start gap-3.5 rounded-[var(--r-md)] border px-4 py-3.5 text-left"
+                style={{ ...style, cursor: revealed ? 'default' : 'pointer' }}
               >
-                <span className="kbd mt-px shrink-0" aria-hidden="true">{n + 1}</span>
-                <span style={{ lineHeight: 1.55 }}>{o.text}</span>
+                <span className="kbd mt-0.5 shrink-0" aria-hidden="true">
+                  {n + 1}
+                </span>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-latin)',
+                    fontSize: '1.0625rem',
+                    lineHeight: 1.55,
+                  }}
+                >
+                  {o.text}
+                </span>
               </button>
             </li>
           );
@@ -189,19 +253,31 @@ function ContextQuiz() {
       </ul>
 
       {revealed && (
-        <Card className="animate-in">
-          <div className="eyebrow mb-1.5">Why</div>
-          <p className="measure text-sm" style={{ color: 'var(--fg-muted)', lineHeight: 1.68, margin: 0 }}>
+        <Panel className="animate-in">
+          <div className="rubric mb-2.5">Why</div>
+          <p
+            className="measure"
+            style={{
+              margin: 0,
+              fontFamily: 'var(--font-latin)',
+              fontSize: '1.0625rem',
+              lineHeight: 1.65,
+              color: 'var(--ink2)',
+            }}
+          >
             {q.explanation}
           </p>
           <button
             type="button"
-            className="btn btn-primary mt-4"
-            onClick={() => { setI((n) => n + 1); setChosen(null); }}
+            className="btn btn-primary mt-5"
+            onClick={() => {
+              setI((n) => n + 1);
+              setChosen(null);
+            }}
           >
             {i < pool.length - 1 ? 'Next' : 'See score'}
           </button>
-        </Card>
+        </Panel>
       )}
     </>
   );

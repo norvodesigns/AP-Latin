@@ -15,8 +15,21 @@ import type { LanguageModel } from 'ai';
  * never exported, never logged, and never referenced from a client component.
  */
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL ?? 'gemini-2.0-flash';
-const GROQ_MODEL = process.env.GROQ_MODEL ?? 'llama-3.3-70b-versatile';
+/*
+ * Model names go stale. `gemini-2.0-flash` and `llama-3.3-70b-versatile` were
+ * both retired by their providers and every AI route returned 502 until these
+ * were updated — with two valid keys configured, which made it look like a key
+ * problem. If the AI stops working, check the model names against the
+ * providers' own model lists before anything else:
+ *
+ *   curl -H "Authorization: Bearer $GROQ_API_KEY" https://api.groq.com/openai/v1/models
+ *   curl "https://generativelanguage.googleapis.com/v1beta/models?key=$GOOGLE_GENERATIVE_AI_API_KEY"
+ *
+ * Both are overridable by env var so a retirement can be worked around in the
+ * Vercel dashboard without a deploy.
+ */
+const GEMINI_MODEL = process.env.GEMINI_MODEL ?? 'gemini-3.5-flash';
+const GROQ_MODEL = process.env.GROQ_MODEL ?? 'openai/gpt-oss-120b';
 
 export type ProviderName = 'google' | 'groq';
 

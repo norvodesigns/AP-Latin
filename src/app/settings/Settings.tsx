@@ -1,13 +1,33 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { useStore, STORAGE_KEY } from '@/store/useStore';
 import { useAiStatus } from '@/lib/useAi';
-import { Page, PageHeader, Card, Badge } from '@/components/ui';
+import { Page, PageHeader, Section, Panel, CedLink, SourceNote } from '@/components/ui';
 
 /** Gemini's free tier has historically allowed on the order of 1,500 requests
  *  a day. It changes, so this is a reference line, not a hard limit. */
 const FREE_TIER_REFERENCE = 1500;
+
+/** One of the three big tallies in the AI-usage row. */
+function Tally({ label, value, note }: { label: string; value: string | number; note?: string }) {
+  return (
+    <div>
+      <div className="slab-sm mb-1.5">{label}</div>
+      <div
+        className="tabular-nums"
+        style={{ fontFamily: 'var(--font-serif)', fontSize: '2rem', lineHeight: 1, fontWeight: 600 }}
+      >
+        {value}
+      </div>
+      {note && (
+        <div className="mt-1.5" style={{ color: 'var(--fg-faint)', fontSize: '0.875rem' }}>
+          {note}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Settings() {
   const ai = useAiStatus();
@@ -44,7 +64,7 @@ export default function Settings() {
     setMessage({ kind: 'ok', text: 'Exported. Keep it somewhere safe — it is your only backup.' });
   }
 
-  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+  async function onFile(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     const text = await file.text();
@@ -67,22 +87,23 @@ export default function Settings() {
 
       {message && (
         <div
-          className="mb-5 border px-3.5 py-2.5 text-sm"
+          role="status"
+          className="animate-in mb-8 rounded-[var(--r-md)] border px-4 py-3"
           style={{
-            background: message.kind === 'ok' ? 'var(--correct-bg)' : 'var(--incorrect-bg)',
-            borderColor: message.kind === 'ok' ? 'var(--correct)' : 'var(--incorrect)',
-            color: 'var(--fg-muted)',
+            borderColor: message.kind === 'ok' ? 'var(--rule-strong)' : 'var(--accent)',
+            background: message.kind === 'ok' ? 'transparent' : 'var(--redtint)',
+            fontFamily: 'var(--font-latin)',
+            fontSize: '1.0625rem',
+            color: message.kind === 'ok' ? 'var(--ink2)' : 'var(--accent)',
           }}
         >
           {message.text}
         </div>
       )}
 
-      {/* appearance */}
-      <Card className="mb-5">
-        <h2 className="mb-3" style={{ fontSize: '1rem' }}>Appearance</h2>
-        <div className="mb-4">
-          <span className="mb-1.5 block text-sm" style={{ color: 'var(--fg-muted)' }}>Theme</span>
+      <Section title="Appearance" className="mb-12">
+        <div className="mb-7">
+          <span className="slab-sm mb-2.5 block">Theme</span>
           <div className="flex gap-1.5">
             {(['light', 'dark', 'system'] as const).map((t) => (
               <button
@@ -90,115 +111,112 @@ export default function Settings() {
                 type="button"
                 aria-pressed={mounted && theme === t}
                 onClick={() => setTheme(t)}
-                className="btn capitalize"
-                style={
-                  mounted && theme === t
-                    ? { background: 'var(--accent)', borderColor: 'var(--accent)', color: 'var(--accent-fg)' }
-                    : undefined
-                }
+                className={mounted && theme === t ? 'btn btn-rubric capitalize' : 'btn capitalize'}
               >
                 {t}
               </button>
             ))}
           </div>
         </div>
-        <label className="flex items-start gap-2.5">
+
+        <label className="squish flex cursor-pointer items-start gap-3">
           <input
             type="checkbox"
             checked={mounted ? glossaryEnabled : true}
             onChange={toggleGlossary}
-            className="mt-0.5"
-            style={{ accentColor: 'var(--accent)' }}
+            className="mt-1"
+            style={{ accentColor: 'var(--accent)', width: '1rem', height: '1rem' }}
           />
-          <span className="text-sm">
-            Glossary on by default in the Reading Room
-            <span className="block text-xs" style={{ color: 'var(--fg-faint)' }}>
-              Turn it off to read cold. You can also toggle it with <span className="kbd">c</span> while reading.
+          <span>
+            <span style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem' }}>
+              Glossary on by default in the Reading Room
+            </span>
+            <span className="mt-1 block" style={{ color: 'var(--fg-faint)', fontSize: '0.9375rem' }}>
+              Turn it off to read cold. You can also toggle it with <span className="kbd">c</span>{' '}
+              while reading.
             </span>
           </span>
         </label>
-        <p className="mt-3 text-xs" style={{ color: 'var(--fg-faint)' }}>
-          Macrons: shown wherever the source text provides them ({mounted && showMacrons ? 'on' : 'on'}).
-          Only Aeneid 1.1–33 carries them, because that is the only passage whose public-domain source
-          marks vowel quantity. Adding macrons elsewhere would mean inventing data.
+
+        <p
+          className="measure mt-6"
+          style={{
+            margin: '1.5rem 0 0',
+            fontFamily: 'var(--font-latin)',
+            fontSize: '1rem',
+            lineHeight: 1.65,
+            color: 'var(--fg-muted)',
+          }}
+        >
+          Macrons are shown wherever the source text provides them
+          {mounted ? ` (currently ${showMacrons ? 'on' : 'off'})` : ''}. Only Aeneid 1.1–33 carries
+          them, because that is the only passage whose public-domain source marks vowel quantity.
+          Adding macrons elsewhere would mean inventing data.
         </p>
-      </Card>
+      </Section>
 
-      {/* AI usage meter */}
-      <Card className="mb-5">
-        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-          <h2 style={{ fontSize: '1rem' }}>AI usage</h2>
-          {!ai.loading && (
-            <Badge tone={ai.configured ? 'green' : 'muted'}>
+      <Section
+        title="AI usage"
+        aside={
+          !ai.loading ? (
+            <span className={ai.configured ? 'chip chip-gilt' : 'chip'}>
               {ai.configured ? 'configured' : 'not configured'}
-            </Badge>
-          )}
-        </div>
-
+            </span>
+          ) : undefined
+        }
+        className="mb-12"
+      >
         {!ai.loading && !ai.configured ? (
-          <p className="text-sm" style={{ color: 'var(--fg-muted)' }}>
+          <p
+            className="measure"
+            style={{
+              margin: 0,
+              fontFamily: 'var(--font-latin)',
+              fontSize: '1.0625rem',
+              lineHeight: 1.65,
+              color: 'var(--ink2)',
+            }}
+          >
             No provider key is set on this deployment, so every AI feature is off and the app runs in
             self-grading mode. See the README for how to add a free Gemini key in the Vercel
             dashboard.
           </p>
         ) : (
           <>
-            <div className="mb-4 grid gap-3 sm:grid-cols-3">
-              <div>
-                <div className="eyebrow">Today</div>
-                <div className="tabular-nums" style={{ fontFamily: 'var(--font-serif)', fontSize: '1.75rem', fontWeight: 600 }}>
-                  {mounted ? (todayUsage?.calls ?? 0) : '—'}
-                </div>
-                <div className="text-xs" style={{ color: 'var(--fg-faint)' }}>
-                  of ~{FREE_TIER_REFERENCE.toLocaleString()} free-tier requests
-                </div>
-              </div>
-              <div>
-                <div className="eyebrow">Last 7 days</div>
-                <div className="tabular-nums" style={{ fontFamily: 'var(--font-serif)', fontSize: '1.75rem', fontWeight: 600 }}>
-                  {mounted ? last7.reduce((n, d) => n + d.calls, 0) : '—'}
-                </div>
-              </div>
-              <div>
-                <div className="eyebrow">All time</div>
-                <div className="tabular-nums" style={{ fontFamily: 'var(--font-serif)', fontSize: '1.75rem', fontWeight: 600 }}>
-                  {mounted ? totalCalls : '—'}
-                </div>
-              </div>
+            <div className="mb-8 grid gap-7 sm:grid-cols-3">
+              <Tally
+                label="Today"
+                value={mounted ? (todayUsage?.calls ?? 0) : '—'}
+                note={`of ~${FREE_TIER_REFERENCE.toLocaleString()} free-tier requests`}
+              />
+              <Tally
+                label="Last 7 days"
+                value={mounted ? last7.reduce((n, d) => n + d.calls, 0) : '—'}
+              />
+              <Tally label="All time" value={mounted ? totalCalls : '—'} />
             </div>
 
-            {mounted && todayUsage && Object.keys(todayUsage.byRoute).length > 0 && (
-              <div className="mb-4">
-                <div className="eyebrow mb-1.5">Today by endpoint</div>
-                <ul className="flex flex-col gap-1">
-                  {Object.entries(todayUsage.byRoute)
-                    .sort((a, b) => b[1] - a[1])
-                    .map(([route, n]) => (
-                      <li key={route} className="flex items-baseline justify-between text-sm">
-                        <span style={{ color: 'var(--fg-muted)' }}>{route}</span>
-                        <span className="tabular-nums">{n}</span>
-                      </li>
-                    ))}
-                </ul>
-              </div>
-            )}
-
             {mounted && last7.length > 0 && (
-              <div className="mb-4 flex items-end gap-1.5" style={{ height: '3rem' }}>
+              <div
+                className="mb-8 flex items-end gap-2"
+                style={{ height: '3.5rem' }}
+                aria-hidden="true"
+              >
                 {last7.map((d) => {
                   const max = Math.max(...last7.map((x) => x.calls), 1);
                   return (
-                    <div key={d.date} className="flex flex-1 flex-col items-center gap-1">
+                    <div key={d.date} className="flex flex-1 flex-col items-center gap-1.5">
                       <div
-                        className="w-full rounded-t"
+                        className="w-full rounded-t-[var(--r-sm)]"
                         style={{
                           height: `${(d.calls / max) * 100}%`,
                           minHeight: d.calls > 0 ? '3px' : '1px',
-                          background: d.date === today ? 'var(--accent)' : 'var(--rule-strong)',
+                          background: d.date === today ? 'var(--accent)' : 'var(--track)',
+                          transition: 'height var(--dur-3) var(--ease-spring)',
                         }}
                         title={`${d.date}: ${d.calls} calls`}
                       />
-                      <span className="text-[0.625rem]" style={{ color: 'var(--fg-faint)' }}>
+                      <span style={{ color: 'var(--fg-faint)', fontSize: '0.6875rem' }}>
                         {d.date.slice(8)}
                       </span>
                     </div>
@@ -207,37 +225,72 @@ export default function Settings() {
               </div>
             )}
 
-            <div className="border-t pt-3.5 text-xs" style={{ borderColor: 'var(--rule)', color: 'var(--fg-faint)' }}>
-              <p className="mb-1.5">
+            {mounted && todayUsage && Object.keys(todayUsage.byRoute).length > 0 && (
+              <div className="mb-8">
+                <div className="slab-sm mb-3">Today by endpoint</div>
+                <ul className="flex flex-col pl-0" style={{ listStyle: 'none' }}>
+                  {Object.entries(todayUsage.byRoute)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([route, n]) => (
+                      <li
+                        key={route}
+                        className="row-hover flex items-baseline justify-between gap-4 rounded-[var(--r-sm)] border-t px-2 py-2"
+                        style={{ borderColor: 'var(--hair)', marginLeft: '-0.5rem' }}
+                      >
+                        <span style={{ color: 'var(--ink2)', fontFamily: 'var(--font-latin)' }}>
+                          {route}
+                        </span>
+                        <span className="tabular-nums" style={{ color: 'var(--fg-muted)' }}>
+                          {n}
+                        </span>
+                      </li>
+                    ))}
+                </ul>
+              </div>
+            )}
+
+            <div
+              className="measure-wide border-t pt-5"
+              style={{ borderColor: 'var(--rule)', color: 'var(--fg-faint)', fontSize: '0.9375rem' }}
+            >
+              <p style={{ margin: '0 0 0.5rem' }}>
                 Providers configured:{' '}
                 {ai.providers?.google.configured && <>Gemini ({ai.providers.google.model}) </>}
-                {ai.providers?.groq.configured && <>· Groq fallback ({ai.providers.groq.model})</>}
-                {!ai.providers?.groq.configured && '· no fallback configured'}
+                {ai.providers?.groq.configured
+                  ? <>· Groq fallback ({ai.providers.groq.model})</>
+                  : '· no fallback configured'}
               </p>
-              <p className="mb-1.5">
+              <p style={{ margin: '0 0 0.5rem' }}>
                 Counted client-side, so it reflects what this browser has asked for, not what the
                 provider has billed. Cached sight passages are not counted, because they never reach
                 a provider.
               </p>
-              <p>
+              <p style={{ margin: 0 }}>
                 Rate limits are enforced server-side: 20 grading calls and 30 tutor questions per 10
                 minutes, 10 sight generations.
               </p>
             </div>
           </>
         )}
-      </Card>
+      </Section>
 
-      {/* data */}
-      <Card className="mb-5">
-        <h2 className="mb-1" style={{ fontSize: '1rem' }}>Your data</h2>
-        <p className="mb-4 text-sm" style={{ color: 'var(--fg-muted)' }}>
+      <Section title="Your data" className="mb-12">
+        <p
+          className="measure"
+          style={{
+            margin: '0 0 1.5rem',
+            fontFamily: 'var(--font-latin)',
+            fontSize: '1.0625rem',
+            lineHeight: 1.65,
+            color: 'var(--ink2)',
+          }}
+        >
           Reading notes, flagged lines, vocabulary schedules, quiz history, translations, essays and
           course project passages are all stored under{' '}
-          <code style={{ fontSize: '0.85em' }}>{STORAGE_KEY}</code> in this browser. Clearing your
+          <code style={{ fontSize: '0.9em' }}>{STORAGE_KEY}</code> in this browser. Clearing your
           browser data deletes them. Export regularly.
         </p>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2.5">
           <button type="button" className="btn btn-primary" onClick={download}>
             Export JSON
           </button>
@@ -253,30 +306,39 @@ export default function Settings() {
             aria-label="Import a previously exported JSON file"
           />
         </div>
-      </Card>
+      </Section>
 
-      {/* danger */}
-      <Card>
-        <h2 className="mb-1" style={{ fontSize: '1rem', color: 'var(--incorrect)' }}>Reset everything</h2>
-        <p className="mb-3 text-sm" style={{ color: 'var(--fg-muted)' }}>
+      <Panel>
+        <div className="rubric mb-2.5">Reset everything</div>
+        <p
+          className="measure"
+          style={{
+            margin: '0 0 1.25rem',
+            fontFamily: 'var(--font-latin)',
+            fontSize: '1.0625rem',
+            lineHeight: 1.65,
+            color: 'var(--ink2)',
+          }}
+        >
           Deletes all progress in this browser. There is no undo — export first.
         </p>
         {!confirmReset ? (
           <button
             type="button"
             className="btn"
-            style={{ borderColor: 'var(--incorrect)', color: 'var(--incorrect)' }}
+            style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}
             onClick={() => setConfirmReset(true)}
           >
             Reset all progress
           </button>
         ) : (
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm" style={{ color: 'var(--fg)' }}>Are you sure?</span>
+          <div className="animate-in flex flex-wrap items-center gap-2.5">
+            <span style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem' }}>
+              Are you sure?
+            </span>
             <button
               type="button"
-              className="btn"
-              style={{ background: 'var(--incorrect)', borderColor: 'var(--incorrect)', color: '#fff' }}
+              className="btn btn-rubric"
               onClick={() => {
                 resetAll();
                 setConfirmReset(false);
@@ -285,12 +347,17 @@ export default function Settings() {
             >
               Yes, delete it all
             </button>
-            <button type="button" className="btn" onClick={() => setConfirmReset(false)}>
+            <button type="button" className="btn btn-ghost" onClick={() => setConfirmReset(false)}>
               Cancel
             </button>
           </div>
         )}
-      </Card>
+      </Panel>
+
+      <SourceNote>
+        AI-graded work is checked against the segment and rubric data in this app, which is written
+        against the official <CedLink to="scoring">scoring guidelines</CedLink>.
+      </SourceNote>
     </Page>
   );
 }
