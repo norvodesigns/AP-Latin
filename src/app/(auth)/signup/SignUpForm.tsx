@@ -90,7 +90,10 @@ export default function SignUpForm() {
                 return (
                   <label
                     key={r.value}
-                    className="squish cursor-pointer rounded-[var(--r-md)] border p-4"
+                    /* --r-lg, not the --r-md the inputs use: the same radius
+                       reads as squarer on a box this much taller, so matching
+                       the number would not match the look. */
+                    className="squish cursor-pointer rounded-[var(--r-lg)] border p-4"
                     style={{
                       borderColor: on ? 'var(--accent)' : 'var(--rule-strong)',
                       borderWidth: on ? 2 : 1,
