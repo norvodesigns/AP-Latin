@@ -5,6 +5,7 @@ import { supabaseConfigured } from '@/lib/supabase/config';
 import { getSupabaseServer, getCurrentProfile, getCurrentUser } from '@/lib/supabase/server';
 import { Page, PageHeader, Section, Panel, Empty, SourceNote } from '@/components/ui';
 import type { Classroom } from '@/lib/supabase/types';
+import { signOut } from '@/app/(auth)/actions';
 import JoinClassroomForm from './JoinClassroomForm';
 
 export const metadata: Metadata = { title: 'Classroom' };
@@ -53,6 +54,13 @@ export default async function ClassroomPage() {
         eyebrow="Accounts"
         title="Classroom"
         lede="Join a classroom with the code your teacher gave you. Once you're in, your assignments and where you stand appear here."
+        actions={
+          <form action={signOut}>
+            <button type="submit" className="btn btn-ghost">
+              Sign out
+            </button>
+          </form>
+        }
       />
 
       <Section title="Join a classroom" className="mb-12">

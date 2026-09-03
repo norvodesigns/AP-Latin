@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { supabaseConfigured } from '@/lib/supabase/config';
 import { getSupabaseServer, getCurrentProfile, getCurrentUser } from '@/lib/supabase/server';
 import { Page, PageHeader, Section, Panel, Empty, SourceNote } from '@/components/ui';
+import { signOut } from '@/app/(auth)/actions';
 import CreateClassroomForm from './CreateClassroomForm';
 
 export const metadata: Metadata = { title: 'Teach' };
@@ -57,6 +58,13 @@ export default async function TeachPage() {
         eyebrow="Accounts"
         title="Teach"
         lede="Create a classroom, share its join code, assign target minutes on a section, and see where every student stands."
+        actions={
+          <form action={signOut}>
+            <button type="submit" className="btn btn-ghost">
+              Sign out
+            </button>
+          </form>
+        }
       />
 
       <Section title="New classroom" className="mb-12">
