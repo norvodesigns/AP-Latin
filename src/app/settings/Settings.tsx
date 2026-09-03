@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { useStore, STORAGE_KEY } from '@/store/useStore';
 import { useAiStatus } from '@/lib/useAi';
 import { Page, PageHeader, Section, Panel, CedLink, SourceNote } from '@/components/ui';
+import { deleteAccount } from '@/app/(auth)/actions';
+import type { Profile } from '@/lib/supabase/types';
 
 /** Gemini's free tier has historically allowed on the order of 1,500 requests
  *  a day. It changes, so this is a reference line, not a hard limit. */
@@ -29,7 +31,7 @@ function Tally({ label, value, note }: { label: string; value: string | number; 
   );
 }
 
-export default function Settings() {
+export default function Settings({ profile }: { profile: Profile | null }) {
   const ai = useAiStatus();
   const theme = useStore((s) => s.theme);
   const setTheme = useStore((s) => s.setTheme);
@@ -44,6 +46,7 @@ export default function Settings() {
   const [mounted, setMounted] = useState(false);
   const [message, setMessage] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => setMounted(true), []);
@@ -82,7 +85,11 @@ export default function Settings() {
       <PageHeader
         eyebrow="Preferences and data"
         title="Settings"
-        lede="Everything you do in this app lives in this browser’s local storage. There is no account and no server-side database, which means the export button is your only backup."
+        lede={
+          profile
+            ? `Reading notes, quiz history and the rest of your local progress still live only in this browser — export is your only backup for it. Signed in as ${profile.display_name}, your study time and accuracy also sync to Supabase for your classroom; deleting your account below removes that copy.`
+            : 'Everything you do in this app lives in this browser’s local storage. There is no account and no server-side database, which means the export button is your only backup.'
+        }
       />
 
       {message && (
@@ -105,7 +112,7 @@ export default function Settings() {
         <div className="mb-7">
           <span className="slab-sm mb-2.5 block">Theme</span>
           <div className="flex gap-1.5">
-            {(['light', 'dark', 'system'] as const).map((t) => (
+            {(['light', 'dark'] as const).map((t) => (
               <button
                 key={t}
                 type="button"
@@ -353,6 +360,53 @@ export default function Settings() {
           </div>
         )}
       </Panel>
+
+      {profile && (
+        <Panel className="mt-8">
+          <div className="rubric mb-2.5">Delete account</div>
+          <p
+            className="measure"
+            style={{
+              margin: '0 0 1.25rem',
+              fontFamily: 'var(--font-latin)',
+              fontSize: '1.0625rem',
+              lineHeight: 1.65,
+              color: 'var(--ink2)',
+            }}
+          >
+            Permanently deletes your {profile.role} account —
+            {profile.role === 'teacher'
+              ? ' every classroom you teach, its join code, its assignments, and every student in it loses your class'
+              : ' your membership in any classroom, and your synced study time and accuracy'}
+            {' '}— from Supabase. There is no undo. This does not touch this browser’s local
+            progress; use “Reset all progress” above for that separately.
+          </p>
+          {!confirmDelete ? (
+            <button
+              type="button"
+              className="btn"
+              style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}
+              onClick={() => setConfirmDelete(true)}
+            >
+              Delete account
+            </button>
+          ) : (
+            <div className="animate-in flex flex-wrap items-center gap-2.5">
+              <span style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem' }}>
+                Are you sure? This cannot be undone.
+              </span>
+              <form action={deleteAccount}>
+                <button type="submit" className="btn btn-rubric">
+                  Yes, delete my account
+                </button>
+              </form>
+              <button type="button" className="btn btn-ghost" onClick={() => setConfirmDelete(false)}>
+                Cancel
+              </button>
+            </div>
+          )}
+        </Panel>
+      )}
 
       <SourceNote>
         AI-graded work is checked against the segment and rubric data in this app, which is written

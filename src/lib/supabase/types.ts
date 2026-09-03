@@ -159,6 +159,10 @@ export interface Database {
         Args: { p_day: string; p_source: GradingSource; p_correct: number; p_total: number };
         Returns: undefined;
       };
+      delete_own_account: {
+        Args: Record<string, never>;
+        Returns: undefined;
+      };
     };
     Enums: { [_ in never]: never };
     CompositeTypes: { [_ in never]: never };

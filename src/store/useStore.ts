@@ -170,7 +170,9 @@ export interface WordEncounter {
 
 export interface StoreState {
   version: number;
-  theme: 'light' | 'dark' | 'system';
+  /** Manual only — no live system tracking. See `initialState.theme` for
+   *  why a fresh visitor still gets a sensible first value. */
+  theme: 'light' | 'dark';
 
   /** Reading Room: hide the glossary for a cold read. */
   glossaryEnabled: boolean;
@@ -253,7 +255,17 @@ const emptyPassage = (): PassageState => ({
 
 const initialState = {
   version: STORE_VERSION,
-  theme: 'system' as const,
+  /**
+   * A one-time read of the OS preference, not a live link to it — the app
+   * has no "system" mode, so this only matters for a visitor who has never
+   * chosen a theme. Guarded for SSR, where `window` does not exist; the
+   * boot script in the document head (`layout.tsx`) makes the same call
+   * with `prefers-color-scheme` in raw CSS for the first paint, so this
+   * value and that paint agree and nothing flashes on hydration.
+   */
+  theme: (typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches
+    ? 'dark'
+    : 'light') as 'light' | 'dark',
   glossaryEnabled: true,
   showMacrons: true,
   passages: {} as Record<string, PassageState>,
@@ -333,17 +345,13 @@ export const useStore = create<StoreState>()(
       setTheme: (theme) => {
         set({ theme });
         if (typeof document !== 'undefined') {
-          if (theme === 'system') {
-            document.documentElement.removeAttribute('data-theme');
-            try {
-              localStorage.removeItem('ap-latin-theme');
-            } catch {}
-          } else {
-            document.documentElement.setAttribute('data-theme', theme);
-            try {
-              localStorage.setItem('ap-latin-theme', theme);
-            } catch {}
-          }
+          document.documentElement.setAttribute('data-theme', theme);
+          // Mirrored outside zustand's own persistence so the boot script in
+          // the document head — plain inline JS, not a store subscriber —
+          // can apply it before first paint without parsing the store.
+          try {
+            localStorage.setItem('ap-latin-theme', theme);
+          } catch {}
         }
       },
 

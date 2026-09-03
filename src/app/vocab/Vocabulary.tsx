@@ -557,24 +557,34 @@ export default function Vocabulary() {
           body="Every card here is scheduled for a future day. Widen the filter, or come back tomorrow."
         />
       ) : (
+        /*
+         * Exactly one button here is always the filled, primary one, and it
+         * is never disabled while there is something to study — a first-time
+         * visitor has nothing due yet, so a "Review 0 due" button that was
+         * both the filled button AND disabled was the only start button on
+         * the page that looked pressable, and it was the one that did not
+         * work. The two "new" buttons that did work read as a due-count
+         * modifier ("Due + 10 new"), not as a start action, so they did not
+         * catch the eye either. With nothing due, one of them takes over as
+         * primary and is relabelled "Start" rather than "Due +".
+         */
         <div className="flex flex-wrap gap-3">
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={() => startReview(0)}
-            disabled={!mounted || dueInScope.length === 0}
-          >
-            Review {mounted ? dueInScope.length : ''} due
-          </button>
-          {[10, 20].map((n) => (
+          {mounted && dueInScope.length > 0 && (
+            <button type="button" className="btn btn-primary" onClick={() => startReview(0)}>
+              Review {dueInScope.length} due
+            </button>
+          )}
+          {[10, 20].map((n, i) => (
             <button
               key={n}
               type="button"
-              className="btn"
+              className={mounted && dueInScope.length === 0 && i === 0 ? 'btn btn-primary' : 'btn'}
               onClick={() => startReview(n)}
               disabled={!mounted || untouched.length === 0}
             >
-              Due + {Math.min(n, untouched.length)} new
+              {mounted && dueInScope.length === 0
+                ? `Start · ${Math.min(n, untouched.length)} new`
+                : `Due + ${Math.min(n, untouched.length)} new`}
             </button>
           ))}
         </div>

@@ -112,12 +112,25 @@ export default function AppShell({
     return () => ro.disconnect();
   }, []);
 
-  // Keep the DOM attribute in sync when the store rehydrates from localStorage.
+  /**
+   * Keeps the DOM attribute in sync once the store rehydrates from
+   * localStorage, and heals a value left over from the retired "system"
+   * mode: a theme persisted before that removal is still, literally, the
+   * string 'system' in someone's localStorage, and JSON does not enforce
+   * the narrower type. Coercing it to a concrete choice here — once, the
+   * first time it is seen — is cheaper than a version-bumped migration and
+   * touches no one who was never on that build.
+   */
   useEffect(() => {
     if (!mounted) return;
-    if (theme === 'system') document.documentElement.removeAttribute('data-theme');
-    else document.documentElement.setAttribute('data-theme', theme);
-  }, [theme, mounted]);
+    if (theme !== 'light' && theme !== 'dark') {
+      const prefersDark =
+        typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+      setTheme(prefersDark ? 'dark' : 'light');
+      return;
+    }
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme, mounted, setTheme]);
 
   useEffect(() => closeIndexNow(), [pathname, closeIndexNow]);
 
@@ -202,13 +215,19 @@ export default function AppShell({
       >
         <div className="mx-auto flex w-full max-w-[1160px] items-center justify-between gap-6 px-5 py-3.5 sm:px-10 sm:py-4">
           {/* Wordmark — also the link home, which is why no "Dashboard" item
-              appears in the nav beside it. */}
-          <Link href="/" className="shrink-0">
+              appears in the nav beside it. The caption underneath is what
+              makes that legible rather than assumed: without it, a logo
+              that is also a link reads as decoration until someone happens
+              to click it. */}
+          <Link href="/" className="squish flex shrink-0 flex-col leading-none">
             <span
               className="wordmark"
               style={{ fontSize: 'clamp(2rem, 1.4rem + 2.4vw, 2.875rem)' }}
             >
               Lectio
+            </span>
+            <span className="slab-sm" style={{ marginTop: '0.2rem' }}>
+              Dashboard
             </span>
           </Link>
 
@@ -386,8 +405,8 @@ function SectionIndex({
   pathname: string;
   days: number;
   mounted: boolean;
-  theme: 'light' | 'dark' | 'system';
-  setTheme: (t: 'light' | 'dark' | 'system') => void;
+  theme: 'light' | 'dark';
+  setTheme: (t: 'light' | 'dark') => void;
   closing: boolean;
   onOpenPalette: () => void;
   /** Instant close, for following a link out of the panel. */
@@ -511,13 +530,7 @@ function SectionIndex({
             <div className="inline-flex items-center gap-2.5">
               <ThemeToggle theme={theme} setTheme={setTheme} mounted={mounted} />
               <span style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem', color: 'var(--fg-muted)' }}>
-                {!mounted
-                  ? 'Theme'
-                  : theme === 'system'
-                    ? 'System theme'
-                    : theme === 'dark'
-                      ? 'Dark theme'
-                      : 'Light theme'}
+                {!mounted ? 'Theme' : theme === 'dark' ? 'Dark theme' : 'Light theme'}
               </span>
             </div>
 
@@ -549,23 +562,19 @@ function SectionIndex({
   );
 }
 
+/** A plain two-way toggle — light or dark, chosen once and kept until
+ *  changed again. There is no third "system" state to cycle through. */
 function ThemeToggle({
   theme,
   setTheme,
   mounted,
 }: {
-  theme: 'light' | 'dark' | 'system';
-  setTheme: (t: 'light' | 'dark' | 'system') => void;
+  theme: 'light' | 'dark';
+  setTheme: (t: 'light' | 'dark') => void;
   mounted: boolean;
 }) {
-  const next = theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light';
-  const label = !mounted
-    ? 'Theme'
-    : theme === 'system'
-      ? 'System theme'
-      : theme === 'dark'
-        ? 'Dark theme'
-        : 'Light theme';
+  const next = theme === 'light' ? 'dark' : 'light';
+  const label = !mounted ? 'Theme' : theme === 'dark' ? 'Dark theme' : 'Light theme';
   return (
     <button
       type="button"
@@ -583,7 +592,7 @@ function ThemeToggle({
             strokeWidth="1.3"
             strokeLinejoin="round"
           />
-        ) : mounted && theme === 'light' ? (
+        ) : (
           <>
             <circle cx="8" cy="8" r="3" stroke="currentColor" strokeWidth="1.3" />
             <path
@@ -592,11 +601,6 @@ function ThemeToggle({
               strokeWidth="1.3"
               strokeLinecap="round"
             />
-          </>
-        ) : (
-          <>
-            <circle cx="8" cy="8" r="5.5" stroke="currentColor" strokeWidth="1.3" />
-            <path d="M8 2.5v11a5.5 5.5 0 000-11z" fill="currentColor" />
           </>
         )}
       </svg>
