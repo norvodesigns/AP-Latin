@@ -234,8 +234,28 @@ export default function AppShell({
             ))}
           </nav>
 
-          {/* Controls */}
-          <div className="flex shrink-0 items-center gap-2.5 sm:gap-4">
+          {/* Controls. Search and the theme toggle are here rather than only
+              inside the index: both are things you reach for while reading,
+              and needing to open a menu first to find either one is a tax on
+              the two controls most likely to be wanted mid-sentence. They are
+              icon-only so that four controls still clear a 360px phone. */}
+          <div className="flex shrink-0 items-center gap-3 sm:gap-3.5">
+            <button
+              type="button"
+              onClick={() => setPaletteOpen(true)}
+              className="squish"
+              title="Search everything (⌘K)"
+              aria-label="Search passages, words and drills"
+              style={{ color: 'var(--fg-muted)' }}
+            >
+              <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.4" />
+                <path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+              </svg>
+            </button>
+
+            <ThemeToggle theme={theme} setTheme={setTheme} mounted={mounted} />
+
             <AccountMenu profile={profile} accountsEnabled={accountsEnabled} />
 
             <button
