@@ -6,7 +6,7 @@ import { translationDrills, getDrill } from '@/data/translation';
 import { getPassage } from '@/data/passages';
 import { useStore } from '@/store/useStore';
 import { useAiStatus, useAiCall } from '@/lib/useAi';
-import { Page, PageHeader, Card, Badge, BackLink } from '@/components/ui';
+import { Page, PageHeader, Section, Panel, CalledOut, BackLink, CedLink, SourceNote } from '@/components/ui';
 import type { TranslationGrade } from '@/lib/ai/schemas';
 
 type Verdict = 'correct' | 'partial' | 'incorrect';
@@ -36,7 +36,8 @@ export default function Translate() {
             </>
           }
         />
-        <ul className="grid gap-2.5 sm:grid-cols-2">
+
+        <ul className="stagger flex flex-col pl-0" style={{ listStyle: 'none' }}>
           {translationDrills.map((d) => {
             const p = getPassage(d.passageId);
             return (
@@ -44,26 +45,51 @@ export default function Translate() {
                 <button
                   type="button"
                   onClick={() => setDrillId(d.id)}
-                  className="card block h-full w-full p-4 text-left transition-transform hover:-translate-y-px"
+                  className="squish row-hover block w-full border-t px-3 py-5 text-left"
+                  style={{ borderColor: 'var(--rule)', marginLeft: '-0.75rem' }}
                 >
-                  <div style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem', fontWeight: 600 }}>
-                    {d.citation}
+                  <div className="flex flex-wrap items-baseline justify-between gap-3">
+                    <span
+                      style={{
+                        fontFamily: 'var(--font-latin)',
+                        fontSize: '1.25rem',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {d.citation}
+                    </span>
+                    <span className="slab-sm">{p?.genre}</span>
                   </div>
-                  <div className="mt-0.5 text-sm" style={{ color: 'var(--fg-muted)' }}>
+
+                  <div
+                    className="mt-1"
+                    style={{
+                      fontFamily: 'var(--font-latin)',
+                      fontSize: '1.0625rem',
+                      color: 'var(--ink2)',
+                    }}
+                  >
                     {p?.title}
                   </div>
-                  <div className="mt-2 flex items-center gap-2 text-xs" style={{ color: 'var(--fg-faint)' }}>
-                    <span>{d.segments.length} segments</span>
+
+                  <div
+                    className="mt-2.5 flex items-center gap-2.5"
+                    style={{ color: 'var(--fg-faint)', fontSize: '0.9375rem' }}
+                  >
+                    <span className="tabular-nums">{d.segments.length} segments</span>
                     <span aria-hidden="true">·</span>
-                    <span>{d.latin.split(/\s+/).length} words</span>
-                    <span aria-hidden="true">·</span>
-                    <Badge tone={p?.genre === 'poetry' ? 'accent' : 'neutral'}>{p?.genre}</Badge>
+                    <span className="tabular-nums">{d.latin.split(/\s+/).length} words</span>
                   </div>
                 </button>
               </li>
             );
           })}
         </ul>
+
+        <SourceNote to="scoring">
+          Segments, requirements and pitfalls are written against the official scoring guidelines for
+          FRQ 2. Read them yourself — knowing how the segment is awarded is most of the skill.
+        </SourceNote>
       </Page>
     );
   }
@@ -136,7 +162,7 @@ function Drill({ drillId, onBack }: { drillId: string; onBack: () => void }) {
 
   return (
     <Page wide>
-      <div className="mb-4">
+      <div className="mb-5">
         <BackLink onClick={onBack}>All drills</BackLink>
       </div>
 
@@ -154,19 +180,18 @@ function Drill({ drillId, onBack }: { drillId: string; onBack: () => void }) {
       />
 
       {/* ---------- Latin ---------- */}
-      <Card className="mb-5">
-        <div className="eyebrow mb-2">Translate as literally as possible</div>
+      <CalledOut rubric="Translate as literally as possible" className="mb-9">
         <p
           className={passage?.author === 'vergil' ? 'latin-verse' : 'latin'}
           style={{ margin: 0, whiteSpace: 'pre-line' }}
         >
           {drill.latin}
         </p>
-      </Card>
+      </CalledOut>
 
       {/* ---------- Input ---------- */}
-      <div className="mb-5">
-        <label className="eyebrow mb-1.5 block" htmlFor="translation">
+      <div className="mb-6">
+        <label className="slab mb-3 block" htmlFor="translation">
           Your translation
         </label>
         <textarea
@@ -175,17 +200,27 @@ function Drill({ drillId, onBack }: { drillId: string; onBack: () => void }) {
           onChange={(e) => setText(e.target.value)}
           rows={8}
           className="input"
-          style={{ fontFamily: 'var(--font-serif)', fontSize: '1rem', lineHeight: 1.75, resize: 'vertical' }}
+          style={{
+            fontFamily: 'var(--font-serif)',
+            fontSize: '1.0625rem',
+            lineHeight: 1.75,
+            resize: 'vertical',
+          }}
           placeholder="Account for every Latin word. Keep the tenses, cases and constructions the Latin actually uses…"
           maxLength={4000}
         />
-        <div className="mt-1.5 flex items-center justify-between text-xs" style={{ color: 'var(--fg-faint)' }}>
-          <span>{text.length} / 4,000 characters</span>
-          {text.trim().length > 0 && !revealed && <span>Write it all before revealing — no peeking.</span>}
+        <div
+          className="mt-2 flex items-center justify-between"
+          style={{ color: 'var(--fg-faint)', fontSize: '0.875rem' }}
+        >
+          <span className="tabular-nums">{text.length} / 4,000 characters</span>
+          {text.trim().length > 0 && !revealed && (
+            <span>Write it all before revealing — no peeking.</span>
+          )}
         </div>
       </div>
 
-      <div className="mb-6 flex flex-wrap gap-2">
+      <div className="mb-8 flex flex-wrap gap-2.5">
         {!revealed && (
           <button
             type="button"
@@ -216,11 +251,15 @@ function Drill({ drillId, onBack }: { drillId: string; onBack: () => void }) {
 
       {grader.error && (
         <div
-          className="mb-5 border px-3.5 py-2.5 text-sm"
+          role="status"
+          className="animate-in mb-8 rounded-[var(--r-md)] border px-4 py-3"
           style={{
-            background: grader.degraded ? 'var(--partial-bg)' : 'var(--incorrect-bg)',
-            borderColor: grader.degraded ? 'color-mix(in srgb, var(--partial) 34%, transparent)' : 'color-mix(in srgb, var(--incorrect) 34%, transparent)',
-            color: 'var(--fg-muted)',
+            borderColor: grader.degraded ? 'var(--rule-strong)' : 'var(--accent)',
+            background: grader.degraded ? 'transparent' : 'var(--redtint)',
+            fontFamily: 'var(--font-latin)',
+            fontSize: '1.0625rem',
+            lineHeight: 1.6,
+            color: grader.degraded ? 'var(--ink2)' : 'var(--accent)',
           }}
         >
           {grader.error}
@@ -231,137 +270,262 @@ function Drill({ drillId, onBack }: { drillId: string; onBack: () => void }) {
       {/* ---------- Segments ---------- */}
       {revealed && (
         <section className="animate-in">
-          <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+          <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
             <div>
-              <h2 style={{ fontSize: '1.0625rem' }}>Scoring segments</h2>
-              <p className="text-sm" style={{ color: 'var(--fg-muted)' }}>
+              <h2 style={{ fontSize: '1.375rem', lineHeight: 1.25 }}>Scoring segments</h2>
+              <p
+                style={{
+                  margin: '0.375rem 0 0',
+                  fontFamily: 'var(--font-latin)',
+                  fontSize: '1.0625rem',
+                  color: 'var(--ink2)',
+                }}
+              >
                 Mark each segment honestly against what you actually wrote.
               </p>
             </div>
             <div className="text-right">
-              <div className="tabular-nums" style={{ fontFamily: 'var(--font-serif)', fontSize: '1.75rem', fontWeight: 600 }}>
-                {score} <span style={{ color: 'var(--fg-faint)', fontSize: '1rem' }}>/ {drill.segments.length}</span>
+              <div
+                className="tabular-nums"
+                style={{ fontFamily: 'var(--font-serif)', fontSize: '2.25rem', lineHeight: 1, fontWeight: 600 }}
+              >
+                {score}
+                <span style={{ color: 'var(--fg-faint)', fontSize: '1.125rem' }}>
+                  {' '}
+                  / {drill.segments.length}
+                </span>
               </div>
-              <div className="text-xs" style={{ color: 'var(--fg-faint)' }}>
+              <div className="slab-sm mt-2">
                 {graded} of {drill.segments.length} marked
               </div>
             </div>
           </div>
 
           {grader.data && (
-            <Card className="mb-4">
-              <div className="eyebrow mb-1.5">One thing to work on</div>
-              <p className="measure text-sm" style={{ margin: 0, color: 'var(--fg)' }}>
+            <CalledOut rubric="One thing to work on" className="mb-8">
+              <p
+                className="measure"
+                style={{
+                  margin: 0,
+                  fontFamily: 'var(--font-latin)',
+                  fontSize: '1.125rem',
+                  lineHeight: 1.6,
+                }}
+              >
                 {grader.data.oneThingToWorkOn}
               </p>
-            </Card>
+            </CalledOut>
           )}
 
-          <ol className="mb-6 flex flex-col gap-3">
+          <ol className="mb-10 flex flex-col pl-0" style={{ listStyle: 'none' }}>
             {drill.segments.map((seg, i) => {
               const v = scores[seg.id];
               const aiSeg = aiSegments?.get(seg.id);
               return (
-                <li key={seg.id}>
-                  <Card>
-                    <div className="flex flex-wrap items-baseline justify-between gap-2">
-                      <div className="flex items-baseline gap-2.5">
-                        <span className="tabular-nums text-xs" style={{ color: 'var(--fg-faint)' }}>{i + 1}</span>
-                        <span style={{ fontFamily: 'var(--font-latin)', fontSize: '1.125rem', fontWeight: 600 }}>
-                          {seg.latin}
-                        </span>
-                      </div>
-                      {v && (
-                        <span
-                          className="px-2 py-0.5 text-[0.6875rem] font-semibold"
-                          style={{ background: VERDICT_STYLE[v].bg, color: VERDICT_STYLE[v].fg }}
-                        >
-                          {VERDICT_STYLE[v].label}
-                        </span>
-                      )}
-                    </div>
-
-                    <p className="mt-2 text-sm" style={{ color: 'var(--fg)' }}>
-                      <span style={{ color: 'var(--fg-faint)' }}>Literal: </span>
-                      {seg.literal}
-                    </p>
-                    <p className="mt-1 text-sm" style={{ color: 'var(--fg-muted)' }}>
-                      <span style={{ color: 'var(--fg-faint)' }}>To earn it: </span>
-                      {seg.requirement}
-                    </p>
-
-                    {seg.pitfalls.length > 0 && (
-                      <ul className="mt-1.5 flex flex-col gap-0.5">
-                        {seg.pitfalls.map((p) => (
-                          <li key={p} className="text-xs" style={{ color: 'var(--fg-faint)' }}>
-                            • {p}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-
-                    {aiSeg && (
-                      <div
-                        className="mt-3 px-3 py-2.5 text-sm"
-                        style={{ background: 'var(--bg-sunk)' }}
+                <li
+                  key={seg.id}
+                  className="border-t pt-5 pb-7"
+                  style={{
+                    borderColor: v ? VERDICT_STYLE[v].fg : 'var(--rule)',
+                    borderTopWidth: v ? 2 : 1,
+                  }}
+                >
+                  <div className="flex flex-wrap items-baseline justify-between gap-3">
+                    <div className="flex items-baseline gap-3">
+                      <span className="numeral tabular-nums" style={{ color: 'var(--fg-faint)' }}>
+                        {i + 1}
+                      </span>
+                      <span
+                        style={{
+                          fontFamily: 'var(--font-latin)',
+                          fontSize: '1.25rem',
+                          fontWeight: 600,
+                        }}
                       >
-                        <div className="eyebrow mb-1">AI reading of your answer</div>
-                        {aiSeg.studentRendering ? (
-                          <p className="italic" style={{ color: 'var(--fg-muted)', margin: 0 }}>
-                            “{aiSeg.studentRendering}”
-                          </p>
-                        ) : (
-                          <p style={{ color: 'var(--incorrect)', margin: 0 }}>Nothing corresponded to this segment.</p>
-                        )}
-                        <p className="mt-1.5" style={{ color: 'var(--fg)', margin: '0.375rem 0 0' }}>
-                          {aiSeg.reason}
-                        </p>
-                      </div>
+                        {seg.latin}
+                      </span>
+                    </div>
+                    {v && (
+                      <span
+                        className="chip"
+                        style={{ borderColor: VERDICT_STYLE[v].fg, color: VERDICT_STYLE[v].fg }}
+                      >
+                        {VERDICT_STYLE[v].label}
+                      </span>
                     )}
+                  </div>
 
-                    <div className="mt-3 flex flex-wrap gap-1.5">
-                      {(['correct', 'partial', 'incorrect'] as Verdict[]).map((verdict) => (
-                        <button
-                          key={verdict}
-                          type="button"
-                          aria-pressed={v === verdict}
-                          onClick={() => setScores((s) => ({ ...s, [seg.id]: verdict }))}
-                          className="border px-2.5 py-1 text-xs font-medium transition-colors"
+                  <p
+                    style={{
+                      margin: '0.75rem 0 0',
+                      fontFamily: 'var(--font-latin)',
+                      fontSize: '1.0625rem',
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    <span className="slab-sm">Literal — </span>
+                    {seg.literal}
+                  </p>
+                  <p
+                    style={{
+                      margin: '0.375rem 0 0',
+                      fontFamily: 'var(--font-latin)',
+                      fontSize: '1rem',
+                      lineHeight: 1.6,
+                      color: 'var(--ink2)',
+                    }}
+                  >
+                    <span className="slab-sm">To earn it — </span>
+                    {seg.requirement}
+                  </p>
+
+                  {seg.pitfalls.length > 0 && (
+                    <ul
+                      className="mt-2.5 flex flex-col gap-1 pl-0"
+                      style={{ listStyle: 'none' }}
+                    >
+                      {seg.pitfalls.map((p) => (
+                        <li
+                          key={p}
+                          className="flex gap-2.5"
                           style={{
-                            background: v === verdict ? VERDICT_STYLE[verdict].bg : 'transparent',
-                            borderColor: v === verdict ? VERDICT_STYLE[verdict].fg : 'var(--rule)',
-                            color: v === verdict ? VERDICT_STYLE[verdict].fg : 'var(--fg-faint)',
+                            fontFamily: 'var(--font-latin)',
+                            fontSize: '0.9375rem',
+                            color: 'var(--fg-muted)',
                           }}
                         >
-                          {VERDICT_STYLE[verdict].label}
-                        </button>
+                          <span aria-hidden="true" style={{ color: 'var(--accent)' }}>
+                            ·
+                          </span>
+                          <span>{p}</span>
+                        </li>
                       ))}
-                      <div className="ml-auto flex flex-wrap gap-1">
-                        {seg.tags.map((t) => (
-                          <Badge key={t} tone="muted">{t.replace(/-/g, ' ')}</Badge>
-                        ))}
-                      </div>
+                    </ul>
+                  )}
+
+                  {aiSeg && (
+                    <div
+                      className="mt-4 rounded-[var(--r-md)] border-l-2 py-1 pl-4"
+                      style={{ borderColor: 'var(--redline)' }}
+                    >
+                      <div className="rubric mb-2">AI reading of your answer</div>
+                      {aiSeg.studentRendering ? (
+                        <p
+                          style={{
+                            margin: 0,
+                            fontFamily: 'var(--font-latin)',
+                            fontSize: '1.0625rem',
+                            fontStyle: 'italic',
+                            color: 'var(--ink2)',
+                          }}
+                        >
+                          “{aiSeg.studentRendering}”
+                        </p>
+                      ) : (
+                        <p
+                          style={{
+                            margin: 0,
+                            fontFamily: 'var(--font-latin)',
+                            fontSize: '1.0625rem',
+                            color: 'var(--accent)',
+                          }}
+                        >
+                          Nothing corresponded to this segment.
+                        </p>
+                      )}
+                      <p
+                        style={{
+                          margin: '0.5rem 0 0',
+                          fontFamily: 'var(--font-latin)',
+                          fontSize: '1.0625rem',
+                          lineHeight: 1.6,
+                        }}
+                      >
+                        {aiSeg.reason}
+                      </p>
+                      {aiSeg.verdict !== 'correct' && aiSeg.correctedLiteral && (
+                        <p
+                          style={{
+                            margin: '0.5rem 0 0',
+                            fontFamily: 'var(--font-latin)',
+                            fontSize: '1.0625rem',
+                            lineHeight: 1.6,
+                            color: 'var(--ink2)',
+                          }}
+                        >
+                          <span className="slab-sm">Should read — </span>
+                          {aiSeg.correctedLiteral}
+                        </p>
+                      )}
                     </div>
-                  </Card>
+                  )}
+
+                  <div className="mt-4 flex flex-wrap items-center gap-2">
+                    {(['correct', 'partial', 'incorrect'] as Verdict[]).map((verdict) => (
+                      <button
+                        key={verdict}
+                        type="button"
+                        aria-pressed={v === verdict}
+                        onClick={() => setScores((s) => ({ ...s, [seg.id]: verdict }))}
+                        className="chip squish"
+                        style={
+                          v === verdict
+                            ? {
+                                background: VERDICT_STYLE[verdict].bg,
+                                borderColor: VERDICT_STYLE[verdict].fg,
+                                color: VERDICT_STYLE[verdict].fg,
+                              }
+                            : undefined
+                        }
+                      >
+                        {VERDICT_STYLE[verdict].label}
+                      </button>
+                    ))}
+                    <div className="ml-auto flex flex-wrap gap-2">
+                      {seg.tags.map((t) => (
+                        <span key={t} className="slab-sm">
+                          {t.replace(/-/g, ' ')}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 </li>
               );
             })}
           </ol>
 
           {/* model translation */}
-          <Card className="mb-5">
-            <div className="eyebrow mb-2">Continuous literal model</div>
-            <p className="measure" style={{ fontFamily: 'var(--font-serif)', lineHeight: 1.75, margin: 0 }}>
+          <Panel className="mb-8">
+            <div className="rubric mb-3">Continuous literal model</div>
+            <p
+              className="measure"
+              style={{
+                margin: 0,
+                fontFamily: 'var(--font-serif)',
+                fontSize: '1.0625rem',
+                lineHeight: 1.75,
+              }}
+            >
               {grader.data?.correctedTranslation ?? drill.modelTranslation}
             </p>
             {drill.notes && (
-              <p className="measure mt-3 border-t pt-3 text-sm" style={{ borderColor: 'var(--rule)', color: 'var(--fg-muted)', marginBottom: 0 }}>
+              <p
+                className="measure mt-5 border-t pt-4"
+                style={{
+                  borderColor: 'var(--rule)',
+                  marginBottom: 0,
+                  fontFamily: 'var(--font-latin)',
+                  fontSize: '1rem',
+                  lineHeight: 1.65,
+                  color: 'var(--ink2)',
+                }}
+              >
                 {drill.notes}
               </p>
             )}
-          </Card>
+          </Panel>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2.5">
             <button
               type="button"
               className="btn btn-primary"
@@ -374,28 +538,51 @@ function Drill({ drillId, onBack }: { drillId: string; onBack: () => void }) {
               Another drill
             </button>
             {graded < drill.segments.length && !saved && (
-              <span className="text-sm" style={{ color: 'var(--fg-faint)' }}>
-                {drill.segments.length - graded} segment{drill.segments.length - graded === 1 ? '' : 's'} still unmarked.
+              <span style={{ color: 'var(--fg-faint)', fontSize: '0.9375rem' }}>
+                {drill.segments.length - graded} segment
+                {drill.segments.length - graded === 1 ? '' : 's'} still unmarked.
               </span>
             )}
           </div>
 
           {priorAttempts.length > 0 && (
-            <div className="mt-6">
-              <div className="eyebrow mb-2">Previous attempts at this drill</div>
-              <ul className="flex flex-col gap-1">
-                {priorAttempts.slice(-5).reverse().map((a) => (
-                  <li key={a.id} className="flex items-baseline gap-3 text-sm">
-                    <span style={{ color: 'var(--fg-faint)' }}>
-                      {new Date(a.at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
-                    </span>
-                    <span className="tabular-nums">{a.score}/{a.maxScore}</span>
-                    <Badge tone="muted">{a.gradedBy === 'ai' ? 'AI graded' : 'self-scored'}</Badge>
-                  </li>
-                ))}
+            <Section title="Previous attempts at this drill" className="mt-12">
+              <ul className="flex flex-col pl-0" style={{ listStyle: 'none' }}>
+                {priorAttempts
+                  .slice(-5)
+                  .reverse()
+                  .map((a) => (
+                    <li
+                      key={a.id}
+                      className="row-hover flex items-baseline gap-4 rounded-[var(--r-sm)] border-t px-2 py-2.5"
+                      style={{ borderColor: 'var(--hair)', marginLeft: '-0.5rem' }}
+                    >
+                      <span style={{ color: 'var(--fg-faint)', fontSize: '0.9375rem' }}>
+                        {new Date(a.at).toLocaleDateString(undefined, {
+                          day: 'numeric',
+                          month: 'short',
+                        })}
+                      </span>
+                      <span
+                        className="tabular-nums"
+                        style={{ fontFamily: 'var(--font-serif)', fontWeight: 600 }}
+                      >
+                        {a.score}/{a.maxScore}
+                      </span>
+                      <span className="slab-sm ml-auto">
+                        {a.gradedBy === 'ai' ? 'AI graded' : 'self-scored'}
+                      </span>
+                    </li>
+                  ))}
               </ul>
-            </div>
+            </Section>
           )}
+
+          <SourceNote to="scoring">
+            Every segment above carries the requirement it is awarded on. When the AI grades, it is
+            given exactly that data — it is not scoring from memory. Check its reasoning against the{' '}
+            <CedLink to="scoring">official guidelines</CedLink> whenever it surprises you.
+          </SourceNote>
         </section>
       )}
     </Page>

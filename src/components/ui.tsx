@@ -112,22 +112,6 @@ export function Panel({
   return <As className={`panel p-6 sm:p-7 ${className}`}>{children}</As>;
 }
 
-/**
- * Kept so unconverted sections keep rendering sensibly: a top hairline and
- * padding rather than a boxed card.
- */
-export function Card({
-  children,
-  className = '',
-  as: As = 'div',
-}: {
-  children: ReactNode;
-  className?: string;
-  as?: 'div' | 'section' | 'article' | 'li';
-}) {
-  return <As className={`card ${className}`}>{children}</As>;
-}
-
 /** A called-out prompt — outlined in red, never filled. */
 export function CalledOut({
   rubric,
@@ -158,31 +142,6 @@ export function CalledOut({
 
 export function Hairline({ faint = false, className = '' }: { faint?: boolean; className?: string }) {
   return <div className={`${faint ? 'hair-faint' : 'hair'} ${className}`} role="presentation" />;
-}
-
-/** Outlined tag. Red for themes, muted for metadata. */
-export function Badge({
-  children,
-  tone = 'neutral',
-  title,
-}: {
-  children: ReactNode;
-  tone?: 'neutral' | 'accent' | 'gilt' | 'green' | 'muted';
-  title?: string;
-}) {
-  const tones: Record<string, { fg: string; bd: string }> = {
-    neutral: { fg: 'var(--fg-muted)', bd: 'var(--rule-strong)' },
-    accent: { fg: 'var(--accent)', bd: 'var(--redborder)' },
-    gilt: { fg: 'var(--gilt)', bd: 'color-mix(in srgb, var(--gilt) 42%, transparent)' },
-    green: { fg: 'var(--correct)', bd: 'color-mix(in srgb, var(--correct) 40%, transparent)' },
-    muted: { fg: 'var(--fg-faint)', bd: 'var(--rule)' },
-  };
-  const t = tones[tone];
-  return (
-    <span title={title} className="chip" style={{ color: t.fg, borderColor: t.bd }}>
-      {children}
-    </span>
-  );
 }
 
 export function Empty({ title, body, action }: { title: string; body: string; action?: ReactNode }) {

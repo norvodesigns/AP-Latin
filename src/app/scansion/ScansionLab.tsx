@@ -192,7 +192,6 @@ export default function ScansionLab() {
     () => scansionBadges(scansionAttempts, Math.max(1, corpusTotal)),
     [scansionAttempts, corpusTotal],
   );
-  const bookLineIds = useMemo(() => lines.map((l) => l.id), [lines]);
   const masteredCount = useMemo(
     () => [...stats.values()].filter((s) => s.mastered).length,
     [stats],
@@ -254,16 +253,6 @@ export default function ScansionLab() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [selected, checked, line, metricalIdx, setMark]);
-
-  function goToLineId(id: string | null) {
-    if (!id) return false;
-    const i = lines.findIndex((l) => l.id === id);
-    if (i >= 0) {
-      setIndex(i);
-      return true;
-    }
-    return false;
-  }
 
   /**
    * Draw the next line at random from the whole corpus.

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { generateObject } from 'ai';
-import { withFallback } from '@/lib/ai/provider';
+import { withFallback, GRADING_MAX_TOKENS } from '@/lib/ai/provider';
 import {
   readJson, checkLength, rateLimit, clientIp, errorResponse, handleAiError,
   GRADING_RULE, LIMITS,
@@ -46,13 +46,24 @@ export async function POST(req: Request) {
    */
   const vocabContext = buildVocabContext(drill.latin);
 
+  /*
+   * The alignment rules below are not padding. Measured against the app's own
+   * model translations, the grader's failure mode was marking a correct
+   * continuous translation down — penalising a segment because the word
+   * appeared just inside a neighbouring segment's span, or because English
+   * idiom needs no separate token for a Latin feature (a vocative does not
+   * require "O"). Marking a correct student wrong is the costly error here:
+   * it teaches them to distrust a right answer.
+   */
   const system = [
     'You are an experienced AP Latin Reader scoring Free-Response Question 2 (literal translation).',
     'AP scores this question in discrete segments. A segment earns credit only when the student accounts for every Latin word in it with correct grammar — correct tense, voice, mood, number, case function, and syntax.',
     'Grade strictly against the segment data supplied. Never invent Latin, never grade against a passage you remember instead of the one supplied.',
+    'ALIGNMENT: the student writes one continuous English translation, not labelled segments. Before judging, map the whole translation onto the segments in order. English word order differs from Latin, so a word belonging to one segment often surfaces earlier or later than its segment boundary. If the sense of a segment is present anywhere in the student\'s rendering of that area, it is accounted for. Never mark a segment missing because the word sits just inside a neighbouring segment\'s span.',
+    'IDIOM: judge whether the grammatical relationship is conveyed, not whether a token-for-token equivalent appears. English needs no "O" for a vocative, no extra noun for an ablative of means, and no separate pronoun where the verb ending carries it. A natural English rendering that preserves tense, voice, mood, number and case function is correct, not partial.',
     'For each segment, name the specific grammatical error, not a vague impression: say "perfect rendered as present" or "ablative absolute translated as a coordinate main clause", never "not quite right".',
     'If the student omitted a segment entirely, mark it incorrect with studentRendering as an empty string.',
-    'Idiomatic English is acceptable only where it preserves the grammar; a paraphrase that drops a construction is at most partial.',
+    'A paraphrase that actually drops a construction is at most partial. But reserve "partial" and "incorrect" for a real grammatical fault you can name — marking a correct rendering wrong is the worse error.',
   ].join(' ');
 
   const prompt = [
@@ -82,6 +93,10 @@ export async function POST(req: Request) {
         system,
         prompt,
         temperature: 0.2,
+        // A 15-segment grade is a long JSON document; without an explicit
+        // ceiling the provider default truncates it and generateObject then
+        // fails schema validation. See GRADING_MAX_TOKENS.
+        maxTokens: GRADING_MAX_TOKENS,
       }),
     );
 

@@ -2,11 +2,11 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { questions, QUESTION_TYPE_LABELS, SKILL_LABELS, getQuestion } from '@/data/questions';
 import { allPassages, getPassage } from '@/data/passages';
 import { useStore } from '@/store/useStore';
-import { Page, PageHeader, Card, Badge, Empty } from '@/components/ui';
+import { Page, PageHeader, Section, Panel, CalledOut, Empty, SourceNote } from '@/components/ui';
 import type { Question, QuestionType, SkillCategory, UnitId } from '@/data/types';
 
 type Filters = {
@@ -19,6 +19,28 @@ type Filters = {
 };
 
 const ALL_TYPES = Object.keys(QUESTION_TYPE_LABELS) as QuestionType[];
+
+/** A labelled select, so the filter panels stay consistent. */
+function Field({
+  label,
+  value,
+  onChange,
+  children,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="block">
+      <span className="slab-sm mb-2 block">{label}</span>
+      <select className="input" value={value} onChange={(e) => onChange(e.target.value)}>
+        {children}
+      </select>
+    </label>
+  );
+}
 
 export default function QuizEngine() {
   const params = useSearchParams();
@@ -144,43 +166,66 @@ export default function QuizEngine() {
     return (
       <Page>
         <PageHeader eyebrow="Set complete" title={`${correct} of ${results.length} correct`} />
-        <Card className="mb-5">
+
+        <div className="animate-in mb-10">
           <div
             className="tabular-nums"
-            style={{ fontFamily: 'var(--font-serif)', fontSize: '3rem', fontWeight: 600, lineHeight: 1 }}
+            style={{ fontFamily: 'var(--font-serif)', fontSize: '4rem', fontWeight: 600, lineHeight: 1 }}
           >
             {pct}%
           </div>
-          <p className="mt-2 text-sm" style={{ color: 'var(--fg-muted)' }}>
+          <p
+            style={{
+              margin: '0.75rem 0 0',
+              fontFamily: 'var(--font-latin)',
+              fontSize: '1.125rem',
+              color: 'var(--ink2)',
+            }}
+          >
             {results.length - correct > 0
               ? `${results.length - correct} question${results.length - correct === 1 ? '' : 's'} went to your review queue.`
               : 'Nothing added to the review queue — clean set.'}
           </p>
-        </Card>
-
-        <div className="mb-6 flex flex-col gap-2">
-          {session.map((qq, i) => {
-            const r = results[i];
-            return (
-              <div key={qq.id} className="flex items-start gap-2.5 text-sm">
-                <span
-                  aria-hidden="true"
-                  className="mt-1 inline-block h-2 w-2 shrink-0"
-                  style={{ background: r?.correct ? 'var(--correct)' : 'var(--incorrect)' }}
-                />
-                <span style={{ color: 'var(--fg-muted)' }}>
-                  {qq.prompt.length > 92 ? `${qq.prompt.slice(0, 92)}…` : qq.prompt}
-                </span>
-              </div>
-            );
-          })}
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          <button type="button" className="btn btn-primary" onClick={() => { setSession(null); }}>
+        <Section title="This set" className="mb-10">
+          <ul className="flex flex-col pl-0" style={{ listStyle: 'none' }}>
+            {session.map((qq, i) => {
+              const r = results[i];
+              return (
+                <li
+                  key={qq.id}
+                  className="row-hover flex items-start gap-3 rounded-[var(--r-sm)] border-t px-2 py-2.5"
+                  style={{ borderColor: 'var(--hair)', marginLeft: '-0.5rem' }}
+                >
+                  <span
+                    aria-hidden="true"
+                    className="mt-2 inline-block h-1.5 w-1.5 shrink-0 rounded-full"
+                    style={{ background: r?.correct ? 'var(--correct)' : 'var(--accent)' }}
+                  />
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-latin)',
+                      fontSize: '1rem',
+                      lineHeight: 1.5,
+                      color: 'var(--ink2)',
+                    }}
+                  >
+                    {qq.prompt.length > 92 ? `${qq.prompt.slice(0, 92)}…` : qq.prompt}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </Section>
+
+        <div className="flex flex-wrap gap-2.5">
+          <button type="button" className="btn btn-primary" onClick={() => setSession(null)}>
             Build another set
           </button>
-          <Link href="/" className="btn">Dashboard</Link>
+          <Link href="/" className="btn">
+            Dashboard
+          </Link>
         </div>
       </Page>
     );
@@ -195,85 +240,113 @@ export default function QuizEngine() {
 
     return (
       <Page>
-        <div className="mb-5 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--fg-muted)' }}>
-            <span className="tabular-nums">
-              {index + 1} / {session!.length}
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="slab tabular-nums">
+              {index + 1} of {session!.length}
             </span>
-            <Badge tone="neutral">{QUESTION_TYPE_LABELS[current.type]}</Badge>
-            <Badge tone="muted" title={SKILL_LABELS[current.skill]}>{current.skill}</Badge>
+            <span className="slab-sm">{QUESTION_TYPE_LABELS[current.type]}</span>
+            <span className="slab-sm" title={SKILL_LABELS[current.skill]}>
+              Skill {current.skill}
+            </span>
           </div>
-          <button type="button" className="btn btn-ghost text-xs" onClick={() => setSession(null)}>
+          <button type="button" className="btn btn-ghost" onClick={() => setSession(null)}>
             End set
           </button>
         </div>
 
-        <div className="mb-4 h-1 w-full overflow-hidden" style={{ background: 'var(--bg-sunk)' }}>
+        <div
+          className="mb-8 h-[3px] w-full overflow-hidden rounded-full"
+          style={{ background: 'var(--track)' }}
+          role="progressbar"
+          aria-valuenow={index}
+          aria-valuemin={0}
+          aria-valuemax={session!.length}
+        >
           <div
-            className="h-full transition-[width] duration-300"
-            style={{ width: `${((index) / session!.length) * 100}%`, background: 'var(--accent)' }}
+            className="h-full rounded-full"
+            style={{
+              width: `${(index / session!.length) * 100}%`,
+              background: 'var(--accent)',
+              transition: 'width var(--dur-3) var(--ease-spring)',
+            }}
           />
         </div>
 
         {/* stimulus */}
         {(lines.length > 0 || current.stimulus) && (
-          <Card className="mb-5">
-            <div className="eyebrow mb-2">
-              {current.stimulus?.citation ?? `${passage?.citation}`}
-            </div>
+          <CalledOut rubric={current.stimulus?.citation ?? passage?.citation} className="mb-8">
             {lines.length > 0 ? (
               lines.map((l) => (
-                <div key={l.n} className="flex items-baseline gap-3">
+                <div key={l.n} className="flex items-baseline gap-4">
                   <span
                     className="w-7 shrink-0 text-right tabular-nums"
-                    style={{ fontSize: '0.6875rem', color: 'var(--fg-faint)' }}
+                    style={{ fontSize: '0.75rem', color: 'var(--fg-faint)' }}
                   >
                     {l.n}
                   </span>
-                  <p className={passage?.author === 'vergil' ? 'latin-verse' : 'latin'} style={{ margin: 0 }}>
+                  <p
+                    className={passage?.author === 'vergil' ? 'latin-verse' : 'latin'}
+                    style={{ margin: 0 }}
+                  >
                     {l.latin}
                   </p>
                 </div>
               ))
             ) : (
-              <p className={current.stimulus?.genre === 'poetry' ? 'latin-verse' : 'latin'} style={{ margin: 0, whiteSpace: 'pre-line' }}>
+              <p
+                className={current.stimulus?.genre === 'poetry' ? 'latin-verse' : 'latin'}
+                style={{ margin: 0, whiteSpace: 'pre-line' }}
+              >
                 {current.stimulus?.latin}
               </p>
             )}
+
             {current.stimulus?.gloss && current.stimulus.gloss.length > 0 && (
-              <ul className="mt-3 flex flex-col gap-0.5 border-t pt-2.5" style={{ borderColor: 'var(--rule)' }}>
+              <ul
+                className="mt-5 flex flex-col gap-1.5 border-t pt-4 pl-0"
+                style={{ borderColor: 'var(--redborder)', listStyle: 'none' }}
+              >
                 {current.stimulus.gloss.map((g) => (
-                  <li key={g.word} className="text-xs" style={{ color: 'var(--fg-muted)' }}>
-                    <span style={{ fontFamily: 'var(--font-latin)', fontSize: '0.95rem' }}>{g.word}</span>
+                  <li
+                    key={g.word}
+                    style={{
+                      fontFamily: 'var(--font-latin)',
+                      fontSize: '1rem',
+                      color: 'var(--ink2)',
+                    }}
+                  >
+                    <span style={{ fontWeight: 600 }}>{g.word}</span>
                     {' — '}
                     {g.meaning}
                   </li>
                 ))}
               </ul>
             )}
-          </Card>
+          </CalledOut>
         )}
 
         {/* prompt */}
-        <h2 className="measure mb-4" style={{ fontSize: '1.0625rem', fontWeight: 550, lineHeight: 1.45 }}>
+        <h2
+          className="measure mb-6"
+          style={{ fontSize: '1.375rem', fontWeight: 550, lineHeight: 1.35 }}
+        >
           {current.prompt}
         </h2>
 
-        <ul className="mb-5 flex flex-col gap-2">
+        <ul className="mb-7 flex flex-col gap-2.5 pl-0" style={{ listStyle: 'none' }}>
           {current.options.map((o, i) => {
             const isAnswer = o.id === current.answerId;
             const isChosen = o.id === chosen;
-            let bg = 'var(--bg-raised)';
-            let bd = 'var(--rule)';
-            let fg = 'var(--fg)';
+            const style: CSSProperties = { borderColor: 'var(--rule-strong)' };
             if (revealed && isAnswer) {
-              bg = 'var(--correct-bg)';
-              bd = 'var(--correct)';
+              style.borderColor = 'var(--correct)';
+              style.background = 'var(--correct-bg)';
             } else if (revealed && isChosen) {
-              bg = 'var(--incorrect-bg)';
-              bd = 'var(--incorrect)';
+              style.borderColor = 'var(--accent)';
+              style.background = 'var(--incorrect-bg)';
             } else if (revealed) {
-              fg = 'var(--fg-faint)';
+              style.opacity = 0.5;
             }
             return (
               <li key={o.id}>
@@ -281,13 +354,23 @@ export default function QuizEngine() {
                   type="button"
                   disabled={revealed}
                   onClick={() => submit(o.id)}
-                  className="flex w-full items-start gap-3 border px-3.5 py-3 text-left text-sm transition-colors"
-                  style={{ background: bg, borderColor: bd, color: fg, cursor: revealed ? 'default' : 'pointer' }}
+                  className="squish row-hover flex w-full items-start gap-3.5 rounded-[var(--r-md)] border px-4 py-3.5 text-left"
+                  style={{ ...style, cursor: revealed ? 'default' : 'pointer' }}
                 >
-                  <span className="kbd mt-px shrink-0" aria-hidden="true">{i + 1}</span>
-                  <span style={{ lineHeight: 1.55 }}>{o.text}</span>
+                  <span className="kbd mt-0.5 shrink-0" aria-hidden="true">
+                    {i + 1}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-latin)',
+                      fontSize: '1.0625rem',
+                      lineHeight: 1.55,
+                    }}
+                  >
+                    {o.text}
+                  </span>
                   {revealed && isAnswer && (
-                    <span className="ml-auto shrink-0 text-xs font-semibold" style={{ color: 'var(--correct)' }}>
+                    <span className="slab-sm ml-auto shrink-0" style={{ color: 'var(--correct)' }}>
                       correct
                     </span>
                   )}
@@ -298,27 +381,38 @@ export default function QuizEngine() {
         </ul>
 
         {revealed && (
-          <Card className="animate-in mb-5">
-            <div className="eyebrow mb-1.5">Why</div>
-            <p className="measure text-sm" style={{ color: 'var(--fg-muted)', lineHeight: 1.68, margin: 0 }}>
+          <Panel className="animate-in mb-7">
+            <div className="rubric mb-2.5">Why</div>
+            <p
+              className="measure"
+              style={{
+                margin: 0,
+                fontFamily: 'var(--font-latin)',
+                fontSize: '1.0625rem',
+                lineHeight: 1.65,
+                color: 'var(--ink2)',
+              }}
+            >
               {current.explanation}
             </p>
             {passage && (
               <Link
                 href={`/read/${passage.id}`}
-                className="mt-3 inline-block text-sm hover:underline"
+                className="link-rule mt-4 inline-block"
                 style={{ color: 'var(--accent)' }}
               >
                 Read {passage.citation} in full →
               </Link>
             )}
-          </Card>
+          </Panel>
         )}
 
         {revealed && (
           <button type="button" className="btn btn-primary" onClick={next} autoFocus>
             {index < session!.length - 1 ? 'Next question' : 'See results'}
-            <span className="kbd ml-1" aria-hidden="true">↵</span>
+            <span className="kbd ml-2" aria-hidden="true">
+              ↵
+            </span>
           </button>
         )}
       </Page>
@@ -340,14 +434,14 @@ export default function QuizEngine() {
         }
         actions={
           reviewMode ? (
-            <Link href="/quiz" className="btn">All questions</Link>
-          ) : (
-            mounted && reviewQueue.length > 0 ? (
-              <Link href="/quiz?mode=review" className="btn">
-                Review queue ({reviewQueue.length})
-              </Link>
-            ) : null
-          )
+            <Link href="/quiz" className="btn">
+              All questions
+            </Link>
+          ) : mounted && reviewQueue.length > 0 ? (
+            <Link href="/quiz?mode=review" className="btn">
+              Review queue ({reviewQueue.length})
+            </Link>
+          ) : null
         }
       />
 
@@ -356,103 +450,113 @@ export default function QuizEngine() {
           <Empty
             title="Your review queue is empty"
             body="Questions you answer incorrectly land here automatically. Answer one correctly and it clears."
-            action={<Link href="/quiz" className="btn btn-primary">Build a practice set</Link>}
+            action={
+              <Link href="/quiz" className="btn btn-primary">
+                Build a practice set
+              </Link>
+            }
           />
         ) : (
-          <Card>
-            <p className="mb-4 text-sm" style={{ color: 'var(--fg-muted)' }}>
+          <CalledOut rubric="Ready when you are">
+            <p
+              style={{
+                margin: '0 0 1.25rem',
+                fontFamily: 'var(--font-latin)',
+                fontSize: '1.125rem',
+              }}
+            >
               {pool.length} question{pool.length === 1 ? '' : 's'} waiting.
             </p>
             <button type="button" className="btn btn-primary" onClick={start}>
               Start review
             </button>
-          </Card>
+          </CalledOut>
         )
       ) : (
         <>
-          <div className="mb-5 grid gap-4 sm:grid-cols-2">
-            <Card>
-              <div className="eyebrow mb-2.5">Source</div>
-              <label className="mb-3 block">
-                <span className="mb-1 block text-xs" style={{ color: 'var(--fg-muted)' }}>Author</span>
-                <select
-                  className="input"
+          <div className="mb-12 grid gap-10 sm:grid-cols-2">
+            <Section title="Source">
+              <div className="flex flex-col gap-5">
+                <Field
+                  label="Author"
                   value={filters.author}
-                  onChange={(e) => setFilters((f) => ({ ...f, author: e.target.value as Filters['author'], passageId: 'all' }))}
+                  onChange={(v) =>
+                    setFilters((f) => ({ ...f, author: v as Filters['author'], passageId: 'all' }))
+                  }
                 >
                   <option value="all">All</option>
                   <option value="vergil">Vergil</option>
                   <option value="pliny">Pliny</option>
                   <option value="sight">Sight (no syllabus passage)</option>
-                </select>
-              </label>
-              <label className="block">
-                <span className="mb-1 block text-xs" style={{ color: 'var(--fg-muted)' }}>Passage</span>
-                <select
-                  className="input"
+                </Field>
+
+                <Field
+                  label="Passage"
                   value={filters.passageId}
-                  onChange={(e) => setFilters((f) => ({ ...f, passageId: e.target.value }))}
+                  onChange={(v) => setFilters((f) => ({ ...f, passageId: v }))}
                 >
                   <option value="all">Any passage</option>
                   {passageOptions.map((p) => (
-                    <option key={p.id} value={p.id}>{p.citation} — {p.title}</option>
+                    <option key={p.id} value={p.id}>
+                      {p.citation} — {p.title}
+                    </option>
                   ))}
-                </select>
-              </label>
-            </Card>
+                </Field>
+              </div>
+            </Section>
 
-            <Card>
-              <div className="eyebrow mb-2.5">Scope</div>
-              <label className="mb-3 block">
-                <span className="mb-1 block text-xs" style={{ color: 'var(--fg-muted)' }}>Unit</span>
-                <select
-                  className="input"
+            <Section title="Scope">
+              <div className="flex flex-col gap-5">
+                <Field
+                  label="Unit"
                   value={filters.unit}
-                  onChange={(e) => setFilters((f) => ({ ...f, unit: e.target.value as Filters['unit'] }))}
+                  onChange={(v) => setFilters((f) => ({ ...f, unit: v as Filters['unit'] }))}
                 >
                   <option value="all">All units</option>
                   {(['1', '2', '3', '4', '5', '6'] as UnitId[]).map((u) => (
-                    <option key={u} value={u}>Unit {u}</option>
+                    <option key={u} value={u}>
+                      Unit {u}
+                    </option>
                   ))}
-                </select>
-              </label>
-              <label className="block">
-                <span className="mb-1 block text-xs" style={{ color: 'var(--fg-muted)' }}>Skill category</span>
-                <select
-                  className="input"
+                </Field>
+
+                <Field
+                  label="Skill category"
                   value={filters.skill}
-                  onChange={(e) => setFilters((f) => ({ ...f, skill: e.target.value as Filters['skill'] }))}
+                  onChange={(v) => setFilters((f) => ({ ...f, skill: v as Filters['skill'] }))}
                 >
                   <option value="all">All skills</option>
                   <option value="1">1 — Read and comprehend</option>
                   <option value="2">2 — Describe style and context</option>
                   <option value="3">3 — Analyse with evidence</option>
-                </select>
-              </label>
-            </Card>
+                </Field>
+              </div>
+            </Section>
           </div>
 
-          <Card className="mb-5">
-            <div className="mb-2.5 flex items-center justify-between">
-              <div className="eyebrow" style={{ margin: 0 }}>Question types</div>
+          <Section
+            title="Question types"
+            className="mb-12"
+            aside={
               <div className="flex gap-1.5">
                 <button
                   type="button"
-                  className="btn btn-ghost px-2 py-0.5 text-xs"
+                  className="btn btn-ghost"
                   onClick={() => setFilters((f) => ({ ...f, types: new Set(ALL_TYPES) }))}
                 >
                   All
                 </button>
                 <button
                   type="button"
-                  className="btn btn-ghost px-2 py-0.5 text-xs"
+                  className="btn btn-ghost"
                   onClick={() => setFilters((f) => ({ ...f, types: new Set() }))}
                 >
                   None
                 </button>
               </div>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
+            }
+          >
+            <div className="flex flex-wrap gap-2">
               {ALL_TYPES.map((t) => {
                 const on = filters.types.has(t);
                 const n = questions.filter((qq) => qq.type === t).length;
@@ -469,62 +573,69 @@ export default function QuizEngine() {
                         return { ...f, types: next };
                       })
                     }
-                    className="border px-2.5 py-1 text-xs transition-colors"
-                    style={{
-                      background: on ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'transparent',
-                      borderColor: on ? 'color-mix(in srgb, var(--accent) 34%, transparent)' : 'var(--rule)',
-                      color: on ? 'var(--accent)' : 'var(--fg-faint)',
-                    }}
+                    className={on ? 'chip chip-on squish' : 'chip squish'}
                   >
-                    {QUESTION_TYPE_LABELS[t]} <span className="tabular-nums opacity-60">{n}</span>
+                    {QUESTION_TYPE_LABELS[t]}{' '}
+                    <span className="tabular-nums" style={{ opacity: 0.6 }}>
+                      {n}
+                    </span>
                   </button>
                 );
               })}
             </div>
-          </Card>
+          </Section>
 
-          <Card>
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <label>
-                <span className="mb-1 block text-xs" style={{ color: 'var(--fg-muted)' }}>
-                  Questions in this set
-                </span>
-                <div className="flex items-center gap-2">
-                  {[5, 10, 20, 52].map((n) => (
-                    <button
-                      key={n}
-                      type="button"
-                      aria-pressed={filters.count === n}
-                      onClick={() => setFilters((f) => ({ ...f, count: n }))}
-                      className="btn px-3"
-                      style={
-                        filters.count === n
-                          ? { background: 'var(--accent)', borderColor: 'var(--accent)', color: 'var(--accent-fg)' }
-                          : undefined
-                      }
-                    >
-                      {n}
-                      {n === 52 && <span className="text-xs opacity-70">full</span>}
-                    </button>
-                  ))}
-                </div>
-              </label>
+          <Section title="Set length">
+            <div className="flex flex-wrap items-end justify-between gap-6">
+              <div className="flex flex-wrap items-center gap-2">
+                {[5, 10, 20, 52].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    aria-pressed={filters.count === n}
+                    onClick={() => setFilters((f) => ({ ...f, count: n }))}
+                    className={filters.count === n ? 'btn btn-rubric' : 'btn'}
+                  >
+                    {n}
+                    {n === 52 && <span style={{ opacity: 0.7 }}>&nbsp;full</span>}
+                  </button>
+                ))}
+              </div>
 
-              <div className="flex items-center gap-3">
-                <span className="text-sm tabular-nums" style={{ color: 'var(--fg-faint)' }}>
+              <div className="flex items-center gap-4">
+                <span className="slab tabular-nums">
                   {pool.length} match{pool.length === 1 ? '' : 'es'}
                 </span>
-                <button type="button" className="btn btn-primary" onClick={start} disabled={pool.length === 0}>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={start}
+                  disabled={pool.length === 0}
+                >
                   Start set
                 </button>
               </div>
             </div>
+
             {pool.length === 0 && (
-              <p className="mt-3 text-sm" style={{ color: 'var(--incorrect)' }}>
+              <p
+                className="animate-in mt-5"
+                style={{
+                  margin: '1.25rem 0 0',
+                  fontFamily: 'var(--font-latin)',
+                  fontSize: '1.0625rem',
+                  color: 'var(--accent)',
+                }}
+              >
                 No questions match those filters. Widen the type or scope selection.
               </p>
             )}
-          </Card>
+          </Section>
+
+          <SourceNote to="examOverview">
+            The multiple-choice section is the largest single part of the exam. The filters above map
+            onto the units and skill categories the Course and Exam Description defines.
+          </SourceNote>
         </>
       )}
     </Page>

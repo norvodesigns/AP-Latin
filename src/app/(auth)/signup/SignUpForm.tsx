@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from 'react';
 import { signUp, type AuthResult } from '../actions';
-import { Card } from '@/components/ui';
+import { Panel } from '@/components/ui';
 import type { Role } from '@/lib/supabase/types';
 
 const initial: AuthResult = { error: null };
@@ -30,18 +30,18 @@ export default function SignUpForm() {
 
   if (awaitingConfirmation) {
     return (
-      <Card>
+      <Panel>
         <h2 style={{ fontSize: '1.0625rem' }}>Check your email</h2>
         <p className="measure mt-2 text-sm" style={{ color: 'var(--fg-muted)' }}>
           We sent you a confirmation link. Click it to finish creating your account, then
           come back and sign in.
         </p>
-      </Card>
+      </Panel>
     );
   }
 
   return (
-    <Card>
+    <Panel>
       <form action={action} className="flex flex-col gap-4">
         <fieldset>
           <legend className="mb-2 text-sm" style={{ color: 'var(--fg-muted)' }}>
@@ -136,6 +136,6 @@ export default function SignUpForm() {
           {pending ? 'Creating account…' : 'Create account'}
         </button>
       </form>
-    </Card>
+    </Panel>
   );
 }

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { supabaseConfigured } from '@/lib/supabase/config';
-import { Page, PageHeader, Card } from '@/components/ui';
+import { Page, PageHeader, Panel } from '@/components/ui';
 import LoginForm from './LoginForm';
 
 export const metadata: Metadata = { title: 'Sign in' };
@@ -17,7 +17,7 @@ export default async function LoginPage({
     return (
       <Page>
         <PageHeader eyebrow="Accounts" title="Sign in" />
-        <Card>
+        <Panel>
           <p className="measure text-sm" style={{ color: 'var(--fg-muted)', margin: 0 }}>
             This deployment has no backend configured, so Lectio is running in solo mode:
             your progress lives in this browser and there are no accounts, classrooms or
@@ -26,7 +26,7 @@ export default async function LoginPage({
           <Link href="/" className="btn btn-primary mt-4">
             Back to studying
           </Link>
-        </Card>
+        </Panel>
       </Page>
     );
   }

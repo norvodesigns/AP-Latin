@@ -58,8 +58,17 @@ function model(p: ProviderName): LanguageModel {
 
 /**
  * Should we retry on the fallback provider?
+ *
  * Rate limits (429), quota exhaustion, and a retired/unknown model (404) are
- * the failures the fallback exists for. Everything else is surfaced as-is.
+ * the failures the fallback exists for.
+ *
+ * `NoObjectGeneratedError` is here too, and it is worth saying why. It means
+ * the model's JSON did not satisfy the schema — in practice almost always
+ * because it ran out of output tokens partway through and the JSON was cut
+ * off. That is a property of one model's response on one attempt, not of the
+ * request, so the other provider deserves a go before the student is told
+ * grading failed. Without this, the longest translation drill returned 502
+ * every time.
  */
 function shouldFallback(err: unknown): boolean {
   const e = err as { statusCode?: number; status?: number; message?: string; name?: string } | null;
@@ -74,9 +83,22 @@ function shouldFallback(err: unknown): boolean {
     msg.includes('model not found') ||
     msg.includes('not_found') ||
     msg.includes('is not found') ||
-    msg.includes('unsupported model')
+    msg.includes('unsupported model') ||
+    msg.includes('no object generated') ||
+    msg.includes('noobjectgenerated') ||
+    msg.includes('did not match schema')
   );
 }
+
+/**
+ * Output-token ceiling for the structured-grading calls.
+ *
+ * A 15-segment translation grade is a large JSON document. The provider
+ * defaults are lower than it needs, and the failure mode is silent truncation
+ * that only surfaces as a schema mismatch, so the budget is set explicitly
+ * here rather than left to whatever each provider happens to default to.
+ */
+export const GRADING_MAX_TOKENS = 8192;
 
 export interface AttemptResult<T> {
   value: T;
@@ -111,7 +133,17 @@ export async function withFallback<T>(
       lastErr = err;
       const isLast = i === available.length - 1;
       if (isLast || !shouldFallback(err)) throw err;
-      // Otherwise loop to the next provider.
+      /*
+       * Say so when the primary drops out. A silent fallback means the app can
+       * run entirely on the secondary for weeks — different model, different
+       * grading behaviour — with nothing anywhere to show it. That is exactly
+       * what happened once already: Gemini's free-tier quota was exhausted and
+       * every grade was quietly coming from Groq.
+       */
+      console.warn(
+        `[ai] ${p} failed (${(err as Error)?.name ?? 'error'}), falling back to ${available[i + 1]}:`,
+        String((err as Error)?.message ?? err).slice(0, 200),
+      );
     }
   }
   throw lastErr;

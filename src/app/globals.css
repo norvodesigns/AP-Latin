@@ -383,17 +383,6 @@ h1, h2, h3, h4 {
     padding: 1.625rem 1.5rem;
   }
 
-  /* Kept as a compatibility shim for sections not yet converted: strips the
-     rounding and shadow so nothing renders as a card mid-migration. */
-  .card {
-    background: transparent;
-    border: 0;
-    border-top: 1px solid var(--rule);
-    border-radius: 0;
-    box-shadow: none;
-    padding-top: 1.5rem;
-  }
-
   /* — Controls —————————————————————————————————————————————————————
      Rectangles. Uppercase, tracked, no radius.
 

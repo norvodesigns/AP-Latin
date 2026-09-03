@@ -2,7 +2,7 @@
 
 import { useActionState } from 'react';
 import { signIn, type AuthResult } from '../actions';
-import { Card } from '@/components/ui';
+import { Panel } from '@/components/ui';
 
 const initial: AuthResult = { error: null };
 
@@ -10,7 +10,7 @@ export default function LoginForm({ next }: { next: string }) {
   const [state, action, pending] = useActionState(signIn, initial);
 
   return (
-    <Card>
+    <Panel>
       <form action={action} className="flex flex-col gap-4">
         <input type="hidden" name="next" value={next} />
 
@@ -61,6 +61,6 @@ export default function LoginForm({ next }: { next: string }) {
           {pending ? 'Signing in…' : 'Sign in'}
         </button>
       </form>
-    </Card>
+    </Panel>
   );
 }

@@ -10,12 +10,11 @@
  * The cases below have objectively known outcomes, built from the drill data
  * itself rather than from anyone's opinion:
  *
- *   perfect    every segment rendered with its own accepted literal. The
- *              grader must award every segment. Any miss is a false negative.
- *   omission   two segments deleted outright. Those two must be marked wrong
- *              and — just as importantly — the rest must still be marked right.
- *   tense      a present verb rendered as a past. That segment must fail.
- *   empty      nothing submitted. Everything must fail.
+ *   perfect    the drill's own continuous model translation. It is by
+ *              definition correct, so the grader must award every segment.
+ *   truncated  only the opening of that translation. The closing segments are
+ *              genuinely absent and must fail; the opening ones must still pass.
+ *   empty      nothing relevant submitted. Everything must fail.
  *
  * False negatives (marking a correct segment wrong) are reported separately
  * from false positives (waving an error through), because they are not equally
@@ -33,61 +32,48 @@ const arg = (flag, fallback) => {
 const BASE = arg('--base', 'http://localhost:3000');
 const RUNS = Number(arg('--runs', '1'));
 
-/** Turn a present-tense English rendering into a past one. */
-function pastify(text) {
-  const swaps = [
-    [/\bI sing\b/g, 'I sang'],
-    [/\bsings\b/g, 'sang'],
-    [/\bis\b/g, 'was'],
-    [/\bare\b/g, 'were'],
-    [/\bcomes\b/g, 'came'],
-    [/\bI tell\b/g, 'I told'],
-    [/\bI am\b/g, 'I was'],
-  ];
-  for (const [re, to] of swaps) {
-    if (re.test(text)) return text.replace(re, to);
-  }
-  return null;
-}
-
+/**
+ * The cases.
+ *
+ * All three are derived from the drill's own continuous model translation,
+ * because that is what a student actually submits: unlabelled English prose,
+ * not a list of segments. An earlier version built cases by concatenating the
+ * segments' accepted literals, which was unsound — a literal that is an
+ * ellipsis placeholder ("I ... that you"), one carrying an editorial gloss in
+ * parentheses, or a pair that overlap all produce text no honest grader should
+ * pass, so every "false negative" it found was really a defect in this file.
+ */
 function buildCases(drill) {
   const segs = drill.segments;
-  const all = segs.map((s) => s.literal);
+  const model = drill.modelTranslation;
   const cases = [];
 
-  // 1. Perfect — assembled from the accepted literals themselves.
+  // 1. Perfect — the drill's own model translation. Correct by construction,
+  //    so every segment must be awarded. Any miss is a false negative.
   cases.push({
     name: 'perfect',
-    translation: all.join(' '),
+    translation: model,
     expectCorrect: new Set(segs.map((s) => s.id)),
     expectWrong: new Set(),
   });
 
-  // 2. Omission — two segments removed.
-  if (segs.length >= 6) {
-    const dropped = [segs[2].id, segs[Math.min(6, segs.length - 1)].id];
+  // 2. Truncated — only the opening of the translation is submitted. Segments
+  //    are ordered, so the passage's closing segments are simply not there and
+  //    must fail; the opening ones must still pass. Judging only the outer
+  //    thirds leaves the middle, where the cut lands and alignment is genuinely
+  //    ambiguous, out of the score.
+  const words = model.split(/\s+/);
+  if (words.length > 20 && segs.length >= 6) {
+    const head = Math.max(3, Math.floor(segs.length / 3));
     cases.push({
-      name: 'omission',
-      translation: segs.filter((s) => !dropped.includes(s.id)).map((s) => s.literal).join(' '),
-      expectCorrect: new Set(segs.filter((s) => !dropped.includes(s.id)).map((s) => s.id)),
-      expectWrong: new Set(dropped),
+      name: 'truncated',
+      translation: words.slice(0, Math.floor(words.length * 0.45)).join(' '),
+      expectCorrect: new Set(segs.slice(0, 2).map((s) => s.id)),
+      expectWrong: new Set(segs.slice(-head).map((s) => s.id)),
     });
   }
 
-  // 3. Tense error in exactly one segment.
-  const tenseIdx = segs.findIndex((s) => pastify(s.literal));
-  if (tenseIdx >= 0) {
-    const broken = [...all];
-    broken[tenseIdx] = pastify(segs[tenseIdx].literal);
-    cases.push({
-      name: 'tense',
-      translation: broken.join(' '),
-      expectCorrect: new Set(segs.filter((_, i) => i !== tenseIdx).map((s) => s.id)),
-      expectWrong: new Set([segs[tenseIdx].id]),
-    });
-  }
-
-  // 4. Nothing submitted.
+  // 3. Nothing relevant submitted. Everything must fail.
   cases.push({
     name: 'empty',
     translation: 'I do not know this passage.',

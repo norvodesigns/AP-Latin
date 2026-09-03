@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { supabaseConfigured } from '@/lib/supabase/config';
-import { Page, PageHeader, Card } from '@/components/ui';
+import { Page, PageHeader, Panel } from '@/components/ui';
 import SignUpForm from './SignUpForm';
 
 export const metadata: Metadata = { title: 'Create an account' };
@@ -11,7 +11,7 @@ export default function SignUpPage() {
     return (
       <Page>
         <PageHeader eyebrow="Accounts" title="Create an account" />
-        <Card>
+        <Panel>
           <p className="measure text-sm" style={{ color: 'var(--fg-muted)', margin: 0 }}>
             This deployment has no backend configured, so there are no accounts to create.
             Lectio is running in solo mode and every study section works without signing in.
@@ -19,7 +19,7 @@ export default function SignUpPage() {
           <Link href="/" className="btn btn-primary mt-4">
             Back to studying
           </Link>
-        </Card>
+        </Panel>
       </Page>
     );
   }

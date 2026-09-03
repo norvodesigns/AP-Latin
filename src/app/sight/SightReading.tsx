@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { sightPassages, sightQuestions, SIGHT_AUTHORS } from '@/data/sight';
 import { questions as syllabusQuestions } from '@/data/questions';
 import { useStore } from '@/store/useStore';
 import { useAiStatus, useAiCall } from '@/lib/useAi';
-import { Page, PageHeader, Card, Badge, BackLink } from '@/components/ui';
+import { Page, PageHeader, Section, Panel, CalledOut, BackLink, SourceNote } from '@/components/ui';
 import type { SightPassage, Question } from '@/data/types';
 import type { GeneratedSight } from '@/lib/ai/schemas';
 
@@ -52,63 +52,97 @@ function Index({
         }
       />
 
-      <h2 className="eyebrow mb-3">Vetted passages</h2>
-      <ul className="mb-9 grid gap-2.5 sm:grid-cols-2">
-        {sightPassages.map((p) => (
-          <li key={p.id}>
-            <button
-              type="button"
-              onClick={() => onOpen(p)}
-              className="card block h-full w-full p-4 text-left transition-transform hover:-translate-y-px"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem', fontWeight: 600 }}>
+      <Section title="Vetted passages" className="mb-14">
+        <ul className="stagger flex flex-col pl-0" style={{ listStyle: 'none' }}>
+          {sightPassages.map((p) => (
+            <li key={p.id}>
+              <button
+                type="button"
+                onClick={() => onOpen(p)}
+                className="squish row-hover block w-full border-t px-3 py-5 text-left"
+                style={{ borderColor: 'var(--rule)', marginLeft: '-0.75rem' }}
+              >
+                <div className="flex flex-wrap items-baseline justify-between gap-3">
+                  <span
+                    style={{ fontFamily: 'var(--font-latin)', fontSize: '1.25rem', fontWeight: 600 }}
+                  >
                     {p.citation}
-                  </div>
-                  <div className="mt-0.5 text-sm" style={{ color: 'var(--fg-muted)' }}>
-                    {p.author}, {p.work}
-                  </div>
+                  </span>
+                  <span className="slab-sm">{p.genre}</span>
                 </div>
-                <Badge tone={p.genre === 'poetry' ? 'accent' : 'neutral'}>{p.genre}</Badge>
-              </div>
-              <div className="mt-2 flex items-center gap-2 text-xs" style={{ color: 'var(--fg-faint)' }}>
-                <span>{p.latin.split(/\s+/).length} words</span>
-                <span aria-hidden="true">·</span>
-                <span>{p.questionIds.length} questions</span>
-              </div>
-            </button>
-          </li>
-        ))}
-      </ul>
 
-      <h2 className="eyebrow mb-3">Generate a new passage</h2>
-      <Card>
+                <div
+                  className="mt-1"
+                  style={{
+                    fontFamily: 'var(--font-latin)',
+                    fontSize: '1.0625rem',
+                    color: 'var(--ink2)',
+                  }}
+                >
+                  {p.author}, {p.work}
+                </div>
+
+                <div
+                  className="mt-2.5 flex items-center gap-2.5"
+                  style={{ color: 'var(--fg-faint)', fontSize: '0.9375rem' }}
+                >
+                  <span className="tabular-nums">{p.latin.split(/\s+/).length} words</span>
+                  <span aria-hidden="true">·</span>
+                  <span className="tabular-nums">{p.questionIds.length} questions</span>
+                </div>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </Section>
+
+      <Section title="Generate a new passage">
         {!ai.loading && !ai.configured ? (
-          <p className="text-sm" style={{ color: 'var(--fg-muted)', margin: 0 }}>
+          <p
+            className="measure"
+            style={{
+              margin: 0,
+              fontFamily: 'var(--font-latin)',
+              fontSize: '1.0625rem',
+              lineHeight: 1.65,
+              color: 'var(--ink2)',
+            }}
+          >
             No AI provider is configured on this deployment, so passage generation is off. The vetted
             passages above work exactly as before — see the README for how to add a free Gemini key.
           </p>
         ) : (
           <>
-            <p className="measure mb-4 text-sm" style={{ color: 'var(--fg-muted)' }}>
+            <p
+              className="measure-wide"
+              style={{
+                margin: '0 0 1.75rem',
+                fontFamily: 'var(--font-latin)',
+                fontSize: '1.0625rem',
+                lineHeight: 1.65,
+                color: 'var(--ink2)',
+              }}
+            >
               The model selects and reproduces a genuine public-domain passage rather than composing
               Latin, and returns a glossed vocabulary list and AP-style questions. Generated passages
               are cached, and are always labelled as machine-selected — they have not been checked by
               a human, so treat the Latin with appropriate caution.
             </p>
 
-            <div className="grid gap-3 sm:grid-cols-3">
-              <label>
-                <span className="mb-1 block text-xs" style={{ color: 'var(--fg-muted)' }}>Author</span>
+            <div className="grid items-end gap-5 sm:grid-cols-3">
+              <label className="block">
+                <span className="slab-sm mb-2 block">Author</span>
                 <select className="input" value={author} onChange={(e) => setAuthor(e.target.value)}>
                   {SIGHT_AUTHORS.map((a) => (
-                    <option key={a} value={a}>{a}</option>
+                    <option key={a} value={a}>
+                      {a}
+                    </option>
                   ))}
                 </select>
               </label>
-              <label>
-                <span className="mb-1 block text-xs" style={{ color: 'var(--fg-muted)' }}>Genre</span>
+
+              <label className="block">
+                <span className="slab-sm mb-2 block">Genre</span>
                 <select
                   className="input"
                   value={genre}
@@ -118,31 +152,37 @@ function Index({
                   <option value="poetry">Poetry</option>
                 </select>
               </label>
-              <div className="flex items-end">
-                <button
-                  type="button"
-                  className="btn btn-primary w-full"
-                  disabled={gen.loading}
-                  onClick={async () => {
-                    const g = await gen.call('generate-sight', { author, genre, variant, questionCount: 4 });
-                    if (g) {
-                      setVariant((v) => v + 1);
-                      onGenerated(g);
-                    }
-                  }}
-                >
-                  {gen.loading ? 'Selecting…' : 'Generate'}
-                </button>
-              </div>
+
+              <button
+                type="button"
+                className="btn btn-primary w-full"
+                disabled={gen.loading}
+                onClick={async () => {
+                  const g = await gen.call('generate-sight', {
+                    author,
+                    genre,
+                    variant,
+                    questionCount: 4,
+                  });
+                  if (g) {
+                    setVariant((v) => v + 1);
+                    onGenerated(g);
+                  }
+                }}
+              >
+                {gen.loading ? 'Selecting…' : 'Generate'}
+              </button>
             </div>
 
             {gen.error && (
               <div
-                className="mt-3 border px-3.5 py-2.5 text-sm"
+                role="status"
+                className="animate-in mt-5 rounded-[var(--r-md)] border px-4 py-3"
                 style={{
-                  background: 'var(--partial-bg)',
-                  borderColor: 'color-mix(in srgb, var(--partial) 34%, transparent)',
-                  color: 'var(--fg-muted)',
+                  borderColor: 'var(--rule-strong)',
+                  fontFamily: 'var(--font-latin)',
+                  fontSize: '1.0625rem',
+                  color: 'var(--ink2)',
                 }}
               >
                 {gen.error}
@@ -150,7 +190,12 @@ function Index({
             )}
           </>
         )}
-      </Card>
+      </Section>
+
+      <SourceNote to="examOverview">
+        Half the multiple-choice section is sight reading. The authors offered here are the ones the
+        Course and Exam Description names for it.
+      </SourceNote>
     </Page>
   );
 }
@@ -271,13 +316,17 @@ function AttemptShell({
 
   return (
     <Page wide>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <BackLink onClick={onBack}>All sight passages</BackLink>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           {started && (
             <span
               className="tabular-nums"
-              style={{ fontFamily: 'var(--font-serif)', fontSize: '1.125rem', color: submitted ? 'var(--fg-faint)' : 'var(--fg)' }}
+              style={{
+                fontFamily: 'var(--font-serif)',
+                fontSize: '1.375rem',
+                color: submitted ? 'var(--fg-faint)' : 'var(--accent)',
+              }}
             >
               {mm}:{ss}
             </span>
@@ -293,88 +342,134 @@ function AttemptShell({
       <PageHeader
         eyebrow={subtitle}
         title={title}
-        actions={<Badge tone={genre === 'poetry' ? 'accent' : 'neutral'}>{genre}</Badge>}
+        actions={<span className="chip">{genre}</span>}
       />
 
       {machineSelected && (
         <div
-          className="mb-5 border px-3.5 py-2.5 text-sm"
-          style={{
-            background: 'color-mix(in srgb, var(--gilt) 10%, transparent)',
-            borderColor: 'color-mix(in srgb, var(--gilt) 32%, transparent)',
-            color: 'var(--fg-muted)',
-          }}
+          className="mb-8 rounded-[var(--r-md)] border-l-2 py-2 pl-4"
+          style={{ borderColor: 'var(--gilt)' }}
         >
-          <strong style={{ color: 'var(--gilt)' }}>Machine-selected.</strong> A model chose and
-          reproduced this passage; nobody has checked it against a printed text. Verify the Latin
-          before trusting it, and treat the questions as practice rather than as vetted items.
-          {confidence && <> The model rated its own confidence <strong>{confidence}</strong>.</>}
-          {cached && ' Served from cache — no quota was used.'}
+          <div className="rubric mb-2" style={{ color: 'var(--gilt)' }}>
+            Machine-selected
+          </div>
+          <p
+            className="measure-wide"
+            style={{
+              margin: 0,
+              fontFamily: 'var(--font-latin)',
+              fontSize: '1.0625rem',
+              lineHeight: 1.65,
+              color: 'var(--ink2)',
+            }}
+          >
+            A model chose and reproduced this passage; nobody has checked it against a printed text.
+            Verify the Latin before trusting it, and treat the questions as practice rather than as
+            vetted items.
+            {confidence && (
+              <>
+                {' '}
+                The model rated its own confidence <strong>{confidence}</strong>.
+              </>
+            )}
+            {cached && ' Served from cache — no quota was used.'}
+          </p>
         </div>
       )}
 
-      <Card className="mb-5">
+      <CalledOut className="mb-9">
         <p
           className={genre === 'poetry' ? 'latin-verse' : 'latin'}
           style={{ margin: 0, whiteSpace: 'pre-line' }}
         >
           {latin}
         </p>
+
         {gloss.length > 0 && (
-          <ul className="mt-4 flex flex-col gap-0.5 border-t pt-3" style={{ borderColor: 'var(--rule)' }}>
+          <ul
+            className="mt-5 flex flex-col gap-1.5 border-t pt-4 pl-0"
+            style={{ borderColor: 'var(--redborder)', listStyle: 'none' }}
+          >
             {gloss.map((g) => (
-              <li key={g.word} className="text-sm" style={{ color: 'var(--fg-muted)' }}>
-                <span style={{ fontFamily: 'var(--font-latin)', fontSize: '1rem' }}>{g.word}</span>
+              <li
+                key={g.word}
+                style={{ fontFamily: 'var(--font-latin)', fontSize: '1rem', color: 'var(--ink2)' }}
+              >
+                <span style={{ fontWeight: 600 }}>{g.word}</span>
                 {' — '}
                 {g.meaning}
               </li>
             ))}
           </ul>
         )}
-        <p className="mt-3 text-xs" style={{ color: 'var(--fg-faint)' }}>{source}</p>
-      </Card>
 
-      <ol className="mb-5 flex flex-col gap-5">
+        <p className="mt-4" style={{ margin: '1rem 0 0', color: 'var(--fg-faint)', fontSize: '0.875rem' }}>
+          {source}
+        </p>
+      </CalledOut>
+
+      <ol className="mb-8 flex flex-col pl-0" style={{ listStyle: 'none' }}>
         {questions.map((q, qi) => (
-          <li key={q.id}>
-            <Card>
-              <div className="mb-2.5 flex items-baseline gap-2.5">
-                <span className="tabular-nums text-xs" style={{ color: 'var(--fg-faint)' }}>{qi + 1}</span>
-                <h2 style={{ fontSize: '1rem', fontWeight: 550, lineHeight: 1.45 }}>{q.prompt}</h2>
-              </div>
-              <ul className="flex flex-col gap-1.5">
-                {q.options.map((o) => {
-                  const isAnswer = o.id === q.answerId;
-                  const isChosen = answers[q.id] === o.id;
-                  let bg = 'transparent';
-                  let bd = 'var(--rule)';
-                  if (submitted && isAnswer) { bg = 'var(--correct-bg)'; bd = 'var(--correct)'; }
-                  else if (submitted && isChosen) { bg = 'var(--incorrect-bg)'; bd = 'var(--incorrect)'; }
-                  else if (isChosen) { bg = 'var(--bg-sunk)'; bd = 'var(--rule-strong)'; }
-                  return (
-                    <li key={o.id}>
-                      <button
-                        type="button"
-                        disabled={submitted}
-                        onClick={() => setAnswers((a) => ({ ...a, [q.id]: o.id }))}
-                        className="w-full border px-3 py-2 text-left text-sm transition-colors"
-                        style={{ background: bg, borderColor: bd, cursor: submitted ? 'default' : 'pointer' }}
-                      >
-                        {o.text}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-              {submitted && (
-                <p
-                  className="measure mt-3 border-t pt-3 text-sm"
-                  style={{ borderColor: 'var(--rule)', color: 'var(--fg-muted)', lineHeight: 1.65 }}
-                >
-                  {q.explanation}
-                </p>
-              )}
-            </Card>
+          <li key={q.id} className="border-t pt-6 pb-8" style={{ borderColor: 'var(--rule)' }}>
+            <div className="mb-4 flex items-baseline gap-3">
+              <span className="numeral tabular-nums" style={{ color: 'var(--fg-faint)' }}>
+                {qi + 1}
+              </span>
+              <h2 style={{ fontSize: '1.1875rem', fontWeight: 550, lineHeight: 1.4 }}>{q.prompt}</h2>
+            </div>
+
+            <ul className="flex flex-col gap-2 pl-0" style={{ listStyle: 'none' }}>
+              {q.options.map((o) => {
+                const isAnswer = o.id === q.answerId;
+                const isChosen = answers[q.id] === o.id;
+                const style: CSSProperties = { borderColor: 'var(--rule-strong)' };
+                if (submitted && isAnswer) {
+                  style.borderColor = 'var(--correct)';
+                  style.background = 'var(--correct-bg)';
+                } else if (submitted && isChosen) {
+                  style.borderColor = 'var(--accent)';
+                  style.background = 'var(--incorrect-bg)';
+                } else if (isChosen) {
+                  style.borderColor = 'var(--accent)';
+                  style.background = 'var(--redtint)';
+                }
+                return (
+                  <li key={o.id}>
+                    <button
+                      type="button"
+                      disabled={submitted}
+                      onClick={() => setAnswers((a) => ({ ...a, [q.id]: o.id }))}
+                      className="squish row-hover w-full rounded-[var(--r-md)] border px-4 py-3 text-left"
+                      style={{
+                        ...style,
+                        fontFamily: 'var(--font-latin)',
+                        fontSize: '1.0625rem',
+                        lineHeight: 1.5,
+                        cursor: submitted ? 'default' : 'pointer',
+                      }}
+                    >
+                      {o.text}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+
+            {submitted && (
+              <p
+                className="measure mt-5 border-t pt-4"
+                style={{
+                  borderColor: 'var(--hair)',
+                  margin: '1.25rem 0 0',
+                  fontFamily: 'var(--font-latin)',
+                  fontSize: '1.0625rem',
+                  lineHeight: 1.65,
+                  color: 'var(--ink2)',
+                }}
+              >
+                {q.explanation}
+              </p>
+            )}
           </li>
         ))}
       </ol>
@@ -389,42 +484,61 @@ function AttemptShell({
           Submit ({Object.keys(answers).length}/{questions.length} answered)
         </button>
       ) : (
-        <Card className="animate-in">
-          <div className="flex flex-wrap items-baseline justify-between gap-3">
+        <Panel className="animate-in">
+          <div className="flex flex-wrap items-baseline justify-between gap-4">
             <div>
-              <div className="eyebrow">Score</div>
-              <div className="tabular-nums" style={{ fontFamily: 'var(--font-serif)', fontSize: '1.75rem', fontWeight: 600 }}>
-                {correct} / {questions.length}
+              <div className="rubric mb-2">Score</div>
+              <div
+                className="tabular-nums"
+                style={{ fontFamily: 'var(--font-serif)', fontSize: '2.25rem', lineHeight: 1, fontWeight: 600 }}
+              >
+                {correct}
+                <span style={{ color: 'var(--fg-faint)', fontSize: '1.125rem' }}>
+                  {' '}
+                  / {questions.length}
+                </span>
               </div>
             </div>
-            <div className="text-right text-sm" style={{ color: 'var(--fg-muted)' }}>
-              <div className="tabular-nums">{mm}:{ss}</div>
-              <div className="text-xs" style={{ color: 'var(--fg-faint)' }}>
-                the exam allows roughly 75 seconds per question
+            <div className="text-right">
+              <div
+                className="tabular-nums"
+                style={{ fontFamily: 'var(--font-serif)', fontSize: '1.25rem' }}
+              >
+                {mm}:{ss}
               </div>
+              <div className="slab-sm mt-1.5">roughly 75 seconds per question on the exam</div>
             </div>
           </div>
 
-          <div className="mt-4 border-t pt-3.5" style={{ borderColor: 'var(--rule)' }}>
+          <div className="mt-6 border-t pt-5" style={{ borderColor: 'var(--rule)' }}>
             <button
               type="button"
-              className="btn btn-ghost px-0 text-sm"
+              className="btn btn-ghost"
               onClick={() => setShowSummary((v) => !v)}
               aria-expanded={showSummary}
             >
               {showSummary ? 'Hide' : 'Show'} the English summary
             </button>
             {showSummary && (
-              <p className="measure mt-2 text-sm" style={{ color: 'var(--fg-muted)', lineHeight: 1.7 }}>
+              <p
+                className="measure animate-in mt-4"
+                style={{
+                  margin: '1rem 0 0',
+                  fontFamily: 'var(--font-latin)',
+                  fontSize: '1.0625rem',
+                  lineHeight: 1.7,
+                  color: 'var(--ink2)',
+                }}
+              >
                 {summary}
               </p>
             )}
           </div>
 
-          <button type="button" className="btn mt-4" onClick={onBack}>
+          <button type="button" className="btn mt-6" onClick={onBack}>
             Another passage
           </button>
-        </Card>
+        </Panel>
       )}
     </Page>
   );
