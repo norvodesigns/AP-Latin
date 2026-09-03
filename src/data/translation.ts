@@ -147,7 +147,7 @@ tu regere imperio populos, Romane, memento
 (hae tibi erunt artes), pacique imponere morem,
 parcere subiectis et debellare superbos.`,
     modelTranslation:
-      'Others will hammer out breathing bronzes more softly (I for my part believe it), they will draw living faces out of marble, they will plead cases better, and they will trace the movements of the sky with the rod and tell of the rising stars: you, Roman, remember to rule the peoples with your power — these will be your arts — and to impose the custom of peace, to spare the conquered and to war down the proud.',
+      'Others will hammer out breathing bronzes more softly (I for my part believe it), they will draw living faces out of marble, they will plead cases better, and they will trace the movements of the sky with the rod and tell of the rising stars: you, Roman, remember to rule the peoples with your power — these will be your arts — and to impose the custom upon peace, to spare the conquered and to war down the proud.',
     notes:
       'The four infinitives after memento (regere, imponere, parcere, debellare) are the backbone of the passage. Losing any one of them costs a segment.',
     segments: [
