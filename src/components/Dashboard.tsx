@@ -15,7 +15,9 @@ import { requiredPassages } from '@/data/passages';
 import { coreVocabulary } from '@/data/vocabulary';
 import { CalledOut, CedLink, Roman, SkillMeter, SourceNote, toRoman } from '@/components/ui';
 import { loadIndex } from '@/data/scansionCorpus';
+import { sectionLabel } from '@/lib/nav';
 import type { SkillCategory } from '@/data/types';
+import type { UpcomingAssignment } from '@/lib/supabase/dashboard';
 
 const SKILL_LABELS: Record<SkillCategory, string> = {
   '1': 'Read & comprehend',
@@ -26,7 +28,16 @@ const SKILL_LABELS: Record<SkillCategory, string> = {
 /** CED exam weighting by skill category (pp. 227–228). */
 const SKILL_WEIGHT: Record<SkillCategory, number> = { '1': 70, '2': 11, '3': 19 };
 
-export default function Dashboard() {
+export default function Dashboard({
+  assignments,
+}: {
+  /** Classroom assignments not yet met, from a server-side fetch — see the
+   *  comment on getUpcomingAssignments for why this comes in as a prop
+   *  rather than being fetched here (this component is client-rendered,
+   *  reading everything else from localStorage). Undefined in solo mode,
+   *  signed out, or when there is nothing due. */
+  assignments?: UpcomingAssignment[];
+}) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -318,6 +329,55 @@ export default function Dashboard() {
               href="/scansion"
             />
           </div>
+
+          {/* Classroom assignments due. Server-rendered via a prop rather than
+              read from the store, so — unlike the rest of this page — this
+              is correct on first paint and does not need the `mounted`
+              guard the localStorage-backed sections use to avoid a
+              hydration mismatch. */}
+          {assignments && assignments.length > 0 && (
+            <div className="border-t pt-7" style={{ borderColor: 'var(--rule)' }}>
+              <div className="slab mb-4">Assigned</div>
+              <ul className="flex flex-col pl-0" style={{ listStyle: 'none' }}>
+                {assignments.map((a, i) => {
+                  const overdue = Boolean(a.dueDate && a.dueDate < new Date().toISOString().slice(0, 10));
+                  return (
+                    <li key={a.id}>
+                      <Link
+                        href={`/classroom/${a.classroomId}`}
+                        className="squish row-hover -mx-3 block px-3 py-3"
+                        style={{ borderTop: i === 0 ? undefined : '1px solid var(--hair)' }}
+                      >
+                        <div className="flex items-baseline justify-between gap-3">
+                          <span
+                            style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem', color: 'var(--fg)' }}
+                          >
+                            {sectionLabel(a.section)}
+                          </span>
+                          {a.dueDate && (
+                            <span
+                              className="tabular-nums"
+                              style={{
+                                fontSize: '0.875rem',
+                                color: overdue ? 'var(--accent)' : 'var(--fg-faint)',
+                              }}
+                            >
+                              {overdue ? 'overdue' : 'due'}{' '}
+                              {new Date(a.dueDate + 'T00:00:00').toLocaleDateString(undefined, {
+                                day: 'numeric',
+                                month: 'short',
+                              })}
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ color: 'var(--fg-faint)', fontSize: '0.8125rem' }}>{a.classroomName}</div>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
 
           {/* Recent exams */}
           {mounted && examResults.length > 0 && (
