@@ -238,8 +238,18 @@ route for the sake of a script, so the eval simply sleeps when it is told to. A 
 takes upwards of ten minutes, and the limiter gets exercised too.
 
 Both providers are exercised through the normal fallback path, so check the `[provider]` tag in the
-output. If one provider's quota is exhausted every row will silently read as the other one, and you
-will be measuring a model you did not think you were measuring.
+output. If the primary is throttled, every row silently reads as the fallback and you are measuring
+a model you did not think you were measuring.
+
+Expect that to happen. Gemini's free tier allows only **20 requests a minute**, which a grading run
+goes through quickly, and the reply is a 429 that the fallback quietly absorbs. Retrying hard on it
+makes things worse — it pushes the fallback into its own per-minute cap and the run stops measuring
+anything at all. The harness therefore paces itself (`--pacing`, default 4s between requests) and
+distinguishes the two kinds of 429: the route's own limiter reports `retryAfterSeconds` and is
+honoured exactly, while a provider 429 gets a flat minute.
+
+To measure a single provider rather than the pair, set `GEMINI_MODEL` / `GROQ_MODEL` or unset one
+provider's key for the run.
 
 ### Where this app's reading list differs from your notes
 

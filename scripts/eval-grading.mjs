@@ -31,6 +31,8 @@ const arg = (flag, fallback) => {
 
 const BASE = arg('--base', 'http://localhost:3000');
 const RUNS = Number(arg('--runs', '1'));
+/** Gap between requests, to stay inside the providers' per-minute caps. */
+const PACING_MS = Number(arg('--pacing', '4000'));
 
 /**
  * The cases.
@@ -102,9 +104,22 @@ async function grade(drillId, translation) {
     const body = await res.json().catch(() => ({}));
     if (res.ok) return body;
 
-    if (res.status === 429 && attempt < 4) {
-      const wait = Math.max(5, Number(body.retryAfterSeconds) || 60) + 2;
-      process.stdout.write(`  … rate limited, waiting ${wait}s\n`);
+    if (res.status === 429 && attempt < 8) {
+      /*
+       * Two different 429s reach here and they need different waits.
+       *
+       * The route's own limiter reports `retryAfterSeconds`, so honour it.
+       * A 429 without that field came from the provider instead — Gemini's
+       * free tier allows only 20 requests a minute — and the fix there is to
+       * stop bursting, not to retry sooner. Retrying hard on a provider 429
+       * is what pushed the fallback into its own rate limit and made a whole
+       * run unmeasurable.
+       */
+      const fromRoute = Number(body.retryAfterSeconds) > 0;
+      const wait = fromRoute ? Number(body.retryAfterSeconds) + 2 : 65;
+      process.stdout.write(
+        `  … ${fromRoute ? 'route' : 'provider'} rate limit, waiting ${wait}s\n`,
+      );
       await sleep(wait * 1000);
       continue;
     }
@@ -131,6 +146,9 @@ for (const drill of translationDrills) {
     for (let run = 0; run < RUNS; run += 1) {
       let result;
       try {
+        // Stay well inside the providers' per-minute caps. A burst trips the
+        // primary, then the fallback, and the run stops measuring anything.
+        if (totals.cases > 0) await sleep(PACING_MS);
         result = await grade(drill.id, testCase.translation);
       } catch (e) {
         console.log(`  ✗ ${drill.citation} / ${testCase.name}: ${e.message}`);
