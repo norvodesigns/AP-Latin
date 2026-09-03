@@ -1004,6 +1004,39 @@ h1, h2, h3, h4 {
     transform-origin: left;
   }
 
+  /* The wordmark's own rule — the same mechanic as .nav-item above, so the
+     logo reads as one of this row's page links rather than as a separate
+     decoration, just without the color swap: the script face keeps its
+     accent color whether or not the rule is showing. Sized to the wordmark
+     itself (inline-block) rather than a full nav item's row, and the rule
+     sits closer underneath since the script face's descenders already fill
+     the gap .nav-item's 5px padding is there for. */
+  .home-link {
+    position: relative;
+    display: inline-block;
+    padding-bottom: 1px;
+  }
+  .home-link::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform var(--dur-3) var(--ease);
+  }
+  .home-link:hover::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+  .home-link[data-active='true']::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+
   /* Rows that lift a touch and warm as the cursor passes — leaderboard
      entries, passage lists, deck rows. */
   .row-hover {

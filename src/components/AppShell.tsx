@@ -215,19 +215,21 @@ export default function AppShell({
       >
         <div className="mx-auto flex w-full max-w-[1160px] items-center justify-between gap-6 px-5 py-3.5 sm:px-10 sm:py-4">
           {/* Wordmark — also the link home, which is why no "Dashboard" item
-              appears in the nav beside it. The caption underneath is what
-              makes that legible rather than assumed: without it, a logo
-              that is also a link reads as decoration until someone happens
-              to click it. */}
-          <Link href="/" className="squish flex shrink-0 flex-col leading-none">
+              appears in the nav beside it. `.home-link` draws the same
+              underline the section links use, active on "/" exactly the way
+              theirs is active on their own route — so the logo reads as one
+              of the row's own page links rather than as separate decoration,
+              with no caption needed to say so. */}
+          <Link
+            href="/"
+            data-active={isActive('/')}
+            className="squish home-link shrink-0"
+          >
             <span
               className="wordmark"
               style={{ fontSize: 'clamp(2rem, 1.4rem + 2.4vw, 2.875rem)' }}
             >
               Lectio
-            </span>
-            <span className="slab-sm" style={{ marginTop: '0.2rem' }}>
-              Dashboard
             </span>
           </Link>
 
