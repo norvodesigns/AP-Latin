@@ -846,6 +846,45 @@ h1, h2, h3, h4 {
   .stagger > *:nth-child(9) { animation-delay: 320ms; }
   .stagger > *:nth-child(n+10) { animation-delay: 360ms; }
 
+  /* — The section index ————————————————————————————————————————————
+     The panel is docked to the underside of the masthead, so it arrives
+     downward, out from behind it. `.animate-in` rises instead, which reads
+     as the panel pulling away from the edge it is attached to. */
+  .index-panel { animation: index-down var(--dur-2) var(--ease) both; }
+  .index-panel[data-closing='true'] {
+    animation: index-up 170ms var(--ease-io) both;
+    pointer-events: none;
+  }
+  /* On the way out the whole panel leaves as one object. Letting the rows
+     keep their entrance stagger while the panel retreats reads as two
+     animations fighting. */
+  .index-panel[data-closing='true'] * { animation: none !important; }
+
+  /* Rows arrive a beat after the panel, so the panel lands first and the
+     contents fill in — rather than everything moving at once. */
+  .index-panel .stagger > * { animation-delay: calc(var(--row-delay, 0ms) + 70ms); }
+  .index-panel .stagger > *:nth-child(1) { --row-delay: 0ms; }
+  .index-panel .stagger > *:nth-child(2) { --row-delay: 35ms; }
+  .index-panel .stagger > *:nth-child(3) { --row-delay: 70ms; }
+  .index-panel .stagger > *:nth-child(4) { --row-delay: 105ms; }
+  .index-panel .stagger > *:nth-child(n+5) { --row-delay: 140ms; }
+
+  /* The masthead button's three rules fold into the cross, rather than one
+     icon being swapped for another. transform-box defaults to view-box in
+     SVG, so `center` is the middle of the 19×19 canvas — which is exactly
+     where the middle rule already sits, and where the cross has to meet. */
+  .burger path {
+    transform-origin: center;
+    transition:
+      transform var(--dur-3) var(--ease),
+      opacity var(--dur-1) linear;
+  }
+  /* Translate first, then rotate: the transform list applies right to left,
+     so the rule is moved onto the centre line before it is turned about it. */
+  .burger[data-open='true'] path:nth-child(1) { transform: rotate(45deg) translateY(4px); }
+  .burger[data-open='true'] path:nth-child(2) { opacity: 0; transform: scaleX(0.15); }
+  .burger[data-open='true'] path:nth-child(3) { transform: rotate(-45deg) translateY(-4px); }
+
   /* A link that draws its own rule underneath, left to right. */
   .link-rule {
     position: relative;
@@ -928,6 +967,16 @@ h1, h2, h3, h4 {
 @keyframes fade-rise {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: none; }
+}
+
+/* The index comes out from under the masthead and goes back under it. */
+@keyframes index-down {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes index-up {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateY(-10px); }
 }
 
 /* The glossary and the quantity chooser arrive from the edge they dock to. */

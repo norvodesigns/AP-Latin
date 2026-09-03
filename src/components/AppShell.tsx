@@ -47,6 +47,12 @@ export default function AppShell({
 
   useStudyTimeSync();
   const [indexOpen, setIndexOpen] = useState(false);
+  /** Held true for the length of the exit animation, so the panel can play it
+   *  before unmounting. Without this the index vanishes on the frame the
+   *  button is pressed, which is what made opening feel animated and closing
+   *  feel like a bug. */
+  const [indexClosing, setIndexClosing] = useState(false);
+  const closeTimer = useRef<number | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -54,6 +60,42 @@ export default function AppShell({
   const setTheme = useStore((s) => s.setTheme);
 
   useEffect(() => setMounted(true), []);
+
+  /** Close with no animation at all — used when the route changes, where the
+   *  page underneath is being replaced and an exit animation would play over
+   *  the top of the new one. */
+  const closeIndexNow = useCallback(() => {
+    if (closeTimer.current !== null) window.clearTimeout(closeTimer.current);
+    closeTimer.current = null;
+    setIndexClosing(false);
+    setIndexOpen(false);
+  }, []);
+
+  /** Close by playing the exit animation first. Skipped entirely when the
+   *  reader has asked for reduced motion: the CSS collapses the animation to
+   *  nothing, so waiting out its duration would just be an unexplained delay. */
+  const closeIndex = useCallback(() => {
+    const reduced =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) {
+      closeIndexNow();
+      return;
+    }
+    setIndexClosing(true);
+    closeTimer.current = window.setTimeout(() => {
+      closeTimer.current = null;
+      setIndexClosing(false);
+      setIndexOpen(false);
+    }, 170);
+  }, [closeIndexNow]);
+
+  useEffect(
+    () => () => {
+      if (closeTimer.current !== null) window.clearTimeout(closeTimer.current);
+    },
+    [],
+  );
 
   /**
    * The index docks directly beneath the masthead, whose height varies with
@@ -79,7 +121,7 @@ export default function AppShell({
     else document.documentElement.setAttribute('data-theme', theme);
   }, [theme, mounted]);
 
-  useEffect(() => setIndexOpen(false), [pathname]);
+  useEffect(() => closeIndexNow(), [pathname, closeIndexNow]);
 
   // The index is a full-screen overlay on touch layouts, so the page beneath
   // must not scroll under it.
@@ -110,7 +152,7 @@ export default function AppShell({
         return;
       }
       if (e.key === 'Escape' && indexOpen) {
-        setIndexOpen(false);
+        closeIndex();
         return;
       }
       if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
@@ -134,7 +176,7 @@ export default function AppShell({
         window.setTimeout(() => setGPending(false), 1600);
       }
     },
-    [gPending, router, indexOpen],
+    [gPending, router, indexOpen, closeIndex],
   );
 
   useEffect(() => {
@@ -200,21 +242,31 @@ export default function AppShell({
 
             <button
               type="button"
-              onClick={() => setIndexOpen((v) => !v)}
+              onClick={() => (indexOpen ? closeIndex() : setIndexOpen(true))}
               aria-expanded={indexOpen}
               aria-controls="section-index"
-              className="flex items-center gap-2.5"
+              className="squish flex items-center gap-2.5"
               style={{ color: 'var(--fg)' }}
             >
               <span className="slab-sm hidden sm:inline" style={{ color: 'inherit' }}>
                 {indexOpen ? 'Close' : 'Index'}
               </span>
-              <svg width="19" height="19" viewBox="0 0 19 19" fill="none" aria-hidden="true">
-                {indexOpen ? (
-                  <path d="M4.5 4.5l10 10M14.5 4.5l-10 10" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-                ) : (
-                  <path d="M2.5 5.5h14M2.5 9.5h14M2.5 13.5h14" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-                )}
+              {/* Three rules that fold into the cross — see `.burger` in
+                  globals.css. Kept as one persistent set of paths rather than
+                  two icons swapped on state, because only the first can be
+                  animated between the two shapes. */}
+              <svg
+                className="burger"
+                data-open={indexOpen}
+                width="19"
+                height="19"
+                viewBox="0 0 19 19"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path d="M2.5 5.5h14" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                <path d="M2.5 9.5h14" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                <path d="M2.5 13.5h14" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
               </svg>
               <span className="sr-only">{indexOpen ? 'Close index' : 'Open index of all sections'}</span>
             </button>
@@ -229,11 +281,12 @@ export default function AppShell({
           mounted={mounted}
           theme={theme}
           setTheme={setTheme}
+          closing={indexClosing}
           onOpenPalette={() => {
-            setIndexOpen(false);
+            closeIndexNow();
             setPaletteOpen(true);
           }}
-          onClose={() => setIndexOpen(false)}
+          onClose={closeIndexNow}
         />
       )}
 
@@ -247,9 +300,20 @@ export default function AppShell({
 }
 
 /**
- * The full contents. Grouped under rubric headings, each entry carrying its
- * blurb — this doubles as the app's table of contents rather than being a
- * bare menu, which is why it gets the whole viewport rather than a dropdown.
+ * The full contents.
+ *
+ * On a wide screen this is a table of contents: four columns, every entry
+ * carrying its blurb, which is why it takes the viewport rather than being a
+ * dropdown. On a phone that same content is a wall — fourteen entries, each
+ * three lines tall, is several screens of prose to get to a link. So the
+ * narrow layout drops to labels alone.
+ *
+ * What it drops on mobile is specifically the things a phone cannot use or
+ * does not need: the blurbs (the labels are self-explanatory once you have
+ * been in the app once) and every keyboard affordance — the per-item shortcut
+ * chips, the ⌘K badge, and the "press g then a letter" hint. A touch device
+ * has no keyboard to press them on, so on mobile they are decoration that
+ * costs height.
  */
 function SectionIndex({
   pathname,
@@ -257,6 +321,7 @@ function SectionIndex({
   mounted,
   theme,
   setTheme,
+  closing,
   onOpenPalette,
   onClose,
 }: {
@@ -265,6 +330,7 @@ function SectionIndex({
   mounted: boolean;
   theme: 'light' | 'dark' | 'system';
   setTheme: (t: 'light' | 'dark' | 'system') => void;
+  closing: boolean;
   onOpenPalette: () => void;
   onClose: () => void;
 }) {
@@ -273,21 +339,21 @@ function SectionIndex({
   return (
     <div
       id="section-index"
-      className="no-print fixed inset-x-0 bottom-0 z-20 overflow-y-auto"
-      style={{
-        top: 'var(--masthead, 64px)',
-        background: 'var(--bg)',
-        animation: 'fade-rise 240ms var(--ease) both',
-      }}
+      data-closing={closing}
+      className="index-panel no-print fixed inset-x-0 bottom-0 z-20 overflow-y-auto"
+      style={{ top: 'var(--masthead, 64px)', background: 'var(--bg)' }}
     >
-      <div className="mx-auto w-full max-w-[1160px] px-5 pb-16 pt-8 sm:px-10 sm:pt-10">
-        <div className="grid gap-x-12 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mx-auto w-full max-w-[1160px] px-5 pb-16 pt-6 sm:px-10 sm:pt-10">
+        <div className="grid gap-x-12 gap-y-7 sm:gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
           {NAV_GROUPS.map((group) => (
             <div key={group.id}>
-              <div className="rubric mb-4 border-b pb-3" style={{ borderColor: 'var(--rule)' }}>
+              <div
+                className="rubric mb-1.5 border-b pb-2 sm:mb-4 sm:pb-3"
+                style={{ borderColor: 'var(--rule)' }}
+              >
                 {group.label}
               </div>
-              <ul className="flex flex-col">
+              <ul className="stagger flex flex-col">
                 {NAV.filter((n) => n.group === group.id).map((item) => {
                   const active = isActive(item.href);
                   return (
@@ -296,7 +362,7 @@ function SectionIndex({
                         href={item.href}
                         onClick={onClose}
                         aria-current={active ? 'page' : undefined}
-                        className="row-hover -mx-3 block border-b px-3 py-3.5"
+                        className="row-hover -mx-3 block border-b px-3 py-2.5 sm:py-3.5"
                         style={{ borderColor: 'var(--hair)' }}
                       >
                         <span className="flex items-baseline justify-between gap-3">
@@ -310,12 +376,12 @@ function SectionIndex({
                           >
                             {item.label}
                           </span>
-                          <span className="kbd shrink-0" aria-hidden="true">
+                          <span className="kbd !hidden shrink-0 sm:!inline-flex" aria-hidden="true">
                             {item.key}
                           </span>
                         </span>
                         <span
-                          className="mt-1.5 block"
+                          className="mt-1.5 hidden sm:block"
                           style={{
                             fontFamily: 'var(--font-latin)',
                             fontSize: '1rem',
@@ -339,7 +405,7 @@ function SectionIndex({
             page it belongs to (the countdown, on the dashboard and the study
             plan), so none of them earned a slot on every screen. */}
         <div
-          className="mt-12 flex flex-wrap items-center gap-x-8 gap-y-5 border-t pt-6"
+          className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4 border-t pt-5 sm:mt-12 sm:gap-y-5 sm:pt-6"
           style={{ borderColor: 'var(--rule)' }}
         >
           <button
@@ -355,7 +421,7 @@ function SectionIndex({
             <span style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem' }}>
               Search everything
             </span>
-            <span className="kbd" aria-hidden="true">⌘K</span>
+            <span className="kbd !hidden sm:!inline-flex" aria-hidden="true">⌘K</span>
           </button>
 
           <div className="inline-flex items-center gap-2.5">
@@ -374,7 +440,7 @@ function SectionIndex({
           <Link
             href="/plan"
             onClick={onClose}
-            className="squish ml-auto inline-flex items-baseline gap-2"
+            className="squish inline-flex items-baseline gap-2 sm:ml-auto"
             title="Days until the exam"
           >
             <span
@@ -386,8 +452,9 @@ function SectionIndex({
           </Link>
         </div>
 
+        {/* Keyboard-only, so it is not shown where there is no keyboard. */}
         <p
-          className="mt-6"
+          className="hidden sm:block"
           style={{
             margin: '1.5rem 0 0',
             fontFamily: 'var(--font-latin)',
