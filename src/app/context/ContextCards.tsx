@@ -5,8 +5,10 @@ import { contextCards, CONTEXT_TOPIC_LABELS } from '@/data/context';
 import { questions, QUESTION_TYPE_LABELS } from '@/data/questions';
 import { useStore } from '@/store/useStore';
 import { Page, PageHeader, Section, Panel, Empty, CedLink, SourceNote } from '@/components/ui';
+import FlashcardDeck from '@/components/FlashcardDeck';
+import type { ContextCard } from '@/data/types';
 
-type Tab = 'cards' | 'quiz';
+type Tab = 'cards' | 'study' | 'quiz';
 
 export default function ContextCards() {
   const [tab, setTab] = useState<Tab>('cards');
@@ -25,7 +27,7 @@ export default function ContextCards() {
         }
         actions={
           <div className="flex gap-1.5" role="tablist" aria-label="View">
-            {(['cards', 'quiz'] as Tab[]).map((t) => (
+            {(['cards', 'study', 'quiz'] as Tab[]).map((t) => (
               <button
                 key={t}
                 type="button"
@@ -34,14 +36,14 @@ export default function ContextCards() {
                 onClick={() => setTab(t)}
                 className={tab === t ? 'btn btn-rubric' : 'btn'}
               >
-                {t === 'cards' ? 'Cards' : 'Quiz'}
+                {t === 'cards' ? 'Reference' : t === 'study' ? 'Study' : 'Quiz'}
               </button>
             ))}
           </div>
         }
       />
 
-      {tab === 'cards' ? <Cards /> : <ContextQuiz />}
+      {tab === 'cards' ? <Cards /> : tab === 'study' ? <Study /> : <ContextQuiz />}
 
       <SourceNote to="skills">
         Skill category 2 — “Interpret and analyse the cultural, historical, and literary context of
@@ -119,6 +121,62 @@ function Cards() {
         ))}
       </div>
     </>
+  );
+}
+
+function Study() {
+  return (
+    <FlashcardDeck<ContextCard>
+      items={contextCards}
+      getId={(c) => c.id}
+      itemNoun="card"
+      renderFront={(c) => (
+        <div className="text-center">
+          <div className="slab-sm mb-4">{CONTEXT_TOPIC_LABELS[c.topic]}</div>
+          <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.75rem', lineHeight: 1.3 }}>
+            {c.title}
+          </div>
+        </div>
+      )}
+      renderBack={(c) => (
+        <div className="flex flex-col gap-6">
+          <p
+            className="measure-wide mx-auto text-center"
+            style={{
+              margin: 0,
+              fontFamily: 'var(--font-latin)',
+              fontSize: '1.0625rem',
+              lineHeight: 1.7,
+              color: 'var(--ink2)',
+            }}
+          >
+            {c.body}
+          </p>
+          <div>
+            <div className="rubric mb-3">Worth knowing cold</div>
+            <ul className="flex flex-col gap-2 pl-0" style={{ listStyle: 'none' }}>
+              {c.keyFacts.map((f) => (
+                <li
+                  key={f}
+                  className="flex gap-3"
+                  style={{
+                    fontFamily: 'var(--font-latin)',
+                    fontSize: '1rem',
+                    lineHeight: 1.6,
+                    color: 'var(--ink2)',
+                  }}
+                >
+                  <span aria-hidden="true" style={{ color: 'var(--accent)' }}>
+                    ·
+                  </span>
+                  <span>{f}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+    />
   );
 }
 

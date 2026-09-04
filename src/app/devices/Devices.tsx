@@ -6,8 +6,10 @@ import { deviceCards } from '@/data/devices';
 import { getPassage } from '@/data/passages';
 import { useStore } from '@/store/useStore';
 import { Page, PageHeader, Panel, CalledOut, SourceNote } from '@/components/ui';
+import FlashcardDeck from '@/components/FlashcardDeck';
+import type { DeviceCard } from '@/data/types';
 
-type Tab = 'reference' | 'drill';
+type Tab = 'reference' | 'study' | 'drill';
 
 interface DrillItem {
   latin: string;
@@ -34,7 +36,7 @@ export default function Devices() {
         }
         actions={
           <div className="flex gap-1.5" role="tablist" aria-label="View">
-            {(['reference', 'drill'] as Tab[]).map((t) => (
+            {(['reference', 'study', 'drill'] as Tab[]).map((t) => (
               <button
                 key={t}
                 type="button"
@@ -43,14 +45,14 @@ export default function Devices() {
                 onClick={() => setTab(t)}
                 className={tab === t ? 'btn btn-rubric' : 'btn'}
               >
-                {t === 'reference' ? 'Reference' : 'Spot the device'}
+                {t === 'reference' ? 'Reference' : t === 'study' ? 'Study' : 'Spot the device'}
               </button>
             ))}
           </div>
         }
       />
 
-      {tab === 'reference' ? <Reference /> : <SpotTheDevice />}
+      {tab === 'reference' ? <Reference /> : tab === 'study' ? <Study /> : <SpotTheDevice />}
 
       <SourceNote to="skills">
         Naming a device earns nothing on its own. Skill category 2 in the Course and Exam
@@ -159,6 +161,88 @@ function Reference() {
         ))}
       </div>
     </>
+  );
+}
+
+function Study() {
+  return (
+    <FlashcardDeck<DeviceCard>
+      items={deviceCards}
+      getId={(d) => d.id}
+      itemNoun="device"
+      renderFront={(d) => (
+        <div className="text-center">
+          <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.75rem', lineHeight: 1.3 }}>
+            {d.name}
+          </div>
+        </div>
+      )}
+      renderBack={(d) => {
+        const ex = d.examples[0];
+        const p = ex?.passageId ? getPassage(ex.passageId) : undefined;
+        return (
+          <div className="flex flex-col gap-6">
+            <p
+              className="measure mx-auto text-center"
+              style={{
+                margin: 0,
+                fontFamily: 'var(--font-latin)',
+                fontSize: '1.0625rem',
+                lineHeight: 1.6,
+              }}
+            >
+              {d.definition}
+            </p>
+            <p
+              className="measure mx-auto text-center"
+              style={{
+                margin: 0,
+                fontFamily: 'var(--font-latin)',
+                fontSize: '1rem',
+                lineHeight: 1.65,
+                color: 'var(--ink2)',
+              }}
+            >
+              <span className="slab-sm" style={{ display: 'inline' }}>
+                Effect —{' '}
+              </span>
+              {d.effect}
+            </p>
+            {ex && (
+              <div className="border-l-2 pl-4" style={{ borderColor: 'var(--redline)' }}>
+                <p className="latin" style={{ margin: 0, fontSize: '1.1875rem', maxWidth: '100%' }}>
+                  {ex.latin}
+                </p>
+                {p ? (
+                  <Link
+                    href={`/read/${p.id}`}
+                    className="link-rule mt-1 inline-block"
+                    style={{ color: 'var(--accent)', fontSize: '0.9375rem' }}
+                  >
+                    {ex.citation}
+                  </Link>
+                ) : (
+                  <span className="mt-1 inline-block" style={{ color: 'var(--fg-faint)', fontSize: '0.9375rem' }}>
+                    {ex.citation}
+                  </span>
+                )}
+                <p
+                  style={{
+                    margin: '0.375rem 0 0',
+                    fontFamily: 'var(--font-latin)',
+                    fontSize: '1rem',
+                    lineHeight: 1.6,
+                    color: 'var(--ink2)',
+                  }}
+                >
+                  {ex.analysis}
+                </p>
+              </div>
+            )}
+          </div>
+        );
+      }}
+    />
   );
 }
 
