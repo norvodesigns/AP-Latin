@@ -141,6 +141,12 @@ export interface ScansionDraft {
   divisions: number[];
   /** Set once the line has been checked, so the review state can be restored. */
   checked?: boolean;
+  /**
+   * Syllable indices the student has claimed elide into the next word — their
+   * own working guess, graded against the corpus's real `elides` flags at
+   * check time rather than shown up front.
+   */
+  elisions?: number[];
 }
 
 export interface ScansionAttempt {
