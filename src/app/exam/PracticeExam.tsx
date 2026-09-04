@@ -6,7 +6,7 @@ import { sightQuestions } from '@/data/sight';
 import { frqPrompts, FRQ_TYPE_LABELS } from '@/data/frq';
 import { getPassage } from '@/data/passages';
 import { useStore } from '@/store/useStore';
-import { Page, PageHeader, Card, Badge } from '@/components/ui';
+import { Page, PageHeader, Panel, CalledOut, SourceNote } from '@/components/ui';
 import type { Question, SkillCategory, QuestionType } from '@/data/types';
 
 /** The real exam: 52 MCQ in 65 minutes, then 5 FRQ in 115. */
@@ -124,7 +124,7 @@ export default function PracticeExam() {
           title="Full Practice Exam"
           lede="52 multiple-choice questions in 65 minutes, then five free-response questions in 115. Plain typed responses, section timers, and a scored report broken down by skill category and question type."
         />
-        <Card className="mb-5">
+        <Panel className="mb-8">
           <table className="w-full text-sm">
             <tbody>
               {[
@@ -152,7 +152,7 @@ export default function PracticeExam() {
               is less so. Add questions in <code>src/data/questions.ts</code> to fix that.
             </p>
           )}
-        </Card>
+        </Panel>
         <button type="button" className="btn btn-primary" onClick={start}>
           Begin Section I
         </button>
@@ -205,8 +205,8 @@ export default function PracticeExam() {
         </div>
 
         {(lines.length > 0 || q.stimulus) && (
-          <Card className="mb-4">
-            <div className="eyebrow mb-2">{q.stimulus?.citation ?? passage?.citation}</div>
+          <CalledOut className="mb-8">
+            <div className="slab-sm mb-2">{q.stimulus?.citation ?? passage?.citation}</div>
             {lines.length > 0 ? (
               lines.map((l) => (
                 <div key={l.n} className="flex items-baseline gap-3">
@@ -223,7 +223,7 @@ export default function PracticeExam() {
                 {q.stimulus?.latin}
               </p>
             )}
-          </Card>
+          </CalledOut>
         )}
 
         <div className="mb-3 flex items-baseline justify-between gap-3">
@@ -257,7 +257,7 @@ export default function PracticeExam() {
                 <button
                   type="button"
                   onClick={() => setMcqAnswers((a) => ({ ...a, [q.id]: o.id }))}
-                  className="flex w-full items-start gap-3 border px-3.5 py-3 text-left text-sm transition-colors"
+                  className="squish row-hover flex w-full items-start gap-3.5 rounded-[var(--r-md)] border px-4 py-3.5 text-left"
                   style={{
                     background: chosen ? 'var(--bg-sunk)' : 'var(--bg-raised)',
                     borderColor: chosen ? 'var(--accent)' : 'var(--rule)',
@@ -295,13 +295,13 @@ export default function PracticeExam() {
     return (
       <Page>
         <PageHeader eyebrow="Section I complete" title="Take a breath" />
-        <Card className="mb-5">
+        <Panel className="mb-8">
           <p className="text-sm" style={{ color: 'var(--fg-muted)' }}>
             You answered {answered} of {paper.length} questions with {clock(mcqLeft)} left on the
             clock. Section II is five free-response questions in 115 minutes. Scores are not shown
             until the whole exam is finished — that is how the real one feels.
           </p>
-        </Card>
+        </Panel>
         <div className="flex flex-wrap gap-2">
           <button type="button" className="btn btn-primary" onClick={() => setStage('frq')}>
             Begin Section II
@@ -331,13 +331,13 @@ export default function PracticeExam() {
           {frqPrompts.map((p) => {
             const passage = p.passageId ? getPassage(p.passageId) : undefined;
             return (
-              <Card key={p.id} as="section">
+              <section key={p.id} className="border-t pt-6 pb-8" style={{ borderColor: 'var(--rule)' }}>
                 <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
                   <div>
-                    <div className="eyebrow">{FRQ_TYPE_LABELS[p.type]}</div>
+                    <div className="slab-sm">{FRQ_TYPE_LABELS[p.type]}</div>
                     <h2 style={{ fontSize: '1.0625rem' }}>{p.title}</h2>
                   </div>
-                  <Badge tone="muted">~{p.minutes} min</Badge>
+                  <span className="chip">~{p.minutes} min</span>
                 </div>
 
                 {passage && (
@@ -370,7 +370,7 @@ export default function PracticeExam() {
                     />
                   </div>
                 ))}
-              </Card>
+              </section>
             );
           })}
         </div>
@@ -408,31 +408,31 @@ export default function PracticeExam() {
       <PageHeader eyebrow="Scored report" title="Practice exam results" />
 
       <div className="mb-6 grid gap-3 sm:grid-cols-3">
-        <Card>
-          <div className="eyebrow">Section I</div>
+        <div>
+          <div className="slab-sm">Section I</div>
           <div className="tabular-nums" style={{ fontFamily: 'var(--font-serif)', fontSize: '2rem', fontWeight: 600 }}>
             {correct}<span style={{ color: 'var(--fg-faint)', fontSize: '1.125rem' }}>/{paper.length}</span>
           </div>
           <div className="text-sm" style={{ color: 'var(--fg-muted)' }}>{pct}% · {clock(MCQ_SECONDS - mcqLeft)} used</div>
-        </Card>
-        <Card>
-          <div className="eyebrow">Section II (self-scored)</div>
+        </div>
+        <div>
+          <div className="slab-sm">Section II (self-scored)</div>
           <div className="tabular-nums" style={{ fontFamily: 'var(--font-serif)', fontSize: '2rem', fontWeight: 600 }}>
             {frqPoints}<span style={{ color: 'var(--fg-faint)', fontSize: '1.125rem' }}>/{frqMax}</span>
           </div>
           <div className="text-sm" style={{ color: 'var(--fg-muted)' }}>{clock(FRQ_SECONDS - frqLeft)} used</div>
-        </Card>
-        <Card>
-          <div className="eyebrow">Pace</div>
+        </div>
+        <div>
+          <div className="slab-sm">Pace</div>
           <div className="tabular-nums" style={{ fontFamily: 'var(--font-serif)', fontSize: '2rem', fontWeight: 600 }}>
             {Math.round((MCQ_SECONDS - mcqLeft) / Math.max(1, Object.keys(mcqAnswers).length))}s
           </div>
           <div className="text-sm" style={{ color: 'var(--fg-muted)' }}>per MCQ · 75s is the budget</div>
-        </Card>
+        </div>
       </div>
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2">
-        <Card>
+        <div className="border-t pt-5 pb-6" style={{ borderColor: 'var(--rule)' }}>
           <h2 className="mb-3" style={{ fontSize: '1rem' }}>By skill category</h2>
           <ul className="flex flex-col gap-2.5">
             {(['1', '2', '3'] as SkillCategory[]).map((c) => {
@@ -459,9 +459,9 @@ export default function PracticeExam() {
               );
             })}
           </ul>
-        </Card>
+        </div>
 
-        <Card>
+        <div className="border-t pt-5 pb-6" style={{ borderColor: 'var(--rule)' }}>
           <h2 className="mb-3" style={{ fontSize: '1rem' }}>By question type</h2>
           <ul className="flex flex-col gap-2">
             {[...byType.entries()]
@@ -475,11 +475,11 @@ export default function PracticeExam() {
                 </li>
               ))}
           </ul>
-        </Card>
+        </div>
       </div>
 
       {/* self-score the FRQ */}
-      <Card className="mb-5">
+      <Panel className="mb-8">
         <h2 className="mb-1" style={{ fontSize: '1rem' }}>Score Section II against the rubric</h2>
         <p className="mb-3 text-sm" style={{ color: 'var(--fg-muted)' }}>
           Free response cannot be machine-scored from an answer key. Work through the rubric rows
@@ -511,7 +511,7 @@ export default function PracticeExam() {
             </li>
           ))}
         </ul>
-      </Card>
+      </Panel>
 
       {/* review the MCQ */}
       <details className="mb-5">
@@ -524,10 +524,10 @@ export default function PracticeExam() {
             const ok = chosen === q.answerId;
             return (
               <li key={`${q.id}-${i}`}>
-                <Card>
+                <div className="border-t pt-5 pb-6" style={{ borderColor: 'var(--rule)' }}>
                   <div className="flex items-baseline gap-2">
                     <span className="tabular-nums text-xs" style={{ color: 'var(--fg-faint)' }}>{i + 1}</span>
-                    <Badge tone={ok ? 'green' : 'accent'}>{ok ? 'correct' : chosen ? 'wrong' : 'skipped'}</Badge>
+                    <span className={ok ? 'chip chip-gilt' : 'chip chip-accent'}>{ok ? 'correct' : chosen ? 'wrong' : 'skipped'}</span>
                     <span className="text-sm" style={{ fontWeight: 550 }}>{q.prompt}</span>
                   </div>
                   <p className="mt-1.5 text-sm" style={{ color: 'var(--fg-muted)' }}>
@@ -538,7 +538,7 @@ export default function PracticeExam() {
                   <p className="measure mt-1.5 text-sm" style={{ color: 'var(--fg-muted)', lineHeight: 1.6 }}>
                     {q.explanation}
                   </p>
-                </Card>
+                </div>
               </li>
             );
           })}
@@ -548,6 +548,11 @@ export default function PracticeExam() {
       <button type="button" className="btn btn-primary" onClick={() => { setSeed((s) => s + 1); setStage('intro'); }}>
         Take another exam
       </button>
+
+      <SourceNote to="examOverview">
+        The section timings, question counts and weightings used here follow the exam overview in
+        the official Course and Exam Description.
+      </SourceNote>
     </Page>
   );
 }
@@ -563,7 +568,7 @@ function ExamBar({
       style={{ background: 'color-mix(in srgb, var(--bg) 90%, transparent)', borderColor: 'var(--rule)' }}
     >
       <div className="flex items-baseline gap-3">
-        <span className="eyebrow" style={{ margin: 0 }}>{label}</span>
+        <span className="slab-sm" style={{ margin: 0 }}>{label}</span>
         <span className="text-xs" style={{ color: 'var(--fg-faint)' }}>{right}</span>
       </div>
       <div className="flex items-center gap-3">

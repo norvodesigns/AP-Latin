@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { useRevealChildren } from '@/hooks/useRevealChildren';
 import { CED, cedHref, CED_PDF, AP_LATIN_COURSE, AP_LATIN_EXAM, type CedLandmark } from '@/lib/ced';
 
 /* ==========================================================================
@@ -12,9 +13,16 @@ import { CED, cedHref, CED_PDF, AP_LATIN_COURSE, AP_LATIN_EXAM, type CedLandmark
    a widely-tracked label in the margin.
    ========================================================================== */
 
+/**
+ * Every page's outer column — and, because every page has one, the single
+ * place the entrance and scroll-reveal behaviour is attached. Each direct
+ * child is treated as a block: see `useRevealChildren`.
+ */
 export function Page({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
+  const ref = useRevealChildren<HTMLDivElement>();
   return (
     <div
+      ref={ref}
       className={`mx-auto w-full px-5 py-8 sm:px-10 sm:py-12 ${wide ? 'max-w-6xl' : 'max-w-4xl'}`}
     >
       {children}
@@ -38,7 +46,7 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <header className="animate-in mb-9 border-b pb-7" style={{ borderColor: 'var(--rule)' }}>
+    <header className="mb-9 border-b pb-7" style={{ borderColor: 'var(--rule)' }}>
       <div className="flex flex-wrap items-end justify-between gap-5">
         <div className="min-w-0">
           {eyebrow && <div className="rubric mb-4">{eyebrow}</div>}
@@ -112,22 +120,6 @@ export function Panel({
   return <As className={`panel p-6 sm:p-7 ${className}`}>{children}</As>;
 }
 
-/**
- * Kept so unconverted sections keep rendering sensibly: a top hairline and
- * padding rather than a boxed card.
- */
-export function Card({
-  children,
-  className = '',
-  as: As = 'div',
-}: {
-  children: ReactNode;
-  className?: string;
-  as?: 'div' | 'section' | 'article' | 'li';
-}) {
-  return <As className={`card ${className}`}>{children}</As>;
-}
-
 /** A called-out prompt — outlined in red, never filled. */
 export function CalledOut({
   rubric,
@@ -160,31 +152,6 @@ export function Hairline({ faint = false, className = '' }: { faint?: boolean; c
   return <div className={`${faint ? 'hair-faint' : 'hair'} ${className}`} role="presentation" />;
 }
 
-/** Outlined tag. Red for themes, muted for metadata. */
-export function Badge({
-  children,
-  tone = 'neutral',
-  title,
-}: {
-  children: ReactNode;
-  tone?: 'neutral' | 'accent' | 'gilt' | 'green' | 'muted';
-  title?: string;
-}) {
-  const tones: Record<string, { fg: string; bd: string }> = {
-    neutral: { fg: 'var(--fg-muted)', bd: 'var(--rule-strong)' },
-    accent: { fg: 'var(--accent)', bd: 'var(--redborder)' },
-    gilt: { fg: 'var(--gilt)', bd: 'color-mix(in srgb, var(--gilt) 42%, transparent)' },
-    green: { fg: 'var(--correct)', bd: 'color-mix(in srgb, var(--correct) 40%, transparent)' },
-    muted: { fg: 'var(--fg-faint)', bd: 'var(--rule)' },
-  };
-  const t = tones[tone];
-  return (
-    <span title={title} className="chip" style={{ color: t.fg, borderColor: t.bd }}>
-      {children}
-    </span>
-  );
-}
-
 export function Empty({ title, body, action }: { title: string; body: string; action?: ReactNode }) {
   return (
     <div
@@ -207,6 +174,55 @@ export function Empty({ title, body, action }: { title: string; body: string; ac
       </p>
       {action && <div className="mt-6">{action}</div>}
     </div>
+  );
+}
+
+/**
+ * A numbered sequence. Used wherever the app is walking someone through
+ * something for the first time — signing up, joining a first classroom,
+ * creating one. The numeral is the same one the dashboard counts down in,
+ * so a set of steps reads as part of the same ledger rather than as a
+ * generic wizard.
+ */
+export function Steps({
+  items,
+}: {
+  items: Array<{ title: string; body: ReactNode }>;
+}) {
+  return (
+    <ol className="flex flex-col pl-0" style={{ listStyle: 'none' }}>
+      {items.map((step, i) => (
+        <li
+          key={i}
+          className="flex gap-5 border-t pt-5 pb-6"
+          style={{ borderColor: 'var(--rule)' }}
+        >
+          <span
+            className="numeral shrink-0 tabular-nums"
+            style={{ fontSize: '1.75rem', lineHeight: 1, color: 'var(--fg-faint)' }}
+            aria-hidden="true"
+          >
+            {i + 1}
+          </span>
+          <div className="min-w-0">
+            <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.1875rem', lineHeight: 1.3 }}>
+              {step.title}
+            </div>
+            <div
+              className="measure mt-1.5"
+              style={{
+                fontFamily: 'var(--font-latin)',
+                fontSize: '1.0625rem',
+                lineHeight: 1.55,
+                color: 'var(--ink2)',
+              }}
+            >
+              {step.body}
+            </div>
+          </div>
+        </li>
+      ))}
+    </ol>
   );
 }
 

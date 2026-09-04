@@ -7,6 +7,7 @@ import { tokenize, lookup, type LookupResult } from '@/lib/latin';
 import { useStore, readingCoverage } from '@/store/useStore';
 import { passageVocabIds } from '@/data/passages';
 import { BackLink, CedLink, SupplementaryNotice } from '@/components/ui';
+import { useRevealChildren } from '@/hooks/useRevealChildren';
 import AskAboutLine from '@/components/AskAboutLine';
 
 interface Nav {
@@ -31,6 +32,7 @@ export default function Reader({
   prev: Nav | null;
   next: Nav | null;
 }) {
+  const columns = useRevealChildren<HTMLDivElement>();
   const glossaryEnabled = useStore((s) => s.glossaryEnabled);
   const toggleGlossary = useStore((s) => s.toggleGlossary);
   const passages = useStore((s) => s.passages);
@@ -188,7 +190,11 @@ export default function Reader({
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-[minmax(0,1fr)_1px_366px]">
+      {/* The ref goes on the grid, so the whole Latin column arrives as one
+          object. Revealing inside the article instead would have the passage
+          appearing line by line under the reader's eye as they scroll it,
+          which is the one place in this app where movement is a liability. */}
+      <div ref={columns} className="grid lg:grid-cols-[minmax(0,1fr)_1px_366px]">
         {/* ─────────── The Latin ─────────── */}
         <article className="min-w-0 px-5 py-10 sm:px-10 sm:py-14 lg:pr-12">
           <header className="mb-9">

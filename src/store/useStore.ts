@@ -3,6 +3,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { SkillCategory, QuestionType, UnitId } from '@/data/types';
+import { bumpActivityStats } from '@/lib/supabase/sync';
 
 export const STORE_VERSION = 1;
 export const STORAGE_KEY = 'ap-latin-store';
@@ -169,7 +170,9 @@ export interface WordEncounter {
 
 export interface StoreState {
   version: number;
-  theme: 'light' | 'dark' | 'system';
+  /** Manual only — no live system tracking. See `initialState.theme` for
+   *  why a fresh visitor still gets a sensible first value. */
+  theme: 'light' | 'dark';
 
   /** Reading Room: hide the glossary for a cold read. */
   glossaryEnabled: boolean;
@@ -195,7 +198,16 @@ export interface StoreState {
   /** vocab id -> how often and where it has been looked up while reading. */
   wordEncounters: Record<string, WordEncounter>;
 
+  /**
+   * The signed-in user's id, or null in solo mode / signed out. Sourced from
+   * a server-rendered profile each time the layout re-renders (see
+   * AppShell), never persisted — see the `partialize` note below for why.
+   * Gates whether graded-work results get synced to Supabase.
+   */
+  authUserId: string | null;
+
   /* actions ------------------------------------------------------- */
+  setAuthUserId: (id: string | null) => void;
   setTheme: (t: StoreState['theme']) => void;
   toggleGlossary: () => void;
 
@@ -243,7 +255,17 @@ const emptyPassage = (): PassageState => ({
 
 const initialState = {
   version: STORE_VERSION,
-  theme: 'system' as const,
+  /**
+   * A one-time read of the OS preference, not a live link to it — the app
+   * has no "system" mode, so this only matters for a visitor who has never
+   * chosen a theme. Guarded for SSR, where `window` does not exist; the
+   * boot script in the document head (`layout.tsx`) makes the same call
+   * with `prefers-color-scheme` in raw CSS for the first paint, so this
+   * value and that paint agree and nothing flashes on hydration.
+   */
+  theme: (typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches
+    ? 'dark'
+    : 'light') as 'light' | 'dark',
   glossaryEnabled: true,
   showMacrons: true,
   passages: {} as Record<string, PassageState>,
@@ -264,6 +286,7 @@ const initialState = {
   scansionAttempts: [] as ScansionAttempt[],
   scansionDrafts: {} as Record<string, ScansionDraft>,
   wordEncounters: {} as Record<string, WordEncounter>,
+  authUserId: null as string | null,
 };
 
 /**
@@ -322,17 +345,13 @@ export const useStore = create<StoreState>()(
       setTheme: (theme) => {
         set({ theme });
         if (typeof document !== 'undefined') {
-          if (theme === 'system') {
-            document.documentElement.removeAttribute('data-theme');
-            try {
-              localStorage.removeItem('ap-latin-theme');
-            } catch {}
-          } else {
-            document.documentElement.setAttribute('data-theme', theme);
-            try {
-              localStorage.setItem('ap-latin-theme', theme);
-            } catch {}
-          }
+          document.documentElement.setAttribute('data-theme', theme);
+          // Mirrored outside zustand's own persistence so the boot script in
+          // the document head — plain inline JS, not a store subscriber —
+          // can apply it before first paint without parsing the store.
+          try {
+            localStorage.setItem('ap-latin-theme', theme);
+          } catch {}
         }
       },
 
@@ -402,6 +421,8 @@ export const useStore = create<StoreState>()(
           return { vocab: { ...s.vocab, [id]: sm2(card, quality) } };
         }),
 
+      setAuthUserId: (id) => set({ authUserId: id }),
+
       recordQuiz: (a) =>
         set((s) => {
           const attempt: QuizAttempt = { ...a, id: uid(), at: new Date().toISOString() };
@@ -410,6 +431,9 @@ export const useStore = create<StoreState>()(
             : s.reviewQueue.includes(a.questionId)
               ? s.reviewQueue
               : [...s.reviewQueue, a.questionId];
+          // Multiple choice is always machine-graded. Best-effort — never
+          // blocks or throws into the local recording above.
+          if (s.authUserId) void bumpActivityStats('auto', a.correct ? 1 : 0, 1);
           return {
             quizAttempts: [...s.quizAttempts, attempt].slice(-3000),
             reviewQueue: queue,
@@ -421,12 +445,15 @@ export const useStore = create<StoreState>()(
         set((s) => ({ reviewQueue: s.reviewQueue.filter((q) => q !== questionId) })),
 
       recordTranslation: (a) =>
-        set((s) => ({
-          translationAttempts: [
-            ...s.translationAttempts,
-            { ...a, id: uid(), at: new Date().toISOString() },
-          ].slice(-500),
-        })),
+        set((s) => {
+          if (s.authUserId) void bumpActivityStats(a.gradedBy === 'ai' ? 'auto' : 'self', a.score, a.maxScore);
+          return {
+            translationAttempts: [
+              ...s.translationAttempts,
+              { ...a, id: uid(), at: new Date().toISOString() },
+            ].slice(-500),
+          };
+        }),
 
       saveFrq: (r) =>
         set((s) => {
@@ -551,8 +578,14 @@ export const useStore = create<StoreState>()(
       storage: createJSONStorage(() => localStorage),
       version: STORE_VERSION,
       partialize: (s) => {
-        // Persist data, not the action functions.
-        const { ...rest } = s;
+        // Action functions drop naturally — persist serializes via
+        // JSON.stringify, which silently omits them. authUserId is excluded
+        // explicitly: it is ephemeral session identity, sourced fresh from
+        // the server on every layout render (see AppShell), and must never
+        // survive to a different session or — on a shared computer — a
+        // different signed-in user.
+        const rest = { ...s } as Partial<StoreState>;
+        delete rest.authUserId;
         return rest as StoreState;
       },
     },

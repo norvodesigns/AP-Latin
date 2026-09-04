@@ -175,6 +175,88 @@ If you are wiring it up from scratch:
    before the first deploy, or redeploy after adding them.
 5. Deploy. Every subsequent push to `main` redeploys; pull requests get preview URLs.
 
+### Pointing `lectio.norvodesigns.com` at it
+
+The subdomain is claimed on Vercel's side first, then proved by one DNS record you add wherever
+`norvodesigns.com`'s nameservers actually point.
+
+1. Vercel project → **Settings → Domains → Add**, and enter `lectio.norvodesigns.com`.
+2. Vercel replies with the record it wants. For a subdomain that is a **CNAME**:
+
+   | Type | Name | Value |
+   | --- | --- | --- |
+   | `CNAME` | `lectio` | `cname.vercel-dns.com` |
+
+   The **Name** is just `lectio`, not the whole hostname — most DNS panels append the apex domain
+   for you. If yours wants it spelled out, use `lectio.norvodesigns.com`. Copy the value Vercel
+   shows rather than the one above if the two ever differ; Vercel is the authority on its own
+   record.
+3. Add that record in the DNS panel for `norvodesigns.com`. **On Cloudflare, set it to DNS only** —
+   the orange proxy cloud intercepts the certificate challenge and the domain never validates.
+4. Back in Vercel, wait for the domain to turn **Valid Configuration**. TLS is issued
+   automatically once it does. A minute or two is normal.
+
+Check it from a terminal, not a browser — browsers cache DNS long past the TTL:
+
+```bash
+dig +short lectio.norvodesigns.com
+```
+
+Two settings to change once it resolves, both easy to forget:
+
+- **Vercel → Settings → Domains** — mark `lectio.norvodesigns.com` as the **primary** domain, so
+  the `.vercel.app` URL redirects to it instead of serving the same site at two addresses.
+- **Supabase → Authentication → URL Configuration** — only if you are running classrooms. Set
+  **Site URL** to `https://lectio.norvodesigns.com` and add it under **Redirect URLs**. Miss this
+  and the confirmation link in every signup email still points at the old host, which is the kind
+  of thing you discover from a student rather than from a test.
+
+---
+
+## Classrooms and accounts (optional)
+
+Everything above works with zero setup: Lectio runs in **solo mode** — no login, progress lives in
+the browser. Configuring Supabase turns on **classroom mode**: student and teacher accounts, join
+codes, assignments, and a leaderboard — without changing anything about solo mode for anyone who
+never signs in.
+
+### Setting it up
+
+1. Create a project at the [Supabase dashboard](https://supabase.com/dashboard).
+2. **Project Settings → API** and copy the Project URL and anon public key.
+3. **SQL Editor → New query**, and run every file in `supabase/migrations/` **in filename order**
+   (0001, then 0002, then 0003 — each depends on tables or functions the one before it created).
+4. Add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` to `.env.local`, and to Vercel
+   the same way as the AI keys above (Environment Variables, then redeploy). Both are safe to expose
+   to the browser — see the comment above them in `.env.example` for why.
+5. Check Supabase's email confirmation setting matches what you want: **Authentication → Providers →
+   Email**. On by default, meaning a new account cannot sign in until it clicks a confirmation
+   email — worth turning off for a classroom where that friction buys nothing.
+
+### How it works
+
+- A **teacher** account creates a classroom (`/teach`) and gets a six-character join code — the
+  alphabet deliberately avoids vowels and 0/O/1/I/L, so a code read aloud off a whiteboard is never
+  ambiguous.
+- A **student** account redeems the code (`/classroom`) to join.
+- The teacher assigns target minutes on a section (Reading Room, Translate, whichever) with an
+  optional due date and note; each student's own classroom page shows their progress toward it.
+- Time studied and quiz/translation results sync to the server automatically while signed in —
+  nothing to turn on, and nothing about how those features behave signed out.
+- The leaderboard ranks by time studied, not accuracy. A student who has answered three questions
+  perfectly should not outrank one who has done three hundred at 90% — accuracy on a handful of
+  attempts is mostly noise. Accuracy is still shown, just not used to rank.
+
+### What a student cannot see about classmates
+
+Nobody's raw activity reaches another student's browser. `study_sessions` and `activity_stats` rows
+are protected by row-level security scoped to their own owner; the leaderboard and roster are
+separate database functions (`classroom_leaderboard`, `classroom_section_time`) that return only
+aggregates and a display name, and only after confirming the caller actually belongs to that
+classroom. The policies themselves are commented in `supabase/migrations/0001_init.sql` and
+`0002_rpc.sql` — the database enforces this, not application code, so a mistake in a query cannot
+leak one classroom's data into another.
+
 ---
 
 ## Accuracy
@@ -198,6 +280,95 @@ This matters more than anything else in a study app, so:
 - **Machine-generated content is always labelled.** Sight passages produced by the AI generator
   carry a persistent "machine-selected" warning and the model's own confidence rating, because
   nobody has checked them against a printed text.
+- **AI grading is measured, not assumed.** `npm run eval:grading` scores the grader against cases
+  whose outcome is known in advance. See below.
+
+### Measuring the AI grader
+
+AI-graded work counts towards your record, so "it seems to work" is not good enough. A grader that
+marks a correct translation wrong costs you real standing and teaches you to distrust a right
+answer; one that waves errors through teaches nothing. Those two failures are not equally bad, so
+the harness reports them separately.
+
+```bash
+npm run dev                       # in one terminal
+npm run eval:grading              # in another
+npm run eval:grading -- --base http://localhost:3160 --runs 3
+```
+
+#### What it currently measures
+
+Full pass, all fifteen cases, Gemini serving every call:
+
+| | count | share |
+| --- | --- | --- |
+| agreed with the key | 184 / 185 segment judgements | **99.5%** |
+| false negatives — a correct segment marked wrong | 1 | 0.5% |
+| false positives — an error waved through | 0 | **0.0%** |
+
+The single disagreement was not the grader's fault. It marked `pacique imponere morem` wrong in the
+Aeneid 6.847–853 model translation, giving the reason "dative rendered as genitive" — and it was
+right: the model answer read "the custom **of** peace" where `paci` is dative with the compound
+`impono`, which is the exact pitfall that drill warns students about. Correcting the content and
+re-running the `perfect` cases gives **75 / 75, no false negatives**, the corrected line included.
+
+So the grader currently disagrees with nothing it should agree with, and lets nothing through it
+should catch — on five drills. That is a floor, not a guarantee: five drills is a small sample, the
+free tiers can put a different model behind the same call tomorrow, and re-running after any change
+to a model translation is cheap (`-- --cases perfect`).
+
+Every case is built from the drill data itself, so the expected outcome does not depend on anyone's
+opinion:
+
+| case | submission | what must happen |
+| --- | --- | --- |
+| `perfect` | the drill's own continuous model translation | every segment awarded — but see the warning below before calling a miss a false negative |
+| `truncated` | only the opening of that translation | the closing segments must fail, the opening ones must still pass |
+| `empty` | an irrelevant sentence | everything must fail |
+
+**A `perfect` miss is a question, not a verdict.** The case assumes the model translation is
+correct, and that assumption does not always hold. Every miss it has ever reported turned out to be
+a defect in this repository's own content, not in the grader — four so far, across two drills:
+`pauca` rendered as the adverb "briefly" where the segment requires a neuter plural object, `pro`
+rendered as "about" as though it were `de`, an "of me" supplied with nothing in the Latin behind
+it, and the dative `paci` rendered as a genitive. Each time the grader was right and the content
+was wrong. Read the reason it gives before concluding anything about the grader; fixing the content
+is usually the correct response.
+
+Two things are worth knowing about this harness.
+
+**Its first version was unsound, and it mattered.** It built "correct" submissions by concatenating
+each segment's accepted literal. For these drills that produces text no honest grader should pass —
+one literal is an ellipsis placeholder (`"I … that you"`), several carry editorial glosses in
+parentheses, and two overlap. It reported a pile of false negatives that were really defects in the
+script. If you extend the harness, derive cases from `modelTranslation`, which is what a student
+actually submits: unlabelled English prose, not a list of segments.
+
+**It waits out the rate limiter rather than bypassing it.** The grading route allows 20 calls per
+10 minutes per IP. Adding a test-only bypass would put an authentication surface into a production
+route for the sake of a script, so the eval simply sleeps when it is told to. A full run therefore
+takes upwards of ten minutes, and the limiter gets exercised too.
+
+Both providers are exercised through the normal fallback path, so check the `[provider]` tag in the
+output. If the primary is throttled, every row silently reads as the fallback and you are measuring
+a model you did not think you were measuring.
+
+Expect that to happen, and expect the free tiers to be the limiting factor throughout:
+
+| provider | free-tier ceiling | grading calls it allows |
+| --- | --- | --- |
+| Gemini | 20 requests/minute | a run saturates it in seconds, since every call tries the primary first and the SDK retries |
+| Groq | 8,000 **tokens**/minute | roughly two, because one grading call costs a few thousand tokens |
+
+Groq's is the one that catches people out: the binding constraint is tokens, not requests, so pacing
+by request count does not help. Retrying hard on either makes things worse — it pushes the fallback
+into its own cap and the run stops measuring anything at all. The harness therefore paces itself
+(`--pacing`, default 90s between requests — the first value measured to survive a whole pass) and distinguishes the two kinds of 429: the route's own
+limiter reports `retryAfterSeconds` and is honoured exactly, while a provider 429 gets a flat
+minute. A full run consequently takes a little over twenty minutes; `--cases perfect` alone takes about eight.
+
+To measure a single provider rather than the pair, set `GEMINI_MODEL` / `GROQ_MODEL` or unset one
+provider's key for the run.
 
 ### Where this app's reading list differs from your notes
 
@@ -217,9 +388,16 @@ context. They just will not appear on the exam as syllabus reading.
 
 ## Data and privacy
 
-There is no account, no database and no server-side storage of anything you write. Progress lives in
-`localStorage` under `ap-latin-store`. **Clearing your browser data deletes it**, so use the export
-button in Settings periodically — that JSON file is your only backup, and Import restores it.
+In solo mode — no Supabase configured, which is the default — there is no account, no database and
+no server-side storage of anything you write. Progress lives in `localStorage` under
+`ap-latin-store`. **Clearing your browser data deletes it**, so use the export button in Settings
+periodically — that JSON file is your only backup, and Import restores it.
+
+Classroom mode does add server-side storage, but only of what a teacher's dashboard needs: your
+display name and role, which classrooms you belong to, minutes studied per section per day, and
+correct/total counts for graded work. It never stores your translations, essays, or anything you
+wrote — those stay local, exactly as in solo mode. See **Classrooms and accounts** above for what a
+classmate can and cannot see of that data.
 
 ---
 

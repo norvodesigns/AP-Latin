@@ -383,17 +383,6 @@ h1, h2, h3, h4 {
     padding: 1.625rem 1.5rem;
   }
 
-  /* Kept as a compatibility shim for sections not yet converted: strips the
-     rounding and shadow so nothing renders as a card mid-migration. */
-  .card {
-    background: transparent;
-    border: 0;
-    border-top: 1px solid var(--rule);
-    border-radius: 0;
-    box-shadow: none;
-    padding-top: 1.5rem;
-  }
-
   /* — Controls —————————————————————————————————————————————————————
      Rectangles. Uppercase, tracked, no radius.
 
@@ -763,15 +752,30 @@ h1, h2, h3, h4 {
      a bar in, clicking sets it. It is the whole second half of scanning, so
      the app must not do it for them. */
 
+  /*
+   * Zero footprint on purpose: this is the hit target for a foot boundary
+   * the student has NOT placed yet, and it used to reserve a real 18px in
+   * the flex row between every single syllable — which is what made a word
+   * read as separated fragments rather than a word, even at rest with
+   * nothing hovered. The negative margins pull it back to zero visible
+   * width without shrinking its actual hit box (a negative margin moves a
+   * box, it does not resize it), so the same 18px target is still there —
+   * centered on wherever the syllables now sit, word-gap or not — and the
+   * red bar it reveals on hover still lands in the right place. A placed
+   * boundary (.foot-rule, below) is the opposite case on purpose: that one
+   * is meant to visibly separate the feet, so it keeps its real width.
+   */
   .foot-gap {
     position: relative;
     align-self: stretch;
     width: 18px;
+    margin: 0 -9px;
     flex: none;
     border: 0;
     background: transparent;
     cursor: pointer;
     padding: 0;
+    z-index: 1;
   }
   .foot-gap::before {
     content: '';
@@ -857,6 +861,110 @@ h1, h2, h3, h4 {
   .stagger > *:nth-child(9) { animation-delay: 320ms; }
   .stagger > *:nth-child(n+10) { animation-delay: 360ms; }
 
+  /* — Page entrance and scroll reveal ————————————————————————————————
+     Every rule here is gated on html[data-motion='on'], which the boot script
+     in the document head sets only when JS is alive and the reader has not
+     asked for reduced motion. That gate is the safety property: nothing can
+     leave content permanently hidden, because without it none of these rules
+     match and the page is simply a page.
+
+     Only opacity and transform are touched, so each block is composited and
+     the scroll stays smooth however many are on screen at once. */
+
+  /* Blocks already in view when the page loads. They arrive in sequence
+     rather than waiting to be scrolled to — they are already there. */
+  html[data-motion='on'] [data-enter] {
+    animation: fade-rise 520ms var(--ease) both;
+    animation-delay: var(--enter-delay, 0ms);
+  }
+
+  /* Blocks below the fold wait. The transition lives on the revealed state,
+     not the pending one, so taking a block away is instant and un-animated
+     while bringing it back is not — the reverse would play a fade-out at the
+     moment the page is first marked up. */
+  html[data-motion='on'] [data-reveal='pending'] {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  html[data-motion='on'] [data-reveal='in'] {
+    opacity: 1;
+    transform: none;
+    /* Brisk enough that a fast scroller cannot outrun it — a longer, more
+       luxurious fade measured well but left headings still arriving after
+       the reader had reached them. */
+    transition:
+      opacity 440ms var(--ease),
+      transform 560ms var(--ease);
+  }
+
+
+  /* — The section index ————————————————————————————————————————————
+     A panel over the page, not a replacement for it. The scrim is doing the
+     real work here: it dims what is behind, says an overlay is open, and
+     gives the whole area outside the panel a way to dismiss it. Without one
+     the index simply looked like the page had been swapped out. */
+  .index-scrim {
+    background: color-mix(in srgb, var(--bg) 30%, transparent);
+    backdrop-filter: blur(3px);
+    animation: scrim-in var(--dur-2) var(--ease-io) both;
+  }
+  .index-scrim[data-closing='true'] { animation: scrim-out 170ms var(--ease-io) both; }
+
+  /* The panel is docked to the underside of the masthead, so it arrives
+     downward, out from behind it. `.animate-in` rises instead, which reads
+     as the panel pulling away from the edge it is attached to. */
+  .index-panel {
+    transform-origin: top center;
+    animation: index-down var(--dur-2) var(--ease) both;
+  }
+  .index-panel[data-closing='true'] {
+    animation: index-up 170ms var(--ease-io) both;
+    pointer-events: none;
+  }
+  /* On the way out the whole panel leaves as one object. Letting the rows
+     keep their entrance stagger while the panel retreats reads as two
+     animations fighting. */
+  .index-panel[data-closing='true'] * { animation: none !important; }
+
+  /* Rows arrive a beat after the panel, so the panel lands first and the
+     contents fill in — rather than everything moving at once. */
+  .index-panel .stagger > * { animation-delay: calc(var(--row-delay, 0ms) + 70ms); }
+  .index-panel .stagger > *:nth-child(1) { --row-delay: 0ms; }
+  .index-panel .stagger > *:nth-child(2) { --row-delay: 35ms; }
+  .index-panel .stagger > *:nth-child(3) { --row-delay: 70ms; }
+  .index-panel .stagger > *:nth-child(4) { --row-delay: 105ms; }
+  .index-panel .stagger > *:nth-child(n+5) { --row-delay: 140ms; }
+
+  /* An index row fills rather than shifting. The old rule-and-nudge treatment
+     borrowed from list rows made fourteen of them feel restless. */
+  .index-row {
+    transition: background-color var(--dur-2) var(--ease-io);
+  }
+  .index-row:hover { background: color-mix(in srgb, var(--redtint) 70%, transparent); }
+  .index-row[data-active='true'] { background: color-mix(in srgb, var(--redtint) 45%, transparent); }
+
+  /* The narrow nav strip scrolls if five sections ever outgrow the width.
+     Its scrollbar is hidden — it is one row of five, and a bar under it
+     would read as a rule that means something. */
+  .nav-strip { scrollbar-width: none; -ms-overflow-style: none; }
+  .nav-strip::-webkit-scrollbar { display: none; }
+
+  /* The masthead button's three rules fold into the cross, rather than one
+     icon being swapped for another. transform-box defaults to view-box in
+     SVG, so `center` is the middle of the 19×19 canvas — which is exactly
+     where the middle rule already sits, and where the cross has to meet. */
+  .burger path {
+    transform-origin: center;
+    transition:
+      transform var(--dur-3) var(--ease),
+      opacity var(--dur-1) linear;
+  }
+  /* Translate first, then rotate: the transform list applies right to left,
+     so the rule is moved onto the centre line before it is turned about it. */
+  .burger[data-open='true'] path:nth-child(1) { transform: rotate(45deg) translateY(4px); }
+  .burger[data-open='true'] path:nth-child(2) { opacity: 0; transform: scaleX(0.15); }
+  .burger[data-open='true'] path:nth-child(3) { transform: rotate(-45deg) translateY(-4px); }
+
   /* A link that draws its own rule underneath, left to right. */
   .link-rule {
     position: relative;
@@ -911,6 +1019,39 @@ h1, h2, h3, h4 {
     transform-origin: left;
   }
 
+  /* The wordmark's own rule — the same mechanic as .nav-item above, so the
+     logo reads as one of this row's page links rather than as a separate
+     decoration, just without the color swap: the script face keeps its
+     accent color whether or not the rule is showing. Sized to the wordmark
+     itself (inline-block) rather than a full nav item's row, and the rule
+     sits closer underneath since the script face's descenders already fill
+     the gap .nav-item's 5px padding is there for. */
+  .home-link {
+    position: relative;
+    display: inline-block;
+    padding-bottom: 1px;
+  }
+  .home-link::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform var(--dur-3) var(--ease);
+  }
+  .home-link:hover::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+  .home-link[data-active='true']::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+
   /* Rows that lift a touch and warm as the cursor passes — leaderboard
      entries, passage lists, deck rows. */
   .row-hover {
@@ -939,6 +1080,28 @@ h1, h2, h3, h4 {
 @keyframes fade-rise {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: none; }
+}
+
+/* The index unfolds downward from the masthead it is docked to, and folds
+   back up under it. The slight vertical scale is what makes it read as
+   unfolding rather than as a block sliding into place; the origin is the top
+   edge, so the docked edge never moves. */
+@keyframes index-down {
+  from { opacity: 0; transform: translateY(-10px) scaleY(0.97); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes index-up {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateY(-8px) scaleY(0.98); }
+}
+
+@keyframes scrim-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes scrim-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 /* The glossary and the quantity chooser arrive from the edge they dock to. */

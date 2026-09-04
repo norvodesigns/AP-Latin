@@ -10,12 +10,26 @@ import { z } from 'zod';
 
 export const segmentVerdict = z.enum(['correct', 'partial', 'incorrect']);
 
+/*
+ * Keep this schema lean. The longest drill (Aeneid 4.333-339, 15 segments) was
+ * failing with AI_NoObjectGeneratedError because the model ran out of output
+ * tokens mid-JSON, and every field the model has to write is output it can run
+ * out of room in.
+ *
+ * Two fields were removed for that reason, and both were dead:
+ *   - `latin`, a verbatim echo of Latin the server already holds. Asking the
+ *     model to reproduce it spent tokens and, worse, gave it an opportunity to
+ *     alter the Latin — which this project never allows.
+ *   - `scoreEstimate`, which the client recomputes from the verdicts anyway.
+ *
+ * Anything added here must actually be rendered. A field nobody reads is a
+ * truncation risk for no benefit.
+ */
 export const translationGradeSchema = z.object({
   segments: z
     .array(
       z.object({
         segmentId: z.string().describe('The id of the segment being graded, copied exactly.'),
-        latin: z.string().describe('The Latin of this segment.'),
         studentRendering: z
           .string()
           .describe("The part of the student's translation that corresponds to this segment, quoted verbatim. Empty string if they omitted it."),
@@ -23,19 +37,17 @@ export const translationGradeSchema = z.object({
         reason: z
           .string()
           .describe(
-            'The specific grammatical reason for the verdict — e.g. "perfect rendered as present", "ablative absolute translated as a main clause", "accusative of respect read as direct object". Name the actual error, never a vague comment.',
+            'The specific grammatical reason for the verdict — e.g. "perfect rendered as present", "ablative absolute translated as a main clause", "accusative of respect read as direct object". Name the actual error, never a vague comment. One short phrase, not a sentence.',
           ),
-        correctedLiteral: z.string().describe('A correct literal rendering of just this segment.'),
+        correctedLiteral: z
+          .string()
+          .describe('A correct literal rendering of just this segment. Shown to the student when the segment is not fully correct.'),
       }),
     )
     .describe('One entry per segment supplied, in the same order.'),
   correctedTranslation: z
     .string()
     .describe('A complete literal translation of the whole passage, accounting for every Latin word.'),
-  scoreEstimate: z.object({
-    earned: z.number().describe('Segments judged correct, counting partial as 0.5.'),
-    possible: z.number(),
-  }),
   oneThingToWorkOn: z
     .string()
     .describe('The single highest-value grammatical habit to fix, stated as an instruction.'),

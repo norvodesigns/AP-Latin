@@ -5,7 +5,7 @@ import { frqPrompts, getPrompt, FRQ_TYPE_LABELS, CHECKPOINT_1_RUBRIC, CHECKPOINT
 import { getPassage } from '@/data/passages';
 import { useStore, type ProjectPassage } from '@/store/useStore';
 import { useAiStatus, useAiCall } from '@/lib/useAi';
-import { Page, PageHeader, Card, Badge, BackLink, Empty } from '@/components/ui';
+import { Page, PageHeader, Panel, CalledOut, BackLink, Empty, SourceNote } from '@/components/ui';
 import type { FrqPrompt } from '@/data/types';
 import type { EssayFeedback, ShortAnswerGrade } from '@/lib/ai/schemas';
 
@@ -52,7 +52,7 @@ export default function FrqWorkshop() {
       />
 
       {tab === 'prompts' ? (
-        <ul className="grid gap-2.5 sm:grid-cols-2">
+        <ul className="stagger flex flex-col pl-0" style={{ listStyle: 'none' }}>
           {frqPrompts.map((p) => {
             const total = p.rubric.reduce((n, r) => n + r.maxPoints, 0);
             return (
@@ -60,9 +60,10 @@ export default function FrqWorkshop() {
                 <button
                   type="button"
                   onClick={() => setOpenId(p.id)}
-                  className="card block h-full w-full p-4 text-left transition-transform hover:-translate-y-px"
+                  className="squish row-hover block w-full border-t px-3 py-5 text-left"
+                  style={{ borderColor: 'var(--rule)', marginLeft: '-0.75rem' }}
                 >
-                  <div className="eyebrow mb-1">{FRQ_TYPE_LABELS[p.type]}</div>
+                  <div className="slab-sm mb-1">{FRQ_TYPE_LABELS[p.type]}</div>
                   <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.0625rem', fontWeight: 600 }}>
                     {p.title}
                   </div>
@@ -86,6 +87,12 @@ export default function FrqWorkshop() {
       ) : (
         <CourseProject />
       )}
+
+      <SourceNote to="scoring">
+        Every rubric row below comes from the official scoring guidelines. Score yourself against
+        them rather than against a feeling about the essay — the rows are what a Reader actually
+        awards on.
+      </SourceNote>
     </Page>
   );
 }
@@ -173,9 +180,9 @@ function Workspace({ prompt, onBack }: { prompt: FrqPrompt; onBack: () => void }
             action={<button type="button" className="btn btn-primary" onClick={onBack}>Go to Course Project</button>}
           />
         ) : (
-          <Card className="mb-5">
+          <Panel className="mb-8">
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <span className="eyebrow">Your {wantedGenre} project passage</span>
+              <span className="slab-sm">Your {wantedGenre} project passage</span>
               {candidates.length > 1 && (
                 <select
                   className="input"
@@ -201,11 +208,11 @@ function Workspace({ prompt, onBack }: { prompt: FrqPrompt; onBack: () => void }
             <p className="mt-3 text-xs" style={{ color: 'var(--fg-faint)' }}>
               Note: on FRQ 4 and 5, words outside the core vocabulary list are <strong>not</strong> glossed.
             </p>
-          </Card>
+          </Panel>
         )
       ) : passage ? (
-        <Card className="mb-5">
-          <div className="eyebrow mb-2">{prompt.citation ?? passage.citation}</div>
+        <CalledOut className="mb-9">
+          <div className="slab-sm mb-2">{prompt.citation ?? passage.citation}</div>
           {passage.lines.map((l) => (
             <div key={l.n} className="flex items-baseline gap-3">
               <span className="w-8 shrink-0 text-right tabular-nums" style={{ fontSize: '0.6875rem', color: 'var(--fg-faint)' }}>
@@ -216,20 +223,20 @@ function Workspace({ prompt, onBack }: { prompt: FrqPrompt; onBack: () => void }
               </p>
             </div>
           ))}
-        </Card>
+        </CalledOut>
       ) : null}
 
       {/* subquestions */}
       <ol className="mb-6 flex flex-col gap-5">
         {prompt.subquestions.map((sq) => (
           <li key={sq.id}>
-            <Card>
+            <div className="border-t pt-5 pb-6" style={{ borderColor: 'var(--rule)' }}>
               <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
                 <h2 style={{ fontSize: '1rem', fontWeight: 550 }}>
                   {sq.label && <span style={{ color: 'var(--fg-faint)' }}>{sq.label} </span>}
                   {sq.prompt}
                 </h2>
-                <Badge tone="muted">{sq.points} pt{sq.points === 1 ? '' : 's'}</Badge>
+                <span className="chip">{sq.points} pt{sq.points === 1 ? '' : 's'}</span>
               </div>
               <textarea
                 value={answers[sq.id] ?? ''}
@@ -243,7 +250,7 @@ function Workspace({ prompt, onBack }: { prompt: FrqPrompt; onBack: () => void }
               <div className="mt-1 text-right text-xs" style={{ color: 'var(--fg-faint)' }}>
                 {(answers[sq.id] ?? '').trim().split(/\s+/).filter(Boolean).length} words
               </div>
-            </Card>
+            </div>
           </li>
         ))}
       </ol>
@@ -316,7 +323,7 @@ function Workspace({ prompt, onBack }: { prompt: FrqPrompt; onBack: () => void }
         <ul className="flex flex-col gap-3">
           {prompt.rubric.map((row) => (
             <li key={row.id}>
-              <Card>
+              <div className="border-t pt-5 pb-6" style={{ borderColor: 'var(--rule)' }}>
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <div style={{ fontWeight: 600, fontSize: '0.9375rem' }}>{row.label}</div>
@@ -336,7 +343,7 @@ function Workspace({ prompt, onBack }: { prompt: FrqPrompt; onBack: () => void }
                         type="button"
                         aria-pressed={selfScore[row.id] === n}
                         onClick={() => setSelfScore((s) => ({ ...s, [row.id]: n }))}
-                        className="h-8 w-8 border text-sm tabular-nums transition-colors"
+                        className="squish h-9 w-9 rounded-[var(--r-sm)] border tabular-nums transition-colors"
                         style={{
                           background: selfScore[row.id] === n ? 'var(--accent)' : 'transparent',
                           borderColor: selfScore[row.id] === n ? 'var(--accent)' : 'var(--rule)',
@@ -348,21 +355,21 @@ function Workspace({ prompt, onBack }: { prompt: FrqPrompt; onBack: () => void }
                     ))}
                   </div>
                 </div>
-              </Card>
+              </div>
             </li>
           ))}
         </ul>
       </section>
 
       {/* sample */}
-      <Card className="mb-5">
+      <Panel className="mb-8">
         <button
           type="button"
-          className="flex w-full items-center justify-between text-left"
+          className="squish flex w-full items-center justify-between text-left"
           onClick={() => setShowSample((v) => !v)}
           aria-expanded={showSample}
         >
-          <span className="eyebrow" style={{ margin: 0 }}>A strong sample response</span>
+          <span className="slab-sm" style={{ margin: 0 }}>A strong sample response</span>
           <span className="text-xs" style={{ color: 'var(--fg-faint)' }}>{showSample ? 'hide' : 'show'}</span>
         </button>
         {showSample && (
@@ -378,7 +385,7 @@ function Workspace({ prompt, onBack }: { prompt: FrqPrompt; onBack: () => void }
             </p>
           </>
         )}
-      </Card>
+      </Panel>
 
       <div className="flex flex-wrap items-center gap-2">
         <button
@@ -404,7 +411,7 @@ function Workspace({ prompt, onBack }: { prompt: FrqPrompt; onBack: () => void }
 
       {prior.length > 0 && (
         <div className="mt-6">
-          <div className="eyebrow mb-2">Previous attempts</div>
+          <div className="slab-sm mb-2">Previous attempts</div>
           <ul className="flex flex-col gap-1">
             {prior.slice(-5).reverse().map((r) => {
               const pts = Object.values(r.selfScore).reduce((n, v) => n + v, 0);
@@ -435,8 +442,8 @@ function EssayFeedbackPanel({ data }: { data: EssayFeedback }) {
       <h2 className="mb-3" style={{ fontSize: '1.0625rem' }}>AI feedback</h2>
 
       {data.uncitedClaims.length > 0 && (
-        <Card className="mb-3" >
-          <div className="eyebrow mb-2" style={{ color: 'var(--incorrect)' }}>
+        <div className="border-t pt-5 pb-6" style={{ borderColor: 'var(--rule)' }}>
+          <div className="slab-sm mb-2" style={{ color: 'var(--incorrect)' }}>
             Claims with no Latin behind them — the commonest way points are lost
           </div>
           <ul className="flex flex-col gap-3">
@@ -451,26 +458,26 @@ function EssayFeedbackPanel({ data }: { data: EssayFeedback }) {
               </li>
             ))}
           </ul>
-        </Card>
+        </div>
       )}
 
       {data.citationCheck.length > 0 && (
-        <Card className="mb-3">
-          <div className="eyebrow mb-2">Your citations, checked against the passage</div>
+        <div className="border-t pt-5 pb-6" style={{ borderColor: 'var(--rule)' }}>
+          <div className="slab-sm mb-2">Your citations, checked against the passage</div>
           <ul className="flex flex-col gap-2">
             {data.citationCheck.map((c, i) => (
               <li key={i} className="flex flex-wrap items-baseline gap-2 text-sm">
                 <span style={{ fontFamily: 'var(--font-latin)', fontSize: '1rem' }}>{c.quoted}</span>
-                <Badge tone={c.accurate ? 'green' : 'accent'}>{c.citedAs}</Badge>
+                <span className={c.accurate ? 'chip chip-gilt' : 'chip chip-accent'}>{c.citedAs}</span>
                 {!c.accurate && <span style={{ color: 'var(--fg-muted)' }}>{c.note}</span>}
               </li>
             ))}
           </ul>
-        </Card>
+        </div>
       )}
 
-      <Card className="mb-3">
-        <div className="eyebrow mb-2">Per-dimension</div>
+      <div className="border-t pt-5 pb-6" style={{ borderColor: 'var(--rule)' }}>
+        <div className="slab-sm mb-2">Per-dimension</div>
         <ul className="flex flex-col gap-2.5">
           {data.dimensions.map((d) => (
             <li key={d.id}>
@@ -484,10 +491,10 @@ function EssayFeedbackPanel({ data }: { data: EssayFeedback }) {
             </li>
           ))}
         </ul>
-      </Card>
+      </div>
 
-      <Card>
-        <div className="eyebrow mb-2">Two revisions</div>
+      <div className="border-t pt-5 pb-6" style={{ borderColor: 'var(--rule)' }}>
+        <div className="slab-sm mb-2">Two revisions</div>
         <ol className="flex list-decimal flex-col gap-1.5 pl-4">
           {data.revisions.map((r, i) => (
             <li key={i} className="text-sm" style={{ color: 'var(--fg-muted)' }}>{r}</li>
@@ -496,7 +503,7 @@ function EssayFeedbackPanel({ data }: { data: EssayFeedback }) {
         <p className="measure mt-3 border-t pt-3 text-sm" style={{ borderColor: 'var(--rule)', color: 'var(--fg-muted)' }}>
           {data.overall}
         </p>
-      </Card>
+      </div>
     </section>
   );
 }
@@ -513,7 +520,7 @@ function ShortAnswerPanel({ data }: { data: ShortAnswerGrade }) {
       <ul className="flex flex-col gap-3">
         {data.items.map((it) => (
           <li key={it.subquestionId}>
-            <Card>
+            <div className="border-t pt-5 pb-6" style={{ borderColor: 'var(--rule)' }}>
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <span style={{ fontWeight: 550, fontSize: '0.9375rem' }}>{it.prompt}</span>
                 <span className="tabular-nums text-sm">{it.earned}/{it.possible}</span>
@@ -523,19 +530,19 @@ function ShortAnswerPanel({ data }: { data: ShortAnswerGrade }) {
                 <span style={{ color: 'var(--fg-faint)' }}>Full credit looks like: </span>
                 {it.modelAnswer}
               </p>
-            </Card>
+            </div>
           </li>
         ))}
       </ul>
       {data.patterns.length > 0 && (
-        <Card className="mt-3">
-          <div className="eyebrow mb-1.5">Patterns across the set</div>
+        <div className="border-t pt-5 pb-6" style={{ borderColor: 'var(--rule)' }}>
+          <div className="slab-sm mb-1.5">Patterns across the set</div>
           <ul className="flex flex-col gap-1">
             {data.patterns.map((p, i) => (
               <li key={i} className="text-sm" style={{ color: 'var(--fg-muted)' }}>• {p}</li>
             ))}
           </ul>
-        </Card>
+        </div>
       )}
     </section>
   );
@@ -571,7 +578,7 @@ function CourseProject() {
         <div className="mb-4">
           <BackLink onClick={() => setEditing(null)}>All project passages</BackLink>
         </div>
-        <Card>
+        <Panel>
           <div className="grid gap-3 sm:grid-cols-2">
             <label>
               <span className="mb-1 block text-xs" style={{ color: 'var(--fg-muted)' }}>Title</span>
@@ -628,8 +635,8 @@ function CourseProject() {
           <div className="mt-5 grid gap-4 border-t pt-5 sm:grid-cols-2" style={{ borderColor: 'var(--rule)' }}>
             <div>
               <div className="mb-1 flex items-baseline justify-between">
-                <span className="eyebrow" style={{ margin: 0 }}>Checkpoint 1 — summary</span>
-                <Badge tone="muted">2 pts</Badge>
+                <span className="slab-sm" style={{ margin: 0 }}>Checkpoint 1 — summary</span>
+                <span className="chip">2 pts</span>
               </div>
               <p className="mb-2 text-xs" style={{ color: 'var(--fg-faint)' }}>
                 {CHECKPOINT_1_RUBRIC[0].criteria}
@@ -645,8 +652,8 @@ function CourseProject() {
             </div>
             <div>
               <div className="mb-1 flex items-baseline justify-between">
-                <span className="eyebrow" style={{ margin: 0 }}>Checkpoint 2 — interpretation</span>
-                <Badge tone="muted">3 pts</Badge>
+                <span className="slab-sm" style={{ margin: 0 }}>Checkpoint 2 — interpretation</span>
+                <span className="chip">3 pts</span>
               </div>
               <p className="mb-2 text-xs" style={{ color: 'var(--fg-faint)' }}>
                 {CHECKPOINT_2_RUBRIC[0].criteria}
@@ -673,21 +680,21 @@ function CourseProject() {
             </button>
             <button type="button" className="btn" onClick={() => setEditing(null)}>Cancel</button>
           </div>
-        </Card>
+        </Panel>
       </>
     );
   }
 
   return (
     <>
-      <Card className="mb-5">
+      <Panel className="mb-8">
         <p className="measure text-sm" style={{ color: 'var(--fg-muted)', margin: 0 }}>
           The course project is four passages you choose with your teacher — two prose, two poetry.
           Two of them are assessed on the exam as FRQ 4 and 5, and two teacher-scored in-class
           checkpoints are worth 2% of the free-response section. Add your passages here and they
           become available in the FRQ 4 and 5 workspaces.
         </p>
-      </Card>
+      </Panel>
 
       {!mounted ? null : passages.length === 0 ? (
         <Empty
@@ -704,7 +711,7 @@ function CourseProject() {
           <ul className="mb-4 grid gap-2.5 sm:grid-cols-2">
             {passages.map((p) => (
               <li key={p.id}>
-                <Card>
+                <div className="border-t pt-5 pb-6" style={{ borderColor: 'var(--rule)' }}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div style={{ fontWeight: 600 }}>{p.title || 'Untitled'}</div>
@@ -712,7 +719,7 @@ function CourseProject() {
                         {p.author}{p.author && p.citation ? ', ' : ''}{p.citation}
                       </div>
                     </div>
-                    <Badge tone={p.genre === 'poetry' ? 'accent' : 'neutral'}>{p.genre}</Badge>
+                    <span className={p.genre === 'poetry' ? 'chip chip-accent' : 'chip'}>{p.genre}</span>
                   </div>
                   <p
                     className="mt-2 line-clamp-3 text-sm"
@@ -731,11 +738,11 @@ function CourseProject() {
                       Remove
                     </button>
                     <div className="ml-auto flex gap-1">
-                      <Badge tone={p.checkpoint1.trim() ? 'green' : 'muted'}>CP1</Badge>
-                      <Badge tone={p.checkpoint2.trim() ? 'green' : 'muted'}>CP2</Badge>
+                      <span className={p.checkpoint1.trim() ? 'chip chip-gilt' : 'chip'}>CP1</span>
+                      <span className={p.checkpoint2.trim() ? 'chip chip-gilt' : 'chip'}>CP2</span>
                     </div>
                   </div>
-                </Card>
+                </div>
               </li>
             ))}
           </ul>

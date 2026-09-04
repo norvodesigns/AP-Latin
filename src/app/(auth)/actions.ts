@@ -120,3 +120,25 @@ export async function signOut() {
   revalidatePath('/', 'layout');
   redirect('/');
 }
+
+/**
+ * Permanently deletes the signed-in user's account: the `delete_own_account`
+ * RPC removes their row in auth.users, which cascades through profiles,
+ * any classrooms they teach, their classroom memberships, and their study
+ * history — every one of those foreign keys was already declared `on delete
+ * cascade` for the same reason a teacher deleting a classroom already
+ * cascades to its assignments. See supabase/migrations/0004_delete_account.sql.
+ *
+ * Does not touch this browser's local progress (Dashboard, Reading Room
+ * notes, vocab schedule, and so on) — that lives outside Supabase entirely
+ * and Settings' own "Reset all progress" is the control for it.
+ */
+export async function deleteAccount() {
+  const supabase = await getSupabaseServer();
+  if (supabase) {
+    await supabase.rpc('delete_own_account');
+    await supabase.auth.signOut();
+  }
+  revalidatePath('/', 'layout');
+  redirect('/');
+}

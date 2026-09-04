@@ -15,8 +15,21 @@ import type { LanguageModel } from 'ai';
  * never exported, never logged, and never referenced from a client component.
  */
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL ?? 'gemini-2.0-flash';
-const GROQ_MODEL = process.env.GROQ_MODEL ?? 'llama-3.3-70b-versatile';
+/*
+ * Model names go stale. `gemini-2.0-flash` and `llama-3.3-70b-versatile` were
+ * both retired by their providers and every AI route returned 502 until these
+ * were updated — with two valid keys configured, which made it look like a key
+ * problem. If the AI stops working, check the model names against the
+ * providers' own model lists before anything else:
+ *
+ *   curl -H "Authorization: Bearer $GROQ_API_KEY" https://api.groq.com/openai/v1/models
+ *   curl "https://generativelanguage.googleapis.com/v1beta/models?key=$GOOGLE_GENERATIVE_AI_API_KEY"
+ *
+ * Both are overridable by env var so a retirement can be worked around in the
+ * Vercel dashboard without a deploy.
+ */
+const GEMINI_MODEL = process.env.GEMINI_MODEL ?? 'gemini-3.5-flash';
+const GROQ_MODEL = process.env.GROQ_MODEL ?? 'openai/gpt-oss-120b';
 
 export type ProviderName = 'google' | 'groq';
 
@@ -45,8 +58,17 @@ function model(p: ProviderName): LanguageModel {
 
 /**
  * Should we retry on the fallback provider?
+ *
  * Rate limits (429), quota exhaustion, and a retired/unknown model (404) are
- * the failures the fallback exists for. Everything else is surfaced as-is.
+ * the failures the fallback exists for.
+ *
+ * `NoObjectGeneratedError` is here too, and it is worth saying why. It means
+ * the model's JSON did not satisfy the schema — in practice almost always
+ * because it ran out of output tokens partway through and the JSON was cut
+ * off. That is a property of one model's response on one attempt, not of the
+ * request, so the other provider deserves a go before the student is told
+ * grading failed. Without this, the longest translation drill returned 502
+ * every time.
  */
 function shouldFallback(err: unknown): boolean {
   const e = err as { statusCode?: number; status?: number; message?: string; name?: string } | null;
@@ -61,9 +83,22 @@ function shouldFallback(err: unknown): boolean {
     msg.includes('model not found') ||
     msg.includes('not_found') ||
     msg.includes('is not found') ||
-    msg.includes('unsupported model')
+    msg.includes('unsupported model') ||
+    msg.includes('no object generated') ||
+    msg.includes('noobjectgenerated') ||
+    msg.includes('did not match schema')
   );
 }
+
+/**
+ * Output-token ceiling for the structured-grading calls.
+ *
+ * A 15-segment translation grade is a large JSON document. The provider
+ * defaults are lower than it needs, and the failure mode is silent truncation
+ * that only surfaces as a schema mismatch, so the budget is set explicitly
+ * here rather than left to whatever each provider happens to default to.
+ */
+export const GRADING_MAX_TOKENS = 8192;
 
 export interface AttemptResult<T> {
   value: T;
@@ -98,7 +133,17 @@ export async function withFallback<T>(
       lastErr = err;
       const isLast = i === available.length - 1;
       if (isLast || !shouldFallback(err)) throw err;
-      // Otherwise loop to the next provider.
+      /*
+       * Say so when the primary drops out. A silent fallback means the app can
+       * run entirely on the secondary for weeks — different model, different
+       * grading behaviour — with nothing anywhere to show it. That is exactly
+       * what happened once already: Gemini's free-tier quota was exhausted and
+       * every grade was quietly coming from Groq.
+       */
+      console.warn(
+        `[ai] ${p} failed (${(err as Error)?.name ?? 'error'}), falling back to ${available[i + 1]}:`,
+        String((err as Error)?.message ?? err).slice(0, 200),
+      );
     }
   }
   throw lastErr;

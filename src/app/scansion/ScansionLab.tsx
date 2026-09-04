@@ -16,6 +16,7 @@ import {
   type CorpusIndex,
 } from '@/data/scansionCorpus';
 import { Page, PageHeader, Empty, Roman, SourceNote } from '@/components/ui';
+import { useRevealChildren } from '@/hooks/useRevealChildren';
 import type { ScansionLine, ScannedSyllable } from '@/data/types';
 
 type Mark = 'long' | 'short' | null;
@@ -97,6 +98,9 @@ function sample<T>(items: T[]): T | null {
 }
 
 export default function ScansionLab() {
+  // Declared with the other hooks: this component returns early while the
+  // corpus loads, and a hook after that would not run on every render.
+  const content = useRevealChildren<HTMLDivElement>();
   const markStudied = useStore((s) => s.markStudied);
   const scansionAttempts = useStore((s) => s.scansionAttempts);
   const recordScansion = useStore((s) => s.recordScansion);
@@ -192,7 +196,6 @@ export default function ScansionLab() {
     () => scansionBadges(scansionAttempts, Math.max(1, corpusTotal)),
     [scansionAttempts, corpusTotal],
   );
-  const bookLineIds = useMemo(() => lines.map((l) => l.id), [lines]);
   const masteredCount = useMemo(
     () => [...stats.values()].filter((s) => s.mastered).length,
     [stats],
@@ -254,16 +257,6 @@ export default function ScansionLab() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [selected, checked, line, metricalIdx, setMark]);
-
-  function goToLineId(id: string | null) {
-    if (!id) return false;
-    const i = lines.findIndex((l) => l.id === id);
-    if (i >= 0) {
-      setIndex(i);
-      return true;
-    }
-    return false;
-  }
 
   /**
    * Draw the next line at random from the whole corpus.
@@ -463,7 +456,9 @@ export default function ScansionLab() {
         </div>
       </div>
 
-      <div className="px-5 py-8 sm:px-10 sm:py-10">
+      {/* Scansion builds its own toolbar-plus-content layout rather than
+          using `Page`, so the reveal ref goes on the content column. */}
+      <div ref={content} className="px-5 py-8 sm:px-10 sm:py-10">
         {showTutorial && <Tutorial />}
 
         {/* ── Where this line came from ── */}
@@ -540,9 +535,22 @@ export default function ScansionLab() {
                                 : 'var(--incorrect)';
                         }
 
+                        // A gap only where the word itself has one — the first
+                        // syllable of a new word gets real space before it (as
+                        // it would in print), everything after sits flush
+                        // against the previous syllable so the word reads as
+                        // one word, not a chain of separated fragments. The
+                        // very first syllable of the line never gets a
+                        // leading gap. `startsWord` is on the data, not
+                        // guessed from punctuation — see ScannedSyllable.
+                        const wordGap = i !== 0 && syl.startsWord !== false;
+
                         return (
                           <div key={i} className="flex items-stretch">
-                            <div className="relative flex flex-col items-center px-1.5">
+                            <div
+                              className="relative flex flex-col items-center"
+                              style={{ paddingLeft: wordGap ? '12px' : 0 }}
+                            >
                               {/* Quantity mark, hanging above the syllable */}
                               <span
                                 aria-hidden="true"

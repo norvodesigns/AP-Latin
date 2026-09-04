@@ -147,7 +147,7 @@ tu regere imperio populos, Romane, memento
 (hae tibi erunt artes), pacique imponere morem,
 parcere subiectis et debellare superbos.`,
     modelTranslation:
-      'Others will hammer out breathing bronzes more softly (I for my part believe it), they will draw living faces out of marble, they will plead cases better, and they will trace the movements of the sky with the rod and tell of the rising stars: you, Roman, remember to rule the peoples with your power — these will be your arts — and to impose the custom of peace, to spare the conquered and to war down the proud.',
+      'Others will hammer out breathing bronzes more softly (I for my part believe it), they will draw living faces out of marble, they will plead cases better, and they will trace the movements of the sky with the rod and tell of the rising stars: you, Roman, remember to rule the peoples with your power — these will be your arts — and to impose the custom upon peace, to spare the conquered and to war down the proud.',
     notes:
       'The four infinitives after memento (regere, imponere, parcere, debellare) are the backbone of the passage. Losing any one of them costs a segment.',
     segments: [
@@ -272,7 +272,7 @@ pro re pauca loquar. neque ego hanc abscondere furto
 speravi (ne finge) fugam, nec coniugis umquam
 praetendi taedas aut haec in foedera veni.`,
     modelTranslation:
-      'At last he replies briefly: "I shall never deny, O queen, that you have deserved well of me in the very many things which you are able to recount in speaking, nor will it irk me to remember Elissa so long as I myself am mindful of myself, so long as breath governs these limbs. I shall say a few things about the matter. I did not hope to conceal this flight by stealth — do not imagine it — nor did I ever hold out a husband\'s torches or come into these compacts."',
+      'At last he replies a few things: "I shall never deny, O queen, that you have deserved well (of me) in the very many things which you are able to recount in speaking, nor will it irk me to remember Elissa so long as I myself am mindful of myself, so long as breath governs these limbs. I shall say a few things on behalf of the matter. I did not hope to conceal this flight by stealth — do not imagine it — nor did I ever hold out a husband\'s torches or come into these compacts."',
     notes:
       'The indirect statement te … promeritam (esse) is the hardest thing here: the participle is doing the work of a whole clause after negabo.',
     segments: [
