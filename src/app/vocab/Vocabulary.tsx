@@ -14,20 +14,29 @@ type Mode = 'idle' | 'review' | 'browse';
 const byId = new Map(coreVocabulary.map((e) => [e.id, e]));
 
 /**
- * Quality buttons mapped to SM-2 grades. "Good" is the filled one because it
- * is the answer a student gives most of the time; the design fills exactly one
- * button per row so the eye knows where to land by default.
+ * Two responses, not SM-2's four. A first-time visitor does not have an
+ * opinion about "Hard" versus "Good" the instant they see a word — the
+ * distinction between "I recalled it" and "I recalled it slowly" is a
+ * judgment call most people are not prepared to make on the spot, and the
+ * old four-button grid asked for it before the student had any idea what
+ * the buttons were even for.
+ *
+ * The only thing that matters at review time is whether the word was
+ * recalled at all. That is a yes/no question, so it gets a yes/no answer:
+ * "Practice again" is SM-2 quality 0 — the same restart-the-interval lapse
+ * the old "Again" button sent. "Got it" is quality 4 ("Good") — the middle
+ * of the three passing grades, and, per the old comment this replaces, the
+ * answer most students give most of the time anyway. SM-2 itself still
+ * decides the actual interval from the card's history; nothing about the
+ * algorithm changed, only the question asked to drive it.
  */
-const GRADES: Array<{
-  q: number;
+const RESPONSES: Array<{
+  quality: number;
   label: string;
-  hint: string;
-  variant: 'again' | 'hard' | 'good' | 'easy';
+  variant: 'again' | 'know';
 }> = [
-  { q: 0, label: 'Again', hint: 'no idea', variant: 'again' },
-  { q: 3, label: 'Hard', hint: 'got it, slowly', variant: 'hard' },
-  { q: 4, label: 'Good', hint: 'recalled it', variant: 'good' },
-  { q: 5, label: 'Easy', hint: 'instant', variant: 'easy' },
+  { quality: 0, label: 'Practice again', variant: 'again' },
+  { quality: 4, label: 'Got it', variant: 'know' },
 ];
 
 /** Days → the short human label under each grade button. */
@@ -57,6 +66,10 @@ export default function Vocabulary() {
   const [shown, setShown] = useState(false);
   const [done, setDone] = useState(0);
   const [search, setSearch] = useState('');
+  /** How many new (never-seen) cards a session introduces. 'all' is a real
+   *  option, not just the other three padded out — see the entry-point
+   *  controls below for why 20 opens as the default instead. */
+  const [newBatch, setNewBatch] = useState<10 | 20 | 50 | 'all'>(20);
 
   /* ---------------- selection ---------------- */
   const scoped = useMemo(() => {
@@ -114,9 +127,9 @@ export default function Vocabulary() {
       if (!shown && (e.key === ' ' || e.key === 'Enter')) {
         e.preventDefault();
         setShown(true);
-      } else if (shown && /^[1-4]$/.test(e.key)) {
+      } else if (shown && /^[1-2]$/.test(e.key)) {
         e.preventDefault();
-        grade(GRADES[Number(e.key) - 1].q);
+        grade(RESPONSES[Number(e.key) - 1].quality);
       }
     };
     window.addEventListener('keydown', onKey);
@@ -165,7 +178,7 @@ export default function Vocabulary() {
             <span className="slab-sm hidden sm:inline">
               SM-2 · EF {card.ef.toFixed(2)}
             </span>
-            <button type="button" className="slab-sm" onClick={() => setMode('idle')}>
+            <button type="button" className="btn btn-ghost" onClick={() => setMode('idle')}>
               End session
             </button>
           </div>
@@ -303,41 +316,46 @@ export default function Vocabulary() {
               </button>
             ) : (
               <>
-                <div className="mt-10 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-                  {GRADES.map((g, i) => {
-                    const preview = sm2(card, g.q);
-                    const style: React.CSSProperties = { borderRadius: 'var(--r-md)' };
-                    Object.assign(style,
-                      g.variant === 'again'
-                        ? { borderColor: 'var(--accent)', color: 'var(--accent)' }
-                        : g.variant === 'good'
-                          ? {
-                              borderColor: 'var(--fg)',
-                              background: 'var(--fg)',
-                              color: 'var(--oninv)',
-                            }
-                          : g.variant === 'easy'
-                            ? { borderColor: 'var(--gilt)', color: 'var(--gilt)' }
-                            : { borderColor: 'var(--rule-strong)', color: 'var(--fg)' });
+                {/* Two questions, not four: did you know it, or not. "Got it"
+                    keeps the one filled, primary slot the old four-grade grid
+                    gave "Good" for the same reason — it is the answer most
+                    reviews end in, so the eye should always find it in the
+                    same place, not have it swap sides depending on the card. */}
+                <div className="mt-10 grid grid-cols-2 gap-3">
+                  {RESPONSES.map((r, i) => {
+                    const preview = sm2(card, r.quality);
+                    const know = r.variant === 'know';
                     return (
                       <button
-                        key={g.q}
+                        key={r.quality}
                         type="button"
-                        onClick={() => grade(g.q)}
-                        title={`${g.hint} — press ${i + 1}`}
-                        className="squish flex flex-col items-center gap-1.5 border px-2 py-3.5 transition-colors duration-200"
-                        style={style}
+                        onClick={() => grade(r.quality)}
+                        title={`press ${i + 1}`}
+                        className="squish flex flex-col items-center gap-2 rounded-[var(--r-lg)] border px-4 py-6 transition-colors duration-200"
+                        style={
+                          know
+                            ? { borderColor: 'var(--fg)', background: 'var(--fg)', color: 'var(--oninv)' }
+                            : { borderColor: 'var(--accent)', color: 'var(--accent)' }
+                        }
                       >
                         <span
+                          className="inline-flex items-center gap-2"
                           style={{
                             fontFamily: 'var(--font-sans)',
-                            fontSize: '0.6875rem',
-                            fontWeight: 500,
-                            letterSpacing: '0.14em',
+                            fontSize: '0.8125rem',
+                            fontWeight: 600,
+                            letterSpacing: '0.08em',
                             textTransform: 'uppercase',
                           }}
                         >
-                          {g.label}
+                          {r.label}
+                          <span
+                            className="kbd"
+                            aria-hidden="true"
+                            style={{ color: 'inherit', borderColor: 'currentColor' }}
+                          >
+                            {i + 1}
+                          </span>
                         </span>
                         <span
                           style={{
@@ -347,7 +365,7 @@ export default function Vocabulary() {
                             opacity: 0.75,
                           }}
                         >
-                          {intervalLabel(preview.interval)}
+                          back in {intervalLabel(preview.interval)}
                         </span>
                       </button>
                     );
@@ -557,36 +575,54 @@ export default function Vocabulary() {
           body="Every card here is scheduled for a future day. Widen the filter, or come back tomorrow."
         />
       ) : (
-        /*
-         * Exactly one button here is always the filled, primary one, and it
-         * is never disabled while there is something to study — a first-time
-         * visitor has nothing due yet, so a "Review 0 due" button that was
-         * both the filled button AND disabled was the only start button on
-         * the page that looked pressable, and it was the one that did not
-         * work. The two "new" buttons that did work read as a due-count
-         * modifier ("Due + 10 new"), not as a start action, so they did not
-         * catch the eye either. With nothing due, one of them takes over as
-         * primary and is relabelled "Start" rather than "Due +".
-         */
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-col gap-6">
+          {/* Review is never size-limited — SM-2 already paces what is due
+              to a manageable number on its own, so there is nothing here for
+              a size picker to do. */}
           {mounted && dueInScope.length > 0 && (
-            <button type="button" className="btn btn-primary" onClick={() => startReview(0)}>
+            <button type="button" className="btn btn-primary self-start" onClick={() => startReview(0)}>
               Review {dueInScope.length} due
             </button>
           )}
-          {[10, 20].map((n, i) => (
-            <button
-              key={n}
-              type="button"
-              className={mounted && dueInScope.length === 0 && i === 0 ? 'btn btn-primary' : 'btn'}
-              onClick={() => startReview(n)}
-              disabled={!mounted || untouched.length === 0}
-            >
-              {mounted && dueInScope.length === 0
-                ? `Start · ${Math.min(n, untouched.length)} new`
-                : `Due + ${Math.min(n, untouched.length)} new`}
-            </button>
-          ))}
+
+          {/* New cards are the ones that actually need a size, which is the
+              thing that was missing before: "10 new" and "20 new" as two
+              separate, oddly-worded buttons were the only way to act on a
+              pool of 990 words, with no way to ask for a different amount
+              and no default account of what "chunk" even meant. This picks
+              a size first, then starts with it — one button, doing what its
+              label says. 20 is the opening size, in line with how spaced
+              repetition apps generally pace new material; "All" is here
+              for whenever that pacing is not wanted. */}
+          {mounted && untouched.length > 0 && (
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex flex-wrap gap-2">
+                {([10, 20, 50, 'all'] as const).map((n) => {
+                  const active = newBatch === n;
+                  const label = n === 'all' ? `All ${untouched.length}` : String(Math.min(n, untouched.length));
+                  return (
+                    <button
+                      key={n}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => setNewBatch(n)}
+                      className={`chip squish ${active ? 'chip-on' : ''}`}
+                      disabled={n !== 'all' && n > untouched.length}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+              <button
+                type="button"
+                className={dueInScope.length > 0 ? 'btn' : 'btn btn-primary'}
+                onClick={() => startReview(newBatch === 'all' ? untouched.length : newBatch)}
+              >
+                Study {newBatch === 'all' ? untouched.length : Math.min(newBatch, untouched.length)} new
+              </button>
+            </div>
+          )}
         </div>
       )}
 
