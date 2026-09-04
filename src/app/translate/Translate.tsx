@@ -220,31 +220,55 @@ function Drill({ drillId, onBack }: { drillId: string; onBack: () => void }) {
         </div>
       </div>
 
-      <div className="mb-8 flex flex-wrap gap-2.5">
+      {/*
+       * One default action, not a choice to make first. When AI grading is
+       * configured, pressing the one primary button both reveals and grades
+       * — no separate "which button do I want" step. A quieter link next to
+       * it still lets a student choose to self-score on purpose; it is
+       * `.btn-ghost` rather than a second full button on purpose, so the
+       * eye finds exactly one obvious thing to press.
+       *
+       * If the AI call fails for any reason — this route's own rate limit,
+       * a provider quota, a network error — `grader.call` resolves to null
+       * and every one of those paths already reports the response as
+       * `degraded` (see useAi.ts). The handler below does not need to tell
+       * those cases apart: null just means fall back to self-scoring, which
+       * is exactly "default to manual grading" with no extra click.
+       */}
+      <div className="mb-8 flex flex-wrap items-center gap-4">
         {!revealed && (
           <button
             type="button"
             className="btn btn-primary"
-            onClick={() => setRevealed(true)}
-            disabled={text.trim().length === 0}
-          >
-            Reveal model and self-score
-          </button>
-        )}
-        {ai.configured && (
-          <button
-            type="button"
-            className="btn"
             disabled={text.trim().length === 0 || grader.loading}
             onClick={async () => {
+              if (!ai.configured) {
+                setRevealed(true);
+                return;
+              }
               const g = await grader.call('grade-translation', {
                 drillId: drill.id,
                 translation: text,
               });
               if (g) applyAiScores(g);
+              else setRevealed(true);
             }}
           >
-            {grader.loading ? 'Grading…' : 'Grade with AI'}
+            {grader.loading
+              ? 'Grading…'
+              : ai.configured
+                ? 'Grade with AI'
+                : 'Reveal model and self-score'}
+          </button>
+        )}
+        {!revealed && ai.configured && (
+          <button
+            type="button"
+            className="btn btn-ghost"
+            disabled={text.trim().length === 0}
+            onClick={() => setRevealed(true)}
+          >
+            or self-score instead
           </button>
         )}
       </div>
