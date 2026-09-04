@@ -104,6 +104,15 @@ export interface VocabEntry {
   readings: string[];
   /** Units derived from `readings`. */
   units: UnitId[];
+  /**
+   * True for an entry from `supplementaryVocabulary` rather than the
+   * required 990-word CED list — real Latin, real dictionary source, but not
+   * part of the fixed official list, the same way the real exam glosses a
+   * non-core word in the margin rather than silently requiring it. `readings`
+   * and `units` are always empty on these: they were never introduced by a
+   * CED unit, so there is nothing to put there.
+   */
+  supplementary?: boolean;
 }
 
 /* ------------------------------------------------------------------ */
