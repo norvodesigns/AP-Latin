@@ -9,6 +9,8 @@ import { useStudyTimeSync } from '@/hooks/useStudyTimeSync';
 import type { Profile } from '@/lib/supabase/types';
 import CommandPalette from './CommandPalette';
 import AccountMenu from './AccountMenu';
+import WelcomeGate from './WelcomeGate';
+import FirstLoginWelcome from './FirstLoginWelcome';
 
 /**
  * The five sections a student moves between constantly. These are always on
@@ -197,6 +199,7 @@ export default function AppShell({
 
   const days = daysUntilExam();
   const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
+  const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/signup');
 
   const primaryItems = PRIMARY.map((href) => NAV.find((n) => n.href === href)).filter(
     (n): n is (typeof NAV)[number] => Boolean(n),
@@ -367,6 +370,11 @@ export default function AppShell({
       </main>
 
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+
+      {mounted && accountsEnabled && !profile && !isAuthRoute && <WelcomeGate />}
+      {mounted && accountsEnabled && profile && (
+        <FirstLoginWelcome userId={profile.id} displayName={profile.display_name} role={profile.role} />
+      )}
     </div>
   );
 }
