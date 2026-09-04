@@ -559,7 +559,7 @@ export default function ScansionLab() {
                 <div key={gi} className="flex items-stretch">
                   <div className="flex min-w-0 flex-col items-center">
                     <div
-                      className={`flex items-end ${group.closed ? '' : 'flex-wrap justify-center'}`}
+                      className={`flex items-start ${group.closed ? '' : 'flex-wrap justify-center'}`}
                     >
                       {group.syllables.map((i, within) => {
                         const syl = active.syllables[i];
