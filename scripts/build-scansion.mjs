@@ -232,6 +232,14 @@ const EITHER = 'either';
  */
 function analyseLine(raw) {
   const words = raw
+    // The Latin Library marks an em dash as the numeric entity `&#151;`
+    // (a Windows-1252 legacy that many old pages carry), and does it with
+    // no surrounding whitespace — "ego&#151;sed", not "ego &#151; sed". A
+    // bare `\s+` split then never sees a boundary there and welds the two
+    // words either side of the dash into one. An em/en dash is punctuation
+    // that separates words regardless of whether the page bothered to add
+    // spaces around it, so it is normalised to a space before splitting.
+    .replace(/&#151;|[—–]/g, ' ')
     .split(/\s+/)
     .map((w) => w.replace(/[^A-Za-zÀ-ÿĀ-ſ]/g, ''))
     .filter(Boolean);

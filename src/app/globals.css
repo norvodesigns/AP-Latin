@@ -752,15 +752,30 @@ h1, h2, h3, h4 {
      a bar in, clicking sets it. It is the whole second half of scanning, so
      the app must not do it for them. */
 
+  /*
+   * Zero footprint on purpose: this is the hit target for a foot boundary
+   * the student has NOT placed yet, and it used to reserve a real 18px in
+   * the flex row between every single syllable — which is what made a word
+   * read as separated fragments rather than a word, even at rest with
+   * nothing hovered. The negative margins pull it back to zero visible
+   * width without shrinking its actual hit box (a negative margin moves a
+   * box, it does not resize it), so the same 18px target is still there —
+   * centered on wherever the syllables now sit, word-gap or not — and the
+   * red bar it reveals on hover still lands in the right place. A placed
+   * boundary (.foot-rule, below) is the opposite case on purpose: that one
+   * is meant to visibly separate the feet, so it keeps its real width.
+   */
   .foot-gap {
     position: relative;
     align-self: stretch;
     width: 18px;
+    margin: 0 -9px;
     flex: none;
     border: 0;
     background: transparent;
     cursor: pointer;
     padding: 0;
+    z-index: 1;
   }
   .foot-gap::before {
     content: '';

@@ -80,6 +80,13 @@ export function unpackLine(book: number, p: PackedLine): ScansionLine {
     wordIndex.push(wi);
   }
 
+  // `wordIndex` already distinguishes a syllable break (`|`) from a real word
+  // break (` `) — the packer encodes that on purpose. Reduce it to "is this
+  // syllable the first one of its word" once here, so the UI can show
+  // syllables run together within a word without re-deriving word
+  // boundaries from punctuation itself.
+  const startsWord = wordIndex.map((w, i) => i === 0 || w !== wordIndex[i - 1]);
+
   const feet = [...p.f].map<FootType>((c) => (c === 'D' ? 'dactyl' : 'spondee'));
 
   // Quantities, in metrical order.
@@ -95,7 +102,7 @@ export function unpackLine(book: number, p: PackedLine): ScansionLine {
   let mi = 0;
   for (let i = 0; i < texts.length; i += 1) {
     if (elided.has(i)) {
-      syllables.push({ text: texts[i], quantity: 'short', elides: true });
+      syllables.push({ text: texts[i], quantity: 'short', elides: true, startsWord: startsWord[i] });
       continue;
     }
     const isLast = mi === metricalCount - 1;
@@ -103,6 +110,7 @@ export function unpackLine(book: number, p: PackedLine): ScansionLine {
       text: texts[i],
       quantity: pattern[mi] ?? 'long',
       elides: false,
+      startsWord: startsWord[i],
       ...(isLast ? { anceps: true } : {}),
     });
     mi += 1;

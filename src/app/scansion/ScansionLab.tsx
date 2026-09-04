@@ -535,9 +535,22 @@ export default function ScansionLab() {
                                 : 'var(--incorrect)';
                         }
 
+                        // A gap only where the word itself has one — the first
+                        // syllable of a new word gets real space before it (as
+                        // it would in print), everything after sits flush
+                        // against the previous syllable so the word reads as
+                        // one word, not a chain of separated fragments. The
+                        // very first syllable of the line never gets a
+                        // leading gap. `startsWord` is on the data, not
+                        // guessed from punctuation — see ScannedSyllable.
+                        const wordGap = i !== 0 && syl.startsWord !== false;
+
                         return (
                           <div key={i} className="flex items-stretch">
-                            <div className="relative flex flex-col items-center px-1.5">
+                            <div
+                              className="relative flex flex-col items-center"
+                              style={{ paddingLeft: wordGap ? '12px' : 0 }}
+                            >
                               {/* Quantity mark, hanging above the syllable */}
                               <span
                                 aria-hidden="true"

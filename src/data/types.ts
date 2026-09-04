@@ -241,6 +241,15 @@ export interface ScannedSyllable {
   /** True when this syllable elides into the next. */
   elides?: boolean;
   /**
+   * True when this is the first syllable of a word — i.e. a real space
+   * precedes it in the source line, not just a syllable break. Drives word
+   * spacing in the Scansion Lab: syllables are shown run together within a
+   * word, exactly as printed, with a gap only where the words themselves
+   * have one. The interactive foot-boundary target between any two
+   * syllables is unaffected either way — feet routinely fall mid-word.
+   */
+  startsWord?: boolean;
+  /**
    * The last syllable of the line, which is anceps: it counts long whatever it
    * really is (brevis in longo). Marked long by convention, but the grader
    * accepts either answer rather than failing a student who wrote its true
