@@ -107,11 +107,166 @@ for (const e of coreVocabulary) {
     if (s.length >= 3) push(byStem, s, e);
   }
   // Perfect / supine stems, taken from the principal parts in the lemma.
+  // Strip a trailing gender/declension parenthetical — "(f.)", "(m. or f.)"
+  // — before normalising: normalizeWord only deletes non-letters, so left
+  // in place it would fuse onto the word (e.g. "partis (f.)" -> "partisf"),
+  // corrupting every full-genitive noun this loop was meant to index.
   for (const part of e.lemma.split(',').slice(1)) {
-    const p = part.trim();
+    const p = part.replace(/\(.*?\)/g, '').trim();
     if (p.startsWith('-')) continue;
     const w = normalizeWord(p);
-    if (w.length >= 4) for (const s of stemOf(w)) if (s.length >= 4) push(byStem, s, e);
+    if (w.length >= 4) for (const s of stemOf(w)) if (s.length >= 3) push(byStem, s, e);
+  }
+}
+
+/**
+ * Inflected forms of the handful of words the suffix-stripping stemmer above
+ * cannot derive on its own: irregular/suppletive verbs and pronouns (sum,
+ * possum, is, hic, ille, qui, quis, idem, ipse), and the small set of 1st/2nd
+ * declension adjectives whose headword strips to a stem under the stemmer's
+ * 3-character floor (meus, tuus, suus, unus) — "su-", "me-", "tu-", "un-"
+ * never get indexed, so no inflected form of those four words resolved
+ * before this table existed. Every form below is a standard textbook
+ * paradigm of a word already present in the core list; this only teaches the
+ * index forms it already has a correct entry for, it does not add new
+ * headwords or definitions.
+ */
+const EXTRA_FORMS: Record<string, string> = {
+  // sum, esse, fui — "to be"
+  sum: 'sum', es: 'sum', est: 'sum', sumus: 'sum', estis: 'sum', sunt: 'sum',
+  eram: 'sum', eras: 'sum', erat: 'sum', eramus: 'sum', eratis: 'sum', erant: 'sum',
+  ero: 'sum', eris: 'sum', erit: 'sum', erimus: 'sum', eritis: 'sum', erunt: 'sum',
+  fui: 'sum', fuisti: 'sum', fuit: 'sum', fuimus: 'sum', fuistis: 'sum', fuerunt: 'sum', fuere: 'sum',
+  fueram: 'sum', fueras: 'sum', fuerat: 'sum', fueramus: 'sum', fueratis: 'sum', fuerant: 'sum',
+  fuero: 'sum', fueris: 'sum', fuerit: 'sum', fuerimus: 'sum', fueritis: 'sum', fuerint: 'sum',
+  sim: 'sum', sis: 'sum', sit: 'sum', simus: 'sum', sitis: 'sum', sint: 'sum',
+  essem: 'sum', esses: 'sum', esset: 'sum', essemus: 'sum', essetis: 'sum', essent: 'sum',
+  forem: 'sum', fores: 'sum', foret: 'sum', forent: 'sum', fore: 'sum',
+  fuerim: 'sum',
+  fuissem: 'sum', fuisses: 'sum', fuisset: 'sum', fuissemus: 'sum', fuissetis: 'sum', fuissent: 'sum',
+  esse: 'sum', fuisse: 'sum', este: 'sum', futurus: 'sum', futura: 'sum', futurum: 'sum',
+  // possum, posse, potui — "to be able"
+  possum: 'possum', potes: 'possum', potest: 'possum', possumus: 'possum', potestis: 'possum', possunt: 'possum',
+  poteram: 'possum', poteras: 'possum', poterat: 'possum', poteramus: 'possum', poteratis: 'possum', poterant: 'possum',
+  potero: 'possum', poteris: 'possum', poterit: 'possum', poterimus: 'possum', poteritis: 'possum', poterunt: 'possum',
+  potui: 'possum', potuisti: 'possum', potuit: 'possum', potuimus: 'possum', potuistis: 'possum', potuerunt: 'possum', potuere: 'possum',
+  possim: 'possum', possis: 'possum', possit: 'possum', possimus: 'possum', possitis: 'possum', possint: 'possum',
+  possem: 'possum', posses: 'possum', posset: 'possum', possemus: 'possum', possetis: 'possum', possent: 'possum',
+  potuerim: 'possum', potuisset: 'possum', potuissem: 'possum',
+  posse: 'possum', potuisse: 'possum',
+  // is, ea, id — "he, she, it; this, that"
+  eius: 'is', ei: 'is', eum: 'is', eam: 'is', eo: 'is', ea: 'is',
+  ii: 'is', eae: 'is', eorum: 'is', earum: 'is', iis: 'is', eis: 'is', eos: 'is', eas: 'is',
+  // hic, haec, hoc — "this"
+  huius: 'hic', huic: 'hic', hunc: 'hic', hanc: 'hic', hac: 'hic',
+  hi: 'hic', hae: 'hic', horum: 'hic', harum: 'hic', his: 'hic', hos: 'hic', has: 'hic',
+  // ille, illa, illud — "that"
+  illius: 'ille', illi: 'ille', illum: 'ille', illam: 'ille', illo: 'ille',
+  illae: 'ille', illorum: 'ille', illarum: 'ille', illis: 'ille', illos: 'ille', illas: 'ille',
+  // qui, quae, quod — relative "who, which"
+  cuius: 'qui', cui: 'qui', quem: 'qui', quam: 'qui', quo: 'qui', qua: 'qui',
+  quorum: 'qui', quarum: 'qui', quibus: 'qui', quos: 'qui', quas: 'qui',
+  // quis, quid — interrogative/indefinite "who, what"
+  quid: 'quis',
+  // idem, eadem, idem — "the same" (is + -dem)
+  eiusdem: 'idem', eidem: 'idem', eundem: 'idem', eandem: 'idem', eodem: 'idem',
+  iidem: 'idem', eaedem: 'idem', eorundem: 'idem', earundem: 'idem', eisdem: 'idem', eosdem: 'idem', easdem: 'idem',
+  // ipse, ipsa, ipsum — "self"
+  ipsius: 'ipse', ipsi: 'ipse', ipsam: 'ipse', ipso: 'ipse',
+  ipsorum: 'ipse', ipsarum: 'ipse', ipsis: 'ipse', ipsos: 'ipse', ipsas: 'ipse',
+  // meus, tuus, suus, unus — regular 1st/2nd declension adjectives, but the
+  // headword's stem ("me-", "tu-", "su-", "un-") is under the stemmer's
+  // 3-character floor, so no form of these ever indexed via `byStem`.
+  meus: 'meus', mea: 'meus', meum: 'meus', meam: 'meus', mei: 'meus', meae: 'meus', meo: 'meus',
+  meorum: 'meus', mearum: 'meus', meis: 'meus', meos: 'meus', meas: 'meus', mi: 'meus',
+  tuus: 'tuus', tua: 'tuus', tuum: 'tuus', tuam: 'tuus', tui: 'tuus', tuae: 'tuus', tuo: 'tuus',
+  tuorum: 'tuus', tuarum: 'tuus', tuis: 'tuus', tuos: 'tuus', tuas: 'tuus',
+  suus: 'suus', sua: 'suus', suum: 'suus', suam: 'suus', suae: 'suus', suo: 'suus',
+  suorum: 'suus', suarum: 'suus', suis: 'suus', suos: 'suus', suas: 'suus',
+  unius: 'unus', uni: 'unus', unum: 'unus', unam: 'unus', uno: 'unus', una: 'unus',
+  // alius, alia, aliud — like unus/ullus/totus/solus/nullus, a pronominal
+  // adjective with an irregular neuter in -ud instead of the regular -um
+  // the stemmer expects.
+  aliud: 'alius',
+  // res, rei and dies, diei — the two common 5th-declension nouns. 5th
+  // declension has its own case endings entirely (-ei, -em, -e, -erum,
+  // -ebus), none of which are in the regular ENDINGS table, so no oblique
+  // form of either word resolved before this.
+  rei: 'res', rem: 'res', re: 'res', rerum: 'res', rebus: 'res',
+  diei: 'dies', diem: 'dies', die: 'dies', dierum: 'dies', diebus: 'dies',
+  // ex, e — "out of, from" (the one-letter alternate form the generic
+  // lemma-parser above deliberately excludes, since it would also pick up
+  // stray gender-abbreviation letters like the "f."/"m."/"n." in other
+  // entries' lemmas).
+  e: 'ex',
+};
+
+for (const [form, headword] of Object.entries(EXTRA_FORMS)) {
+  for (const entry of byHeadword.get(normalizeWord(headword)) ?? []) {
+    push(byAnyForm, normalizeWord(form), entry);
+  }
+}
+
+/**
+ * Oblique-case stems for nouns and adjectives whose 3rd-declension genitive
+ * differs from the nominative by more than the ordinary case ending —
+ * rhotacism (genus → gener-), a hidden nasal (homo → homin-, agmen →
+ * agmin-), syncope (pater → patr-), or a consonant shift the nominative
+ * spelling hides entirely (nox → noct- is fine already because the lemma
+ * gives it in full; corpus → corpor- is not, because the dictionary entry
+ * abbreviates it as "-oris"). `stemOf()` above always includes the
+ * unmodified headword as a candidate stem, which is correct when the
+ * genitive really is just "nominative + ending" (amor → amoris, consul →
+ * consulis need nothing here) — this table exists only for the words where
+ * that assumption fails. Every stem below is the standard textbook genitive
+ * of a word already present in the core list with a correct definition;
+ * this only extends which of its own forms the index can find.
+ */
+const NOUN_STEMS: Record<string, string> = {
+  // -us (n.) s-stem neuters, rhotacised in oblique cases
+  corpus: 'corpor', tempus: 'tempor', genus: 'gener', opus: 'oper', vulnus: 'vulner',
+  munus: 'muner', litus: 'litor', latus: 'later', pectus: 'pector', scelus: 'sceler',
+  nemus: 'nemor', sidus: 'sider',
+  flos: 'flor',
+  // -o (m./f.) nouns with a hidden -in-/-on- stem
+  homo: 'homin', caligo: 'caligin', imago: 'imagin', virgo: 'virgin', ordo: 'ordin',
+  legio: 'legion', oratio: 'oration', ratio: 'ration', sermo: 'sermon', multitudo: 'multitudin',
+  carthago: 'carthagin', dido: 'didon', iuno: 'iunon', nemo: 'nemin',
+  // -men (n.), stem in -min-
+  agmen: 'agmin', carmen: 'carmin', crimen: 'crimin', flumen: 'flumin', limen: 'limin',
+  lumen: 'lumin', nomen: 'nomin', numen: 'numin',
+  caput: 'capit',
+  // -es (m.), stem in -it-/-ip-
+  comes: 'comit', eques: 'equit', miles: 'milit', hospes: 'hospit', princeps: 'princip',
+  // -ex (m./f.), stem in -ic-
+  iudex: 'iudic', vertex: 'vertic', pumex: 'pumic',
+  // -is (m.) with a hidden nasal
+  lapis: 'lapid', sanguis: 'sanguin',
+  // -tas (f.), stem in -tat-
+  civitas: 'civitat', aestas: 'aestat', aetas: 'aetat', celeritas: 'celeritat',
+  cupiditas: 'cupiditat', libertas: 'libertat', potestas: 'potestat', tempestas: 'tempestat',
+  voluptas: 'voluptat',
+  // -us (f.), stem in -ut-/-ur-
+  salus: 'salut', virtus: 'virtut', tellus: 'tellur',
+  hiems: 'hiem',
+  coniunx: 'coniug',
+  // -er (m./f.) with syncope
+  frater: 'fratr', pater: 'patr', mater: 'matr',
+  pallas: 'pallant', laocoon: 'laocoont', harpocras: 'harpocrat',
+  // Present-participle-type adjectives and nouns, stem in -nt-
+  ardens: 'ardent', diligens: 'diligent', ingens: 'ingent', infans: 'infant',
+  potens: 'potent', prudens: 'prudent', sapiens: 'sapient', vehemens: 'vehement', cliens: 'client',
+  // -x adjectives, stem in -c-
+  audax: 'audac', felix: 'felic', ferox: 'feroc',
+  dives: 'divit', vetus: 'veter',
+};
+
+for (const [headword, stem] of Object.entries(NOUN_STEMS)) {
+  // Written above in ordinary spelling for readability — normalise here
+  // rather than by hand, so a "v" or "j" in either column can't slip
+  // through unconverted the way an already-normalised literal could.
+  for (const entry of byHeadword.get(normalizeWord(headword)) ?? []) {
+    push(byStem, normalizeWord(stem), entry);
   }
 }
 

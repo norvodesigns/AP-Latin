@@ -343,6 +343,17 @@ h1, h2, h3, h4 {
     color: var(--fg-muted);
   }
 
+  /* The per-line "ask" control in the Reading Room — always visible rather
+     than hover-only, so it reads as a real control instead of an easter egg. */
+  .ask-hint {
+    color: var(--fg-faint);
+    transition: color var(--dur-2) var(--ease-io);
+  }
+  .ask-hint:hover,
+  .ask-hint:focus-visible {
+    color: var(--accent);
+  }
+
   /* Retained so older markup keeps its shape while sections are converted. */
   .eyebrow {
     font-family: var(--font-sans);
