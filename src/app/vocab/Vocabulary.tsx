@@ -178,7 +178,7 @@ export default function Vocabulary() {
             <span className="slab-sm hidden sm:inline">
               SM-2 · EF {card.ef.toFixed(2)}
             </span>
-            <button type="button" className="btn btn-ghost" onClick={() => setMode('idle')}>
+            <button type="button" className="btn" onClick={() => setMode('idle')}>
               End session
             </button>
           </div>
@@ -320,7 +320,10 @@ export default function Vocabulary() {
                     keeps the one filled, primary slot the old four-grade grid
                     gave "Good" for the same reason — it is the answer most
                     reviews end in, so the eye should always find it in the
-                    same place, not have it swap sides depending on the card. */}
+                    same place, not have it swap sides depending on the card.
+                    Both reuse `.btn`'s ink-wipe hover invert — the same
+                    animation as every other button on the site — just
+                    reshaped from a pill into a tall card. */}
                 <div className="mt-10 grid grid-cols-2 gap-3">
                   {RESPONSES.map((r, i) => {
                     const preview = sm2(card, r.quality);
@@ -331,12 +334,7 @@ export default function Vocabulary() {
                         type="button"
                         onClick={() => grade(r.quality)}
                         title={`press ${i + 1}`}
-                        className="squish flex flex-col items-center gap-2 rounded-[var(--r-lg)] border px-4 py-6 transition-colors duration-200"
-                        style={
-                          know
-                            ? { borderColor: 'var(--fg)', background: 'var(--fg)', color: 'var(--oninv)' }
-                            : { borderColor: 'var(--accent)', color: 'var(--accent)' }
-                        }
+                        className={`btn ${know ? 'btn-primary' : 'btn-rubric'} flex-col gap-2 rounded-[var(--r-lg)] px-4 py-6`}
                       >
                         <span
                           className="inline-flex items-center gap-2"
