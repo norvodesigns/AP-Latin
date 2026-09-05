@@ -191,6 +191,17 @@ const properNouns = [
   { headword: 'Mezentius', lemma: 'Mezentius, -i', pos: 'noun (proper)', definition: "Mezentius, exiled Etruscan tyrant allied with Turnus" },
   { headword: 'Metabus', lemma: 'Metabus, -i', pos: 'noun (proper)', definition: "Camilla's father, an exiled king of the Volscians" },
   { headword: 'Pergama', lemma: 'Pergama, -orum', pos: 'noun (proper, pl.)', definition: 'Pergama, the citadel of Troy; often used for Troy itself' },
+  { headword: 'Garumna', lemma: 'Garumna, -ae', pos: 'noun (proper)', definition: 'the Garonne, a river forming the boundary between Aquitania and the rest of Gaul (Caesar, De Bello Gallico)' },
+  // Added by hand as its own exact-match headword rather than left to the
+  // generic dictionary-matching pass above: "Gallia" stems (by stripping a
+  // single final "-a") to "galli", which is correct, but the query word
+  // "gallia" itself also collides with "galliari" ("poultry-keeper" /
+  // "hen-house") once the "-ri" ending (added for passive infinitives like
+  // "amari") strips down to the same 6-letter "gallia" — an accidental
+  // collision that let two irrelevant poultry senses outrank the real
+  // "Gaul" entry by stem length. An exact headword match here is checked
+  // before any stem match at all, so it can never lose to that collision.
+  { headword: 'Gallia', lemma: 'Gallia, -ae', pos: 'noun (proper)', definition: 'Gaul, the region comprising modern France, Belgium, and parts of the Netherlands, Germany, and Switzerland' },
 ];
 
 /* ---- write the file ---- */
