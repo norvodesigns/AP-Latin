@@ -126,7 +126,19 @@ function Reference() {
                   style={{ borderColor: 'var(--rule)' }}
                 >
                   <div id={topic.id} className="scroll-mt-24" />
-                  <h3 style={{ fontSize: '1.25rem', lineHeight: 1.25 }}>{topic.name}</h3>
+                  <div className="flex flex-wrap items-baseline gap-2.5">
+                    <h3 style={{ fontSize: '1.25rem', lineHeight: 1.25 }}>{topic.name}</h3>
+                    {topic.level === 'advanced' && (
+                      <span className="slab-sm" style={{ color: 'var(--fg-faint)' }}>
+                        Beyond the exam
+                      </span>
+                    )}
+                    {topic.level === 'foundational' && (
+                      <span className="slab-sm" style={{ color: 'var(--fg-faint)' }}>
+                        Prerequisite
+                      </span>
+                    )}
+                  </div>
                   <p
                     className="measure"
                     style={{
@@ -218,7 +230,10 @@ function Study() {
       itemNoun="topic"
       renderFront={(t) => (
         <div className="text-center">
-          <div className="rubric mb-4">{CATEGORY_LABELS[t.category] ?? t.category}</div>
+          <div className="rubric mb-4">
+            {CATEGORY_LABELS[t.category] ?? t.category}
+            {t.level === 'advanced' ? ' · beyond the exam' : t.level === 'foundational' ? ' · prerequisite' : ''}
+          </div>
           <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.75rem', lineHeight: 1.3 }}>
             {t.name}
           </div>
