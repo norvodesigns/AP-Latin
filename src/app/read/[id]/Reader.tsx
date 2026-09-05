@@ -135,7 +135,7 @@ export default function Reader({
     return () => window.removeEventListener('keydown', onKey);
   }, [passage.id, toggleGlossary, toggleBookmark]);
 
-  const isVerse = passage.author === 'vergil';
+  const isVerse = passage.genre === 'poetry';
 
   const vocabIds = useMemo(() => passageVocabIds(passage), [passage]);
   const coverage = useMemo(
@@ -320,7 +320,7 @@ export default function Reader({
                   <button
                     type="button"
                     onClick={() => setAskLine({ n: line.n, latin: line.latin })}
-                    className="slab-sm shrink-0 self-start opacity-0 transition-opacity duration-200 focus-visible:opacity-100 group-hover:opacity-100"
+                    className="slab-sm ask-hint shrink-0 self-start"
                     style={{ marginTop: '0.9rem' }}
                     title="Ask about this line"
                   >
@@ -576,6 +576,12 @@ export default function Reader({
                     {r.match === 'stem' && (
                       <span style={{ color: 'var(--fg-faint)' }}> · stem match, verify in context</span>
                     )}
+                    {r.entry.supplementary && (
+                      <span style={{ color: 'var(--fg-faint)' }}>
+                        {' '}
+                        · not on the CED core list — the exam would gloss this one for you too
+                      </span>
+                    )}
                   </div>
                   <div
                     style={{
@@ -604,7 +610,12 @@ export default function Reader({
                 if (top) seedVocab([top.entry.id]);
                 setSel(null);
               }}
-              disabled={sel.results.length === 0}
+              disabled={sel.results.length === 0 || Boolean(sel.results[0]?.entry.supplementary)}
+              title={
+                sel.results[0]?.entry.supplementary
+                  ? 'Not on the CED core list, so it has no flashcard deck entry'
+                  : undefined
+              }
             >
               ＋ Add to deck
             </button>

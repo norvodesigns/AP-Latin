@@ -1951,7 +1951,7 @@ export const coreVocabulary: VocabEntry[] = [
   {
     id: 'deindeordein',
     lemma: `deinde or dein`,
-    headword: `deinde or dein`,
+    headword: `deinde`,
     pos: 'adverb',
     definition: `then, next, thereafter, afterward`,
     readings: ['1.3', '6.1'],
@@ -2430,7 +2430,7 @@ export const coreVocabulary: VocabEntry[] = [
     lemma: `eo, ire, ivi or ii, itum`,
     headword: `eo`,
     pos: 'verb',
-    definition: `there, in that place; to there; therefore, for that reason`,
+    definition: `to go, walk, proceed, march`,
     readings: ['1.3', '3.6'],
     units: ['1', '3'],
   },
@@ -2599,7 +2599,7 @@ export const coreVocabulary: VocabEntry[] = [
   {
     id: 'exspectoorexpecto',
     lemma: `exspecto or expecto, -are, ve -avi, -atum`,
-    headword: `exspecto or expecto`,
+    headword: `exspecto`,
     pos: 'verb',
     definition: `to look out for, await, wait for`,
     readings: ['2.4'],
@@ -2608,7 +2608,7 @@ export const coreVocabulary: VocabEntry[] = [
   {
     id: 'exstinguoorextinguo',
     lemma: `exstinguo or extinguo, -ere, -nxi, -nctum`,
-    headword: `exstinguo or extinguo`,
+    headword: `exstinguo`,
     pos: 'verb',
     definition: `to put out, quench, extinguish, destroy`,
     readings: ['2.4'],
@@ -3220,7 +3220,7 @@ export const coreVocabulary: VocabEntry[] = [
   {
     id: 'haudorhaut',
     lemma: `haud or haut`,
-    headword: `haud or haut`,
+    headword: `haud`,
     pos: 'adverb',
     definition: `not, not at all, by no means`,
     readings: ['5.4'],
@@ -3445,7 +3445,7 @@ export const coreVocabulary: VocabEntry[] = [
   {
     id: 'iatraliptaores',
     lemma: `iatralipta or -es, -ae (m.)`,
-    headword: `iatralipta or -es`,
+    headword: `iatralipta`,
     pos: 'noun',
     definition: `doctor, especially one who uses massage and ointments`,
     readings: ['3.4'],
@@ -4372,7 +4372,7 @@ export const coreVocabulary: VocabEntry[] = [
   {
     id: 'locusorlocum',
     lemma: `locus or locum, -i (m.)`,
-    headword: `locus or locum`,
+    headword: `locus`,
     pos: 'noun',
     definition: `place, spot`,
     readings: ['1.2'],
@@ -4588,7 +4588,7 @@ export const coreVocabulary: VocabEntry[] = [
   {
     id: 'maximeormaxume',
     lemma: `maxime or maxume`,
-    headword: `maxime or maxume`,
+    headword: `maxime`,
     pos: 'adverb',
     definition: `in the highest degree, especially, exceedingly, very`,
     readings: ['2.1', '2.3'],
@@ -5011,7 +5011,7 @@ export const coreVocabulary: VocabEntry[] = [
   {
     id: 'namornamque',
     lemma: `nam or namque`,
-    headword: `nam or namque`,
+    headword: `nam`,
     pos: 'conjunction',
     definition: `for, you see`,
     readings: ['1.2', '5.6'],
@@ -5101,7 +5101,7 @@ export const coreVocabulary: VocabEntry[] = [
   {
     id: 'necorneque',
     lemma: `nec or neque`,
-    headword: `nec or neque`,
+    headword: `nec`,
     pos: 'conjunction',
     definition: `and not, also not, nor; neither...nor (nec/neque...nec/ neque)`,
     readings: ['1.1'],
@@ -5182,7 +5182,7 @@ export const coreVocabulary: VocabEntry[] = [
   {
     id: 'nihilornil',
     lemma: `nihil or nil`,
-    headword: `nihil or nil`,
+    headword: `nihil`,
     pos: 'pronoun',
     definition: `nothing`,
     readings: ['1.2'],
@@ -5893,7 +5893,7 @@ export const coreVocabulary: VocabEntry[] = [
   {
     id: 'periculumorpericlum',
     lemma: `periculum or periclum, -i (n.)`,
-    headword: `periculum or periclum`,
+    headword: `periculum`,
     pos: 'noun',
     definition: `trial, experiment, attempt, test; risk, hazard, danger, peril`,
     readings: ['1.3', '1.4'],
@@ -6136,7 +6136,7 @@ export const coreVocabulary: VocabEntry[] = [
   {
     id: 'postquamorpostquam',
     lemma: `postquam or post quam`,
-    headword: `postquam or post quam`,
+    headword: `postquam`,
     pos: 'adverb',
     definition: `after that, after, as soon as, when`,
     readings: ['3.1'],
@@ -6253,7 +6253,7 @@ export const coreVocabulary: VocabEntry[] = [
   {
     id: 'priusquamorpriusquam',
     lemma: `priusquam or prius quam`,
-    headword: `priusquam or prius quam`,
+    headword: `priusquam`,
     pos: 'adverb',
     definition: `before that, before; sooner, rather`,
     readings: ['5.4'],
@@ -6352,7 +6352,7 @@ export const coreVocabulary: VocabEntry[] = [
   {
     id: 'proximusorproxumus',
     lemma: `proximus or proxumus, -a, -um`,
-    headword: `proximus or proxumus`,
+    headword: `proximus`,
     pos: 'adjective',
     definition: `nearest, next`,
     readings: ['2.1', '2.3'],
@@ -6946,7 +6946,7 @@ export const coreVocabulary: VocabEntry[] = [
   {
     id: 'rursusorrursum',
     lemma: `rursus or rursum`,
-    headword: `rursus or rursum`,
+    headword: `rursus`,
     pos: 'adjective/adverb',
     definition: `turned back, back, backwards; back again, again, once more`,
     readings: ['1.2', '1.3', '5.6'],
@@ -6982,7 +6982,7 @@ export const coreVocabulary: VocabEntry[] = [
   {
     id: 'saeculumorsaeclum',
     lemma: `saeculum or saeclum, -i (n.)`,
-    headword: `saeculum or saeclum`,
+    headword: `saeculum`,
     pos: 'noun',
     definition: `generation, age, people of any time`,
     readings: ['3.4', '3.6'],
@@ -7072,7 +7072,7 @@ export const coreVocabulary: VocabEntry[] = [
   {
     id: 'satisorsat',
     lemma: `satis or sat`,
-    headword: `satis or sat`,
+    headword: `satis`,
     pos: 'adjective/adverb',
     definition: `enough, sufficient, satisfactory, ample, adequate`,
     readings: ['5.1', '5.3'],
@@ -7387,7 +7387,7 @@ export const coreVocabulary: VocabEntry[] = [
   {
     id: 'siveorseu',
     lemma: `sive or seu`,
-    headword: `sive or seu`,
+    headword: `sive`,
     pos: 'conjunction',
     definition: `or if`,
     readings: ['3.1'],
@@ -7873,7 +7873,7 @@ export const coreVocabulary: VocabEntry[] = [
   {
     id: 'tamquamortanquam',
     lemma: `tamquam or tanquam`,
-    headword: `tamquam or tanquam`,
+    headword: `tamquam`,
     pos: 'adverb',
     definition: `as much as, so as, just as, like as, as if, so to speak`,
     readings: ['2.4'],
@@ -8458,7 +8458,7 @@ export const coreVocabulary: VocabEntry[] = [
   {
     id: 'utoruti',
     lemma: `ut or uti`,
-    headword: `ut or uti`,
+    headword: `ut`,
     pos: 'adverb/conjunction',
     definition: `how, in what way; as, like; when; that, so that`,
     readings: ['1.1', '1.2', '5.6'],
@@ -8530,7 +8530,7 @@ export const coreVocabulary: VocabEntry[] = [
   {
     id: 'velutorveluti',
     lemma: `velut or veluti`,
-    headword: `velut or veluti`,
+    headword: `velut`,
     pos: 'adverb',
     definition: `even as, just as, like as, like`,
     readings: ['1.4'],
@@ -8710,7 +8710,7 @@ export const coreVocabulary: VocabEntry[] = [
   {
     id: 'vinculumorvinclum',
     lemma: `vinculum or vinclum, -i (n.)`,
-    headword: `vinculum or vinclum`,
+    headword: `vinculum`,
     pos: 'noun',
     definition: `bond, fastening, band, rope, chain, cord, tie`,
     readings: ['3.1'],

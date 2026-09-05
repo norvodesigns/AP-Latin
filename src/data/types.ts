@@ -19,7 +19,7 @@ export type SkillCategory = '1' | '2' | '3';
 /** Individual skills within each category (CED pp. 227–228). */
 export type SkillCode = '1.A' | '1.B' | '1.C' | '1.D' | '2.A' | '2.B' | '3.A' | '3.B';
 
-export type Author = 'vergil' | 'pliny' | 'other';
+export type Author = 'vergil' | 'pliny' | 'caesar' | 'catullus' | 'other';
 export type Genre = 'poetry' | 'prose';
 
 /** Question taxonomy used by the quiz engine's filters. */
@@ -104,6 +104,15 @@ export interface VocabEntry {
   readings: string[];
   /** Units derived from `readings`. */
   units: UnitId[];
+  /**
+   * True for an entry from `supplementaryVocabulary` rather than the
+   * required 990-word CED list — real Latin, real dictionary source, but not
+   * part of the fixed official list, the same way the real exam glosses a
+   * non-core word in the margin rather than silently requiring it. `readings`
+   * and `units` are always empty on these: they were never introduced by a
+   * CED unit, so there is nothing to put there.
+   */
+  supplementary?: boolean;
 }
 
 /* ------------------------------------------------------------------ */
@@ -198,7 +207,16 @@ export interface GrammarExample {
 export interface GrammarTopic {
   id: string;
   name: string;
-  category: 'clause' | 'case' | 'verbal' | 'mood' | 'participle';
+  category: 'clause' | 'case' | 'verbal' | 'mood' | 'participle' | 'morphology';
+  /**
+   * Where this sits in a course sequence. 'foundational' is the paradigm
+   * material (declensions, conjugations, pronouns) a first- or second-year
+   * course covers before AP; 'ap' is exactly what the CED's syntax list
+   * tests; 'advanced' is real, common Latin syntax the exam does not
+   * require. Optional and defaults to 'ap' in the UI: every topic written
+   * before this field existed is genuine AP-tested syntax.
+   */
+  level?: 'foundational' | 'ap' | 'advanced';
   summary: string;
   /** How to recognise it in the wild. */
   recognition: string[];
@@ -218,11 +236,31 @@ export interface DeviceCard {
 
 export interface ContextCard {
   id: string;
-  topic: 'vergil-augustan' | 'epic-conventions' | 'trojan-legend' | 'pliny-world'
-       | 'epistolary' | 'provincial-admin' | 'vesuvius';
+  topic:
+    // Syllabus-specific — tied directly to the two required authors.
+    | 'vergil-augustan' | 'epic-conventions' | 'trojan-legend' | 'pliny-world'
+    | 'epistolary' | 'provincial-admin' | 'vesuvius'
+    // Broader Roman history and culture — background no CED reading is
+    // required to teach on its own, but that the syllabus authors all
+    // assume. Not required by the exam; here because a comprehensive
+    // course covers it regardless.
+    | 'roman-founding' | 'early-republic' | 'roman-government' | 'punic-wars'
+    | 'late-republic-crisis' | 'caesar-civil-war' | 'fall-of-republic'
+    | 'augustan-reforms' | 'julio-claudians' | 'flavians'
+    | 'roman-religion' | 'roman-family' | 'roman-education' | 'roman-slavery'
+    | 'roman-military' | 'roman-law' | 'city-of-rome' | 'roman-provinces'
+    | 'roman-engineering' | 'roman-entertainment';
   title: string;
   body: string;
   keyFacts: string[];
+  /**
+   * False for general Roman history/culture background beyond what Skill
+   * 2.B requires — real and worth knowing, but not itself exam-scoped, the
+   * same distinction `Passage.required` draws for reading. Omitted (treated
+   * as required) on every card written before this field existed, since all
+   * of those are tied directly to a syllabus author or reading.
+   */
+  required?: boolean;
 }
 
 /* ------------------------------------------------------------------ */

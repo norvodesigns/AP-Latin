@@ -286,7 +286,7 @@ export default function QuizEngine() {
                     {l.n}
                   </span>
                   <p
-                    className={passage?.author === 'vergil' ? 'latin-verse' : 'latin'}
+                    className={passage?.genre === 'poetry' ? 'latin-verse' : 'latin'}
                     style={{ margin: 0 }}
                   >
                     {l.latin}

@@ -97,6 +97,13 @@ function sample<T>(items: T[]): T | null {
   return items.length ? items[Math.floor(Math.random() * items.length)] : null;
 }
 
+/** True when syllable `i` is the last syllable of its word — i.e. the next
+ *  syllable starts a new one, or there is no next syllable at all. */
+function isWordFinal(syllables: ScannedSyllable[], i: number): boolean {
+  const next = syllables[i + 1];
+  return !next || next.startsWord !== false;
+}
+
 export default function ScansionLab() {
   // Declared with the other hooks: this component returns early while the
   // corpus loads, and a hook after that would not run on every render.
@@ -117,6 +124,9 @@ export default function ScansionLab() {
   const [index, setIndex] = useState(0);
   const [marks, setMarks] = useState<Mark[]>([]);
   const [divisions, setDivisions] = useState<number[]>([]);
+  /** Syllable indices the student has claimed elide into the next word — a
+   *  working guess, not the answer. See the comment on ScansionDraft. */
+  const [studentElisions, setStudentElisions] = useState<Set<number>>(new Set());
   const [checked, setChecked] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
   const [showTutorial, setShowTutorial] = useState(false);
@@ -163,10 +173,12 @@ export default function ScansionLab() {
     if (draft && draft.marks.length === line.syllables.length) {
       setMarks(draft.marks);
       setDivisions(draft.divisions);
+      setStudentElisions(new Set(draft.elisions ?? []));
       setChecked(Boolean(draft.checked));
     } else {
       setMarks(new Array(line.syllables.length).fill(null));
       setDivisions([]);
+      setStudentElisions(new Set());
       setChecked(false);
     }
     setSelected(null);
@@ -182,13 +194,13 @@ export default function ScansionLab() {
   /* Save work in progress, debounced so marking a syllable is not a write. */
   useEffect(() => {
     if (!line || checked) return;
-    if (marks.every((m) => m === null) && divisions.length === 0) return;
+    if (marks.every((m) => m === null) && divisions.length === 0 && studentElisions.size === 0) return;
     const t = window.setTimeout(
-      () => saveScansionDraft(line.id, { marks, divisions }),
+      () => saveScansionDraft(line.id, { marks, divisions, elisions: [...studentElisions] }),
       500,
     );
     return () => window.clearTimeout(t);
-  }, [line, marks, divisions, checked, saveScansionDraft]);
+  }, [line, marks, divisions, studentElisions, checked, saveScansionDraft]);
 
   const stats = useMemo(() => scansionStatsByLine(scansionAttempts), [scansionAttempts]);
   const corpusTotal = corpus?.total ?? 0;
@@ -205,6 +217,22 @@ export default function ScansionLab() {
   /** Indices of syllables that actually count metrically. */
   const metricalIdx = useMemo(
     () => (line ? line.syllables.map((s, i) => (s.elides ? -1 : i)).filter((i) => i >= 0) : []),
+    [line],
+  );
+
+  /**
+   * Every word-junction inside the line where elision is a live question —
+   * i.e. every word-final syllable that has a following word to elide into.
+   * The student judges each one for themselves; nothing here reveals which
+   * ones actually elide.
+   */
+  const elidableIdx = useMemo(
+    () =>
+      line
+        ? line.syllables
+            .map((_, i) => i)
+            .filter((i) => i < line.syllables.length - 1 && isWordFinal(line.syllables, i))
+        : [],
     [line],
   );
 
@@ -233,6 +261,25 @@ export default function ScansionLab() {
     setMarks((prev) => {
       const next = [...prev];
       next[i] = m;
+      return next;
+    });
+    setSelected(null);
+  }, []);
+
+  /** Toggle the student's own claim that syllable `i` elides into the next
+   *  word. Claiming it clears any quantity mark already on it — an elided
+   *  syllable does not take one — so the two controls never disagree on
+   *  screen; un-claiming it leaves a mark in place rather than discarding
+   *  work the student may want to keep. */
+  const toggleElision = useCallback((i: number) => {
+    setStudentElisions((prev) => {
+      const claiming = !prev.has(i);
+      const next = new Set(prev);
+      if (claiming) next.add(i);
+      else next.delete(i);
+      if (claiming) {
+        setMarks((m) => (m[i] === null ? m : m.map((v, j) => (j === i ? null : v))));
+      }
       return next;
     });
     setSelected(null);
@@ -387,22 +434,29 @@ export default function ScansionLab() {
 
   const scored = checked ? metricalIdx.filter(isCorrect).length : 0;
 
+  /** Did the student's elision claim at junction `i` match the real answer —
+   *  whether that means correctly spotting one or correctly finding none. */
+  const elisionCorrect = (i: number) => studentElisions.has(i) === Boolean(active.syllables[i].elides);
+  const elisionsRight = checked ? elidableIdx.filter(elisionCorrect).length : 0;
+
   /**
-   * Both halves count. Getting every quantity right but dividing the line
-   * wrongly is not a scanned line, so the foot divisions are scored alongside
-   * the syllables rather than treated as decoration.
+   * Three halves count, not two. Getting every quantity right but dividing
+   * the line wrongly, or missing an elision, is not a scanned line, so foot
+   * divisions and elisions are scored alongside the syllables rather than
+   * treated as decoration.
    */
   function check() {
     setChecked(true);
     setSelected(null);
     const syllablesRight = metricalIdx.filter(isCorrect).length;
     const boundariesRight = divisions.filter((d) => correctDivisions.includes(d)).length;
+    const elisionsCorrectCount = elidableIdx.filter(elisionCorrect).length;
     recordScansion(
       active.id,
-      syllablesRight + boundariesRight,
-      metricalIdx.length + correctDivisions.length,
+      syllablesRight + boundariesRight + elisionsCorrectCount,
+      metricalIdx.length + correctDivisions.length + elidableIdx.length,
     );
-    saveScansionDraft(active.id, { marks, divisions, checked: true });
+    saveScansionDraft(active.id, { marks, divisions, elisions: [...studentElisions], checked: true });
   }
 
   function next() {
@@ -505,7 +559,7 @@ export default function ScansionLab() {
                 <div key={gi} className="flex items-stretch">
                   <div className="flex min-w-0 flex-col items-center">
                     <div
-                      className={`flex items-end ${group.closed ? '' : 'flex-wrap justify-center'}`}
+                      className={`flex items-start ${group.closed ? '' : 'flex-wrap justify-center'}`}
                     >
                       {group.syllables.map((i, within) => {
                         const syl = active.syllables[i];
@@ -519,14 +573,25 @@ export default function ScansionLab() {
                           (c) => metricalIdx[c.afterSyllable] === i,
                         );
 
-                        // The metrical index of this syllable, for boundaries.
+                        // The metrical index of this syllable, for boundaries —
+                        // always the real one, so the foot math underneath stays
+                        // correct regardless of what the student has or hasn't
+                        // claimed elides. Only the *display* of a syllable reacts
+                        // to the student's own elision marks; the arithmetic never
+                        // does, or a wrong guess there would cascade into every
+                        // foot boundary after it looking wrong too.
                         const m = metricalIdx.indexOf(i);
                         const isLastInGroup = within === group.syllables.length - 1;
-                        const canDivide =
-                          !checked && !syl.elides && m >= 0 && m < metricalIdx.length - 1;
+                        const canDivide = !checked && !syl.elides && m >= 0 && m < metricalIdx.length - 1;
+
+                        // What this syllable looks like right now: the
+                        // student's own claim before checking, the real answer
+                        // after. Never the real answer up front — that was the
+                        // giveaway the strikethrough used to be.
+                        const showElided = checked ? Boolean(syl.elides) : studentElisions.has(i);
 
                         let color = 'var(--fg)';
-                        if (checked && !syl.elides) {
+                        if (checked && !showElided) {
                           color =
                             state === 'ok'
                               ? 'var(--correct)'
@@ -544,6 +609,14 @@ export default function ScansionLab() {
                         // leading gap. `startsWord` is on the data, not
                         // guessed from punctuation — see ScannedSyllable.
                         const wordGap = i !== 0 && syl.startsWord !== false;
+
+                        // Elision is not shown — it is asked. Every word-final
+                        // syllable with a word after it gets a small target
+                        // beneath it the student taps to claim an elision
+                        // there, exactly the judgment call scanning the line
+                        // by hand requires.
+                        const elidable = elidableIdx.includes(i);
+                        const elisionMarkedCorrect = checked && elidable ? elisionCorrect(i) : null;
 
                         return (
                           <div key={i} className="flex items-stretch">
@@ -569,7 +642,7 @@ export default function ScansionLab() {
                                   animation: mark ? 'mark-drop 240ms var(--ease) both' : undefined,
                                 }}
                               >
-                                {syl.elides
+                                {showElided
                                   ? ''
                                   : mark === 'long'
                                     ? '—'
@@ -583,8 +656,8 @@ export default function ScansionLab() {
                               <button
                                 type="button"
                                 onClick={() => setSelected(isSelected ? null : i)}
-                                disabled={syl.elides || checked}
-                                aria-label={`${syl.text}${syl.elides ? ', elided' : ''}${
+                                disabled={showElided || checked}
+                                aria-label={`${syl.text}${
                                   mark ? `, marked ${mark}` : ''
                                 }`}
                                 aria-pressed={isSelected}
@@ -593,13 +666,13 @@ export default function ScansionLab() {
                                   fontFamily: 'var(--font-latin)',
                                   fontSize: 'calc(2.125rem * var(--ls))',
                                   lineHeight: 1.2,
-                                  color: syl.elides ? 'var(--fg-faint)' : color,
-                                  textDecoration: syl.elides ? 'line-through' : undefined,
+                                  color: showElided ? 'var(--fg-faint)' : color,
+                                  textDecoration: showElided ? 'line-through' : undefined,
                                   background: isSelected ? 'var(--redtint)' : 'transparent',
                                   boxShadow: isSelected ? '0 3px 0 var(--accent)' : undefined,
                                   borderRadius: '6px',
                                   padding: '0 5px',
-                                  cursor: syl.elides || checked ? 'default' : 'pointer',
+                                  cursor: showElided || checked ? 'default' : 'pointer',
                                 }}
                               >
                                 {syl.text}
@@ -636,6 +709,40 @@ export default function ScansionLab() {
                                     <span className="slab-sm">Brevis</span>
                                   </button>
                                 </div>
+                              )}
+
+                              {/* The elision target — underneath the word, not
+                                  the syllable, since it is the gap between two
+                                  words being judged. */}
+                              {elidable && (
+                                <button
+                                  type="button"
+                                  onClick={() => toggleElision(i)}
+                                  disabled={checked}
+                                  title={
+                                    checked
+                                      ? undefined
+                                      : 'Tap if you think this elides into the next word'
+                                  }
+                                  aria-label={`${
+                                    studentElisions.has(i) ? 'Unmark' : 'Mark'
+                                  } an elision after ${syl.text}`}
+                                  aria-pressed={studentElisions.has(i)}
+                                  className="squish elision-tap"
+                                  style={{
+                                    color:
+                                      elisionMarkedCorrect === true
+                                        ? 'var(--correct)'
+                                        : elisionMarkedCorrect === false
+                                          ? 'var(--incorrect)'
+                                          : studentElisions.has(i)
+                                            ? 'var(--accent)'
+                                            : 'var(--fg-faint)',
+                                    opacity: studentElisions.has(i) || checked ? 1 : 0.45,
+                                  }}
+                                >
+                                  ‿
+                                </button>
                               )}
                             </div>
 
@@ -713,13 +820,14 @@ export default function ScansionLab() {
                   onClick={() => {
                     setMarks(new Array(active.syllables.length).fill(null));
                     setDivisions([]);
+                    setStudentElisions(new Set());
                     setSelected(null);
                   }}
                 >
                   Clear
                 </button>
               </div>
-              {/* Two counters, because there are two halves to the task. */}
+              {/* Three counters, because there are three halves to the task. */}
               <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1">
                 <span
                   className="slab-sm"
@@ -737,6 +845,10 @@ export default function ScansionLab() {
                     ? '✓ six feet'
                     : `${divisions.length} of 5 divisions — click between syllables`}
                 </span>
+                <span className="slab-sm">
+                  {studentElisions.size} elision{studentElisions.size === 1 ? '' : 's'} marked —
+                  tap under a word
+                </span>
               </div>
             </div>
           ) : (
@@ -748,6 +860,10 @@ export default function ScansionLab() {
               divisionsRight={divisionsRight}
               divisionCount={correctDivisions.length}
               divisionsHit={divisions.filter((d) => correctDivisions.includes(d)).length}
+              elisionsRight={elisionsRight}
+              elisionCount={elidableIdx.length}
+              wrongElisions={elidableIdx.filter((i) => !elisionCorrect(i))}
+              studentElisions={studentElisions}
               onNext={next}
               onRetry={() => {
                 setMarks(new Array(active.syllables.length).fill(null));
@@ -876,6 +992,10 @@ function Verdict({
   divisionsRight,
   divisionCount,
   divisionsHit,
+  elisionsRight,
+  elisionCount,
+  wrongElisions,
+  studentElisions,
   onNext,
   onRetry,
 }: {
@@ -886,10 +1006,15 @@ function Verdict({
   divisionsRight: boolean;
   divisionCount: number;
   divisionsHit: number;
+  elisionsRight: number;
+  elisionCount: number;
+  wrongElisions: number[];
+  studentElisions: Set<number>;
   onNext: () => void;
   onRetry: () => void;
 }) {
   const wrong = metricalIdx.filter((i) => marks[i] !== active.syllables[i].quantity);
+  const elisionsAllRight = elisionsRight === elisionCount;
 
   return (
     <div
@@ -909,6 +1034,16 @@ function Verdict({
             ? '· feet divided correctly'
             : `· ${divisionsHit} of ${divisionCount} divisions right`}
         </span>
+        {elisionCount > 0 && (
+          <span
+            className="slab"
+            style={{ color: elisionsAllRight ? 'var(--gilt)' : 'var(--accent)' }}
+          >
+            {elisionsAllRight
+              ? '· elisions spotted correctly'
+              : `· ${elisionsRight} of ${elisionCount} elisions right`}
+          </span>
+        )}
         <div className="ml-auto flex flex-wrap gap-2">
           {active.feet.map((f, i) => (
             <span
@@ -947,6 +1082,35 @@ function Verdict({
               {marks[i] && <> — you marked it {marks[i]}</>}. {explain(active, i)}
             </li>
           ))}
+        </ul>
+      )}
+
+      {wrongElisions.length > 0 && (
+        <ul className="mb-6 flex flex-col gap-3">
+          {wrongElisions.map((i) => {
+            const trulyElides = Boolean(active.syllables[i].elides);
+            const claimed = studentElisions.has(i);
+            return (
+              <li
+                key={i}
+                style={{
+                  fontFamily: 'var(--font-latin)',
+                  fontSize: '1.0625rem',
+                  lineHeight: 1.5,
+                  color: 'var(--ink2)',
+                }}
+              >
+                <span style={{ color: 'var(--fg)', fontSize: '1.1875rem' }}>
+                  {active.syllables[i].text}
+                </span>{' '}
+                {trulyElides
+                  ? 'elides into the next word'
+                  : 'does not elide, despite the vowels on either side of the gap'}
+                {claimed && !trulyElides && <> — you marked it as eliding</>}
+                {!claimed && trulyElides && <> — you left it unmarked</>}.
+              </li>
+            );
+          })}
         </ul>
       )}
 
@@ -1046,8 +1210,9 @@ function Tutorial() {
       body: (
         <>
           A word ending in a vowel, a diphthong, or a vowel + m loses that final syllable before a
-          word beginning with a vowel or h. Elided syllables are struck through here and do not
-          count toward the feet.
+          word beginning with a vowel or h. It is not marked for you — tap the <strong>‿</strong>{' '}
+          under a word&rsquo;s last syllable to claim it elides. An elision you have claimed does
+          not count toward the feet, the same as the real answer will not.
         </>
       ),
     },
@@ -1065,9 +1230,9 @@ function Tutorial() {
       title: 'A working method',
       body: (
         <>
-          Mark the elisions first, then everything long by position, then the diphthongs. Put a
-          dactyl in the fifth foot and a spondee in the sixth. What remains usually has only one
-          legal solution.
+          Look for elisions first — a vowel or -m before a word starting with a vowel or h — then
+          mark everything long by position, then the diphthongs. Put a dactyl in the fifth foot
+          and a spondee in the sixth. What remains usually has only one legal solution.
         </>
       ),
     },

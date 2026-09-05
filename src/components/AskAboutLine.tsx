@@ -119,7 +119,7 @@ export default function AskAboutLine({
         <header className="flex items-start justify-between gap-3 border-b px-4 py-3" style={{ borderColor: 'var(--rule)' }}>
           <div className="min-w-0">
             <div className="eyebrow">
-              {passage.citation} · {passage.author === 'vergil' ? 'line' : 'section'} {lineN}
+              {passage.citation} · {passage.genre === 'poetry' ? 'line' : 'section'} {lineN}
             </div>
             <p className="latin mt-1" style={{ fontSize: '1.125rem', margin: 0 }}>
               {latin}

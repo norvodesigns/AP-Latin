@@ -218,7 +218,7 @@ function Workspace({ prompt, onBack }: { prompt: FrqPrompt; onBack: () => void }
               <span className="w-8 shrink-0 text-right tabular-nums" style={{ fontSize: '0.6875rem', color: 'var(--fg-faint)' }}>
                 {l.n}
               </span>
-              <p className={passage.author === 'vergil' ? 'latin-verse' : 'latin'} style={{ margin: 0 }}>
+              <p className={passage.genre === 'poetry' ? 'latin-verse' : 'latin'} style={{ margin: 0 }}>
                 {l.latin}
               </p>
             </div>

@@ -343,6 +343,27 @@ h1, h2, h3, h4 {
     color: var(--fg-muted);
   }
 
+  /* The per-line "ask" control in the Reading Room. On a device with a real
+     pointer it stays hidden until the line is hovered — one per line, in
+     full, reads as clutter — but on a touchscreen, where hover never fires
+     at all, that same rule would hide the control permanently, so there it
+     stays on. Either way it is reachable by keyboard via focus-visible. */
+  .ask-hint {
+    color: var(--fg-faint);
+    transition: color var(--dur-2) var(--ease-io), opacity var(--dur-2) var(--ease-io);
+  }
+  .ask-hint:hover,
+  .ask-hint:focus-visible {
+    color: var(--accent);
+  }
+  @media (hover: hover) {
+    .ask-hint { opacity: 0; }
+    .group:hover .ask-hint,
+    .ask-hint:focus-visible {
+      opacity: 1;
+    }
+  }
+
   /* Retained so older markup keeps its shape while sections are converted. */
   .eyebrow {
     font-family: var(--font-sans);
@@ -821,6 +842,27 @@ h1, h2, h3, h4 {
   .foot-rule:hover::before { background: var(--incorrect); opacity: 0.55; }
   .foot-rule:disabled { cursor: default; }
   .foot-rule:disabled:hover::before { opacity: 1; }
+
+  /* The elision target beneath a word-final syllable — a tap, not a
+     giveaway. Faint until claimed or hovered, so a line does not read as
+     dotted with answers before the student has decided anything. */
+  .elision-tap {
+    display: block;
+    width: 100%;
+    margin-top: 2px;
+    border: 0;
+    background: transparent;
+    padding: 0 2px;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1;
+    text-align: center;
+    transition: opacity var(--dur-2) var(--ease-io), color var(--dur-2) var(--ease-io);
+  }
+  .elision-tap:hover,
+  .elision-tap:focus-visible { opacity: 1; color: var(--accent); }
+  .elision-tap:disabled { cursor: default; }
 
   /* Verse gets a red margin rule and hanging line numbers. */
   .verse-block {
