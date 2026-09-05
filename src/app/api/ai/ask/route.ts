@@ -84,7 +84,11 @@ export async function POST(req: Request) {
   ].join(' ');
 
   const prompt = [
-    passage ? `PASSAGE: ${passage.citation} — ${passage.title} (${passage.author === 'vergil' ? 'dactylic hexameter' : 'prose'})` : '',
+    passage
+      ? `PASSAGE: ${passage.citation} — ${passage.title} (${
+          passage.author === 'vergil' ? 'dactylic hexameter' : passage.genre === 'poetry' ? 'Latin verse' : 'prose'
+        })`
+      : '',
     `LINE ${lineN}: ${latin}`,
     neighbours ? `\nSURROUNDING LINES (context only):\n${neighbours}` : '',
     vocab ? `\nDICTIONARY ENTRIES for words in this line:\n${vocab}` : '',

@@ -673,7 +673,7 @@ function findContextLine(entry: VocabEntry): { latin: string; citation: string }
       const words = line.latin.split(/[^A-Za-zÀ-ÿĀ-ſ]+/).map(normalizeWord);
       if (words.some((w) => w === target || (w.length > 3 && w.startsWith(stem)))) {
         // Keep prose sections readable by trimming to the sentence with the word.
-        if (p.author === 'pliny' && line.latin.length > 240) {
+        if (p.genre === 'prose' && line.latin.length > 240) {
           const sentences = line.latin.split(/(?<=[.?!])\s+/);
           const hit = sentences.find((s) =>
             s
@@ -685,7 +685,7 @@ function findContextLine(entry: VocabEntry): { latin: string; citation: string }
         }
         return {
           latin: line.latin,
-          citation: `${p.citation}${p.author === 'pliny' ? `.${line.n}` : ` (${line.n})`}`,
+          citation: `${p.citation}${p.genre === 'prose' ? `.${line.n}` : ` (${line.n})`}`,
         };
       }
     }

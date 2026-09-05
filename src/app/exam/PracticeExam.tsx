@@ -213,7 +213,7 @@ export default function PracticeExam() {
                   <span className="w-7 shrink-0 text-right tabular-nums" style={{ fontSize: '0.6875rem', color: 'var(--fg-faint)' }}>
                     {l.n}
                   </span>
-                  <p className={passage?.author === 'vergil' ? 'latin-verse' : 'latin'} style={{ margin: 0 }}>
+                  <p className={passage?.genre === 'poetry' ? 'latin-verse' : 'latin'} style={{ margin: 0 }}>
                     {l.latin}
                   </p>
                 </div>
@@ -347,7 +347,7 @@ export default function PracticeExam() {
                         <span className="w-7 shrink-0 text-right tabular-nums" style={{ fontSize: '0.6875rem', color: 'var(--fg-faint)' }}>
                           {l.n}
                         </span>
-                        <p className={passage.author === 'vergil' ? 'latin-verse' : 'latin'} style={{ margin: 0, fontSize: '1.125rem' }}>
+                        <p className={passage.genre === 'poetry' ? 'latin-verse' : 'latin'} style={{ margin: 0, fontSize: '1.125rem' }}>
                           {l.latin}
                         </p>
                       </div>

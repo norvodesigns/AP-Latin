@@ -182,7 +182,7 @@ function Drill({ drillId, onBack }: { drillId: string; onBack: () => void }) {
       {/* ---------- Latin ---------- */}
       <CalledOut rubric="Translate as literally as possible" className="mb-9">
         <p
-          className={passage?.author === 'vergil' ? 'latin-verse' : 'latin'}
+          className={passage?.genre === 'poetry' ? 'latin-verse' : 'latin'}
           style={{ margin: 0, whiteSpace: 'pre-line' }}
         >
           {drill.latin}

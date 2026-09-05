@@ -63,8 +63,9 @@ export interface LookupResult {
 const ENDINGS = [
   'ibus', 'orum', 'arum', 'erunt', 'eram', 'issem', 'isset', 'antur', 'entur',
   'untur', 'atur', 'etur', 'itur', 'ri', 'bantur', 'batur', 'bant', 'bimus', 'bitis',
-  'imus', 'itis', 'unt', 'ant', 'ent', 'bat', 'bam', 'bit', 'bis', 'bo', 'ere', 'are',
-  'ire', 'ae', 'am', 'as', 'is', 'os', 'us', 'um', 'em', 'es', 'ei', 'ia', 'ibus',
+  'amus', 'atis', 'emus', 'etis', 'imus', 'itis', 'unt', 'ant', 'ent', 'at', 'et',
+  'bat', 'bam', 'bit', 'bis', 'bo', 'mus', 'tis', 'ere', 'are', 'ire', 'ae', 'am',
+  'as', 'is', 'os', 'us', 'um', 'em', 'es', 'ei', 'ia', 'ibus',
   'i', 'o', 'a', 'e', 'u', 's', 'm', 't',
 ];
 
@@ -171,13 +172,17 @@ export function buildIndex(entries: VocabEntry[]): Index {
       }
       if (!w) continue;
       if (w.length >= 4) for (const s of stemOf(w)) if (s.length >= 3) push(byStem, s, e);
-      // The present stem itself — infinitive minus just "-re" — for a 2nd/3rd/4th
-      // conjugation verb's "-ere"/"-ire" infinitive. `stemOf` above only strips
-      // whole endings like "-ere" (to the bare root, e.g. "ger-") or a lone "-e"
-      // (to "gerer-"); neither lands on "gere-", the vowel-bearing stem imperfect
-      // tense forms are actually built on ("gere-bat", "vide-batur"). Without this,
-      // no imperfect form of a regular verb in this pattern resolves at all.
-      if (w.length >= 5 && (w.endsWith('ere') || w.endsWith('ire'))) {
+      // The present stem itself — infinitive minus just "-re" — for a verb's
+      // "-are"/"-ere"/"-ire" infinitive. `stemOf` above only strips whole
+      // endings like "-are"/"-ere" (to the bare root, e.g. "am-"/"ger-") or a
+      // lone "-e" (to "amar-"/"gerer-"); neither lands on "ama-"/"gere-", the
+      // vowel-bearing stem the present indicative plural and the imperfect
+      // are actually built on ("ama-mus", "gere-bat", "vide-batur"). Without
+      // this, no such form of a regular verb in these patterns resolves —
+      // including, for "-are" verbs, the ordinary present tense itself
+      // (amat, amamus) once its stem is longer than the single bare
+      // consonant root stemOf's generic endings reduce it to.
+      if (w.length >= 5 && (w.endsWith('are') || w.endsWith('ere') || w.endsWith('ire'))) {
         const presentStem = w.slice(0, -2);
         if (presentStem.length >= 3) push(byStem, presentStem, e);
       }

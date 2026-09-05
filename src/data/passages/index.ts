@@ -2,10 +2,11 @@ import type { Passage, UnitId } from '../types';
 import { vergilPassages } from './vergil';
 import { plinyPassages } from './pliny';
 import { caesarPassages } from './caesar';
+import { catullusPassages } from './catullus';
 import { coreVocabulary } from '../vocabulary';
 import { normalizeWord } from '../../lib/latin';
 
-export const allPassages: Passage[] = [...plinyPassages, ...vergilPassages, ...caesarPassages].sort((a, b) => {
+export const allPassages: Passage[] = [...plinyPassages, ...vergilPassages, ...caesarPassages, ...catullusPassages].sort((a, b) => {
   // Required first, then by unit, then by book/line so the list reads like the syllabus.
   if (a.required !== b.required) return a.required ? -1 : 1;
   if (a.unit !== b.unit) return a.unit < b.unit ? -1 : 1;
@@ -18,7 +19,7 @@ export const allPassages: Passage[] = [...plinyPassages, ...vergilPassages, ...c
 export const requiredPassages = allPassages.filter((p) => p.required);
 export const supplementaryPassages = allPassages.filter((p) => !p.required);
 
-export { vergilPassages, plinyPassages, caesarPassages };
+export { vergilPassages, plinyPassages, caesarPassages, catullusPassages };
 
 export function getPassage(id: string): Passage | undefined {
   return allPassages.find((p) => p.id === id);

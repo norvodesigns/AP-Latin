@@ -19,7 +19,7 @@ export type SkillCategory = '1' | '2' | '3';
 /** Individual skills within each category (CED pp. 227–228). */
 export type SkillCode = '1.A' | '1.B' | '1.C' | '1.D' | '2.A' | '2.B' | '3.A' | '3.B';
 
-export type Author = 'vergil' | 'pliny' | 'caesar' | 'other';
+export type Author = 'vergil' | 'pliny' | 'caesar' | 'catullus' | 'other';
 export type Genre = 'poetry' | 'prose';
 
 /** Question taxonomy used by the quiz engine's filters. */

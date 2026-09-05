@@ -135,7 +135,7 @@ export default function Reader({
     return () => window.removeEventListener('keydown', onKey);
   }, [passage.id, toggleGlossary, toggleBookmark]);
 
-  const isVerse = passage.author === 'vergil';
+  const isVerse = passage.genre === 'poetry';
 
   const vocabIds = useMemo(() => passageVocabIds(passage), [passage]);
   const coverage = useMemo(
