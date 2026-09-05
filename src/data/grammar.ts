@@ -395,6 +395,506 @@ export const grammarTopics: GrammarTopic[] = [
       },
     ],
   },
+
+  /* ------------------------------------------------------------------ */
+  /* Foundational morphology — the paradigms a course covers before AP.  */
+  /* Most examples below are standard textbook paradigms, not claimed as */
+  /* quotations from a specific passage, and so carry no passageId; where */
+  /* a form is quoted from the actual syllabus text, the citation is      */
+  /* checked the same way every other example in this file is.           */
+  /* ------------------------------------------------------------------ */
+
+  {
+    id: 'first-declension',
+    name: 'First declension',
+    category: 'morphology',
+    level: 'foundational',
+    summary:
+      'Nouns whose stem ends in -a, almost all feminine (a handful of occupations and river/place names are masculine, e.g. nauta, agricola, poeta, Aenēās).',
+    recognition: [
+      'Singular: -a, -ae, -ae, -am, -ā, (-a). Plural: -ae, -ārum, -īs, -ās, -īs, (-ae).',
+      'Genitive singular and nominative plural are identical in spelling (-ae) — context or a modifying adjective disambiguates.',
+      '-ābus instead of -īs in the dative/ablative plural survives only in a few nouns that would otherwise collide with a 2nd-declension masculine (deābus, fīliābus).',
+    ],
+    translation: [
+      'Nominative: subject or predicate noun. Genitive: "of ___" (possession, or partitive after a quantity word).',
+      'Dative: indirect object, "to/for ___". Accusative: direct object, or place-to-which with a bare name of a small island/city.',
+      'Ablative: usually needs a preposition in prose (in, cum, ā/ab) unless it is functioning as means, manner, or time-when.',
+    ],
+    examples: [
+      {
+        latin: 'Trōiae quī prīmus ab ōrīs',
+        citation: 'Aeneid 1.1',
+        passageId: 'aen-1-1-33',
+        analysis:
+          'Trōiae is 1st declension: here genitive singular, "of Troy", modifying the unstated antecedent implied before quī ("[he] who [came] first from the shores of Troy").',
+      },
+      {
+        latin: 'rosa, rosae, rosae, rosam, rosā',
+        citation: 'standard paradigm',
+        analysis: 'The textbook model noun, "rose" — every regular 1st-declension noun follows this pattern exactly.',
+      },
+    ],
+  },
+  {
+    id: 'second-declension',
+    name: 'Second declension',
+    category: 'morphology',
+    level: 'foundational',
+    summary:
+      'Nouns whose stem ends in -o: masculine in -us (or -er, -ir), neuter in -um. The single largest source of irregular-looking nominatives in beginning Latin, because the nominative singular often drops or alters the stem vowel.',
+    recognition: [
+      'Masculine -us: -us, -ī, -ō, -um, -ō / -ī, -ōrum, -īs, -ōs, -īs. Vocative singular is -e (fīlī is the one common exception, from fīlius).',
+      'Masculine -er: puer keeps the -er throughout (puerī); ager, magister, liber drop the -e- outside the nominative (agrī, magistrī, librī) — the genitive singular tells you which pattern a new -er noun follows.',
+      'Neuter -um: nominative and accusative are always identical, singular -um and plural -a — never -ī or -ōs.',
+    ],
+    translation: [
+      'Functions match the 1st declension exactly — the difference is spelling, not syntax.',
+      'A neuter plural subject regularly takes a singular verb in Greek-influenced poetic style, but standard classical prose treats it as a normal plural.',
+      'Locative survives productively only in a few 2nd-declension place names: Rōmae ("at Rome"), humī ("on the ground"), a fossil of the old -ī ending.',
+    ],
+    examples: [
+      {
+        latin: 'arma virumque canō',
+        citation: 'Aeneid 1.1',
+        passageId: 'aen-1-1-33',
+        analysis:
+          'arma is neuter plural (2nd declension -um nouns exist mostly in the plural for this word, "arms/weapons"); virum is masculine accusative singular, "the man" — direct objects of canō, "I sing".',
+      },
+      {
+        latin: 'dominus, dominī, dominō, dominum, dominō',
+        citation: 'standard paradigm',
+        analysis: '"Master, lord" — the model masculine -us noun; bellum, bellī, bellō, bellum, bellō is the model neuter.',
+      },
+    ],
+  },
+  {
+    id: 'third-declension-nouns',
+    name: 'Third declension nouns',
+    category: 'morphology',
+    level: 'foundational',
+    summary:
+      'The largest and least predictable declension: masculine, feminine, and neuter nouns of every stem shape, unified only by genitive singular -is. The nominative singular must simply be memorised with the genitive, since it hides the real stem far more often than not.',
+    recognition: [
+      'Genitive singular -is is the one constant across every gender. Consonant-stem endings: -is/-ēs (m./f.) or nothing distinctive (n.); i-stems add -ium in the genitive plural instead of -um, and neuter i-stems end in -e/-al/-ar in the nominative singular.',
+      'A "hidden" stem change between nominative and genitive is common and must be learned per word: corpus, corporis; homō, hominis; rēx, rēgis; pater, patris.',
+      'Neuter nominative and accusative are always identical in both numbers, exactly as in the 2nd declension.',
+    ],
+    translation: [
+      'Functions are identical to the 1st and 2nd declensions — only the endings differ.',
+      'An i-stem ablative singular in -ī rather than -e survives in a handful of common nouns (turris, secūris) and in most neuter i-stems (marī, not mare as an ablative form would suggest).',
+      'Because the nominative gives so little information, always look up an unfamiliar 3rd-declension noun by its genitive stem, not its nominative spelling.',
+    ],
+    examples: [
+      {
+        latin: 'rēx, rēgis (m.) — homō, hominis (m.) — corpus, corporis (n.) — turris, turris (f.)',
+        citation: 'standard paradigms',
+        analysis:
+          'Four representative patterns: a stem consonant shift (rēx/rēg-), a hidden nasal (homō/homin-), rhotacism (corpus/corpor-), and a feminine i-stem with genitive plural in -ium.',
+      },
+      {
+        latin: 'saevae memorem Iūnōnis',
+        citation: 'Aeneid 1.4',
+        passageId: 'aen-1-1-33',
+        analysis:
+          'Iūnōnis is 3rd declension (Iūnō, Iūnōnis, f.) genitive singular, with the same hidden -n- stem seen in homō/hominis above; memorem is the one-termination 3rd-declension adjective agreeing with the accusative īram later in the same line, not with Iūnōnis.',
+      },
+    ],
+  },
+  {
+    id: 'fourth-fifth-declension',
+    name: 'Fourth and fifth declensions',
+    category: 'morphology',
+    level: 'foundational',
+    summary:
+      'Two small, closed declensions: the 4th (u-stem), mostly masculine nouns in -us built from a verb\'s fourth principal part (adventus, cāsus, exercitus, manus is the common feminine exception); the 5th (ē-stem), only rēs and diēs in everyday use.',
+    recognition: [
+      '4th declension: -us, -ūs, -uī, -um, -ū (plural -ūs, -uum, -ibus, -ūs, -ibus). Genitive singular -ūs is easy to mistake for a nominative at a glance.',
+      '5th declension: -ēs, -eī, -eī, -em, -ē (plural rare except for rēs and diēs). diēs is masculine except when it means a fixed/appointed day, then feminine.',
+      'domus mixes 2nd- and 4th-declension endings unpredictably (genitive domūs or domī, locative domī, accusative plural domōs or domūs) — it must simply be memorised as irregular.',
+    ],
+    translation: [
+      'Functions match every other declension; only the spelling differs.',
+      'rēs is the single most overworked noun in Latin — "thing, matter, business, property, situation, fact" — and is often best rendered by dropping it and translating its adjective/genitive alone (rēs novae, "revolution", literally "new things").',
+      'diē in the ablative regularly means simply "on [that] day" without a preposition, the ordinary ablative of time when.',
+    ],
+    examples: [
+      {
+        latin: 'adventus, adventūs (m.) — rēs, reī (f.) — diēs, diēī (m./f.)',
+        citation: 'standard paradigms',
+        analysis: '"Arrival", "thing", and "day" — the three most common nouns of these two declensions.',
+      },
+    ],
+  },
+  {
+    id: 'adjectives-1st-2nd',
+    name: 'First/second-declension adjectives',
+    category: 'morphology',
+    level: 'foundational',
+    summary:
+      'Adjectives declined like 1st-declension nouns in the feminine and 2nd-declension nouns in the masculine and neuter — bonus, bona, bonum being the textbook model.',
+    recognition: [
+      'Given in the dictionary as three forms (bonus, -a, -um) or, for an -er adjective, as masculine plus feminine (pulcher, pulchra, pulchrum; miser, misera, miserum keeps the -e-).',
+      'Agreement is in gender, number, and case with the noun it modifies — NOT in declension: a 1st/2nd-declension adjective can and constantly does modify a 3rd-declension noun (rēx bonus, "a good king").',
+      'The nine "pronominal" adjectives (ūnus, sōlus, tōtus, ūllus, nūllus, alius, alter, uter, neuter) follow this pattern everywhere except the genitive singular (-īus for all genders) and dative singular (-ī for all genders).',
+    ],
+    translation: [
+      'Ordinary attributive position in English precedes the noun ("a good king"); Latin word order is far freer and carries no such rule.',
+      'An adjective used with no noun expressed is substantive: bonī, "good men"; bona, "good things" (neuter plural is an extremely common way to say "things").',
+      'A predicate adjective after sum agrees with the subject but is not translated "of": rēx bonus est, "the king is good," not "of a good king".',
+    ],
+    examples: [
+      {
+        latin: 'pius Aenēās',
+        citation: 'common Vergilian epithet',
+        analysis: 'pius, -a, -um, "dutiful" — a 1st/2nd-declension adjective in the nominative masculine singular, agreeing with Aenēās.',
+      },
+      {
+        latin: 'bonus, bona, bonum',
+        citation: 'standard paradigm',
+        analysis: 'Declines exactly like dominus/rosa/bellum in every case and number — there is no separate adjective paradigm to learn beyond the noun endings already known.',
+      },
+    ],
+  },
+  {
+    id: 'adjectives-3rd',
+    name: 'Third-declension adjectives',
+    category: 'morphology',
+    level: 'foundational',
+    summary:
+      'Adjectives declined entirely on 3rd-declension i-stem endings, sorted by how many distinct nominative singular spellings they show across the three genders: three-termination (ācer, ācris, ācre), two-termination (fortis, forte), and one-termination (fēlīx, gen. fēlīcis, one spelling for all three genders).',
+    recognition: [
+      'All three types share the same oblique-case endings: -is/-e or -em (m./f./n. accusative), -ī (abl. sing., an i-stem feature adjectives keep even where a matching noun would not), -ium (gen. pl.), -ia (neut. nom./acc. pl.).',
+      'One-termination adjectives are the trickiest to spot as adjectives at all, since the nominative singular looks like an ordinary 3rd-declension noun (ingēns, potēns, fēlīx) — the genitive in the dictionary entry is the tell.',
+      'A present active participle (amāns, -antis) declines exactly like a one-termination 3rd-declension adjective.',
+    ],
+    translation: [
+      'Functions and agreement rules are identical to 1st/2nd-declension adjectives.',
+      'Several very common 3rd-declension adjectives are irregular in the neuter nominative/accusative singular only: an -ns participle keeps -ns, but ingēns/potēns etc. also keep the -s spelling for neuter (a rare case with no separate neuter form at all).',
+      'omnis, omne ("every, all") and the comparative degree of every adjective (see comparison) are two-termination.',
+    ],
+    examples: [
+      {
+        latin: 'vī superum saevae memorem Iūnōnis ob īram',
+        citation: 'Aeneid 1.4',
+        passageId: 'aen-1-1-33',
+        analysis:
+          'memorem is a 3rd-declension one-termination adjective (memor, gen. memoris, "mindful, unforgetting") modifying īram, feminine accusative singular. saevae is 1st/2nd declension (saevus, -a, -um) modifying Iūnōnis.',
+      },
+    ],
+  },
+  {
+    id: 'adjective-comparison',
+    name: 'Comparison of adjectives',
+    category: 'morphology',
+    level: 'foundational',
+    summary:
+      'Positive, comparative, and superlative degree. The comparative is always 3rd declension regardless of the positive\'s declension; the superlative is always 1st/2nd declension.',
+    recognition: [
+      'Comparative: stem + -ior (m./f.), -ius (n.) — altior, altius, "taller". Declines like a 3rd-declension two-termination adjective, but with genitive -ōris, not an i-stem (no -ium, no -ī ablative singular).',
+      'Superlative: stem + -issimus, -a, -um for most adjectives (altissimus). Adjectives ending in -er double the -r instead (pulcherrimus, not pulcherissimus); six adjectives in -ilis (facilis, difficilis, similis, dissimilis, gracilis, humilis) take -illimus.',
+      'A handful of very common adjectives are irregular all three ways and must be memorised outright: bonus/melior/optimus, malus/peior/pessimus, magnus/maior/maximus, parvus/minor/minimus, multus/plūs/plūrimus.',
+    ],
+    translation: [
+      'Comparative alone: "more ___" or "___-er", or, with quam, "more ___ than". Without an explicit standard of comparison, it can also mean "rather/too ___".',
+      'Superlative alone: "most ___" or "___-est"; with quam + a superlative, "as ___ as possible" (quam celerrimē, "as quickly as possible").',
+      'The ablative of comparison (no quam, just the ablative) means the same as quam + nominative/accusative: Cicerō est doctior Catōne = doctior quam Catō, "more learned than Cato".',
+    ],
+    examples: [
+      {
+        latin: 'altior, altius (comparative) — altissimus, -a, -um (superlative)',
+        citation: 'standard paradigm',
+        analysis: 'From altus, -a, -um, "high, deep" — a fully regular 1st/2nd-declension adjective forming its degrees the ordinary way.',
+      },
+    ],
+  },
+  {
+    id: 'first-conjugation',
+    name: 'First conjugation',
+    category: 'morphology',
+    level: 'foundational',
+    summary:
+      'Verbs whose stem ends in -ā-, principal parts amō, amāre, amāvī, amātum — the most regular and populous conjugation, and the default pattern most new verbs coined in Latin (and named after Latin) still follow.',
+    recognition: [
+      'Present stem amā- runs through the present, imperfect, and future active and passive indicative, and the present subjunctive (with the thematic ā replaced by an -e-: amem, amēs…).',
+      'Perfect stem amāv- (present stem + -v-) runs through the perfect, pluperfect, and future perfect active, and the perfect subjunctive/pluperfect subjunctive.',
+      'Present passive infinitive amārī looks superficially like a genitive noun in -ārī but is unmistakable once a verb\'s meaning is known.',
+    ],
+    translation: [
+      'Present: "loves / does love / is loving". Imperfect: "was loving / used to love / kept loving" — always ongoing or repeated past action.',
+      'Future -bō/-bis/-bit… Perfect: "loved / has loved" (a completed, one-time past action, contrast with the imperfect).',
+      'Passive voice reverses subject and agent: amātur, "he/she/it is loved"; amābātur, "was being loved".',
+    ],
+    examples: [
+      {
+        latin: 'amō, amās, amat, amāmus, amātis, amant',
+        citation: 'standard paradigm, present active indicative',
+        analysis: 'The model verb for the entire conjugation — every regular 1st-conjugation verb inflects exactly this way in every tense.',
+      },
+      {
+        latin: 'multa quoque et bellō passus',
+        citation: 'Aeneid 1.5',
+        passageId: 'aen-1-1-33',
+        analysis: 'Not itself 1st conjugation (passus is from patior, a deponent), but bellō here shows the 2nd-declension noun this construction depends on — worth contrasting with a true 1st-conjugation form in the same line\'s vocabulary.',
+      },
+    ],
+  },
+  {
+    id: 'second-conjugation',
+    name: 'Second conjugation',
+    category: 'morphology',
+    level: 'foundational',
+    summary:
+      'Verbs whose stem ends in -ē-, principal parts moneō, monēre, monuī, monitum. The long ē of the infinitive and present-stem forms is the conjugation\'s signature, though it does not show up in unmacronized text.',
+    recognition: [
+      'Present stem monē- behaves exactly like 1st-conjugation amā- in where it is used, just with -ē- instead of -ā-.',
+      'Perfect stems are far less predictable than the 1st conjugation\'s uniform -v-: -uī (monuī), -ēvī (dēlēvī), -sī (mānsī), or a stem change (videō → vīdī) are all common.',
+      'The present passive infinitive monērī and the present active infinitive monēre differ only by that final vowel plus -rī vs -re — an easy pair to confuse under time pressure.',
+    ],
+    translation: [
+      'Tense and voice meanings are identical to the 1st conjugation; only the vowel and (often) the perfect stem differ.',
+      'A handful of extremely common 2nd-conjugation verbs are highly irregular in the perfect and must be learned individually: videō/vīdī, maneō/mānsī, respondeō/respondī.',
+    ],
+    examples: [
+      {
+        latin: 'moneō, monēre, monuī, monitum',
+        citation: 'standard paradigm',
+        analysis: '"To warn, advise" — the model 2nd-conjugation verb.',
+      },
+      {
+        latin: 'ipse ego … videō',
+        citation: 'common construction',
+        analysis: 'videō, "I see" — 2nd conjugation with an irregular perfect vīdī, contrasted with the regular pattern above.',
+      },
+    ],
+  },
+  {
+    id: 'third-conjugation',
+    name: 'Third conjugation (including -iō verbs)',
+    category: 'morphology',
+    level: 'foundational',
+    summary:
+      'The largest and most irregular-feeling conjugation: a bare consonant or short-vowel stem, principal parts regō, regere, rēxī, rēctum, with a thematic vowel (e, i, or u) that shifts by ending rather than staying fixed the way the 1st and 2nd conjugations\' vowel does. A subgroup, the "-iō verbs" (capiō, faciō, iaciō, fugiō, cupiō and their compounds), inflects like the 4th conjugation everywhere except the infinitive and a few present-stem forms, where it drops back to the plain 3rd-conjugation pattern.',
+    recognition: [
+      'Infinitive -ere with a SHORT e (regere) distinguishes 3rd conjugation from 2nd conjugation\'s -ēre with a long ē (monēre) — invisible without macrons, which is exactly why the perfect stem and meaning matter more in practice than the infinitive spelling alone.',
+      'Present indicative active: regō, regis, regit, regimus, regitis, regunt — note the vowel change from -i- to -u- in the 3rd-person plural, unlike any other conjugation.',
+      '-iō verbs keep the -i- one syllable longer than plain 3rd conjugation: capiō, capis, capit, capimus, capitis, capiunt (compare regō above) — but their infinitive is still capere, not capīre.',
+    ],
+    translation: [
+      'Tense and voice meanings match every other conjugation exactly; only the stem-vowel pattern differs.',
+      'Perfect stems are unpredictable and must be memorised per verb: rēxī, dūxī, mīsī, tulī are all 3rd-conjugation perfects with no shared pattern.',
+      'The present passive infinitive is -ī, not -irī: regī ("to be ruled"), not regīrī — a common error to watch for.',
+    ],
+    examples: [
+      {
+        latin: 'regō, regere, rēxī, rēctum — capiō, capere, cēpī, captum',
+        citation: 'standard paradigms',
+        analysis: 'regō, "to rule", shows the plain pattern; capiō, "to take, seize", shows the -iō subgroup — note the shared -ere infinitive despite the different present-tense vowel pattern.',
+      },
+    ],
+  },
+  {
+    id: 'fourth-conjugation',
+    name: 'Fourth conjugation',
+    category: 'morphology',
+    level: 'foundational',
+    summary:
+      'Verbs whose stem ends in -ī-, principal parts audiō, audīre, audīvī, audītum. Closely parallel to the -iō subgroup of the 3rd conjugation, but keeps its long ī in the infinitive and everywhere else.',
+    recognition: [
+      'Infinitive -īre (audīre) is unambiguous even without macrons, since no other conjugation produces that spelling.',
+      'Present indicative active: audiō, audīs, audit, audīmus, audītis, audiunt — compare capiō above and note the identical 3rd-plural -iunt.',
+      'Perfect is regularly -īvī (audīvī), though syncopated forms dropping the -v- (audiī, audiit) are common, especially in verse.',
+    ],
+    translation: [
+      'Tense and voice meanings match every other conjugation.',
+      'venīre ("to come") and its compounds (advenīre, pervenīre) are extremely common 4th-conjugation verbs worth knowing outright rather than deriving.',
+    ],
+    examples: [
+      {
+        latin: 'audiō, audīre, audīvī, audītum',
+        citation: 'standard paradigm',
+        analysis: '"To hear, listen to" — the model 4th-conjugation verb.',
+      },
+    ],
+  },
+  {
+    id: 'sum-and-compounds',
+    name: 'Sum and its compounds',
+    category: 'morphology',
+    level: 'foundational',
+    summary:
+      'sum, esse, fuī, futūrus, "to be" — the single most frequent verb in Latin and irregular in nearly every tense, plus its compounds (possum "to be able", absum "to be away", adsum "to be present", dēsum "to be lacking", intersum "to take part").',
+    recognition: [
+      'Present: sum, es, est, sumus, estis, sunt. Imperfect: eram, erās, erat… Future: erō, eris, erit… — none of these show a normal thematic vowel pattern.',
+      'possum is sum welded to the adjective potis ("able"): potis + sum → possum, potis + es → potes, and so on — the pot-/pos- alternation is purely for pronounceability.',
+      'sum has no passive voice (it is not transitive) and, unusually, no accusative object; its complement is a nominative (a predicate noun or adjective).',
+    ],
+    translation: [
+      'sum links a subject to a predicate noun or adjective — "X is Y" — and never takes a direct object.',
+      'A dative with a form of sum expresses possession: mihi est liber, literally "there is a book to me", idiomatically "I have a book".',
+      'possum + a complementary infinitive: possum videre, "I am able to see / I can see".',
+    ],
+    examples: [
+      {
+        latin: 'sum, es, est, sumus, estis, sunt',
+        citation: 'standard paradigm, present indicative',
+        analysis: 'Committed to memory before any other verb in a beginning course, since it underlies the perfect passive system, the periphrastics, and most sentences with a predicate noun or adjective.',
+      },
+    ],
+  },
+  {
+    id: 'irregular-verbs',
+    name: 'Other irregular verbs',
+    category: 'morphology',
+    level: 'foundational',
+    summary:
+      'A short, closed list of verbs that do not follow any of the four regular conjugation patterns and must be learned individually: ferō ("carry/bear"), volō/nōlō/mālō ("want/not want/prefer"), eō ("go"), fīō ("become/be made", serving as the passive of faciō).',
+    recognition: [
+      'ferō: present ferō, fers, fert, ferimus, fertis, ferunt — no thematic vowel at all in most forms; infinitive ferre (not ferere).',
+      'volō/nōlō/mālō share one irregular paradigm: volō, vīs, vult, volumus, vultis, volunt; nōlō is volō negated (nōn + volō, fused); mālō is magis + volō fused ("want more, prefer").',
+      'eō: present eō, īs, it, īmus, ītis, eunt; infinitive īre (this is the pattern every compound of eō — abeō, exeō, redeō, pereō — inherits, which is why "abeō, -īre" always expands to abīre, never abeīre).',
+    ],
+    translation: [
+      'ferō doubles as the suppletive perfect system for a verb meaning "carry" (tulī, latum) that looks nothing like ferō itself — an inherited irregularity, not a coincidence.',
+      'fīō supplies nearly all the missing present-system passive forms of faciō: fit ("it happens/is made"), fīēbat ("was happening"), fierī ("to happen/be made").',
+      'volō/nōlō/mālō take a complementary infinitive exactly like possum: volō īre, "I want to go".',
+    ],
+    examples: [
+      {
+        latin: 'fertur … Aenēān … acciri',
+        citation: 'Aeneid 1.617 (paraphrase for illustration)',
+        analysis: 'fertur, 3rd singular present passive of ferō, idiomatically "he is said" — one of the most common idiomatic uses of this irregular verb\'s passive.',
+      },
+    ],
+  },
+  {
+    id: 'personal-reflexive-pronouns',
+    name: 'Personal and reflexive pronouns',
+    category: 'morphology',
+    level: 'foundational',
+    summary:
+      'ego ("I"), tū ("you"), nōs ("we"), vōs ("you all") for the 1st and 2nd persons; the reflexive sē/suī has no nominative and no distinct singular/plural, since it always refers back to the subject of its own clause regardless of that subject\'s number.',
+    recognition: [
+      'ego: gen. meī, dat. mihi, acc./abl. mē. tū: gen. tuī, dat. tibi, acc./abl. tē.',
+      'nōs: gen. nostrī/nostrum, dat./abl. nōbīs, acc. nōs. vōs: gen. vestrī/vestrum, dat./abl. vōbīs, acc. vōs.',
+      'sē/suī has no nominative form (a reflexive cannot be the subject of the clause it reflects); the same spelling sē serves as both accusative and ablative singular and plural.',
+    ],
+    translation: [
+      'A 3rd-person pronoun referring BACK to the subject is reflexive (sē, "himself/herself/itself/themselves"); one referring to someone ELSE is is/ea/id.',
+      'suus, -a, -um is the reflexive possessive ("his own, her own") and likewise always points back to the subject — eius ("his/her", not his own) is used instead when the possessor is someone other than the subject.',
+      'The genitives nostrum/vestrum (not nostrī/vestrī) are used partitively — ūnus nostrum, "one of us".',
+    ],
+    examples: [
+      {
+        latin: 'mē, mihi, tē, tibi, sē, sibi',
+        citation: 'standard paradigm',
+        analysis: 'The oblique-case forms of the first, second, and reflexive third person — memorised as a set, since none of the three declines like an ordinary noun.',
+      },
+    ],
+  },
+  {
+    id: 'demonstrative-pronouns',
+    name: 'Demonstrative pronouns',
+    category: 'morphology',
+    level: 'foundational',
+    summary:
+      'hic, haec, hoc ("this, the latter"); ille, illa, illud ("that, the former"); is, ea, id ("this/that, he/she/it" — the ordinary 3rd-person pronoun); īdem, eadem, idem ("the same", is + -dem); ipse, ipsa, ipsum ("-self", for emphasis, not reflexive in meaning).',
+    recognition: [
+      'All five share the same irregular case-ending family: genitive singular -īus (huius, illīus, eius, eiusdem, ipsīus) for every gender, dative singular -ī (huic, illī, eī, eīdem, ipsī) for every gender — exactly like the nine pronominal adjectives.',
+      'is, ea, id supplies the ordinary unstressed 3rd-person pronoun ("he, she, it, they") wherever Latin has no dedicated word for one, unlike English.',
+      'īdem is built by simply appending -dem to the appropriate form of is: eundem (not *eumdem, an m/n assimilation), eōrundem (not *eōrumdem) are the two irregular-looking spots.',
+    ],
+    translation: [
+      'hic/ille used together contrast two things just mentioned: hic = "the latter" (nearer, i.e. more recently named), ille = "the former".',
+      'ipse intensifies whatever noun or pronoun it agrees with: ipse rēx, "the king himself"; it is never reflexive by itself (ipse sē laudat, "he himself praises himself", needs sē to carry the reflexive sense).',
+      'A form of is agreeing with a relative pronoun is very frequently omitted in Latin where English requires "the one/those": [eī] quī veniunt, "those who come".',
+    ],
+    examples: [
+      {
+        latin: 'Trōiae quī prīmus ab ōrīs / … vēnit',
+        citation: 'Aeneid 1.1–2',
+        passageId: 'aen-1-1-33',
+        analysis: 'The antecedent of quī is exactly this kind of unstated is — understood as "[he] who came first…" with no separate pronoun written.',
+      },
+    ],
+  },
+  {
+    id: 'relative-interrogative-pronouns',
+    name: 'Relative and interrogative pronouns',
+    category: 'morphology',
+    level: 'foundational',
+    summary:
+      'quī, quae, quod ("who, which, that") introduces a relative clause and agrees with its antecedent in gender and number, but takes its case from its OWN clause. quis, quid (substantive) and quī, quae/qua, quod (adjectival) ask a question; the interrogative and relative share nearly all their forms.',
+    recognition: [
+      'quī, quae, quod: gen. cuius (for all genders), dat. cui (for all genders) — the same -īus/-ī family as the demonstratives.',
+      'The interrogative pronoun quis/quid is used substantively ("who? what?"); the interrogative adjective quī/quae/quod is used with a noun ("which man? what plan?") and is spelled exactly like the relative.',
+      'quisque ("each"), quīdam ("a certain"), aliquis ("someone") are all quis/quī compounded with a suffix or prefix, and decline the same way underneath it.',
+    ],
+    translation: [
+      'A relative clause\'s case is diagnosed from its OWN verb/preposition, never copied from the antecedent — this is the single most common relative-clause error to check for.',
+      '"the man WHOM I saw" — quem is accusative because it is the object of vīdī, even though its antecedent (vir) might be nominative in its own clause.',
+      'quod alone, uncapitalized in translation, often means simply "because" — a causal conjunction that happens to be spelled like the neuter relative/interrogative.',
+    ],
+    examples: [
+      {
+        latin: 'Trōiae quī prīmus ab ōrīs',
+        citation: 'Aeneid 1.1',
+        passageId: 'aen-1-1-33',
+        analysis: 'quī is nominative because it is the subject of vēnit in its own clause (line 2) — its antecedent is an unstated "he", not Trōiae, which is genitive.',
+      },
+    ],
+  },
+  {
+    id: 'prepositions',
+    name: 'Prepositions',
+    category: 'morphology',
+    level: 'foundational',
+    summary:
+      'Latin prepositions govern only two cases: the accusative (the large majority — ad, ante, apud, circum, contrā, inter, ob, per, post, prope, propter, trāns) or the ablative (ā/ab, cum, dē, ē/ex, prō, sine, sub when meaning "under" at rest). in and sub take the accusative for motion-into and the ablative for location-at.',
+    recognition: [
+      'The case a preposition governs is fixed and must be memorised with the word — it does not follow from meaning alone.',
+      'in + accusative = motion "into"; in + ablative = static location "in/on". The same accusative/ablative split applies to sub ("under").',
+      'cum attaches enclitically to a personal or reflexive pronoun in the ablative rather than preceding it: mēcum, tēcum, nōbīscum, sēcum ("with me/you/us/himself"), never *cum mē.',
+    ],
+    translation: [
+      'A bare case ending, with no preposition, can express some of the same ideas a preposition would in English — ablative of means ("by/with"), locative ("at/in", for cities and small islands), accusative/ablative of a few relations of place-name.',
+      'A preposition\'s English gloss ("in", "with", "on account of") is only a starting point — propter, "on account of, because of", and ob, likewise "because of, in front of", often need situational judgment to render well.',
+    ],
+    examples: [
+      {
+        latin: 'ab ōrīs … ob īram',
+        citation: 'Aeneid 1.1, 1.4',
+        passageId: 'aen-1-1-33',
+        analysis: 'ab governs the ablative ōrīs ("from the shores"); ob governs the accusative īram ("because of the anger") — one word from each of the two governing groups, both from the poem\'s own opening.',
+      },
+    ],
+  },
+  {
+    id: 'numbers',
+    name: 'Numbers',
+    category: 'morphology',
+    level: 'foundational',
+    summary:
+      'Cardinal numbers ("one, two, three…") count; ordinal numbers ("first, second, third…") rank. Only ūnus, duo, trēs, and every hundred from ducentī up decline; the cardinals four through one hundred are indeclinable. Every ordinal declines like a normal 1st/2nd-declension adjective.',
+    recognition: [
+      'ūnus, -a, -um declines like the nine pronominal adjectives (gen. ūnīus, dat. ūnī).',
+      'duo, duae, duo is irregular and archaic-looking: duōrum/duārum, duōbus/duābus, duōs (or duo)/duās/duo. trēs, tria declines like a 3rd-declension plural i-stem adjective (trium, tribus).',
+      'mīlle is indeclinable as an adjective ("a thousand X"); its plural mīlia is a neuter i-stem noun construed with a following genitive (duo mīlia hominum, literally "two thousands of men").',
+    ],
+    translation: [
+      'A cardinal used with a noun agrees with it in gender and case when it declines at all (trēs puellae, "three girls"; cum tribus puellīs, "with three girls").',
+      'An ordinal identifies rank or sequence and is fully declinable: prīmus, secundus, tertius, quārtus, quīntus… agree with their noun exactly like any adjective.',
+      'Roman dates are ordinal-based and counted inclusively backward from three fixed points each month (Kalends, Nones, Ides) — a system worth recognising even though the exam does not require computing one.',
+    ],
+    examples: [
+      {
+        latin: 'Trōiae quī prīmus ab ōrīs',
+        citation: 'Aeneid 1.1',
+        passageId: 'aen-1-1-33',
+        analysis: 'prīmus, -a, -um, "first" — an ordinal, here a 1st/2nd-declension adjective modifying the unstated subject of vēnit, not a cardinal number.',
+      },
+    ],
+  },
 ];
 
 export function getTopic(id: string): GrammarTopic | undefined {

@@ -75,7 +75,14 @@ function Cards() {
             <div id={c.id} className="scroll-mt-24" />
             <div className="mb-3 flex flex-wrap items-baseline justify-between gap-3">
               <h2 style={{ fontSize: '1.25rem', lineHeight: 1.25 }}>{c.title}</h2>
-              <span className="slab-sm">{CONTEXT_TOPIC_LABELS[c.topic]}</span>
+              <span className="flex items-baseline gap-2">
+                {c.required === false && (
+                  <span className="slab-sm" style={{ color: 'var(--fg-faint)' }}>
+                    Beyond the exam
+                  </span>
+                )}
+                <span className="slab-sm">{CONTEXT_TOPIC_LABELS[c.topic]}</span>
+              </span>
             </div>
 
             <p

@@ -11,6 +11,7 @@ import type { GrammarTopic } from '@/data/types';
 type Tab = 'reference' | 'study';
 
 const CATEGORY_LABELS: Record<string, string> = {
+  morphology: 'Forms (foundational)',
   clause: 'Clauses',
   case: 'Case uses',
   verbal: 'Verbal nouns',
@@ -89,8 +90,19 @@ export default function Grammar() {
   );
 }
 
+/** Foundational forms first, then AP's own syntax categories in the order
+ *  the reference has always used — new categories fall back to appearing
+ *  in whatever order they were first seen, same as before this existed. */
+const CATEGORY_ORDER = ['morphology', 'case', 'participle', 'verbal', 'mood', 'clause'];
+
 function Reference() {
-  const categories = [...new Set(grammarTopics.map((t) => t.category))];
+  const rank = (c: string) => {
+    const i = CATEGORY_ORDER.indexOf(c);
+    return i === -1 ? CATEGORY_ORDER.length : i;
+  };
+  const categories = [...new Set(grammarTopics.map((t) => t.category))].sort(
+    (a, b) => rank(a) - rank(b),
+  );
 
   return (
     <>
