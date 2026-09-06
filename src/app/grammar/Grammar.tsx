@@ -106,11 +106,22 @@ function Reference() {
 
   return (
     <>
-      <nav aria-label="Jump to topic" className="mb-10 flex flex-wrap gap-2">
-        {grammarTopics.map((t) => (
-          <a key={t.id} href={`#${t.id}`} className="chip squish">
-            {t.name}
-          </a>
+      <nav aria-label="Jump to topic" className="mb-14 flex flex-col gap-5">
+        {categories.map((cat) => (
+          <div key={cat}>
+            <div className="slab-sm mb-2" style={{ color: 'var(--fg-faint)' }}>
+              {CATEGORY_LABELS[cat] ?? cat}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {grammarTopics
+                .filter((t) => t.category === cat)
+                .map((t) => (
+                  <a key={t.id} href={`#${t.id}`} className="chip squish">
+                    {t.name}
+                  </a>
+                ))}
+            </div>
+          </div>
         ))}
       </nav>
 
