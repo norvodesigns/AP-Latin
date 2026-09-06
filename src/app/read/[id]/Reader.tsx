@@ -320,7 +320,9 @@ export default function Reader({
                   <button
                     type="button"
                     onClick={() => setAskLine({ n: line.n, latin: line.latin })}
-                    className="slab-sm ask-hint shrink-0 self-start"
+                    className={`slab-sm ask-hint shrink-0 self-start ${
+                      sel?.lineN === line.n ? 'ask-hint-active' : ''
+                    }`}
                     style={{ marginTop: '0.9rem' }}
                     title="Ask about this line"
                   >

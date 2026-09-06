@@ -343,23 +343,31 @@ h1, h2, h3, h4 {
     color: var(--fg-muted);
   }
 
-  /* The per-line "ask" control in the Reading Room. On a device with a real
-     pointer it stays hidden until the line is hovered — one per line, in
-     full, reads as clutter — but on a touchscreen, where hover never fires
-     at all, that same rule would hide the control permanently, so there it
-     stays on. Either way it is reachable by keyboard via focus-visible. */
+  /* The per-line "ask" control in the Reading Room — one per line, in full,
+     reads as clutter, so it stays hidden by default on every device. On a
+     device with a real pointer, hovering the line reveals it. On a
+     touchscreen, where hover never fires (and a stray tap can otherwise
+     leave a phantom `:hover` state stuck "on" until the next tap elsewhere —
+     the actual bug that made this look permanently visible on a phone), it
+     instead reveals only for the line the reader is already engaging with —
+     i.e. one whose glossary popover is open, via `.ask-hint-active`, toggled
+     in script rather than in this stylesheet. Either way it is also
+     reachable by keyboard via focus-visible. */
   .ask-hint {
     color: var(--fg-faint);
+    opacity: 0;
     transition: color var(--dur-2) var(--ease-io), opacity var(--dur-2) var(--ease-io);
   }
   .ask-hint:hover,
   .ask-hint:focus-visible {
     color: var(--accent);
   }
+  .ask-hint:focus-visible,
+  .ask-hint-active {
+    opacity: 1;
+  }
   @media (hover: hover) {
-    .ask-hint { opacity: 0; }
-    .group:hover .ask-hint,
-    .ask-hint:focus-visible {
+    .group:hover .ask-hint {
       opacity: 1;
     }
   }
