@@ -61,9 +61,102 @@ export interface LookupResult {
 
 /** Endings stripped when deriving a stem, longest first. */
 const ENDINGS = [
-  'ibus', 'orum', 'arum', 'erunt', 'eram', 'issem', 'isset', 'antur', 'entur',
-  'untur', 'atur', 'etur', 'itur', 'ri', 'bantur', 'batur', 'bant', 'bimus', 'bitis',
+  // Pluperfect indicative, full paradigm (eram already covered 1sg; the
+  // rest never did, so no pluperfect but the 1st singular resolved before).
+  'ibus', 'orum', 'arum', 'erunt', 'eram', 'erat', 'eras', 'erant', 'eratis', 'eramus',
+  'issem', 'isset', 'antur', 'entur', 'untur', 'atur', 'etur', 'itur', 'ri',
+  // Future passive/deponent 3rd plural (-buntur), missing next to the
+  // imperfect's "-bantur" above — amabuntur/videbuntur land on "ama-"/
+  // "vide-" the same way.
+  'bantur', 'buntur', 'batur', 'bant', 'bimus', 'bitis',
+  // Present passive/deponent 1st/2nd plural, both the bare form 1st/2nd/
+  // 4th conjugation (and 3rd-io, whose stem already has the "-i-") need
+  // and the "-i-"/"-a-" linked forms bare consonant-stem 3rd conjugation
+  // needs for its indicative and subjunctive respectively (regimur/
+  // regimini indicative, regamur/regamini subjunctive — obteramur is the
+  // subjunctive passive, "so that we may be crushed").
+  'mur', 'imur', 'amur', 'mini', 'imini', 'amini',
+  // Present active participle (-ns, all oblique cases). The bare "nt-"
+  // family below only reaches 1st/2nd conjugation, whose present stem
+  // ("ama-"/"tene-") already contains the thematic vowel the ending needs
+  // ("tenens"/"tenentis"/etc. all reduce to "tene"); 3rd, 3rd-io, and 4th
+  // conjugation ("regens", "capiens", "audiens") need the same "-e-" link
+  // the imperfect tense does, so they get their own set landing on "reg-"/
+  // "capi-"/"audi-" instead.
+  'ntibus', 'ntium', 'ntes', 'ntem', 'ntis', 'nti', 'nte', 'ntia', 'ns',
+  'entibus', 'entium', 'entes', 'entem', 'entis', 'enti', 'ente', 'entia', 'ens',
+  // Future active participle (-urus, -ura, -urum), landing on the perfect/
+  // supine stem already indexed from a verb's own principal parts.
+  'urus', 'urum', 'ura',
+  // Gerund / gerundive (-andus/-endus and their full case paradigm),
+  // landing on the present stem exactly like the participle endings above.
+  'andus', 'andum', 'anda', 'andi', 'ando', 'andos', 'andas', 'andis', 'andorum', 'andarum',
+  'endus', 'endum', 'enda', 'endi', 'endo', 'endos', 'endas', 'endis', 'endorum', 'endarum',
+  // Comparative adjective (-ior/-ius and its 3rd-declension case forms),
+  // landing on the positive adjective's own stem — gravior/gravius/
+  // gravioris/etc. all reduce to grav-, gravis's own indexed stem.
+  'ioribus', 'iorum', 'iores', 'ioris', 'iorem', 'iori', 'ior', 'ius',
+  // Superlative adjective (-issimus and its full case paradigm plus the
+  // adverbial -issime), landing on the positive adjective's own stem exactly
+  // like the comparative endings above — gravissimus/gravissime/etc. all
+  // reduce to grav-.
+  'issimorum', 'issimarum', 'issimus', 'issima', 'issimum', 'issimi', 'issimae',
+  'issimo', 'issimam', 'issimis', 'issimos', 'issimas', 'issime',
+  // Imperfect indicative/subjunctive with the "-e-" linking vowel that 3rd,
+  // 3rd-io, and 4th conjugation verbs need but 1st/2nd don't (their present
+  // stem already ends in the thematic vowel, so the bare "bat"/"rer" family
+  // below already reaches them) — regebat/audiebat/capiebatur/regerer all
+  // reduce to their bare present stem this way, the same stem the present
+  // participle and gerund endings above already resolve through.
+  'ebamus', 'ebatis', 'ebantur', 'ebamur', 'ebamini',
+  'ebam', 'ebas', 'ebat', 'ebant', 'ebar', 'ebaris', 'ebatur', 'bar',
+  // Imperfect subjunctive, active and passive/deponent alike (amarem/
+  // amarer, regerem/regerer — 3rd conjugation needs the same "-e-" link
+  // the imperfect indicative above does; the rest land straight on their
+  // own vowel-bearing stem).
+  'eremus', 'eretis', 'erentur', 'eremur', 'eremini',
+  'erer', 'ereris', 'eretur', 'erent', 'erem', 'eres', 'eret',
+  'remus', 'retis', 'rentur', 'remur', 'remini',
+  'rer', 'reris', 'retur', 'rem', 'res', 'ret',
   'amus', 'atis', 'emus', 'etis', 'imus', 'itis', 'unt', 'ant', 'ent', 'at', 'et',
+  // Bare 2-char personal endings: "it" (3rd/3rd-io/4th conj. 3rd singular
+  // present active — poscit/tollit/ponit, the connecting vowel the 1st/2nd/
+  // 3rd plural forms already resolve through never applies to this one
+  // person, so it needed its own ending) and "or" (1st singular present
+  // passive/deponent — ducor/queror/testor, landing on the same active
+  // present stem the rest of the passive paradigm already resolves through).
+  // "ar" is the same 1st-singular passive/deponent ending's SUBJUNCTIVE
+  // vowel (loquar, "I may speak", next to indicative loquor).
+  'it', 'or', 'ar',
+  // Perfect subjunctive / future perfect, full paradigm (only "erim" existed
+  // by accident, as a potential-subjunctive example — the rest never did).
+  'erimus', 'eritis', 'erint', 'erim', 'erit', 'eris',
+  // Perfect infinitive (-isse), landing on the same perfect stem the rest of
+  // the perfect system already resolves through (vidisse -> vid-, videbam's
+  // own stem; also covers the poetic syncopated "-asse" for 1st conjugation,
+  // e.g. amasse = amavisse, since that already strips to the bare root via
+  // the "asti" entry below rather than needing a separate rule here).
+  'isse',
+  // Perfect indicative 2nd singular/plural (-isti/-istis), landing on the
+  // same perfect stem as the rest of the paradigm — dixisti/dixistis reduce
+  // to "dix", audivisti to "audiv", exactly like "vidit"/"viderunt" already do.
+  'isti', 'istis',
+  // Bare "-tur" (3rd singular present passive) for the handful of irregular
+  // verbs whose infinitive has no thematic vowel to trigger the ordinary
+  // "-atur"/"-etur"/"-itur" endings above — fero's "fertur", and compounds
+  // of it and eo, land on their own bare stem this way instead.
+  'tur',
+  // Poetic syncopated 1st-conjugation perfect, dropping "-vi-" before an
+  // ending starting with s or r (amavisti -> amasti, "sperasti" for
+  // speravisti; amavisse -> amasse the same way for the infinitive) —
+  // landing on the bare root exactly like the ordinary present tense does,
+  // since 1st conjugation's own thematic vowel isn't present in this
+  // contracted form either.
+  'asti', 'asse',
+  // Ablative singular of a 3rd-declension comparative (crassior -> the
+  // ablative crassiore) — every other case of the comparative paradigm
+  // already has its own entry above.
+  'iore',
   'bat', 'bam', 'bit', 'bis', 'bo', 'mus', 'tis', 'ere', 'are', 'ire', 'ae', 'am',
   'as', 'is', 'os', 'us', 'um', 'em', 'es', 'ei', 'ia', 'ibus',
   'i', 'o', 'a', 'e', 'u', 's', 'm', 't',
@@ -130,7 +223,13 @@ export function buildIndex(entries: VocabEntry[]): Index {
     // in place it would fuse onto the word (e.g. "partis (f.)" -> "partisf"),
     // corrupting every full-genitive noun this loop was meant to index.
     for (const part of e.lemma.split(',').slice(1)) {
-      const p = part.replace(/\(.*?\)/g, '').trim();
+      // A deponent/semi-deponent's perfect is a participle + "sum" ("locutus
+      // sum", "ausus sum"), not a single word — dropping "sum" here is what
+      // lets the rest of this loop treat "locutus" like any other stem-
+      // bearing form, instead of normalizeWord fusing the two into the
+      // unindexable "locutussum" (its embedded space is stripped along with
+      // everything else that isn't a letter).
+      const p = part.replace(/\(.*?\)/g, '').replace(/\bsum\b/g, '').trim();
       let w: string | null = null;
       if (p.startsWith('-')) {
         // Dictionary-style abbreviated infinitive ("gero, -ere" means
@@ -181,8 +280,12 @@ export function buildIndex(entries: VocabEntry[]): Index {
       // this, no such form of a regular verb in these patterns resolves —
       // including, for "-are" verbs, the ordinary present tense itself
       // (amat, amamus) once its stem is longer than the single bare
-      // consonant root stemOf's generic endings reduce it to.
-      if (w.length >= 5 && (w.endsWith('are') || w.endsWith('ere') || w.endsWith('ire'))) {
+      // consonant root stemOf's generic endings reduce it to. "-eri" is the
+      // same present stem for a 2nd-conjugation-pattern DEPONENT infinitive
+      // (tueri, vereri, misereri — "tue-ntem", "vere-batur" need "tue-"/
+      // "vere-" exactly like an active verb's "-ere" infinitive needs
+      // "gere-").
+      if (w.length >= 5 && (w.endsWith('are') || w.endsWith('ere') || w.endsWith('ire') || w.endsWith('eri'))) {
         const presentStem = w.slice(0, -2);
         if (presentStem.length >= 3) push(byStem, presentStem, e);
       }
@@ -286,6 +389,108 @@ const EXTRA_FORMS: Record<string, string> = {
   // above, since "ferre" itself is irregular and not one of those) never
   // resolved: fertur ("it is said/carried") is common idiom in narrative.
   fertur: 'fero', feruntur: 'fero', ferebatur: 'fero', ferebantur: 'fero', ferri: 'fero',
+  // do, dare, dedi, datum — "to give". 1st conjugation, but its present stem
+  // is the bare 2-letter "da-", under the stemmer's 3-character floor, so no
+  // present-system form of it (unlike every other 1st-conjugation verb) can
+  // ever be found via `byStem`.
+  da: 'do', das: 'do', dat: 'do', damus: 'do', datis: 'do', dant: 'do',
+  dabam: 'do', dabas: 'do', dabat: 'do', dabamus: 'do', dabatis: 'do', dabant: 'do',
+  dabo: 'do', dabis: 'do', dabit: 'do', dabimus: 'do', dabitis: 'do', dabunt: 'do',
+  dem: 'do', des: 'do', det: 'do', demus: 'do', detis: 'do', dent: 'do',
+  darem: 'do', dares: 'do', daret: 'do', daremus: 'do', daretis: 'do', darent: 'do',
+  dedi: 'do', dedisti: 'do', dedit: 'do', dedimus: 'do', dedistis: 'do', dederunt: 'do', dedere: 'do',
+  datus: 'do', data: 'do', datum: 'do', dare: 'do', dans: 'do', dantis: 'do',
+  datur: 'do', dantur: 'do', dabatur: 'do', dabantur: 'do',
+  dandus: 'do', dandum: 'do', dando: 'do', dandi: 'do',
+  // eo, ire, ii/ivi, itum — "to go". Root is a single letter ("i-"/"e-"),
+  // so nothing built on it ever clears the stemmer's 3-character floor.
+  ibat: 'eo', ibam: 'eo', ibas: 'eo', ibant: 'eo', ibo: 'eo', ibit: 'eo',
+  iret: 'eo', irem: 'eo', irent: 'eo', eundo: 'eo', eundum: 'eo', eundi: 'eo',
+  iit: 'eo', iimus: 'eo', ierunt: 'eo', iere: 'eo',
+  // abeo — same short root, common enough compound to need its own set.
+  // eo's present participle is the irregular "iens, euntis" (not the
+  // regular "-ens" family every other verb uses), so its compounds' own
+  // participles need their own mapping too.
+  abeundi: 'abeo', abeundo: 'abeo', abeundum: 'abeo', abeuntes: 'abeo',
+  // eo's future participle "iturus" — irregular the same way "moriturus" is.
+  iturum: 'eo', itura: 'eo', iturus: 'eo',
+  // adsum, adesse, adfui — imperfect "aderat" family (its own short root
+  // "ad-" is fine at 2 letters plus the "es-" stem, but "aderant" collides
+  // textually with the plain pluperfect "-erant" ending above, which strips
+  // to just "ad" and falls under the floor).
+  aderam: 'adsum', aderas: 'adsum', aderat: 'adsum', aderamus: 'adsum',
+  aderatis: 'adsum', aderant: 'adsum',
+  // desum, deesse, defui — "to be lacking/wanting", same short-root issue.
+  deerat: 'desum', deerit: 'desum', deerunt: 'desum', deest: 'desum', deesse: 'desum',
+  // memini, meminisse — defective verb whose only imperative is the
+  // irregular future form "memento" (there is no present tense to build it
+  // from regularly).
+  memento: 'memini', mementote: 'memini',
+  // nosco, noscere, novi, notum — "to know, recognize". The syncopated
+  // perfect "novisti" -> "nosti" drops the "-vi-" the way "amasti" does for
+  // 1st conjugation, but on a stem the "asti" rule doesn't cover.
+  nosti: 'nosco', nostis: 'nosco', norat: 'nosco', norant: 'nosco',
+  // ago, agere, egi, actum — perfect stem "eg-" is only 2 letters.
+  egi: 'ago', egit: 'ago', egimus: 'ago', egistis: 'ago', egerunt: 'ago', egere: 'ago',
+  // vinco, vincere, vici, victum — perfect stem "vic-" is fine at 3 letters,
+  // but "vicisti" needed the "-isti" ending fixed above; already covered now.
+  // volo, velle, volui — irregular infinitive already handled via EXTRA_FORMS
+  // pattern for velle itself; "voluisti" needed the same "-isti" fix.
+  // for, fari, fatus sum — deponent, root is a single letter ("f-").
+  fatur: 'for', fabar: 'for', fantur: 'for', fatus: 'for', fata: 'for', fatum: 'for',
+  // sum, esse, fui — the one common imperative form "este" (2nd plural) was
+  // already covered; "esto" (2nd/3rd singular future imperative) was not.
+  esto: 'sum',
+  // capio, capere — "capit" ("it takes", Caesar B.G. 1.1 "initium capit a
+  // flumine Rhodano") is not itself a real inflected form of caput/capitis
+  // ("head") at all, but NOUN_STEMS registers "capit" as caput's oblique
+  // stem for genuinely declined forms like "capitis"/"capiti" — as a side
+  // effect that also makes the bare string "capit" match caput by a longer
+  // (and wrongly winning) stem length. An exact match here fixes it without
+  // touching the oblique-case indexing caput's other forms still need.
+  capit: 'capio',
+  // duo, duae, duo — the numeral's oblique cases don't fit the regular
+  // 1st/2nd declension endings the stemmer expects.
+  duobus: 'duo', duorum: 'duo', duabus: 'duo',
+  // quidam, quaedam, quoddam — "a certain" (qui + -dam), oblique cases with
+  // the inserted "-n-"/"-r-" a plain qui+dam split would miss.
+  quendam: 'quidam', quandam: 'quidam', quorundam: 'quidam', quarundam: 'quidam',
+  quibusdam: 'quidam', quosdam: 'quidam', quasdam: 'quidam',
+  // qui/quibus + the postpositive enclitic "-cum" ("with whom"), and
+  // ego + the same enclitic ("mecum", "with me") — neither "cum" attached
+  // this way is in the ordinary ENCLITICS list, since unlike -que/-ve/-ne it
+  // only ever attaches to a handful of ablative pronouns.
+  quocum: 'qui', quacum: 'qui', quibuscum: 'qui',
+  mecum: 'ego', tecum: 'tu',
+  // utor, uti, usus sum — root "ut-" is fine at 2 letters plus a vowel, but
+  // still under the stemmer's 3-character floor.
+  utantur: 'utor', utaris: 'utor',
+  // fio, fieri — root is a single letter ("fi-").
+  fient: 'fio', fit: 'fio',
+  // deus, dei — the headword's own 2-letter stem ("de-") is under the floor,
+  // same class of gap as os/oris above.
+  dei: 'deus', deo: 'deus',
+  // oro, orare and paro, parare — both fine 1st-conjugation verbs, but their
+  // future tense ("-abunt"/"-abuntur") needed an ending this table doesn't
+  // have, and both roots ("or-", "par-") are borderline short enough that a
+  // direct mapping is safer than adding a new generic ending just for these.
+  orabunt: 'oro', parabuntur: 'paro', oranda: 'oro',
+  // peto, petere — the syncopated perfect 3rd plural "petiere" (alongside
+  // regular "petiverunt"/"petierunt") drops the same way "amasse" does.
+  petiere: 'peto',
+  // volo, velle — "mavis" is a fused contraction of "magis vis" ("you
+  // prefer"), not a regular 2nd singular built on the stem at all.
+  mavis: 'volo',
+  // vis, vis — wildly irregular declension (vis, vis, vim, vi... plural
+  // vires, virium, viribus, vires, viribus), so almost none of its case
+  // forms fit the ordinary noun endings.
+  vim: 'vis', vires: 'vis', virium: 'vis', viribus: 'vis',
+  // ops, opis — plural "opes" ("resources, wealth") is the far more common
+  // form, but the headword's own 2-letter stem is under the floor.
+  opes: 'ops',
+  // sum compounds again: insum, inesse — "to be in/among" — not common
+  // enough on its own to warrant a separate dictionary entry.
+  inest: 'sum',
 };
 
 for (const [form, headword] of Object.entries(EXTRA_FORMS)) {
@@ -376,6 +581,72 @@ const SUPPLEMENTARY_EXTRA_FORMS: Record<string, string> = {
   // Aeneas, -ae — Greek 1st-declension accusative in "-an", not the Latin
   // "-am" the stemmer expects (e.g. Aeneid 1.617 "ipse... Aenean acciri").
   aenean: 'aeneas',
+  // sui, sibi, se — the emphatic/poetic doubled form "sese" alongside "se".
+  sese: 'sui',
+  // odi, odisse — perfect-in-form-only, so its "3rd plural" is the
+  // syncopated "odere" alongside the regular "oderunt".
+  odere: 'odi',
+  // ruo, ruere, rui — root is a bare 2-letter "ru-", under the stemmer's
+  // 3-character floor, so no present-system form of it ever indexed.
+  ruit: 'ruo', ruunt: 'ruo', ruisse: 'ruo', ruens: 'ruo',
+  // reus, rei — dative/ablative plural "reis" collides with nothing but
+  // also matches nothing, since the headword's own 2-letter stem is under
+  // the stemmer's floor.
+  reis: 'reus',
+  // iatraliptes — the one accusative form Pliny's text actually uses.
+  iatralipten: 'iatraliptes',
+  // aufero and offero (fero compounds) — irregular "ferre" infinitive means
+  // their passive 3rd singular ("-fertur") has no thematic vowel for the
+  // ordinary "-atur"/"-etur"/"-itur" endings to land on.
+  aufertur: 'aufero', offertur: 'offero',
+  // gigno, gignere, genui, genitum — progigno is the same verb with a
+  // prefix Whitaker's dictionary doesn't carry as its own headword.
+  progenuit: 'gigno',
+  // avus, avi — accusative plural, its own 2-letter stem under the floor.
+  avos: 'avus',
+  // Proper-noun oblique/Greek-declension forms the ordinary ENDINGS table
+  // and the generic "headword, genitive" lemma parser can't derive —
+  // exactly the same class of gap "aenean" above exists to close.
+  arpocras: 'harpocras', arpocrati: 'harpocras',
+  laocoonta: 'laocoon', iarban: 'iarbas',
+  tyrii: 'tyrius', tyrias: 'tyrius', tyrio: 'tyrius',
+  tyrrhena: 'tyrrhenus',
+  nicomedensem: 'nicomedenses',
+  dardanidum: 'dardanidae',
+  alciden: 'alcides', thesea: 'theseus',
+  gerusian: 'gerusia', iseon: 'iseum',
+  thermuthin: 'thermuthis', maximillae: 'maximilla',
+  // imus, ima, imum — headword's own 2-letter stem ("im-") is under the floor.
+  imas: 'imus',
+  // venor/miror — future 2nd singular alternate "-bere"/"-beris" ending, and
+  // (miror) the "-b-" future infix a deponent stem never otherwise carries.
+  uenabere: 'venor', miraberis: 'miror',
+  // percontor/adsumo — spelling variants ("percunctor" with -u-, "assumo"
+  // with assimilated -ss-) that don't match the headword's own stem letter
+  // for letter, exactly like "Arpocras" for "Harpocras" above.
+  percunctatus: 'percontor', assumpsi: 'adsumo',
+  // sono — "sonantior" is the comparative of its own present participle
+  // "sonans" ("more resounding"), not a headword of its own.
+  sonantior: 'sono',
+  // subeo — same irregular "-eunt-" participle eo's other compounds need.
+  subeuntem: 'subeo',
+  // morior — future participle "moriturus" is built irregularly on the
+  // present stem, not the supine stem "mortuus" its perfect actually uses.
+  moriturum: 'morior', morituram: 'morior', moriturus: 'morior',
+  // requiro — the syncopated perfect "requisisti" drops "-vi-" the same way
+  // "amasti" does, but on a stem the 1st-conjugation-only "asti" rule above
+  // doesn't reach.
+  requisisti: 'requiro',
+  // axis — headword's own 2-letter stem is under the floor.
+  axem: 'axis',
+  // insatiabilis — the 3rd-declension adjective's adverb ends "-iter", not
+  // the ordinary "-e"/"-er" the stemmer expects.
+  insatiabiliter: 'insatiabilis',
+  // hortor — its own stem ("hort-") is exactly the noun "hortus" ("garden")
+  // reduces to as well, and "hortus" is core. Without an exact match of its
+  // own, "hortatur" (Pliny 6.16.12) always loses that stem-length tie to
+  // the (wrong) core noun, since a stem match ranks purely by length.
+  hortatur: 'hortor',
 };
 
 for (const [form, headword] of Object.entries(SUPPLEMENTARY_EXTRA_FORMS)) {
@@ -446,19 +717,30 @@ function lookupWithEnclitic(index: Index, w: string): LookupResult[] {
  * candidates ranked by how much of the word they explain. The UI labels
  * stem matches as such, and the "ask about this line" AI action is the route
  * to a real parse in context.
+ *
+ * An exact match beats a stem match regardless of which tier it came from —
+ * not just within one tier's own results. Without this, a core-list word
+ * that merely *stems* to the query (e.g. "hortus" stemming to "hort") would
+ * silently outrank a supplementary word that is an *exact* dictionary match
+ * for it (e.g. "hortor" 3rd singular "hortatur"), since the core tier is
+ * consulted first and a plain "core non-empty?" check never lets the
+ * (correct) supplementary answer get a look in at all.
  */
 export function lookup(word: string): LookupResult[] {
   const w = normalizeWord(word);
   if (w.length < 1) return [];
 
   const core = lookupWithEnclitic(coreIndex, w);
-  const results = core.length > 0 ? core : lookupWithEnclitic(supplementaryIndex, w);
+  const coreExact = core.filter((r) => r.match === 'exact');
+  if (coreExact.length > 0) return coreExact.slice(0, 6);
 
+  const supplementary = lookupWithEnclitic(supplementaryIndex, w);
+  const supplementaryExact = supplementary.filter((r) => r.match === 'exact');
+  if (supplementaryExact.length > 0) return supplementaryExact.slice(0, 6);
+
+  const results = core.length > 0 ? core : supplementary;
   return results
-    .sort((a, b) => {
-      if (a.match !== b.match) return a.match === 'exact' ? -1 : 1;
-      return b.stemLength - a.stemLength;
-    })
+    .sort((a, b) => b.stemLength - a.stemLength)
     .slice(0, 6);
 }
 

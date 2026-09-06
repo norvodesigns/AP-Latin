@@ -8835,7 +8835,7 @@ export const coreVocabulary: VocabEntry[] = [
   },
   {
     id: 'volo',
-    lemma: `volo, -are, -avi, -atum`,
+    lemma: `volo, velle, volui`,
     headword: `volo`,
     pos: 'verb',
     definition: `to will, wish, want, purpose, be minded, determine`,
