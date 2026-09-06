@@ -70,6 +70,21 @@
   --shadow: rgba(60, 48, 26, 0.16);
   --shadow2: rgba(60, 48, 26, 0.10);
 
+  /* Highlighter washes for the Reader's select-to-annotate toolbar, named
+     for manuscript pigments to match the rest of the palette rather than
+     reading like a stock four-color marker set. Mixed against the live
+     --bg, so a single definition here already adapts to dark mode without
+     needing to be repeated in the theme blocks below. The *-fill variants
+     are the solid dot shown on the toolbar's own swatch buttons. */
+  --hl-gilt: color-mix(in srgb, var(--gilt) 35%, var(--bg));
+  --hl-gilt-fill: var(--gilt);
+  --hl-verdigris: color-mix(in srgb, #2f6e57 35%, var(--bg));
+  --hl-verdigris-fill: #3f8a6d;
+  --hl-woad: color-mix(in srgb, #2f5478 35%, var(--bg));
+  --hl-woad-fill: #3f6a94;
+  --hl-rubric: color-mix(in srgb, var(--accent) 28%, var(--bg));
+  --hl-rubric-fill: var(--accent);
+
   /* Semantic — kept for graded work, tuned to sit inside the palette. */
   --correct: #4a6b3f;
   --correct-bg: #eaefe2;
@@ -651,6 +666,12 @@ h1, h2, h3, h4 {
     margin: 0 -0.06em;
     cursor: pointer;
     transition: background-color 110ms ease, box-shadow 110ms ease;
+    /* A <button>'s text is not selectable by default in Chromium — without
+       this, dragging across word tokens (every word in the reader is one)
+       could never start a text selection at all, and the select-to-annotate
+       toolbar would never see a selection to act on. */
+    user-select: text;
+    -webkit-user-select: text;
   }
   .word:hover {
     background: var(--redtint);
@@ -664,6 +685,86 @@ h1, h2, h3, h4 {
   .word-flagged {
     box-shadow: inset 0 -0.09em 0 color-mix(in srgb, var(--gilt) 45%, transparent);
   }
+
+  /* A reader-made highlight — a wash under the text, the same shape as a
+     word's own hover state so a highlighted run of words reads as one
+     continuous mark rather than four separate boxes bumping together. */
+  .hl {
+    border-radius: 5px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+  .hl-gilt { background: var(--hl-gilt); }
+  .hl-verdigris { background: var(--hl-verdigris); }
+  .hl-woad { background: var(--hl-woad); }
+  .hl-rubric { background: var(--hl-rubric); }
+
+  /* The small dot marking a highlight that also carries a note — sits right
+     after the marked text, never before it, so it reads as an endnote mark. */
+  .note-mark {
+    display: inline-block;
+    margin-left: 0.2em;
+    font-size: 0.55em;
+    line-height: 1;
+    vertical-align: super;
+    color: var(--accent);
+    cursor: pointer;
+  }
+  .note-mark:hover,
+  .note-mark:focus-visible {
+    color: var(--fg);
+  }
+
+  /* The select-to-annotate toolbar — the same anchored-slip mechanism the
+     glossary uses (--gx/--gy, a full-width sheet on touch), but sized as a
+     compact bar instead of a tall card, since its content never needs the
+     room. */
+  .annotate-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 41;
+    background: var(--panel);
+    border: 0;
+    border-top: 1px solid var(--rule-strong);
+    box-shadow: 0 -12px 34px var(--shadow);
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+    padding: 1rem 1.25rem calc(1rem + env(safe-area-inset-bottom));
+    animation: sheet-up var(--dur-3) var(--ease) both;
+  }
+  @media (min-width: 1024px) {
+    .annotate-bar {
+      left: var(--gx);
+      top: var(--gy);
+      right: auto;
+      bottom: auto;
+      width: 236px;
+      border: 1px solid var(--rule-strong);
+      border-radius: var(--r-lg);
+      box-shadow: 0 10px 26px var(--shadow);
+      padding: 0.75rem 0.875rem;
+      animation: pop-in var(--dur-2) var(--ease) both;
+    }
+  }
+
+  .swatch {
+    width: 20px;
+    height: 20px;
+    border-radius: var(--r-pill);
+    border: 2px solid transparent;
+    cursor: pointer;
+    padding: 0;
+    transition: transform var(--dur-1) var(--ease-spring), border-color var(--dur-1) var(--ease-io);
+  }
+  .swatch:hover { transform: scale(1.12); }
+  .swatch-active { border-color: var(--fg); }
+  .swatch-gilt { background: var(--hl-gilt-fill); }
+  .swatch-verdigris { background: var(--hl-verdigris-fill); }
+  .swatch-woad { background: var(--hl-woad-fill); }
+  .swatch-rubric { background: var(--hl-rubric-fill); }
+
+  .hair-v { width: 1px; align-self: stretch; background: var(--hair); border: 0; }
 
   /* The glossary slip.
 
