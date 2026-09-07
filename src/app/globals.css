@@ -796,12 +796,24 @@ h1, h2, h3, h4 {
       right: auto;
       bottom: auto;
       width: 352px;
-      max-height: none;
+      /* A safety net, not the common case — most entries are far shorter
+         than the viewport — but a word with several stem-match candidates
+         can run long, and unlike the mobile sheet above this was never
+         capped, so it could run past the bottom of the screen with no way
+         to reach the rest without resizing the window. */
+      max-height: calc(100dvh - 32px);
+      overflow-y: auto;
       border: 1px solid var(--rule-strong);
       border-radius: var(--r-lg);
       box-shadow: 0 10px 26px var(--shadow);
       padding: 1.25rem 1.375rem 1.125rem;
       animation: pop-in var(--dur-2) var(--ease) both;
+    }
+    /* Flipped up when the word is too low on the screen for the slip to
+       fit below it — grows upward off the word's top edge instead. */
+    .glossary-above {
+      top: auto;
+      bottom: var(--gy-above);
     }
   }
 

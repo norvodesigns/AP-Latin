@@ -20,7 +20,10 @@ interface Selection {
   lineN: number;
   results: LookupResult[];
   x: number;
+  /** Anchor point: the word's bottom edge when the slip opens below it, or
+   *  its top edge when there isn't room below and it opens above instead. */
   y: number;
+  above: boolean;
 }
 
 /** A pending text-selection annotation: a token range plus where to anchor
@@ -123,12 +126,19 @@ export default function Reader({
       if (!glossaryEnabled) return;
       const rect = e.currentTarget.getBoundingClientRect();
       const results = lookup(word);
+      // Flip above the word when there isn't reasonably room below for even
+      // a short entry, and above actually has more room to offer — never
+      // flip a word near the very top of the screen just because it's also
+      // not near the bottom.
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const above = spaceBelow < 260 && rect.top > spaceBelow;
       setSel({
         word,
         lineN,
         results,
         x: rect.left + rect.width / 2,
-        y: rect.bottom,
+        y: above ? rect.top : rect.bottom,
+        above,
       });
       // Reading is the primary way vocabulary gets tracked here: an exact
       // dictionary match seeds the word into the SM-2 rotation automatically,
@@ -382,6 +392,18 @@ export default function Reader({
               </button>
             </div>
           </header>
+
+          <p
+            className="mb-8"
+            style={{
+              margin: '0 0 2rem',
+              fontFamily: 'var(--font-sans)',
+              fontSize: '0.8125rem',
+              color: 'var(--fg-faint)',
+            }}
+          >
+            Tip: select a word or phrase in the text to highlight it or attach a note.
+          </p>
 
           {!passage.required && (
             <div className="mb-8">
@@ -686,7 +708,7 @@ export default function Reader({
           ref={popRef}
           role="dialog"
           aria-label={`Glossary: ${sel.word}`}
-          className="glossary"
+          className={`glossary ${sel.above ? 'glossary-above' : ''}`}
           style={
             {
               // Clamped so the slip never runs off the right edge on desktop;
@@ -695,7 +717,15 @@ export default function Reader({
                 Math.max(sel.x - 176, 16),
                 (typeof window !== 'undefined' ? window.innerWidth : 1200) - 368,
               )}px`,
+              // Below the word: anchor its top 10px under the word's bottom
+              // edge. Above the word (not enough room below): anchor its
+              // bottom 10px above the word's top edge instead, so the slip
+              // grows upward off the word rather than running past the
+              // bottom of the viewport.
               '--gy': `${sel.y + 10}px`,
+              '--gy-above': `${
+                (typeof window !== 'undefined' ? window.innerHeight : 800) - sel.y + 10
+              }px`,
             } as React.CSSProperties
           }
         >
