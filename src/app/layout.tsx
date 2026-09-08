@@ -45,6 +45,28 @@ export const metadata: Metadata = {
   },
   description:
     'Lectio — a study environment for the AP Latin exam (2025–26 framework): Vergil’s Aeneid and Pliny’s Letters.',
+  /**
+   * "Add to Home Screen" in Safari has never fully read the web manifest —
+   * it takes the name from `apple-mobile-web-app-title` (set here) and the
+   * icon from the nearest `apple-touch-icon` link (generated automatically
+   * from apple-icon.tsx), rather than manifest.ts's `name`/`icons`. Both are
+   * kept in step so every install path — Safari's own and a manifest-aware
+   * one — lands on the same name and mark.
+   */
+  appleWebApp: {
+    capable: true,
+    title: 'Lectio',
+    statusBarStyle: 'default',
+  },
+  /**
+   * `appleWebApp.capable` above only emits the newer unprefixed
+   * `mobile-web-app-capable` tag. Safari has honored the `apple-` prefixed
+   * one for standalone mode since long before it recognized the unprefixed
+   * name, so it stays here alongside it rather than replacing it.
+   */
+  other: {
+    'apple-mobile-web-app-capable': 'yes',
+  },
 };
 
 export const viewport: Viewport = {
