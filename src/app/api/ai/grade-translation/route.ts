@@ -68,7 +68,11 @@ export async function POST(req: Request) {
   ].join(' ');
 
   const prompt = [
-    `PASSAGE: ${drill.citation}${passage ? ` (${passage.author === 'vergil' ? 'Vergil, verse' : 'Pliny, prose'})` : ''}`,
+    `PASSAGE: ${drill.citation}${
+      passage
+        ? ` (${passage.author.charAt(0).toUpperCase()}${passage.author.slice(1)}, ${passage.genre === 'poetry' ? 'verse' : 'prose'})`
+        : ''
+    }`,
     '',
     'FULL LATIN:',
     drill.latin,

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Passage } from '@/data/types';
 import { tokenize, lookup, type LookupResult } from '@/lib/latin';
-import { useStore, readingCoverage } from '@/store/useStore';
+import { useStore, readingCoverage, type Annotation, type HighlightColor } from '@/store/useStore';
 import { passageVocabIds } from '@/data/passages';
 import { BackLink, CedLink, SupplementaryNotice } from '@/components/ui';
 import { useRevealChildren } from '@/hooks/useRevealChildren';
@@ -20,8 +20,31 @@ interface Selection {
   lineN: number;
   results: LookupResult[];
   x: number;
+  /** Anchor point: the word's bottom edge when the slip opens below it, or
+   *  its top edge when there isn't room below and it opens above instead. */
   y: number;
+  above: boolean;
 }
+
+/** A pending text-selection annotation: a token range plus where to anchor
+ *  the popup, and the existing annotation for that exact range if any. */
+interface Annotate {
+  lineN: number;
+  startTok: number;
+  endTok: number;
+  text: string;
+  x: number;
+  y: number;
+  existing: Annotation | null;
+  noteOpen: boolean;
+}
+
+const HIGHLIGHT_COLORS: { id: HighlightColor; label: string }[] = [
+  { id: 'gilt', label: 'Gilt' },
+  { id: 'verdigris', label: 'Verdigris' },
+  { id: 'woad', label: 'Woad' },
+  { id: 'rubric', label: 'Rubric' },
+];
 
 export default function Reader({
   passage,
@@ -39,6 +62,9 @@ export default function Reader({
   const updatePassage = useStore((s) => s.updatePassage);
   const toggleBookmark = useStore((s) => s.toggleBookmark);
   const toggleFlaggedLine = useStore((s) => s.toggleFlaggedLine);
+  const setHighlight = useStore((s) => s.setHighlight);
+  const setAnnotationNote = useStore((s) => s.setAnnotationNote);
+  const removeAnnotation = useStore((s) => s.removeAnnotation);
   const encounterWord = useStore((s) => s.encounterWord);
   const wordEncounters = useStore((s) => s.wordEncounters);
   const vocab = useStore((s) => s.vocab);
@@ -47,14 +73,17 @@ export default function Reader({
 
   const state = passages[passage.id];
   const flagged = useMemo(() => new Set(state?.flaggedLines ?? []), [state?.flaggedLines]);
+  const annotations = useMemo(() => state?.annotations ?? [], [state?.annotations]);
 
   const [sel, setSel] = useState<Selection | null>(null);
-  const [notesOpen, setNotesOpen] = useState(false);
-  const [notesDraft, setNotesDraft] = useState('');
+  const [annotate, setAnnotate] = useState<Annotate | null>(null);
+  const [noteDraft, setNoteDraft] = useState('');
   const [showSummary, setShowSummary] = useState(false);
   const [askLine, setAskLine] = useState<{ n: number; latin: string } | null>(null);
   const [mounted, setMounted] = useState(false);
   const popRef = useRef<HTMLDivElement>(null);
+  const annotateRef = useRef<HTMLDivElement>(null);
+  const verseRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => setMounted(true), []);
   useEffect(() => {
@@ -64,28 +93,52 @@ export default function Reader({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [passage.id]);
 
-  useEffect(() => setNotesDraft(state?.notes ?? ''), [state?.notes, passage.id]);
+  useEffect(
+    () => setNoteDraft(annotate?.existing?.note ?? ''),
+    // Reset the draft only when the *identity* of the open annotation
+    // changes (a different selection, or none) — reacting to its `.note`
+    // too would stomp whatever the reader is mid-typing every time this
+    // same effect's own save writes that note back to the store.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [annotate?.existing?.id],
+  );
 
-  /* Persist notes on a debounce so typing stays smooth. */
-  useEffect(() => {
-    if (!notesOpen) return;
-    const t = window.setTimeout(() => {
-      if (notesDraft !== (state?.notes ?? '')) updatePassage(passage.id, { notes: notesDraft });
-    }, 400);
-    return () => window.clearTimeout(t);
-  }, [notesDraft, notesOpen, passage.id, state?.notes, updatePassage]);
+  /** Reopens the annotate popup, in note-editing mode, for an annotation the
+   *  reader already made — the note mark next to its highlighted text is the
+   *  only way back into it once the original selection is gone. */
+  const openAnnotationForEdit = useCallback((e: React.SyntheticEvent, ann: Annotation) => {
+    e.stopPropagation();
+    const rect = e.currentTarget.getBoundingClientRect();
+    setAnnotate({
+      lineN: ann.lineN,
+      startTok: ann.startTok,
+      endTok: ann.endTok,
+      text: ann.text,
+      x: rect.left + rect.width / 2,
+      y: rect.bottom,
+      existing: ann,
+      noteOpen: true,
+    });
+  }, []);
 
   const onWord = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>, word: string, lineN: number) => {
       if (!glossaryEnabled) return;
       const rect = e.currentTarget.getBoundingClientRect();
       const results = lookup(word);
+      // Flip above the word when there isn't reasonably room below for even
+      // a short entry, and above actually has more room to offer — never
+      // flip a word near the very top of the screen just because it's also
+      // not near the bottom.
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const above = spaceBelow < 260 && rect.top > spaceBelow;
       setSel({
         word,
         lineN,
         results,
         x: rect.left + rect.width / 2,
-        y: rect.bottom,
+        y: above ? rect.top : rect.bottom,
+        above,
       });
       // Reading is the primary way vocabulary gets tracked here: an exact
       // dictionary match seeds the word into the SM-2 rotation automatically,
@@ -98,14 +151,45 @@ export default function Reader({
     [glossaryEnabled, encounterWord, passage.id],
   );
 
-  /* Dismiss the glossary on outside click or Escape. */
+  /** Persists the pending selection as an annotation (creating one if it
+   *  doesn't exist yet, keeping its current color if it does) and returns
+   *  its id — the one place both the note-save and remove flows need. */
+  const ensureAnnotation = useCallback(
+    (a: Annotate) =>
+      setHighlight(passage.id, a.lineN, a.startTok, a.endTok, a.text, a.existing?.color ?? null),
+    [passage.id, setHighlight],
+  );
+
+  /** Closes the annotate popup, flushing an in-progress note edit first so
+   *  clicking away never silently discards what was typed. */
+  const closeAnnotate = useCallback(() => {
+    setAnnotate((prev) => {
+      if (prev?.noteOpen) {
+        const trimmed = noteDraft.trim();
+        if (trimmed !== (prev.existing?.note ?? '')) {
+          const a = ensureAnnotation(prev);
+          setAnnotationNote(passage.id, a.id, trimmed);
+        }
+      }
+      return null;
+    });
+    window.getSelection()?.removeAllRanges();
+  }, [noteDraft, ensureAnnotation, passage.id, setAnnotationNote]);
+
+  /* Dismiss the glossary or the annotate popup on outside click or Escape. */
   useEffect(() => {
-    if (!sel) return;
+    if (!sel && !annotate) return;
     const onDown = (e: MouseEvent) => {
-      if (popRef.current && !popRef.current.contains(e.target as Node)) setSel(null);
+      if (sel && popRef.current && !popRef.current.contains(e.target as Node)) setSel(null);
+      if (annotate && annotateRef.current && !annotateRef.current.contains(e.target as Node)) {
+        closeAnnotate();
+      }
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setSel(null);
+      if (e.key === 'Escape') {
+        setSel(null);
+        closeAnnotate();
+      }
     };
     document.addEventListener('mousedown', onDown);
     window.addEventListener('keydown', onKey);
@@ -113,9 +197,68 @@ export default function Reader({
       document.removeEventListener('mousedown', onDown);
       window.removeEventListener('keydown', onKey);
     };
-  }, [sel]);
+    // `closeAnnotate` is intentionally included despite changing identity on
+    // every note keystroke: it closes over `noteDraft`, and this listener
+    // must always flush the *current* draft, not whatever it was when the
+    // popup first opened.
+  }, [sel, annotate, closeAnnotate]);
 
-  /* Section shortcuts: c = cold read, n = notes, s = summary, b = bookmark. */
+  /* A dragged text selection inside the verse block opens the annotate
+   *  popup — checked on mouseup/touchend rather than every selectionchange
+   *  so the popup appears once, when the gesture finishes, not mid-drag.
+   *  Restricted to a single line: the anchor (line + token range) has to
+   *  stay simple enough that `tokenize()` on that one line's fixed text can
+   *  always reproduce it. A plain click for the glossary popover leaves the
+   *  selection collapsed, so it never reaches this. */
+  useEffect(() => {
+    const onUp = () => {
+      const selection = window.getSelection();
+      if (!selection || selection.isCollapsed || selection.rangeCount === 0) return;
+      if (!selection.toString().trim()) return;
+      const range = selection.getRangeAt(0);
+      if (!verseRef.current?.contains(range.commonAncestorContainer)) return;
+
+      const asEl = (n: Node) => (n.nodeType === Node.ELEMENT_NODE ? (n as Element) : n.parentElement);
+      const startTokEl = asEl(range.startContainer)?.closest<HTMLElement>('[data-tok]');
+      const endTokEl = asEl(range.endContainer)?.closest<HTMLElement>('[data-tok]');
+      if (!startTokEl || !endTokEl) return;
+      const startLineEl = startTokEl.closest<HTMLElement>('[data-line-n]');
+      const endLineEl = endTokEl.closest<HTMLElement>('[data-line-n]');
+      if (!startLineEl || !endLineEl || startLineEl !== endLineEl) return;
+
+      const lineN = Number(startLineEl.dataset.lineN);
+      let startTok = Number(startTokEl.dataset.tok);
+      let endTok = Number(endTokEl.dataset.tok);
+      if (startTok > endTok) [startTok, endTok] = [endTok, startTok];
+
+      const line = passage.lines.find((l) => l.n === lineN);
+      if (!line) return;
+      const tokens = tokenize(line.latin);
+      const text = tokens.slice(startTok, endTok + 1).map((t) => t.text).join('');
+      const existing =
+        annotations.find((a) => a.lineN === lineN && a.startTok === startTok && a.endTok === endTok) ??
+        null;
+      const rect = range.getBoundingClientRect();
+      setAnnotate({
+        lineN,
+        startTok,
+        endTok,
+        text,
+        x: rect.left + rect.width / 2,
+        y: rect.bottom,
+        existing,
+        noteOpen: false,
+      });
+    };
+    document.addEventListener('mouseup', onUp);
+    document.addEventListener('touchend', onUp);
+    return () => {
+      document.removeEventListener('mouseup', onUp);
+      document.removeEventListener('touchend', onUp);
+    };
+  }, [passage.lines, annotations]);
+
+  /* Section shortcuts: c = cold read, s = summary, b = bookmark. */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement | null;
@@ -127,7 +270,6 @@ export default function Reader({
       }
       const k = e.key.toLowerCase();
       if (k === 'c') { e.preventDefault(); toggleGlossary(); }
-      else if (k === 'n') { e.preventDefault(); setNotesOpen((v) => !v); }
       else if (k === 's') { e.preventDefault(); setShowSummary((v) => !v); }
       else if (k === 'b') { e.preventDefault(); toggleBookmark(passage.id); }
     };
@@ -135,7 +277,12 @@ export default function Reader({
     return () => window.removeEventListener('keydown', onKey);
   }, [passage.id, toggleGlossary, toggleBookmark]);
 
-  const isVerse = passage.author === 'vergil';
+  const isVerse = passage.genre === 'poetry';
+
+  const notedAnnotations = useMemo(
+    () => annotations.filter((a) => a.note.trim()).sort((a, b) => a.lineN - b.lineN),
+    [annotations],
+  );
 
   const vocabIds = useMemo(() => passageVocabIds(passage), [passage]);
   const coverage = useMemo(
@@ -227,16 +374,6 @@ export default function Reader({
               </button>
               <button
                 type="button"
-                className="btn"
-                onClick={() => setNotesOpen((v) => !v)}
-                aria-pressed={notesOpen}
-                aria-expanded={notesOpen}
-              >
-                Notes
-                <span className="kbd" aria-hidden="true">n</span>
-              </button>
-              <button
-                type="button"
                 className="btn px-3"
                 onClick={() => toggleBookmark(passage.id)}
                 aria-pressed={mounted ? Boolean(state?.bookmarked) : false}
@@ -256,6 +393,18 @@ export default function Reader({
             </div>
           </header>
 
+          <p
+            className="mb-8"
+            style={{
+              margin: '0 0 2rem',
+              fontFamily: 'var(--font-sans)',
+              fontSize: '0.8125rem',
+              color: 'var(--fg-faint)',
+            }}
+          >
+            Tip: select a word or phrase in the text to highlight it or attach a note.
+          </p>
+
           {!passage.required && (
             <div className="mb-8">
               <SupplementaryNotice />
@@ -263,13 +412,17 @@ export default function Reader({
           )}
 
           {/* The verse block: a red margin rule with the text ruled off it. */}
-          <div className="verse-block">
+          <div className="verse-block" ref={verseRef}>
             {passage.lines.map((line, li) => {
               const isFlagged = mounted && flagged.has(line.n);
               const tokens = tokenize(line.latin);
+              const lineAnnotations = mounted
+                ? annotations.filter((a) => a.lineN === line.n)
+                : [];
               return (
                 <div
                   key={`${line.n}-${li}`}
+                  data-line-n={line.n}
                   className="group relative flex gap-5"
                   style={{ marginBottom: isVerse ? '0.375rem' : '1.15rem' }}
                 >
@@ -297,12 +450,20 @@ export default function Reader({
                         : undefined,
                     }}
                   >
-                    {tokens.map((t) =>
-                      t.isWord ? (
+                    {tokens.map((t) => {
+                      const ann = lineAnnotations.find(
+                        (a) => t.index >= a.startTok && t.index <= a.endTok,
+                      );
+                      const hlClass = ann?.color ? `hl hl-${ann.color}` : '';
+                      // The note marker sits once, after the last token of
+                      // the span it belongs to, however many words that is.
+                      const showNoteMark = Boolean(ann?.note) && ann?.endTok === t.index;
+                      return t.isWord ? (
                         <button
                           key={t.index}
                           type="button"
-                          className={`word ${
+                          data-tok={t.index}
+                          className={`word ${hlClass} ${
                             sel?.word === t.text && sel?.lineN === line.n ? 'word-active' : ''
                           }`}
                           onClick={(e) => onWord(e, t.text, line.n)}
@@ -310,17 +471,23 @@ export default function Reader({
                           style={{ cursor: glossaryEnabled ? 'pointer' : 'text' }}
                         >
                           {t.text}
+                          {showNoteMark && ann && <NoteMark onOpen={(e) => openAnnotationForEdit(e, ann)} />}
                         </button>
                       ) : (
-                        <span key={t.index}>{t.text}</span>
-                      ),
-                    )}
+                        <span key={t.index} data-tok={t.index} className={hlClass}>
+                          {t.text}
+                          {showNoteMark && ann && <NoteMark onOpen={(e) => openAnnotationForEdit(e, ann)} />}
+                        </span>
+                      );
+                    })}
                   </p>
 
                   <button
                     type="button"
                     onClick={() => setAskLine({ n: line.n, latin: line.latin })}
-                    className="slab-sm shrink-0 self-start opacity-0 transition-opacity duration-200 focus-visible:opacity-100 group-hover:opacity-100"
+                    className={`slab-sm ask-hint shrink-0 self-start ${
+                      sel?.lineN === line.n ? 'ask-hint-active' : ''
+                    }`}
                     style={{ marginTop: '0.9rem' }}
                     title="Ask about this line"
                   >
@@ -345,26 +512,10 @@ export default function Reader({
             {passage.macronized
               ? 'This passage carries vowel-quantity macrons from the source.'
               : 'This source does not mark vowel quantity; macrons are not shown because they would have to be invented.'}{' '}
-            Click a line number to flag it as hard. This passage&rsquo;s place on the syllabus is
-            set by the <CedLink to="requiredReading">CED&rsquo;s required reading list</CedLink>.
+            Click a line number to flag it as hard, or select any span of text to highlight it or
+            attach a note. This passage&rsquo;s place on the syllabus is set by the{' '}
+            <CedLink to="requiredReading">CED&rsquo;s required reading list</CedLink>.
           </p>
-
-          {notesOpen && (
-            <div className="animate-in mt-8">
-              <div className="mb-3 flex items-baseline justify-between gap-3">
-                <span className="rubric">Your notes · {passage.citation}</span>
-                <span className="slab-sm">saved automatically</span>
-              </div>
-              <textarea
-                value={notesDraft}
-                onChange={(e) => setNotesDraft(e.target.value)}
-                rows={8}
-                className="textarea"
-                style={{ resize: 'vertical' }}
-                placeholder="Grammar you keep tripping on, an argument you want to use in an essay, a line worth memorising…"
-              />
-            </div>
-          )}
         </article>
 
         {/* The ruling */}
@@ -436,7 +587,7 @@ export default function Reader({
           {vocabIds.length > 0 && (
             <RailSection
               title="Vocabulary coverage"
-              last={!(mounted && flagged.size > 0)}
+              last={!(mounted && (notedAnnotations.length > 0 || flagged.size > 0))}
               aside={
                 <span
                   style={{
@@ -478,6 +629,57 @@ export default function Reader({
             </RailSection>
           )}
 
+          {mounted && notedAnnotations.length > 0 && (
+            <RailSection title="Your notes" last={flagged.size === 0}>
+              <ul className="flex flex-col gap-5 pl-0" style={{ listStyle: 'none' }}>
+                {notedAnnotations.map((a) => (
+                  <li key={a.id}>
+                    <button
+                      type="button"
+                      className="latin text-left"
+                      style={{
+                        margin: 0,
+                        fontSize: '1.0625rem',
+                        background: 'none',
+                        border: 0,
+                        padding: 0,
+                        cursor: 'pointer',
+                      }}
+                      onClick={() => {
+                        document
+                          .querySelector(`[data-line-n="${a.lineN}"]`)
+                          ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }}
+                      title="Jump to this line"
+                    >
+                      {a.color && <span className={`hl hl-${a.color} rounded-sm`}>{a.text}</span>}
+                      {!a.color && <>&ldquo;{a.text}&rdquo;</>}
+                    </button>
+                    <p
+                      style={{
+                        margin: '0.375rem 0 0',
+                        fontFamily: 'var(--font-sans)',
+                        fontSize: '0.9375rem',
+                        lineHeight: 1.5,
+                        color: 'var(--ink2)',
+                      }}
+                    >
+                      {a.note}
+                    </p>
+                    <button
+                      type="button"
+                      className="slab-sm mt-1.5"
+                      style={{ color: 'var(--fg-faint)' }}
+                      onClick={() => removeAnnotation(passage.id, a.id)}
+                    >
+                      Remove
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </RailSection>
+          )}
+
           {mounted && flagged.size > 0 && (
             <RailSection title={`Flagged ${isVerse ? 'lines' : 'sections'}`} last>
               <div className="flex flex-wrap gap-2">
@@ -506,7 +708,7 @@ export default function Reader({
           ref={popRef}
           role="dialog"
           aria-label={`Glossary: ${sel.word}`}
-          className="glossary"
+          className={`glossary ${sel.above ? 'glossary-above' : ''}`}
           style={
             {
               // Clamped so the slip never runs off the right edge on desktop;
@@ -515,7 +717,15 @@ export default function Reader({
                 Math.max(sel.x - 176, 16),
                 (typeof window !== 'undefined' ? window.innerWidth : 1200) - 368,
               )}px`,
+              // Below the word: anchor its top 10px under the word's bottom
+              // edge. Above the word (not enough room below): anchor its
+              // bottom 10px above the word's top edge instead, so the slip
+              // grows upward off the word rather than running past the
+              // bottom of the viewport.
               '--gy': `${sel.y + 10}px`,
+              '--gy-above': `${
+                (typeof window !== 'undefined' ? window.innerHeight : 800) - sel.y + 10
+              }px`,
             } as React.CSSProperties
           }
         >
@@ -576,6 +786,12 @@ export default function Reader({
                     {r.match === 'stem' && (
                       <span style={{ color: 'var(--fg-faint)' }}> · stem match, verify in context</span>
                     )}
+                    {r.entry.supplementary && (
+                      <span style={{ color: 'var(--fg-faint)' }}>
+                        {' '}
+                        · not on the CED core list — the exam would gloss this one for you too
+                      </span>
+                    )}
                   </div>
                   <div
                     style={{
@@ -604,7 +820,12 @@ export default function Reader({
                 if (top) seedVocab([top.entry.id]);
                 setSel(null);
               }}
-              disabled={sel.results.length === 0}
+              disabled={sel.results.length === 0 || Boolean(sel.results[0]?.entry.supplementary)}
+              title={
+                sel.results[0]?.entry.supplementary
+                  ? 'Not on the CED core list, so it has no flashcard deck entry'
+                  : undefined
+              }
             >
               ＋ Add to deck
             </button>
@@ -623,6 +844,123 @@ export default function Reader({
         </div>
       )}
 
+      {/* ─────────── Select-to-annotate toolbar ─────────── */}
+      {annotate && (
+        <div
+          ref={annotateRef}
+          role="dialog"
+          aria-label="Highlight or annotate selection"
+          className="annotate-bar"
+          style={
+            {
+              '--gx': `${Math.min(
+                Math.max(annotate.x - 110, 16),
+                (typeof window !== 'undefined' ? window.innerWidth : 1200) - 236,
+              )}px`,
+              '--gy': `${annotate.y + 10}px`,
+            } as React.CSSProperties
+          }
+        >
+          {!annotate.noteOpen ? (
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5">
+                {HIGHLIGHT_COLORS.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    className={`swatch swatch-${c.id} ${
+                      annotate.existing?.color === c.id ? 'swatch-active' : ''
+                    }`}
+                    title={c.label}
+                    aria-label={`Highlight in ${c.label}`}
+                    onClick={() => {
+                      const nextColor = annotate.existing?.color === c.id ? null : c.id;
+                      const a = setHighlight(
+                        passage.id,
+                        annotate.lineN,
+                        annotate.startTok,
+                        annotate.endTok,
+                        annotate.text,
+                        nextColor,
+                      );
+                      setAnnotate({ ...annotate, existing: nextColor ? a : null });
+                      // The browser's own blue selection band would otherwise
+                      // sit on top of the highlight's color and muddy it.
+                      window.getSelection()?.removeAllRanges();
+                    }}
+                  />
+                ))}
+              </div>
+              <div className="hair-v" aria-hidden="true" />
+              <button
+                type="button"
+                className="slab-sm"
+                onClick={() => {
+                  navigator.clipboard?.writeText(annotate.text).catch(() => {});
+                  window.getSelection()?.removeAllRanges();
+                  setAnnotate(null);
+                }}
+              >
+                Copy
+              </button>
+              <button
+                type="button"
+                className="slab-sm"
+                onClick={() => setAnnotate({ ...annotate, noteOpen: true })}
+              >
+                {annotate.existing?.note ? 'Edit note' : 'Note'}
+              </button>
+              {annotate.existing && (
+                <button
+                  type="button"
+                  className="slab-sm"
+                  style={{ color: 'var(--fg-faint)' }}
+                  onClick={() => {
+                    if (annotate.existing) removeAnnotation(passage.id, annotate.existing.id);
+                    window.getSelection()?.removeAllRanges();
+                    setAnnotate(null);
+                  }}
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2.5">
+              <p
+                className="latin"
+                style={{ margin: 0, fontSize: '1rem', color: 'var(--fg-muted)' }}
+              >
+                &ldquo;{annotate.text}&rdquo;
+              </p>
+              <textarea
+                autoFocus
+                value={noteDraft}
+                onChange={(e) => setNoteDraft(e.target.value)}
+                rows={3}
+                className="textarea"
+                style={{ resize: 'vertical', fontSize: '0.9375rem' }}
+                placeholder="What's worth remembering about this?"
+              />
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  className="btn btn-rubric"
+                  onClick={() => {
+                    const a = ensureAnnotation(annotate);
+                    setAnnotationNote(passage.id, a.id, noteDraft.trim());
+                    window.getSelection()?.removeAllRanges();
+                    setAnnotate(null);
+                  }}
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {askLine && (
         <AskAboutLine
           passage={passage}
@@ -632,6 +970,30 @@ export default function Reader({
         />
       )}
     </div>
+  );
+}
+
+/** A small superscript dot marking a highlighted span that also carries a
+ *  note — the only visible trace of the note once its original selection is
+ *  gone, and the only way back into editing it. */
+function NoteMark({ onOpen }: { onOpen: (e: React.SyntheticEvent) => void }) {
+  return (
+    <span
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onOpen(e);
+        }
+      }}
+      className="note-mark"
+      title="View note"
+      aria-label="View note on this text"
+    >
+      ●
+    </span>
   );
 }
 

@@ -136,7 +136,7 @@ function PassageRow({ p }: { p: (typeof allPassages)[number] }) {
             {p.genre}
           </span>
           <span>
-            {p.lines.length} {p.author === 'vergil' ? 'lines' : '§§'}
+            {p.lines.length} {p.genre === 'poetry' ? 'lines' : '§§'}
           </span>
           <span>{p.wordCount} words</span>
         </span>

@@ -70,6 +70,21 @@
   --shadow: rgba(60, 48, 26, 0.16);
   --shadow2: rgba(60, 48, 26, 0.10);
 
+  /* Highlighter washes for the Reader's select-to-annotate toolbar, named
+     for manuscript pigments to match the rest of the palette rather than
+     reading like a stock four-color marker set. Mixed against the live
+     --bg, so a single definition here already adapts to dark mode without
+     needing to be repeated in the theme blocks below. The *-fill variants
+     are the solid dot shown on the toolbar's own swatch buttons. */
+  --hl-gilt: color-mix(in srgb, var(--gilt) 35%, var(--bg));
+  --hl-gilt-fill: var(--gilt);
+  --hl-verdigris: color-mix(in srgb, #2f6e57 35%, var(--bg));
+  --hl-verdigris-fill: #3f8a6d;
+  --hl-woad: color-mix(in srgb, #2f5478 35%, var(--bg));
+  --hl-woad-fill: #3f6a94;
+  --hl-rubric: color-mix(in srgb, var(--accent) 28%, var(--bg));
+  --hl-rubric-fill: var(--accent);
+
   /* Semantic — kept for graded work, tuned to sit inside the palette. */
   --correct: #4a6b3f;
   --correct-bg: #eaefe2;
@@ -341,6 +356,87 @@ h1, h2, h3, h4 {
     letter-spacing: 0.16em;
     text-transform: uppercase;
     color: var(--fg-muted);
+  }
+
+  /* A declension/conjugation paradigm, ruled rather than boxed — the page's
+     own hard geometry, not a bordered "card" pretending to be a table. */
+  .chart {
+    border-collapse: collapse;
+    font-family: var(--font-latin);
+    font-size: 0.9375rem;
+  }
+  .chart caption {
+    caption-side: top;
+    text-align: left;
+    font-family: var(--font-sans);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    padding-bottom: 0.625rem;
+  }
+  .chart th, .chart td {
+    border: 1px solid var(--hair);
+    padding: 0.375rem 0.75rem;
+    text-align: left;
+  }
+  .chart thead th {
+    font-family: var(--font-sans);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    border-bottom: 1px solid var(--rule-strong);
+    white-space: normal;
+  }
+  .chart tbody th {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--fg-muted);
+  }
+  .chart tfoot td {
+    font-family: var(--font-sans);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--fg-muted);
+    white-space: normal;
+  }
+
+  /* The per-line "ask" control in the Reading Room — one per line, in full,
+     reads as clutter, so it stays hidden by default on every device. On a
+     device with a real pointer, hovering the line reveals it — gated on
+     `any-hover`, not the primary-input-only `hover` media feature, since a
+     touchscreen laptop with a mouse or trackpad attached reports `hover:
+     none` (touch is its primary pointer) even while the mouse is what the
+     reader is actually using, which silently hid this behind the touch
+     fallback below for exactly that hardware. On a touchscreen with no
+     hover-capable input at all (where a stray tap can otherwise leave a
+     phantom `:hover` state stuck "on" until the next tap elsewhere — the
+     actual bug that made this look permanently visible on a phone), it
+     instead reveals only for the line the reader is already engaging with —
+     i.e. one whose glossary popover is open, via `.ask-hint-active`, toggled
+     in script rather than in this stylesheet. Either way it is also
+     reachable by keyboard via focus-visible. */
+  .ask-hint {
+    color: var(--fg-faint);
+    opacity: 0;
+    transition: color var(--dur-2) var(--ease-io), opacity var(--dur-2) var(--ease-io);
+  }
+  .ask-hint:hover,
+  .ask-hint:focus-visible {
+    color: var(--accent);
+  }
+  .ask-hint:focus-visible,
+  .ask-hint-active {
+    opacity: 1;
+  }
+  @media (any-hover: hover) {
+    .group:hover .ask-hint {
+      opacity: 1;
+    }
   }
 
   /* Retained so older markup keeps its shape while sections are converted. */
@@ -622,6 +718,12 @@ h1, h2, h3, h4 {
     margin: 0 -0.06em;
     cursor: pointer;
     transition: background-color 110ms ease, box-shadow 110ms ease;
+    /* A <button>'s text is not selectable by default in Chromium — without
+       this, dragging across word tokens (every word in the reader is one)
+       could never start a text selection at all, and the select-to-annotate
+       toolbar would never see a selection to act on. */
+    user-select: text;
+    -webkit-user-select: text;
   }
   .word:hover {
     background: var(--redtint);
@@ -635,6 +737,86 @@ h1, h2, h3, h4 {
   .word-flagged {
     box-shadow: inset 0 -0.09em 0 color-mix(in srgb, var(--gilt) 45%, transparent);
   }
+
+  /* A reader-made highlight — a wash under the text, the same shape as a
+     word's own hover state so a highlighted run of words reads as one
+     continuous mark rather than four separate boxes bumping together. */
+  .hl {
+    border-radius: 5px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+  .hl-gilt { background: var(--hl-gilt); }
+  .hl-verdigris { background: var(--hl-verdigris); }
+  .hl-woad { background: var(--hl-woad); }
+  .hl-rubric { background: var(--hl-rubric); }
+
+  /* The small dot marking a highlight that also carries a note — sits right
+     after the marked text, never before it, so it reads as an endnote mark. */
+  .note-mark {
+    display: inline-block;
+    margin-left: 0.2em;
+    font-size: 0.55em;
+    line-height: 1;
+    vertical-align: super;
+    color: var(--accent);
+    cursor: pointer;
+  }
+  .note-mark:hover,
+  .note-mark:focus-visible {
+    color: var(--fg);
+  }
+
+  /* The select-to-annotate toolbar — the same anchored-slip mechanism the
+     glossary uses (--gx/--gy, a full-width sheet on touch), but sized as a
+     compact bar instead of a tall card, since its content never needs the
+     room. */
+  .annotate-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 41;
+    background: var(--panel);
+    border: 0;
+    border-top: 1px solid var(--rule-strong);
+    box-shadow: 0 -12px 34px var(--shadow);
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+    padding: 1rem 1.25rem calc(1rem + env(safe-area-inset-bottom));
+    animation: sheet-up var(--dur-3) var(--ease) both;
+  }
+  @media (min-width: 1024px) {
+    .annotate-bar {
+      left: var(--gx);
+      top: var(--gy);
+      right: auto;
+      bottom: auto;
+      width: 236px;
+      border: 1px solid var(--rule-strong);
+      border-radius: var(--r-lg);
+      box-shadow: 0 10px 26px var(--shadow);
+      padding: 0.75rem 0.875rem;
+      animation: pop-in var(--dur-2) var(--ease) both;
+    }
+  }
+
+  .swatch {
+    width: 20px;
+    height: 20px;
+    border-radius: var(--r-pill);
+    border: 2px solid transparent;
+    cursor: pointer;
+    padding: 0;
+    transition: transform var(--dur-1) var(--ease-spring), border-color var(--dur-1) var(--ease-io);
+  }
+  .swatch:hover { transform: scale(1.12); }
+  .swatch-active { border-color: var(--fg); }
+  .swatch-gilt { background: var(--hl-gilt-fill); }
+  .swatch-verdigris { background: var(--hl-verdigris-fill); }
+  .swatch-woad { background: var(--hl-woad-fill); }
+  .swatch-rubric { background: var(--hl-rubric-fill); }
+
+  .hair-v { width: 1px; align-self: stretch; background: var(--hair); border: 0; }
 
   /* The glossary slip.
 
@@ -666,12 +848,24 @@ h1, h2, h3, h4 {
       right: auto;
       bottom: auto;
       width: 352px;
-      max-height: none;
+      /* A safety net, not the common case — most entries are far shorter
+         than the viewport — but a word with several stem-match candidates
+         can run long, and unlike the mobile sheet above this was never
+         capped, so it could run past the bottom of the screen with no way
+         to reach the rest without resizing the window. */
+      max-height: calc(100dvh - 32px);
+      overflow-y: auto;
       border: 1px solid var(--rule-strong);
       border-radius: var(--r-lg);
       box-shadow: 0 10px 26px var(--shadow);
       padding: 1.25rem 1.375rem 1.125rem;
       animation: pop-in var(--dur-2) var(--ease) both;
+    }
+    /* Flipped up when the word is too low on the screen for the slip to
+       fit below it — grows upward off the word's top edge instead. */
+    .glossary-above {
+      top: auto;
+      bottom: var(--gy-above);
     }
   }
 
@@ -822,6 +1016,27 @@ h1, h2, h3, h4 {
   .foot-rule:disabled { cursor: default; }
   .foot-rule:disabled:hover::before { opacity: 1; }
 
+  /* The elision target beneath a word-final syllable — a tap, not a
+     giveaway. Faint until claimed or hovered, so a line does not read as
+     dotted with answers before the student has decided anything. */
+  .elision-tap {
+    display: block;
+    width: 100%;
+    margin-top: 2px;
+    border: 0;
+    background: transparent;
+    padding: 0 2px;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1;
+    text-align: center;
+    transition: opacity var(--dur-2) var(--ease-io), color var(--dur-2) var(--ease-io);
+  }
+  .elision-tap:hover,
+  .elision-tap:focus-visible { opacity: 1; color: var(--accent); }
+  .elision-tap:disabled { cursor: default; }
+
   /* Verse gets a red margin rule and hanging line numbers. */
   .verse-block {
     border-left: 1px solid var(--redline);
@@ -925,6 +1140,32 @@ h1, h2, h3, h4 {
      keep their entrance stagger while the panel retreats reads as two
      animations fighting. */
   .index-panel[data-closing='true'] * { animation: none !important; }
+
+  /* — The splash screen —————————————————————————————————————————————
+     A rectangular dialog over a blurred, dimmed home screen, the same
+     scrim-plus-panel shape as the index above but centered rather than
+     docked, and one the reader dismisses by dissolving rather than by
+     retreating off an edge — there's nowhere for a centered card to
+     retreat to. */
+  .splash-scrim {
+    background: color-mix(in srgb, var(--bg-sunk) 55%, transparent);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    animation: scrim-in var(--dur-2) var(--ease-io) both;
+  }
+  .splash-scrim[data-closing='true'] { animation: scrim-out var(--dur-2) var(--ease-io) both; }
+
+  .splash-card {
+    background: var(--bg-raised);
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--r-lg);
+    box-shadow: 0 24px 60px -24px var(--shadow), 0 2px 8px -4px var(--shadow2);
+    animation: pop-in var(--dur-2) var(--ease) both;
+  }
+  .splash-card[data-closing='true'] {
+    animation: pop-out var(--dur-2) var(--ease-io) both;
+    pointer-events: none;
+  }
 
   /* Rows arrive a beat after the panel, so the panel lands first and the
      contents fill in — rather than everything moving at once. */
@@ -1113,6 +1354,10 @@ h1, h2, h3, h4 {
 @keyframes pop-in {
   from { opacity: 0; transform: translateY(4px) scale(0.98); }
   to { opacity: 1; transform: none; }
+}
+@keyframes pop-out {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: scale(0.98); }
 }
 
 /* Quantity marks land above their syllable rather than fading in place. */

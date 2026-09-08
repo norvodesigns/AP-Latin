@@ -331,6 +331,281 @@ export const deviceCards: DeviceCard[] = [
       },
     ],
   },
+
+  /* -------------------------------------------------------------- */
+  /* Further devices — real terms an AP reader also expects, beyond */
+  /* the fifteen already above.                                      */
+  /* -------------------------------------------------------------- */
+
+  {
+    id: 'metaphor',
+    name: 'Metaphor',
+    definition: 'An implied comparison between two unlike things, made by calling one the other outright rather than saying it is "like" it.',
+    effect:
+      'Compresses a comparison into a single word or phrase instead of spelling it out, so it works faster than a simile and can be sustained quietly across a whole passage without announcing itself.',
+    examples: [
+      {
+        latin: 'Fāma, malum quā nōn aliud vēlōcius ūllum',
+        citation: 'Aeneid 4.174',
+        passageId: 'aen-4-165-197',
+        analysis: 'malum ("an evil/disease") is a metaphor identifying Rumour itself as a sickness, before the personification that follows develops the idea further.',
+      },
+    ],
+  },
+  {
+    id: 'hyperbole',
+    name: 'Hyperbole',
+    definition: 'Deliberate, obvious exaggeration, not meant to be taken literally.',
+    effect:
+      'Signals the intensity of a feeling or the scale of an event by overshooting the literal truth — the exaggeration itself, being unmistakable, is what communicates the emotion.',
+    examples: [
+      {
+        latin: 'quā nōn aliud vēlōcius ūllum',
+        citation: 'Aeneid 4.174',
+        passageId: 'aen-4-165-197',
+        analysis: '"than which nothing else is swifter" — an absolute superlative claim about Rumour\'s speed, not literally defensible but immediately felt.',
+      },
+    ],
+  },
+  {
+    id: 'zeugma',
+    name: 'Zeugma',
+    definition: 'One verb (or other governing word) made to apply to two or more objects, at least one of which it does not literally or grammatically suit.',
+    effect:
+      'Yokes two ideas together through a shared word that fits one sense literally and the other only figuratively, often for wit or compression — the strain of the shared verb is itself the point.',
+    examples: [
+      {
+        latin: 'ōdī et amō',
+        citation: 'standard textbook example (cf. Catullus 85)',
+        analysis: 'Not itself a zeugma, but the same author\'s technique elsewhere routinely yokes a single verb across an emotional and a literal object in one breath — worth studying alongside genuine zeugma for the family resemblance.',
+      },
+    ],
+  },
+  {
+    id: 'hendiadys',
+    name: 'Hendiadys',
+    definition: 'Expressing a single complex idea as two nouns joined by "and" instead of a noun modified by an adjective ("with cups and gold" for "with golden cups").',
+    effect:
+      'Slows the phrase down and gives each element its own weight, often lending a certain ceremonial or heightened quality to what a plain adjective would say more quickly.',
+    examples: [
+      {
+        latin: 'molem et montēs',
+        citation: 'standard textbook example (a common Vergilian pattern)',
+        analysis: '"a mass and mountains", for "a mountainous mass" — two coordinated nouns standing in for noun-plus-adjective.',
+      },
+    ],
+  },
+  {
+    id: 'synecdoche',
+    name: 'Synecdoche',
+    definition: 'A part standing for the whole (or, less often, the whole for a part) — "sail" for "ship", "roof" for "house".',
+    effect: 'Narrows focus to one vivid detail and lets it carry the whole, often making an abstraction or a large scene feel immediate and concrete.',
+    examples: [
+      {
+        latin: 'puppis',
+        citation: 'standard textbook example (common in Vergil for "ship")',
+        analysis: '"stern" used for the entire ship — a single part of a vessel standing for the whole vessel, extremely common in nautical epic narrative.',
+      },
+    ],
+  },
+  {
+    id: 'oxymoron',
+    name: 'Oxymoron',
+    definition: 'Two normally contradictory terms placed together for effect.',
+    effect: 'The jolt of the contradiction forces a reader to hold two opposed ideas at once, often capturing a genuinely paradoxical feeling no single word could.',
+    examples: [
+      {
+        latin: 'sōlācia luctūs',
+        citation: 'standard textbook example (a recurring Vergilian phrase-type, "the comforts of grief")',
+        analysis: 'Pairing "comfort" with "grief" holds together an idea that is emotionally true — the strange comfort of mourning — even though the two words seem to contradict each other.',
+      },
+    ],
+  },
+  {
+    id: 'anastrophe',
+    name: 'Anastrophe',
+    definition: 'Inversion of the normal (or expected) order of two words, most often a preposition placed after its object instead of before it.',
+    effect: 'A smaller-scale relative of hyperbaton, drawing attention to the displaced word and giving the line a more elevated, less conversational register.',
+    examples: [
+      {
+        latin: 'Ītaliam … Lāvīniaque vēnit / lītora',
+        citation: 'Aeneid 1.2–3',
+        passageId: 'aen-1-1-33',
+        analysis: 'lītora is postponed well past the phrase it belongs with, an example of the broader word-order flexibility anastrophe is one special case of — here a preposition is not involved, but the same displacing instinct is at work.',
+      },
+    ],
+  },
+  {
+    id: 'prolepsis',
+    name: 'Prolepsis (anticipation)',
+    definition: 'An adjective (or noun) applied to something in anticipation of a result that has not yet happened at that point in the sentence — describing a thing by what it is ABOUT to become.',
+    effect: 'Compresses cause and effect into a single word, letting the outcome of an action colour it before the action is even complete.',
+    examples: [
+      {
+        latin: 'submersās obrue puppēs',
+        citation: 'standard textbook example (cf. Aeneid 1.69, Juno\'s prayer)',
+        analysis: '"Overwhelm [and thereby] sink the ships" — submersās ("sunk") describes the ships proleptically, as an effect of the very verb (obrue) that will cause it.',
+      },
+    ],
+  },
+  {
+    id: 'aposiopesis',
+    name: 'Aposiopesis',
+    definition: 'A sudden breaking-off of a sentence, leaving it deliberately unfinished, as if the speaker cannot or will not continue.',
+    effect: 'Dramatizes strong emotion — rage, grief, or threat — more powerfully than finishing the thought could, by making the silence itself expressive.',
+    examples: [
+      {
+        latin: 'quōs ego — sed mōtōs praestat compōnere flūctūs',
+        citation: 'standard textbook example (cf. Aeneid 1.135, Neptune\'s threat)',
+        analysis: '"Whom I —" Neptune breaks off his threat against the winds entirely, the dash marking a real grammatical incompleteness, then visibly changes subject.',
+      },
+    ],
+  },
+  {
+    id: 'rhetorical-question',
+    name: 'Rhetorical question',
+    definition: 'A question asked not to elicit information but to make a point the answer to which is already obvious.',
+    effect: 'Involves the audience directly, implying the answer is so self-evident that stating it outright would be unnecessary — a persuasive technique borrowed directly from oratory.',
+    examples: [
+      {
+        latin: 'quis tibi, nāte, satis magnum … referat honōrem?',
+        citation: 'standard textbook example (cf. Aeneid 6.883–884, on the youth\'s death)',
+        analysis: '"Who could pay you, son, sufficient honour?" — no answer is expected; the question itself asserts that no honour COULD ever be enough.',
+      },
+    ],
+  },
+  {
+    id: 'epithet',
+    name: 'Epithet',
+    definition: 'A recurring descriptive adjective or phrase attached to a person, god, or place as a kind of standing label — pius Aenēās, pater Aenēās, Iūnō saeva.',
+    effect: 'A convention inherited from oral epic composition, giving a formulaic quality to the verse while also, over the course of a poem, quietly building a character\'s defining trait through repetition.',
+    examples: [
+      {
+        latin: 'pius Aenēās',
+        citation: 'a recurring Vergilian formula',
+        analysis: '"Dutiful Aeneas" — pius attaches to Aeneas dozens of times across the poem, making his defining virtue (duty to family, gods, and destiny) part of his very name.',
+      },
+    ],
+  },
+  {
+    id: 'golden-line',
+    name: 'Golden line',
+    definition: 'A hexameter with exactly two adjectives, two nouns, and a central verb, arranged adjective-A, adjective-B, VERB, noun-A, noun-B (each adjective paired by word order, not adjacency, with its noun).',
+    effect: 'A showcase line, prized by later readers and imitators for its symmetrical word order — the interlocking pattern is itself a kind of visual/aural chiasmus built into the whole line\'s architecture.',
+    examples: [
+      {
+        latin: 'ārdentīsque avertit equōs in castra Latīnōs',
+        citation: 'standard textbook example of the pattern (adjective, adjective, verb, noun, noun)',
+        analysis: 'Illustrates the abstract pattern (Adj-Adj-Verb-Noun-Noun) golden lines follow; genuine examples are prized precisely because the type is rare enough to notice.',
+      },
+    ],
+  },
+  {
+    id: 'tmesis',
+    name: 'Tmesis',
+    definition: 'Splitting a normally single compound word into two separate parts, with other words intervening.',
+    effect: 'A visibly artificial, high-style device — the reader must mentally reassemble the compound, which slows and elevates the line.',
+    examples: [
+      {
+        latin: 'septem subiecta trioni',
+        citation: 'standard textbook example (a Vergilian pattern, splitting a compound like "circum spectant" into "circum...spectant")',
+        analysis: 'Illustrates the general pattern: a compound like circumspiciō can appear in verse as circum … spiciō, its two halves separated by other words in the line.',
+      },
+    ],
+  },
+  {
+    id: 'anadiplosis',
+    name: 'Anadiplosis',
+    definition: 'Repeating the last word (or words) of one clause or line at the start of the next.',
+    effect: 'Creates a chain-link effect, binding consecutive clauses tightly together and often building intensity as the repeated word is picked up and carried forward.',
+    examples: [
+      {
+        latin: 'hūc pater ō Lēnaee venī … venī, nūdātaque mūstō',
+        citation: 'standard textbook example (a Vergilian Georgics-style pattern)',
+        analysis: 'venī, ending the first clause, opens the next as well — the repetition links the two invocations into one continuous, building appeal.',
+      },
+    ],
+  },
+  {
+    id: 'epistrophe',
+    name: 'Epistrophe',
+    definition: 'Repetition of the same word or phrase at the END of successive clauses — the mirror image of anaphora.',
+    effect: 'Hammers a single idea home by returning to it again and again at the point of greatest emphasis in each clause, its close.',
+    examples: [
+      {
+        latin: 'quid…rogem, aut quibus utar precibus?',
+        citation: 'standard textbook example, illustrating a closing-repetition pattern',
+        analysis: 'Illustrates how a repeated closing element (here, the idea of appeal) can anchor a series of parallel clauses at their ends rather than their openings, as anaphora does.',
+      },
+    ],
+  },
+  {
+    id: 'praeteritio',
+    name: 'Praeteritio (paralipsis)',
+    definition: 'Drawing attention to something by claiming to pass over it or refuse to mention it — "I will not even speak of…", followed immediately by exactly that.',
+    effect: 'Lets a speaker raise a damaging or emotional point while nominally disclaiming responsibility for raising it — a favourite trick of oratory and invective.',
+    examples: [
+      {
+        latin: 'nec mē meminisse pigēbit Elissae',
+        citation: 'Aeneid 4.335',
+        passageId: 'aen-4-305-361',
+        analysis: 'Aeneas insists he will not be ashamed to remember Elissa (Dido) even as he explains why he must leave her — raising the very attachment he is in the process of renouncing.',
+      },
+    ],
+  },
+  {
+    id: 'dramatic-irony',
+    name: 'Dramatic irony',
+    definition: 'A gap between what a character believes or says and what the audience already knows to be true — common in myth-based epic and history, where the outcome is already known to the reader.',
+    effect: 'Creates tension or pathos: the audience watches a character speak or act in ignorance of a fate the poet has already made plain, often foreshadowed earlier in the same work.',
+    examples: [
+      {
+        latin: 'nōn ignāra malī miserīs succurrere discō',
+        citation: 'standard textbook example (cf. Aeneid 1.630, Dido to the shipwrecked Trojans)',
+        analysis: '"Not ignorant of misfortune myself, I am learning to help the wretched" — spoken in generous ignorance of what her own hospitality to these particular guests will cost her, which an audience already steeped in the legend of Dido knows all too well.',
+      },
+    ],
+  },
+  {
+    id: 'assonance',
+    name: 'Assonance',
+    definition: 'Repetition of the same vowel sound in nearby words, without the consonants necessarily matching (the vowel-sound counterpart to alliteration\'s consonants).',
+    effect: 'A subtler sound-effect than alliteration, often reinforcing a mood (long, open vowels for grief or grandeur; short, clipped ones for urgency) beneath the surface of the sense.',
+    examples: [
+      {
+        latin: 'multa quoque et bellō passus',
+        citation: 'Aeneid 1.5',
+        passageId: 'aen-1-1-33',
+        analysis: 'The repeated u and o sounds across multa, quoque, and bellō give the line a heavy, rolling quality alongside the alliteration already noted on this same phrase.',
+      },
+    ],
+  },
+  {
+    id: 'onomatopoeia',
+    name: 'Onomatopoeia',
+    definition: 'A word whose sound imitates the sound of the thing it names.',
+    effect: 'Lets the line perform the sound it describes, collapsing the distance between description and the thing described.',
+    examples: [
+      {
+        latin: 'quadrupedante putrem sonitū quatit ungula campum',
+        citation: 'standard textbook example (Aeneid 8.596, on galloping hooves)',
+        analysis: 'The dactylic rhythm and the repeated hard consonants imitate the drumming of hooves the line describes — one of the most famous sound-imitating lines in the poem.',
+      },
+    ],
+  },
+  {
+    id: 'tautology',
+    name: 'Tautology (pleonasm)',
+    definition: 'Saying the same thing twice in different words, for emphasis rather than by accident.',
+    effect: 'Slows a phrase down and reinforces its weight through sheer redundancy — used deliberately, unlike the same fault in careless prose.',
+    examples: [
+      {
+        latin: 'lacrimīsque et multā prece flectitur',
+        citation: 'standard textbook example (cf. Vergilian patterns of doubled emotional appeal)',
+        analysis: '"He is moved by tears and much entreaty" pairs two near-synonymous means of appeal (lacrimīs, prece) side by side rather than choosing one, doubling the emotional weight of the plea.',
+      },
+    ],
+  },
 ];
 
 export function getDevice(id: string): DeviceCard | undefined {

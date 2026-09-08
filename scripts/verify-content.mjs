@@ -42,7 +42,9 @@ function norm(s) {
 
 const { vergilPassages: vergil } = await load('src/data/passages/vergil.ts');
 const { plinyPassages: pliny } = await load('src/data/passages/pliny.ts');
-const passages = [...vergil, ...pliny];
+const { caesarPassages: caesar } = await load('src/data/passages/caesar.ts');
+const { catullusPassages: catullus } = await load('src/data/passages/catullus.ts');
+const passages = [...vergil, ...pliny, ...caesar, ...catullus];
 const byId = new Map(passages.map((p) => [p.id, p]));
 
 const { coreVocabulary: vocab } = await load('src/data/vocabulary.ts');

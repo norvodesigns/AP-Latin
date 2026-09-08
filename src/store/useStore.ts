@@ -15,6 +15,32 @@ export const EXAM_DATE = '2027-05-14';
 /* Record shapes                                                      */
 /* ------------------------------------------------------------------ */
 
+/** The highlighter colors offered on a text selection, manuscript-pigment
+ *  names to match the rest of the palette rather than generic marker colors. */
+export type HighlightColor = 'gilt' | 'verdigris' | 'woad' | 'rubric';
+
+/**
+ * A highlight and/or note anchored to a run of tokens within one line — never
+ * across lines, which keeps both the anchor (a line number plus a token
+ * range `tokenize()` reproduces deterministically from the passage's own
+ * fixed text) and the rendering simple. `color` and `note` are independent:
+ * a highlight can carry no note, and a note can exist on a span the reader
+ * never colored.
+ */
+export interface Annotation {
+  id: string;
+  lineN: number;
+  /** Inclusive token indices, as produced by `tokenize()` on that line. */
+  startTok: number;
+  endTok: number;
+  /** The highlighted text itself, kept for display so the "Your notes" rail
+   *  and export never need to re-tokenize the passage to show a snippet. */
+  text: string;
+  color: HighlightColor | null;
+  note: string;
+  createdAt: string;
+}
+
 export interface PassageState {
   notes: string;
   bookmarked: boolean;
@@ -23,6 +49,8 @@ export interface PassageState {
   lastOpened?: string;
   /** Number of cold reads completed (glossary hidden). */
   coldReads: number;
+  /** Highlights and notes anchored to spans of text, newest last. */
+  annotations: Annotation[];
 }
 
 /** SM-2 scheduling record for one vocabulary item. */
@@ -141,6 +169,12 @@ export interface ScansionDraft {
   divisions: number[];
   /** Set once the line has been checked, so the review state can be restored. */
   checked?: boolean;
+  /**
+   * Syllable indices the student has claimed elide into the next word — their
+   * own working guess, graded against the corpus's real `elides` flags at
+   * check time rather than shown up front.
+   */
+  elisions?: number[];
 }
 
 export interface ScansionAttempt {
@@ -215,6 +249,19 @@ export interface StoreState {
   toggleBookmark: (id: string) => void;
   toggleFlaggedLine: (id: string, line: number) => void;
 
+  /** Create or update the highlight color of the annotation spanning exactly
+   *  this token range (creating one if none exists yet), and return it. */
+  setHighlight: (
+    passageId: string,
+    lineN: number,
+    startTok: number,
+    endTok: number,
+    text: string,
+    color: HighlightColor | null,
+  ) => Annotation;
+  setAnnotationNote: (passageId: string, annotationId: string, note: string) => void;
+  removeAnnotation: (passageId: string, annotationId: string) => void;
+
   reviewVocab: (id: string, quality: number) => void;
   seedVocab: (ids: string[]) => void;
   /** A word was looked up in the Reading Room and resolved to `vocabId`; seeds it into rotation. */
@@ -251,6 +298,7 @@ const emptyPassage = (): PassageState => ({
   bookmarked: false,
   flaggedLines: [],
   coldReads: 0,
+  annotations: [],
 });
 
 const initialState = {
@@ -385,6 +433,68 @@ export const useStore = create<StoreState>()(
                 flaggedLines: has
                   ? cur.flaggedLines.filter((l) => l !== line)
                   : [...cur.flaggedLines, line].sort((a, b) => a - b),
+              },
+            },
+          };
+        }),
+
+      setHighlight: (passageId, lineN, startTok, endTok, text, color) => {
+        const cur = get().passages[passageId] ?? emptyPassage();
+        const existing = cur.annotations.find(
+          (a) => a.lineN === lineN && a.startTok === startTok && a.endTok === endTok,
+        );
+        const next: Annotation = existing
+          ? { ...existing, color, text }
+          : { id: uid(), lineN, startTok, endTok, text, color, note: '', createdAt: new Date().toISOString() };
+        // A colorless annotation with no note carries nothing worth keeping
+        // — but only once it already existed: a brand-new one reaching here
+        // with no color is `ensureAnnotation`'s note-flow calling this just
+        // to guarantee an id exists, immediately followed by
+        // `setAnnotationNote` giving it a note. Dropping it here first would
+        // leave that note with no annotation left to attach to.
+        const drop = Boolean(existing) && !next.color && !next.note.trim();
+        set({
+          passages: {
+            ...get().passages,
+            [passageId]: {
+              ...cur,
+              annotations: drop
+                ? cur.annotations.filter((a) => a.id !== next.id)
+                : existing
+                  ? cur.annotations.map((a) => (a.id === next.id ? next : a))
+                  : [...cur.annotations, next],
+            },
+          },
+        });
+        return next;
+      },
+
+      setAnnotationNote: (passageId, annotationId, note) =>
+        set((s) => {
+          const cur = s.passages[passageId] ?? emptyPassage();
+          return {
+            passages: {
+              ...s.passages,
+              [passageId]: {
+                ...cur,
+                annotations: cur.annotations
+                  .map((a) => (a.id === annotationId ? { ...a, note } : a))
+                  // A colorless annotation with no note carries nothing worth keeping.
+                  .filter((a) => a.color || a.note.trim()),
+              },
+            },
+          };
+        }),
+
+      removeAnnotation: (passageId, annotationId) =>
+        set((s) => {
+          const cur = s.passages[passageId] ?? emptyPassage();
+          return {
+            passages: {
+              ...s.passages,
+              [passageId]: {
+                ...cur,
+                annotations: cur.annotations.filter((a) => a.id !== annotationId),
               },
             },
           };
