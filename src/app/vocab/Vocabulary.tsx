@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { coreVocabulary } from '@/data/vocabulary';
 import { allPassages, getPassage, passageVocabIds } from '@/data/passages';
 import { useStore, dueVocab, newCard, sm2 } from '@/store/useStore';
-import { Page, PageHeader, Empty, Roman, CedLink, SourceNote } from '@/components/ui';
+import { Page, PageHeader, Empty, CedLink, SourceNote } from '@/components/ui';
 import type { VocabEntry, UnitId } from '@/data/types';
 import { normalizeWord } from '@/lib/latin';
 
@@ -196,13 +196,7 @@ export default function Vocabulary() {
                 {entry.readings[0] ? `CED ${entry.readings[0]}` : 'Core list'}
               </span>
               <span className="slab-sm">
-                {card.reviews > 0 ? (
-                  <>
-                    Seen <Roman value={card.reviews} />×
-                  </>
-                ) : (
-                  'New card'
-                )}
+                {card.reviews > 0 ? `Seen ${card.reviews}×` : 'New card'}
               </span>
             </div>
 
