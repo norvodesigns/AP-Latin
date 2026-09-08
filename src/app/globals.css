@@ -407,10 +407,15 @@ h1, h2, h3, h4 {
 
   /* The per-line "ask" control in the Reading Room — one per line, in full,
      reads as clutter, so it stays hidden by default on every device. On a
-     device with a real pointer, hovering the line reveals it. On a
-     touchscreen, where hover never fires (and a stray tap can otherwise
-     leave a phantom `:hover` state stuck "on" until the next tap elsewhere —
-     the actual bug that made this look permanently visible on a phone), it
+     device with a real pointer, hovering the line reveals it — gated on
+     `any-hover`, not the primary-input-only `hover` media feature, since a
+     touchscreen laptop with a mouse or trackpad attached reports `hover:
+     none` (touch is its primary pointer) even while the mouse is what the
+     reader is actually using, which silently hid this behind the touch
+     fallback below for exactly that hardware. On a touchscreen with no
+     hover-capable input at all (where a stray tap can otherwise leave a
+     phantom `:hover` state stuck "on" until the next tap elsewhere — the
+     actual bug that made this look permanently visible on a phone), it
      instead reveals only for the line the reader is already engaging with —
      i.e. one whose glossary popover is open, via `.ask-hint-active`, toggled
      in script rather than in this stylesheet. Either way it is also
@@ -428,7 +433,7 @@ h1, h2, h3, h4 {
   .ask-hint-active {
     opacity: 1;
   }
-  @media (hover: hover) {
+  @media (any-hover: hover) {
     .group:hover .ask-hint {
       opacity: 1;
     }
