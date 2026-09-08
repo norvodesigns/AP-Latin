@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { NAV, NAV_GROUPS } from '@/lib/nav';
-import { useStore, daysUntilExam } from '@/store/useStore';
+import { useStore, daysUntilExam, prefersDarkDefault } from '@/store/useStore';
 import { useStudyTimeSync } from '@/hooks/useStudyTimeSync';
 import type { Profile } from '@/lib/supabase/types';
 import CommandPalette from './CommandPalette';
@@ -127,9 +127,7 @@ export default function AppShell({
   useEffect(() => {
     if (!mounted) return;
     if (theme !== 'light' && theme !== 'dark') {
-      const prefersDark =
-        typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches;
-      setTheme(prefersDark ? 'dark' : 'light');
+      setTheme(prefersDarkDefault() ? 'dark' : 'light');
       return;
     }
     document.documentElement.setAttribute('data-theme', theme);

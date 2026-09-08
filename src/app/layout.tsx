@@ -84,6 +84,12 @@ export const viewport: Viewport = {
  * anything is drawn or the reader sees a flash of the wrong thing.
  *
  * 1. Applies the stored theme, so there is no flash of the wrong palette.
+ *    A visitor who has never chosen one gets dark by default outside
+ *    6am-6pm *local* time (`getHours()` is always local, never UTC) — or
+ *    whenever the OS itself prefers dark — matching the same one-time
+ *    default `initialState.theme` computes in useStore.ts, so the two never
+ *    disagree once React hydrates. Left unset otherwise: the CSS
+ *    `prefers-color-scheme` rule paints daytime-default light on its own.
  * 2. Sets `data-motion` when JS is running and the reader has not asked for
  *    reduced motion. Every entrance and scroll-reveal rule in globals.css is
  *    gated on that attribute, so anything that starts hidden only ever does
@@ -97,6 +103,13 @@ const bootScript = `
     var t = localStorage.getItem('ap-latin-theme');
     if (t === 'light' || t === 'dark') {
       document.documentElement.setAttribute('data-theme', t);
+    } else {
+      var hour = new Date().getHours();
+      var isNight = hour >= 18 || hour < 6;
+      var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (isNight || prefersDark) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
     }
   } catch (e) {}
   try {

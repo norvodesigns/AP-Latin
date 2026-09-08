@@ -301,19 +301,26 @@ const emptyPassage = (): PassageState => ({
   annotations: [],
 });
 
+/**
+ * A one-time read, not a live link to either signal — the app has no
+ * "system" mode, so this only matters for a visitor who has never chosen a
+ * theme. Dark by default outside 6am-6pm *local* time (`getHours()` is
+ * always local, never UTC), or whenever the OS itself prefers dark. Guarded
+ * for SSR, where `window` does not exist; the boot script in the document
+ * head (`layout.tsx`) makes the same two checks in raw JS for the first
+ * paint, so this value and that paint agree and nothing flashes on
+ * hydration.
+ */
+export function prefersDarkDefault(): boolean {
+  if (typeof window === 'undefined') return false;
+  const hour = new Date().getHours();
+  const isNight = hour >= 18 || hour < 6;
+  return isNight || Boolean(window.matchMedia?.('(prefers-color-scheme: dark)').matches);
+}
+
 const initialState = {
   version: STORE_VERSION,
-  /**
-   * A one-time read of the OS preference, not a live link to it — the app
-   * has no "system" mode, so this only matters for a visitor who has never
-   * chosen a theme. Guarded for SSR, where `window` does not exist; the
-   * boot script in the document head (`layout.tsx`) makes the same call
-   * with `prefers-color-scheme` in raw CSS for the first paint, so this
-   * value and that paint agree and nothing flashes on hydration.
-   */
-  theme: (typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches
-    ? 'dark'
-    : 'light') as 'light' | 'dark',
+  theme: (prefersDarkDefault() ? 'dark' : 'light') as 'light' | 'dark',
   glossaryEnabled: true,
   showMacrons: true,
   passages: {} as Record<string, PassageState>,
