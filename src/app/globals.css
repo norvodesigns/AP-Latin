@@ -358,6 +358,53 @@ h1, h2, h3, h4 {
     color: var(--fg-muted);
   }
 
+  /* A declension/conjugation paradigm, ruled rather than boxed — the page's
+     own hard geometry, not a bordered "card" pretending to be a table. */
+  .chart {
+    border-collapse: collapse;
+    font-family: var(--font-latin);
+    font-size: 0.9375rem;
+  }
+  .chart caption {
+    caption-side: top;
+    text-align: left;
+    font-family: var(--font-sans);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    padding-bottom: 0.625rem;
+  }
+  .chart th, .chart td {
+    border: 1px solid var(--hair);
+    padding: 0.375rem 0.75rem;
+    text-align: left;
+  }
+  .chart thead th {
+    font-family: var(--font-sans);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    border-bottom: 1px solid var(--rule-strong);
+    white-space: normal;
+  }
+  .chart tbody th {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--fg-muted);
+  }
+  .chart tfoot td {
+    font-family: var(--font-sans);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--fg-muted);
+    white-space: normal;
+  }
+
   /* The per-line "ask" control in the Reading Room — one per line, in full,
      reads as clutter, so it stays hidden by default on every device. On a
      device with a real pointer, hovering the line reveals it. On a

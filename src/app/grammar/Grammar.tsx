@@ -6,7 +6,7 @@ import { grammarTopics } from '@/data/grammar';
 import { getPassage } from '@/data/passages';
 import { Page, PageHeader, Section, SourceNote } from '@/components/ui';
 import FlashcardDeck from '@/components/FlashcardDeck';
-import type { GrammarTopic } from '@/data/types';
+import type { GrammarTopic, GrammarChart } from '@/data/types';
 
 type Tab = 'reference' | 'study';
 
@@ -43,6 +43,46 @@ function Cues({ title, items }: { title: string; items: string[] }) {
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+/** A declension/conjugation paradigm as an actual ruled table — case or
+ *  person/number down the side, number or tense across the top — instead
+ *  of the prose a reader would otherwise have to reconstruct by hand. */
+function ParadigmChart({ chart }: { chart: GrammarChart }) {
+  return (
+    <div className="min-w-0 max-w-full overflow-x-auto">
+      <table className="chart">
+        <caption>{chart.title}</caption>
+        <thead>
+          <tr>
+            <th scope="col" />
+            {chart.cols.map((c) => (
+              <th key={c} scope="col">
+                {c}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {chart.rows.map((row, i) => (
+            <tr key={i}>
+              <th scope="row">{row.label}</th>
+              {row.cells.map((cell, j) => (
+                <td key={j}>{cell || '—'}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+        {chart.note && (
+          <tfoot>
+            <tr>
+              <td colSpan={chart.cols.length + 1}>{chart.note}</td>
+            </tr>
+          </tfoot>
+        )}
+      </table>
     </div>
   );
 }
@@ -162,6 +202,14 @@ function Reference() {
                   >
                     {topic.summary}
                   </p>
+
+                  {topic.charts && topic.charts.length > 0 && (
+                    <div className="mt-6 flex flex-col gap-6 sm:flex-row sm:flex-wrap">
+                      {topic.charts.map((chart, i) => (
+                        <ParadigmChart key={i} chart={chart} />
+                      ))}
+                    </div>
+                  )}
 
                   <div className="mt-6 grid gap-7 sm:grid-cols-2">
                     <Cues title="How to spot it" items={topic.recognition} />

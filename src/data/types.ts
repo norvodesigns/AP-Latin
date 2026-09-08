@@ -204,6 +204,22 @@ export interface GrammarExample {
   analysis: string;
 }
 
+/**
+ * A paradigm table — a declension or conjugation laid out as an actual
+ * chart (case/person by number, or whatever grid fits the paradigm)
+ * instead of prose. `rows[n].cells` must have exactly `cols.length` entries,
+ * in the same order as `cols`; an empty string is a real paradigm gap (e.g.
+ * the reflexive pronoun's missing nominative), not a missing value.
+ */
+export interface GrammarChart {
+  /** e.g. "rosa, -ae (f.)" — the model word or forms this chart declines/conjugates. */
+  title: string;
+  cols: string[];
+  rows: { label: string; cells: string[] }[];
+  /** A short note below the table — an irregularity, a variant spelling. */
+  note?: string;
+}
+
 export interface GrammarTopic {
   id: string;
   name: string;
@@ -223,6 +239,8 @@ export interface GrammarTopic {
   /** How to render it in a literal translation. */
   translation: string[];
   examples: GrammarExample[];
+  /** One or more paradigm charts — declensions and conjugations mainly. */
+  charts?: GrammarChart[];
 }
 
 export interface DeviceCard {

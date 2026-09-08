@@ -411,6 +411,20 @@ export const grammarTopics: GrammarTopic[] = [
     level: 'foundational',
     summary:
       'Nouns whose stem ends in -a, almost all feminine (a handful of occupations and river/place names are masculine, e.g. nauta, agricola, poeta, Aenēās).',
+    charts: [
+      {
+        title: 'rosa, -ae (f.) — "rose"',
+        cols: ['Singular', 'Plural'],
+        rows: [
+          { label: 'Nom.', cells: ['rosa', 'rosae'] },
+          { label: 'Gen.', cells: ['rosae', 'rosārum'] },
+          { label: 'Dat.', cells: ['rosae', 'rosīs'] },
+          { label: 'Acc.', cells: ['rosam', 'rosās'] },
+          { label: 'Abl.', cells: ['rosā', 'rosīs'] },
+        ],
+        note: 'Vocative matches the nominative in both numbers, as in every declension but the 2nd.',
+      },
+    ],
     recognition: [
       'Singular: -a, -ae, -ae, -am, -ā, (-a). Plural: -ae, -ārum, -īs, -ās, -īs, (-ae).',
       'Genitive singular and nominative plural are identical in spelling (-ae) — context or a modifying adjective disambiguates.',
@@ -443,6 +457,32 @@ export const grammarTopics: GrammarTopic[] = [
     level: 'foundational',
     summary:
       'Nouns whose stem ends in -o: masculine in -us (or -er, -ir), neuter in -um. The single largest source of irregular-looking nominatives in beginning Latin, because the nominative singular often drops or alters the stem vowel.',
+    charts: [
+      {
+        title: 'dominus, -ī (m.) — "master, lord"',
+        cols: ['Singular', 'Plural'],
+        rows: [
+          { label: 'Nom.', cells: ['dominus', 'dominī'] },
+          { label: 'Gen.', cells: ['dominī', 'dominōrum'] },
+          { label: 'Dat.', cells: ['dominō', 'dominīs'] },
+          { label: 'Acc.', cells: ['dominum', 'dominōs'] },
+          { label: 'Abl.', cells: ['dominō', 'dominīs'] },
+        ],
+        note: 'Vocative singular is domine, not dominus — the one ending in this whole declension that isn\'t shared with another case.',
+      },
+      {
+        title: 'bellum, -ī (n.) — "war"',
+        cols: ['Singular', 'Plural'],
+        rows: [
+          { label: 'Nom.', cells: ['bellum', 'bella'] },
+          { label: 'Gen.', cells: ['bellī', 'bellōrum'] },
+          { label: 'Dat.', cells: ['bellō', 'bellīs'] },
+          { label: 'Acc.', cells: ['bellum', 'bella'] },
+          { label: 'Abl.', cells: ['bellō', 'bellīs'] },
+        ],
+        note: 'Every neuter noun, in any declension, repeats this pattern: nominative = accusative in both numbers, plural always in -a.',
+      },
+    ],
     recognition: [
       'Masculine -us: -us, -ī, -ō, -um, -ō / -ī, -ōrum, -īs, -ōs, -īs. Vocative singular is -e (fīlī is the one common exception, from fīlius).',
       'Masculine -er: puer keeps the -er throughout (puerī); ager, magister, liber drop the -e- outside the nominative (agrī, magistrī, librī) — the genitive singular tells you which pattern a new -er noun follows.',
@@ -475,6 +515,31 @@ export const grammarTopics: GrammarTopic[] = [
     level: 'foundational',
     summary:
       'The largest and least predictable declension: masculine, feminine, and neuter nouns of every stem shape, unified only by genitive singular -is. The nominative singular must simply be memorised with the genitive, since it hides the real stem far more often than not.',
+    charts: [
+      {
+        title: 'rēx, rēgis (m.) — "king" (consonant stem)',
+        cols: ['Singular', 'Plural'],
+        rows: [
+          { label: 'Nom.', cells: ['rēx', 'rēgēs'] },
+          { label: 'Gen.', cells: ['rēgis', 'rēgum'] },
+          { label: 'Dat.', cells: ['rēgī', 'rēgibus'] },
+          { label: 'Acc.', cells: ['rēgem', 'rēgēs'] },
+          { label: 'Abl.', cells: ['rēge', 'rēgibus'] },
+        ],
+      },
+      {
+        title: 'corpus, corporis (n.) — "body" (consonant stem)',
+        cols: ['Singular', 'Plural'],
+        rows: [
+          { label: 'Nom.', cells: ['corpus', 'corpora'] },
+          { label: 'Gen.', cells: ['corporis', 'corporum'] },
+          { label: 'Dat.', cells: ['corporī', 'corporibus'] },
+          { label: 'Acc.', cells: ['corpus', 'corpora'] },
+          { label: 'Abl.', cells: ['corpore', 'corporibus'] },
+        ],
+        note: 'An i-stem noun (turris, turris; mare, maris) instead takes -ium in the genitive plural and often -ī rather than -e in the ablative singular — the genitive stated in the dictionary entry is what tells the two patterns apart, never the nominative.',
+      },
+    ],
     recognition: [
       'Genitive singular -is is the one constant across every gender. Consonant-stem endings: -is/-ēs (m./f.) or nothing distinctive (n.); i-stems add -ium in the genitive plural instead of -um, and neuter i-stems end in -e/-al/-ar in the nominative singular.',
       'A "hidden" stem change between nominative and genitive is common and must be learned per word: corpus, corporis; homō, hominis; rēx, rēgis; pater, patris.',
@@ -508,6 +573,31 @@ export const grammarTopics: GrammarTopic[] = [
     level: 'foundational',
     summary:
       'Two small, closed declensions: the 4th (u-stem), mostly masculine nouns in -us built from a verb\'s fourth principal part (adventus, cāsus, exercitus, manus is the common feminine exception); the 5th (ē-stem), only rēs and diēs in everyday use.',
+    charts: [
+      {
+        title: 'adventus, -ūs (m.) — "arrival" (4th declension)',
+        cols: ['Singular', 'Plural'],
+        rows: [
+          { label: 'Nom.', cells: ['adventus', 'adventūs'] },
+          { label: 'Gen.', cells: ['adventūs', 'adventuum'] },
+          { label: 'Dat.', cells: ['adventuī', 'adventibus'] },
+          { label: 'Acc.', cells: ['adventum', 'adventūs'] },
+          { label: 'Abl.', cells: ['adventū', 'adventibus'] },
+        ],
+      },
+      {
+        title: 'rēs, reī (f.) — "thing" (5th declension)',
+        cols: ['Singular', 'Plural'],
+        rows: [
+          { label: 'Nom.', cells: ['rēs', 'rēs'] },
+          { label: 'Gen.', cells: ['reī', 'rērum'] },
+          { label: 'Dat.', cells: ['reī', 'rēbus'] },
+          { label: 'Acc.', cells: ['rem', 'rēs'] },
+          { label: 'Abl.', cells: ['rē', 'rēbus'] },
+        ],
+        note: 'Almost every other 5th-declension noun (diēs is the main exception) is rare or unattested in the plural.',
+      },
+    ],
     recognition: [
       '4th declension: -us, -ūs, -uī, -um, -ū (plural -ūs, -uum, -ibus, -ūs, -ibus). Genitive singular -ūs is easy to mistake for a nominative at a glance.',
       '5th declension: -ēs, -eī, -eī, -em, -ē (plural rare except for rēs and diēs). diēs is masculine except when it means a fixed/appointed day, then feminine.',
@@ -533,6 +623,25 @@ export const grammarTopics: GrammarTopic[] = [
     level: 'foundational',
     summary:
       'Adjectives declined like 1st-declension nouns in the feminine and 2nd-declension nouns in the masculine and neuter — bonus, bona, bonum being the textbook model.',
+    charts: [
+      {
+        title: 'bonus, -a, -um — "good"',
+        cols: ['M.', 'F.', 'N.'],
+        rows: [
+          { label: 'Nom. sg.', cells: ['bonus', 'bona', 'bonum'] },
+          { label: 'Gen. sg.', cells: ['bonī', 'bonae', 'bonī'] },
+          { label: 'Dat. sg.', cells: ['bonō', 'bonae', 'bonō'] },
+          { label: 'Acc. sg.', cells: ['bonum', 'bonam', 'bonum'] },
+          { label: 'Abl. sg.', cells: ['bonō', 'bonā', 'bonō'] },
+          { label: 'Nom. pl.', cells: ['bonī', 'bonae', 'bona'] },
+          { label: 'Gen. pl.', cells: ['bonōrum', 'bonārum', 'bonōrum'] },
+          { label: 'Dat. pl.', cells: ['bonīs', 'bonīs', 'bonīs'] },
+          { label: 'Acc. pl.', cells: ['bonōs', 'bonās', 'bona'] },
+          { label: 'Abl. pl.', cells: ['bonīs', 'bonīs', 'bonīs'] },
+        ],
+        note: 'The masculine column is exactly the dominus paradigm, the feminine exactly rosa, the neuter exactly bellum — nothing here to learn beyond the noun endings already known.',
+      },
+    ],
     recognition: [
       'Given in the dictionary as three forms (bonus, -a, -um) or, for an -er adjective, as masculine plus feminine (pulcher, pulchra, pulchrum; miser, misera, miserum keeps the -e-).',
       'Agreement is in gender, number, and case with the noun it modifies — NOT in declension: a 1st/2nd-declension adjective can and constantly does modify a 3rd-declension noun (rēx bonus, "a good king").',
@@ -563,6 +672,25 @@ export const grammarTopics: GrammarTopic[] = [
     level: 'foundational',
     summary:
       'Adjectives declined entirely on 3rd-declension i-stem endings, sorted by how many distinct nominative singular spellings they show across the three genders: three-termination (ācer, ācris, ācre), two-termination (fortis, forte), and one-termination (fēlīx, gen. fēlīcis, one spelling for all three genders).',
+    charts: [
+      {
+        title: 'fortis, forte — "brave, strong" (two-termination)',
+        cols: ['M./F.', 'N.'],
+        rows: [
+          { label: 'Nom. sg.', cells: ['fortis', 'forte'] },
+          { label: 'Gen. sg.', cells: ['fortis', 'fortis'] },
+          { label: 'Dat. sg.', cells: ['fortī', 'fortī'] },
+          { label: 'Acc. sg.', cells: ['fortem', 'forte'] },
+          { label: 'Abl. sg.', cells: ['fortī', 'fortī'] },
+          { label: 'Nom. pl.', cells: ['fortēs', 'fortia'] },
+          { label: 'Gen. pl.', cells: ['fortium', 'fortium'] },
+          { label: 'Dat. pl.', cells: ['fortibus', 'fortibus'] },
+          { label: 'Acc. pl.', cells: ['fortēs', 'fortia'] },
+          { label: 'Abl. pl.', cells: ['fortibus', 'fortibus'] },
+        ],
+        note: 'A one-termination adjective like fēlīx, gen. fēlīcis shares every one of these oblique-case endings — only the nominative singular is a single spelling (fēlīx) instead of two.',
+      },
+    ],
     recognition: [
       'All three types share the same oblique-case endings: -is/-e or -em (m./f./n. accusative), -ī (abl. sing., an i-stem feature adjectives keep even where a matching noun would not), -ium (gen. pl.), -ia (neut. nom./acc. pl.).',
       'One-termination adjectives are the trickiest to spot as adjectives at all, since the nominative singular looks like an ordinary 3rd-declension noun (ingēns, potēns, fēlīx) — the genitive in the dictionary entry is the tell.',
@@ -590,6 +718,36 @@ export const grammarTopics: GrammarTopic[] = [
     level: 'foundational',
     summary:
       'Positive, comparative, and superlative degree. The comparative is always 3rd declension regardless of the positive\'s declension; the superlative is always 1st/2nd declension.',
+    charts: [
+      {
+        title: 'altior, altius — "taller" (comparative of altus)',
+        cols: ['M./F.', 'N.'],
+        rows: [
+          { label: 'Nom. sg.', cells: ['altior', 'altius'] },
+          { label: 'Gen. sg.', cells: ['altiōris', 'altiōris'] },
+          { label: 'Dat. sg.', cells: ['altiōrī', 'altiōrī'] },
+          { label: 'Acc. sg.', cells: ['altiōrem', 'altius'] },
+          { label: 'Abl. sg.', cells: ['altiōre', 'altiōre'] },
+          { label: 'Nom. pl.', cells: ['altiōrēs', 'altiōra'] },
+          { label: 'Gen. pl.', cells: ['altiōrum', 'altiōrum'] },
+          { label: 'Dat. pl.', cells: ['altiōribus', 'altiōribus'] },
+          { label: 'Acc. pl.', cells: ['altiōrēs', 'altiōra'] },
+          { label: 'Abl. pl.', cells: ['altiōribus', 'altiōribus'] },
+        ],
+        note: 'Compare fortis above: same 3rd-declension shape, but -ōris/-ōre, not an i-stem — no -ium genitive plural, no -ī ablative singular.',
+      },
+      {
+        title: 'The irregular comparisons',
+        cols: ['Positive', 'Comparative', 'Superlative'],
+        rows: [
+          { label: '"good"', cells: ['bonus', 'melior, melius', 'optimus'] },
+          { label: '"bad"', cells: ['malus', 'peior, peius', 'pessimus'] },
+          { label: '"big"', cells: ['magnus', 'maior, maius', 'maximus'] },
+          { label: '"small"', cells: ['parvus', 'minor, minus', 'minimus'] },
+          { label: '"much"', cells: ['multus', 'plūs', 'plūrimus'] },
+        ],
+      },
+    ],
     recognition: [
       'Comparative: stem + -ior (m./f.), -ius (n.) — altior, altius, "taller". Declines like a 3rd-declension two-termination adjective, but with genitive -ōris, not an i-stem (no -ium, no -ī ablative singular).',
       'Superlative: stem + -issimus, -a, -um for most adjectives (altissimus). Adjectives ending in -er double the -r instead (pulcherrimus, not pulcherissimus); six adjectives in -ilis (facilis, difficilis, similis, dissimilis, gracilis, humilis) take -illimus.',
@@ -615,6 +773,20 @@ export const grammarTopics: GrammarTopic[] = [
     level: 'foundational',
     summary:
       'Verbs whose stem ends in -ā-, principal parts amō, amāre, amāvī, amātum — the most regular and populous conjugation, and the default pattern most new verbs coined in Latin (and named after Latin) still follow.',
+    charts: [
+      {
+        title: 'amō, amāre — active indicative',
+        cols: ['Present', 'Imperfect', 'Future'],
+        rows: [
+          { label: '1 sg.', cells: ['amō', 'amābam', 'amābō'] },
+          { label: '2 sg.', cells: ['amās', 'amābās', 'amābis'] },
+          { label: '3 sg.', cells: ['amat', 'amābat', 'amābit'] },
+          { label: '1 pl.', cells: ['amāmus', 'amābāmus', 'amābimus'] },
+          { label: '2 pl.', cells: ['amātis', 'amābātis', 'amābitis'] },
+          { label: '3 pl.', cells: ['amant', 'amābant', 'amābunt'] },
+        ],
+      },
+    ],
     recognition: [
       'Present stem amā- runs through the present, imperfect, and future active and passive indicative, and the present subjunctive (with the thematic ā replaced by an -e-: amem, amēs…).',
       'Perfect stem amāv- (present stem + -v-) runs through the perfect, pluperfect, and future perfect active, and the perfect subjunctive/pluperfect subjunctive.',
@@ -646,6 +818,21 @@ export const grammarTopics: GrammarTopic[] = [
     level: 'foundational',
     summary:
       'Verbs whose stem ends in -ē-, principal parts moneō, monēre, monuī, monitum. The long ē of the infinitive and present-stem forms is the conjugation\'s signature, though it does not show up in unmacronized text.',
+    charts: [
+      {
+        title: 'moneō, monēre — active indicative',
+        cols: ['Present', 'Imperfect', 'Future'],
+        rows: [
+          { label: '1 sg.', cells: ['moneō', 'monēbam', 'monēbō'] },
+          { label: '2 sg.', cells: ['monēs', 'monēbās', 'monēbis'] },
+          { label: '3 sg.', cells: ['monet', 'monēbat', 'monēbit'] },
+          { label: '1 pl.', cells: ['monēmus', 'monēbāmus', 'monēbimus'] },
+          { label: '2 pl.', cells: ['monētis', 'monēbātis', 'monēbitis'] },
+          { label: '3 pl.', cells: ['monent', 'monēbant', 'monēbunt'] },
+        ],
+        note: 'Same endings as the 1st conjugation throughout — only the stem vowel (-ē- for -ā-) differs.',
+      },
+    ],
     recognition: [
       'Present stem monē- behaves exactly like 1st-conjugation amā- in where it is used, just with -ē- instead of -ā-.',
       'Perfect stems are far less predictable than the 1st conjugation\'s uniform -v-: -uī (monuī), -ēvī (dēlēvī), -sī (mānsī), or a stem change (videō → vīdī) are all common.',
@@ -675,6 +862,34 @@ export const grammarTopics: GrammarTopic[] = [
     level: 'foundational',
     summary:
       'The largest and most irregular-feeling conjugation: a bare consonant or short-vowel stem, principal parts regō, regere, rēxī, rēctum, with a thematic vowel (e, i, or u) that shifts by ending rather than staying fixed the way the 1st and 2nd conjugations\' vowel does. A subgroup, the "-iō verbs" (capiō, faciō, iaciō, fugiō, cupiō and their compounds), inflects like the 4th conjugation everywhere except the infinitive and a few present-stem forms, where it drops back to the plain 3rd-conjugation pattern.',
+    charts: [
+      {
+        title: 'regō, regere — active indicative',
+        cols: ['Present', 'Imperfect', 'Future'],
+        rows: [
+          { label: '1 sg.', cells: ['regō', 'regēbam', 'regam'] },
+          { label: '2 sg.', cells: ['regis', 'regēbās', 'regēs'] },
+          { label: '3 sg.', cells: ['regit', 'regēbat', 'reget'] },
+          { label: '1 pl.', cells: ['regimus', 'regēbāmus', 'regēmus'] },
+          { label: '2 pl.', cells: ['regitis', 'regēbātis', 'regētis'] },
+          { label: '3 pl.', cells: ['regunt', 'regēbant', 'regent'] },
+        ],
+        note: '3rd and 4th conjugation future is built on -a-/-ē-, not -b- — regam ("I will rule") is easy to mistake for a present subjunctive at a glance.',
+      },
+      {
+        title: 'capiō, capere — active indicative (-iō subgroup)',
+        cols: ['Present', 'Imperfect', 'Future'],
+        rows: [
+          { label: '1 sg.', cells: ['capiō', 'capiēbam', 'capiam'] },
+          { label: '2 sg.', cells: ['capis', 'capiēbās', 'capiēs'] },
+          { label: '3 sg.', cells: ['capit', 'capiēbat', 'capiet'] },
+          { label: '1 pl.', cells: ['capimus', 'capiēbāmus', 'capiēmus'] },
+          { label: '2 pl.', cells: ['capitis', 'capiēbātis', 'capiētis'] },
+          { label: '3 pl.', cells: ['capiunt', 'capiēbant', 'capient'] },
+        ],
+        note: 'Identical to regō except for the extra -i- the 4th conjugation also shows — but the infinitive is still capere, not capīre.',
+      },
+    ],
     recognition: [
       'Infinitive -ere with a SHORT e (regere) distinguishes 3rd conjugation from 2nd conjugation\'s -ēre with a long ē (monēre) — invisible without macrons, which is exactly why the perfect stem and meaning matter more in practice than the infinitive spelling alone.',
       'Present indicative active: regō, regis, regit, regimus, regitis, regunt — note the vowel change from -i- to -u- in the 3rd-person plural, unlike any other conjugation.',
@@ -700,6 +915,21 @@ export const grammarTopics: GrammarTopic[] = [
     level: 'foundational',
     summary:
       'Verbs whose stem ends in -ī-, principal parts audiō, audīre, audīvī, audītum. Closely parallel to the -iō subgroup of the 3rd conjugation, but keeps its long ī in the infinitive and everywhere else.',
+    charts: [
+      {
+        title: 'audiō, audīre — active indicative',
+        cols: ['Present', 'Imperfect', 'Future'],
+        rows: [
+          { label: '1 sg.', cells: ['audiō', 'audiēbam', 'audiam'] },
+          { label: '2 sg.', cells: ['audīs', 'audiēbās', 'audiēs'] },
+          { label: '3 sg.', cells: ['audit', 'audiēbat', 'audiet'] },
+          { label: '1 pl.', cells: ['audīmus', 'audiēbāmus', 'audiēmus'] },
+          { label: '2 pl.', cells: ['audītis', 'audiēbātis', 'audiētis'] },
+          { label: '3 pl.', cells: ['audiunt', 'audiēbant', 'audient'] },
+        ],
+        note: 'Future built the same -a-/-ē- way as the 3rd conjugation, not with -b- — the two conjugations share this whole pattern, differing only in the stem\'s own vowel.',
+      },
+    ],
     recognition: [
       'Infinitive -īre (audīre) is unambiguous even without macrons, since no other conjugation produces that spelling.',
       'Present indicative active: audiō, audīs, audit, audīmus, audītis, audiunt — compare capiō above and note the identical 3rd-plural -iunt.',
@@ -724,6 +954,30 @@ export const grammarTopics: GrammarTopic[] = [
     level: 'foundational',
     summary:
       'sum, esse, fuī, futūrus, "to be" — the single most frequent verb in Latin and irregular in nearly every tense, plus its compounds (possum "to be able", absum "to be away", adsum "to be present", dēsum "to be lacking", intersum "to take part").',
+    charts: [
+      {
+        title: 'sum, esse',
+        cols: ['Present', 'Imperfect', 'Future'],
+        rows: [
+          { label: '1 sg.', cells: ['sum', 'eram', 'erō'] },
+          { label: '2 sg.', cells: ['es', 'erās', 'eris'] },
+          { label: '3 sg.', cells: ['est', 'erat', 'erit'] },
+          { label: '1 pl.', cells: ['sumus', 'erāmus', 'erimus'] },
+          { label: '2 pl.', cells: ['estis', 'erātis', 'eritis'] },
+          { label: '3 pl.', cells: ['sunt', 'erant', 'erunt'] },
+        ],
+      },
+      {
+        title: 'possum, posse — "to be able" (present)',
+        cols: ['Singular', 'Plural'],
+        rows: [
+          { label: '1st', cells: ['possum', 'possumus'] },
+          { label: '2nd', cells: ['potes', 'potestis'] },
+          { label: '3rd', cells: ['potest', 'possunt'] },
+        ],
+        note: 'pot- before a vowel (potes, potest, poterat…), pos- before s (possum, possunt) — the same welded potis + sum in every form.',
+      },
+    ],
     recognition: [
       'Present: sum, es, est, sumus, estis, sunt. Imperfect: eram, erās, erat… Future: erō, eris, erit… — none of these show a normal thematic vowel pattern.',
       'possum is sum welded to the adjective potis ("able"): potis + sum → possum, potis + es → potes, and so on — the pot-/pos- alternation is purely for pronounceability.',
@@ -749,6 +1003,21 @@ export const grammarTopics: GrammarTopic[] = [
     level: 'foundational',
     summary:
       'A short, closed list of verbs that do not follow any of the four regular conjugation patterns and must be learned individually: ferō ("carry/bear"), volō/nōlō/mālō ("want/not want/prefer"), eō ("go"), fīō ("become/be made", serving as the passive of faciō).',
+    charts: [
+      {
+        title: 'Present indicative, three irregulars side by side',
+        cols: ['ferō — "carry"', 'volō — "want"', 'eō — "go"'],
+        rows: [
+          { label: '1 sg.', cells: ['ferō', 'volō', 'eō'] },
+          { label: '2 sg.', cells: ['fers', 'vīs', 'īs'] },
+          { label: '3 sg.', cells: ['fert', 'vult', 'it'] },
+          { label: '1 pl.', cells: ['ferimus', 'volumus', 'īmus'] },
+          { label: '2 pl.', cells: ['fertis', 'vultis', 'ītis'] },
+          { label: '3 pl.', cells: ['ferunt', 'volunt', 'eunt'] },
+        ],
+        note: 'Infinitives: ferre, velle, īre — nōlō (nōlle) and mālō (mālle) inflect exactly like volō with n- or m(agis)- fused on the front.',
+      },
+    ],
     recognition: [
       'ferō: present ferō, fers, fert, ferimus, fertis, ferunt — no thematic vowel at all in most forms; infinitive ferre (not ferere).',
       'volō/nōlō/mālō share one irregular paradigm: volō, vīs, vult, volumus, vultis, volunt; nōlō is volō negated (nōn + volō, fused); mālō is magis + volō fused ("want more, prefer").',
@@ -774,6 +1043,32 @@ export const grammarTopics: GrammarTopic[] = [
     level: 'foundational',
     summary:
       'ego ("I"), tū ("you"), nōs ("we"), vōs ("you all") for the 1st and 2nd persons; the reflexive sē/suī has no nominative and no distinct singular/plural, since it always refers back to the subject of its own clause regardless of that subject\'s number.',
+    charts: [
+      {
+        title: 'Personal and reflexive pronouns',
+        cols: ['ego "I"', 'tū "you"', 'sē (reflexive)'],
+        rows: [
+          { label: 'Nom.', cells: ['ego', 'tū', '—'] },
+          { label: 'Gen.', cells: ['meī', 'tuī', 'suī'] },
+          { label: 'Dat.', cells: ['mihi', 'tibi', 'sibi'] },
+          { label: 'Acc.', cells: ['mē', 'tē', 'sē'] },
+          { label: 'Abl.', cells: ['mē', 'tē', 'sē'] },
+        ],
+        note: 'sē has no nominative — a reflexive can never be the subject of its own clause — and one spelling covers accusative and ablative in both singular and plural alike.',
+      },
+      {
+        title: 'Plurals',
+        cols: ['nōs "we"', 'vōs "you all"'],
+        rows: [
+          { label: 'Nom.', cells: ['nōs', 'vōs'] },
+          { label: 'Gen.', cells: ['nostrī / nostrum', 'vestrī / vestrum'] },
+          { label: 'Dat.', cells: ['nōbīs', 'vōbīs'] },
+          { label: 'Acc.', cells: ['nōs', 'vōs'] },
+          { label: 'Abl.', cells: ['nōbīs', 'vōbīs'] },
+        ],
+        note: 'nostrum/vestrum (not the -ī forms) are used partitively: ūnus nostrum, "one of us".',
+      },
+    ],
     recognition: [
       'ego: gen. meī, dat. mihi, acc./abl. mē. tū: gen. tuī, dat. tibi, acc./abl. tē.',
       'nōs: gen. nostrī/nostrum, dat./abl. nōbīs, acc. nōs. vōs: gen. vestrī/vestrum, dat./abl. vōbīs, acc. vōs.',
@@ -799,6 +1094,25 @@ export const grammarTopics: GrammarTopic[] = [
     level: 'foundational',
     summary:
       'hic, haec, hoc ("this, the latter"); ille, illa, illud ("that, the former"); is, ea, id ("this/that, he/she/it" — the ordinary 3rd-person pronoun); īdem, eadem, idem ("the same", is + -dem); ipse, ipsa, ipsum ("-self", for emphasis, not reflexive in meaning).',
+    charts: [
+      {
+        title: 'is, ea, id — "he, she, it; this, that"',
+        cols: ['M.', 'F.', 'N.'],
+        rows: [
+          { label: 'Nom. sg.', cells: ['is', 'ea', 'id'] },
+          { label: 'Gen. sg.', cells: ['eius', 'eius', 'eius'] },
+          { label: 'Dat. sg.', cells: ['eī', 'eī', 'eī'] },
+          { label: 'Acc. sg.', cells: ['eum', 'eam', 'id'] },
+          { label: 'Abl. sg.', cells: ['eō', 'eā', 'eō'] },
+          { label: 'Nom. pl.', cells: ['eī (iī)', 'eae', 'ea'] },
+          { label: 'Gen. pl.', cells: ['eōrum', 'eārum', 'eōrum'] },
+          { label: 'Dat. pl.', cells: ['eīs', 'eīs', 'eīs'] },
+          { label: 'Acc. pl.', cells: ['eōs', 'eās', 'ea'] },
+          { label: 'Abl. pl.', cells: ['eīs', 'eīs', 'eīs'] },
+        ],
+        note: 'hic/haec/hoc, ille/illa/illud, and ipse/ipsa/ipsum all share this same genitive-singular -ius / dative-singular -ī shape; only the stem changes. īdem is is with -dem appended (eundem, eōrundem are the two spots that assimilate).',
+      },
+    ],
     recognition: [
       'All five share the same irregular case-ending family: genitive singular -īus (huius, illīus, eius, eiusdem, ipsīus) for every gender, dative singular -ī (huic, illī, eī, eīdem, ipsī) for every gender — exactly like the nine pronominal adjectives.',
       'is, ea, id supplies the ordinary unstressed 3rd-person pronoun ("he, she, it, they") wherever Latin has no dedicated word for one, unlike English.',
@@ -825,6 +1139,25 @@ export const grammarTopics: GrammarTopic[] = [
     level: 'foundational',
     summary:
       'quī, quae, quod ("who, which, that") introduces a relative clause and agrees with its antecedent in gender and number, but takes its case from its OWN clause. quis, quid (substantive) and quī, quae/qua, quod (adjectival) ask a question; the interrogative and relative share nearly all their forms.',
+    charts: [
+      {
+        title: 'quī, quae, quod — relative/interrogative',
+        cols: ['M.', 'F.', 'N.'],
+        rows: [
+          { label: 'Nom. sg.', cells: ['quī', 'quae', 'quod'] },
+          { label: 'Gen. sg.', cells: ['cuius', 'cuius', 'cuius'] },
+          { label: 'Dat. sg.', cells: ['cui', 'cui', 'cui'] },
+          { label: 'Acc. sg.', cells: ['quem', 'quam', 'quod'] },
+          { label: 'Abl. sg.', cells: ['quō', 'quā', 'quō'] },
+          { label: 'Nom. pl.', cells: ['quī', 'quae', 'quae'] },
+          { label: 'Gen. pl.', cells: ['quōrum', 'quārum', 'quōrum'] },
+          { label: 'Dat. pl.', cells: ['quibus', 'quibus', 'quibus'] },
+          { label: 'Acc. pl.', cells: ['quōs', 'quās', 'quae'] },
+          { label: 'Abl. pl.', cells: ['quibus', 'quibus', 'quibus'] },
+        ],
+        note: 'The substantive interrogative quis, quid replaces only the nominative/accusative singular (quis for both M. and F., quid for N.) — every other form is identical to this table.',
+      },
+    ],
     recognition: [
       'quī, quae, quod: gen. cuius (for all genders), dat. cui (for all genders) — the same -īus/-ī family as the demonstratives.',
       'The interrogative pronoun quis/quid is used substantively ("who? what?"); the interrogative adjective quī/quae/quod is used with a noun ("which man? what plan?") and is spelled exactly like the relative.',
@@ -851,6 +1184,22 @@ export const grammarTopics: GrammarTopic[] = [
     level: 'foundational',
     summary:
       'Latin prepositions govern only two cases: the accusative (the large majority — ad, ante, apud, circum, contrā, inter, ob, per, post, prope, propter, trāns) or the ablative (ā/ab, cum, dē, ē/ex, prō, sine, sub when meaning "under" at rest). in and sub take the accusative for motion-into and the ablative for location-at.',
+    charts: [
+      {
+        title: 'Which case, by preposition',
+        cols: ['Accusative', 'Ablative', 'Either (differ by meaning)'],
+        rows: [
+          {
+            label: 'Governs',
+            cells: [
+              'ad, ante, apud, circum, contrā, inter, ob, per, post, prope, propter, trāns',
+              'ā/ab, cum, dē, ē/ex, prō, sine',
+              'in, sub (accusative = motion "into/onto"; ablative = static location)',
+            ],
+          },
+        ],
+      },
+    ],
     recognition: [
       'The case a preposition governs is fixed and must be memorised with the word — it does not follow from meaning alone.',
       'in + accusative = motion "into"; in + ablative = static location "in/on". The same accusative/ablative split applies to sub ("under").',
@@ -876,6 +1225,25 @@ export const grammarTopics: GrammarTopic[] = [
     level: 'foundational',
     summary:
       'Cardinal numbers ("one, two, three…") count; ordinal numbers ("first, second, third…") rank. Only ūnus, duo, trēs, and every hundred from ducentī up decline; the cardinals four through one hundred are indeclinable. Every ordinal declines like a normal 1st/2nd-declension adjective.',
+    charts: [
+      {
+        title: 'One through ten',
+        cols: ['Cardinal', 'Ordinal'],
+        rows: [
+          { label: '1', cells: ['ūnus, -a, -um', 'prīmus, -a, -um'] },
+          { label: '2', cells: ['duo, duae, duo', 'secundus, -a, -um'] },
+          { label: '3', cells: ['trēs, tria', 'tertius, -a, -um'] },
+          { label: '4', cells: ['quattuor', 'quārtus, -a, -um'] },
+          { label: '5', cells: ['quīnque', 'quīntus, -a, -um'] },
+          { label: '6', cells: ['sex', 'sextus, -a, -um'] },
+          { label: '7', cells: ['septem', 'septimus, -a, -um'] },
+          { label: '8', cells: ['octō', 'octāvus, -a, -um'] },
+          { label: '9', cells: ['novem', 'nōnus, -a, -um'] },
+          { label: '10', cells: ['decem', 'decimus, -a, -um'] },
+        ],
+        note: 'Every ordinal declines like bonus, -a, -um. Of the cardinals here, only ūnus, duo, and trēs decline at all — quattuor through decem never change form regardless of case.',
+      },
+    ],
     recognition: [
       'ūnus, -a, -um declines like the nine pronominal adjectives (gen. ūnīus, dat. ūnī).',
       'duo, duae, duo is irregular and archaic-looking: duōrum/duārum, duōbus/duābus, duōs (or duo)/duās/duo. trēs, tria declines like a 3rd-declension plural i-stem adjective (trium, tribus).',
