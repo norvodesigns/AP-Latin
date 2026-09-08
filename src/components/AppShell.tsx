@@ -12,6 +12,7 @@ import AccountMenu from './AccountMenu';
 import WelcomeGate from './WelcomeGate';
 import FirstLoginWelcome from './FirstLoginWelcome';
 import SplashScreen from './SplashScreen';
+import DailyGoalToast from './DailyGoalToast';
 
 /**
  * The five sections a student moves between constantly. These are always on
@@ -371,6 +372,7 @@ export default function AppShell({
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
 
       {mounted && !isAuthRoute && <SplashScreen />}
+      {mounted && !isAuthRoute && <DailyGoalToast />}
       {mounted && accountsEnabled && !profile && !isAuthRoute && <WelcomeGate />}
       {mounted && accountsEnabled && profile && (
         <FirstLoginWelcome userId={profile.id} displayName={profile.display_name} role={profile.role} />

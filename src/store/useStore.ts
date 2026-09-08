@@ -226,6 +226,10 @@ export interface StoreState {
 
   /** ISO dates on which any study activity was recorded. */
   studyDays: string[];
+  studySecondsToday: number;
+  studyGoalDate: string;
+  goalCelebratedDate: string | null;
+  goalJustReached: boolean;
   aiUsage: AiUsageDay[];
 
   scansionAttempts: ScansionAttempt[];
@@ -285,6 +289,11 @@ export interface StoreState {
   scansionDrafts: Record<string, ScansionDraft>;
   saveScansionDraft: (lineId: string, draft: ScansionDraft) => void;
   markStudied: () => void;
+  /** Adds active study time toward today's goal, rolling the counter over
+   *  on a new day and flagging `goalJustReached` the moment it first
+   *  crosses `studyPlan.minutesPerDay` for the day. */
+  addStudySeconds: (seconds: number) => void;
+  dismissGoalCelebration: () => void;
   exportJSON: () => string;
   importJSON: (json: string) => { ok: true } | { ok: false; error: string };
   resetAll: () => void;
@@ -337,6 +346,15 @@ const initialState = {
     startedAt: today(),
   } as StudyPlanSettings,
   studyDays: [] as string[],
+  /** Seconds of active study time accrued today, against `studyPlan.minutesPerDay`. */
+  studySecondsToday: 0,
+  /** ISO date `studySecondsToday` belongs to — a new day zeroes it. */
+  studyGoalDate: today(),
+  /** ISO date the "goal reached" toast last fired, so it shows once a day. */
+  goalCelebratedDate: null as string | null,
+  /** Ephemeral — never persisted (see `partialize`). True for exactly as
+   *  long as the "goal reached" toast should be on screen. */
+  goalJustReached: false,
   aiUsage: [] as AiUsageDay[],
   scansionAttempts: [] as ScansionAttempt[],
   scansionDrafts: {} as Record<string, ScansionDraft>,
@@ -646,6 +664,24 @@ export const useStore = create<StoreState>()(
           return s.studyDays.includes(d) ? s : { studyDays: [...s.studyDays, d].slice(-800) };
         }),
 
+      addStudySeconds: (seconds) =>
+        set((s) => {
+          const d = today();
+          // A new day (or the very first tick ever) starts the counter over
+          // rather than adding onto whatever yesterday left behind.
+          const before = s.studyGoalDate === d ? s.studySecondsToday : 0;
+          const after = before + seconds;
+          const goalSeconds = s.studyPlan.minutesPerDay * 60;
+          const justReached = goalSeconds > 0 && before < goalSeconds && after >= goalSeconds && s.goalCelebratedDate !== d;
+          return {
+            studySecondsToday: after,
+            studyGoalDate: d,
+            goalCelebratedDate: justReached ? d : s.goalCelebratedDate,
+            goalJustReached: justReached ? true : s.goalJustReached,
+          };
+        }),
+      dismissGoalCelebration: () => set({ goalJustReached: false }),
+
       exportJSON: () => {
         const s = get();
         const payload = {
@@ -700,9 +736,13 @@ export const useStore = create<StoreState>()(
         // explicitly: it is ephemeral session identity, sourced fresh from
         // the server on every layout render (see AppShell), and must never
         // survive to a different session or — on a shared computer — a
-        // different signed-in user.
+        // different signed-in user. goalJustReached is excluded for a
+        // different reason: it is a "show the toast right now" pulse, not
+        // state — persisting `true` would replay the celebration on every
+        // reload until the reader happens to dismiss it.
         const rest = { ...s } as Partial<StoreState>;
         delete rest.authUserId;
+        delete rest.goalJustReached;
         return rest as StoreState;
       },
     },
