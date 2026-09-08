@@ -647,6 +647,17 @@ const SUPPLEMENTARY_EXTRA_FORMS: Record<string, string> = {
   // own, "hortatur" (Pliny 6.16.12) always loses that stem-length tie to
   // the (wrong) core noun, since a stem match ranks purely by length.
   hortatur: 'hortor',
+  // Aeneid 1.34-87 — Juno's bargain with Aeolus. divom/divom (archaic
+  // genitive plural of divus, alongside the regular "divum" the ordinary
+  // ENDINGS table would still miss since the headword's own stem is under
+  // the 3-character floor); Aeole, the vocative of Aeolus (2nd-declension
+  // "-us" nouns take "-e", not covered by the generic stemmer any more than
+  // "domine" from "dominus" is); Aiacis and Oilei, oblique/genitive forms of
+  // proper nouns whose nominatives never appear in the text at all; imis,
+  // dative/ablative plural of imus (2-letter stem, same floor issue as
+  // "imas" above); Argivom, archaic genitive plural of Argivi.
+  divom: 'divus', aeole: 'aeolus', aiacis: 'aiax', oilei: 'oileus',
+  imis: 'imus', argivom: 'argivi',
 };
 
 for (const [form, headword] of Object.entries(SUPPLEMENTARY_EXTRA_FORMS)) {

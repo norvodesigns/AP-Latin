@@ -443,6 +443,17 @@ const otherHandAdded = [
     pos: 'noun (proper)',
     definition: 'an Iseum, a temple of the goddess Isis (Greek loanword)',
   },
+  // divus — a genuinely common word (substantive plural "the gods"), but
+  // absent from Whitaker's dictionary cache under this headword entirely
+  // (only "deus" is there). Aeneid 1.46 "quae divom incedo regina" uses the
+  // archaic genitive plural "divom"/"divum", mapped in SUPPLEMENTARY_EXTRA_
+  // FORMS since the ordinary ENDINGS table has no "-om" alternate to "-um".
+  {
+    headword: 'divus',
+    lemma: 'divus, -a, -um',
+    pos: 'adjective',
+    definition: 'divine, godlike; (substantive, usually plural) a god',
+  },
 ];
 
 /* ---- proper nouns Whitaker's dictionary itself doesn't carry ---- */
@@ -575,6 +586,15 @@ const properNouns = [
   { headword: 'Tyrrhenus', lemma: 'Tyrrhenus, -a, -um', pos: 'adjective', definition: 'Etruscan, Tyrrhenian' },
   { headword: 'Cyllenius', lemma: 'Cyllenius, -a, -um', pos: 'adjective', definition: 'of Mount Cyllene; (as a substantive) Mercury, born on Cyllene' },
   { headword: 'Gryneus', lemma: 'Gryneus, -a, -um', pos: 'adjective', definition: 'of Grynium, a town in Asia Minor with a famous oracle of Apollo' },
+  // Aeneid 1.34-87 (Juno's grievance and her bargain with Aeolus): the king
+  // of the winds, his floating island-prison, the nymph offered as his
+  // bribe, and the two Greek names in Juno's own complaint against fate.
+  { headword: 'Aeolus', lemma: 'Aeolus, -i', pos: 'noun (proper)', definition: 'Aeolus, king and keeper of the winds, who releases them against the Trojan fleet at Juno’s bidding' },
+  { headword: 'Aeolia', lemma: 'Aeolia, -ae', pos: 'noun (proper)', definition: "Aeolia, the floating island that is Aeolus's home and the winds' prison" },
+  { headword: 'Deiopea', lemma: 'Deiopea, -ae', pos: 'noun (proper)', definition: "Deiopea, loveliest of Juno's fourteen nymphs, promised to Aeolus in marriage as payment for wrecking the Trojan fleet" },
+  { headword: 'Aiax', lemma: 'Aiax, Aiacis', pos: 'noun (proper)', definition: 'Ajax the Lesser, son of Oileus, whose sacrilege against Cassandra at Troy earned Minerva’s lasting hatred' },
+  { headword: 'Oileus', lemma: 'Oileus, Oilei', pos: 'noun (proper)', definition: 'Oileus, king of Locris, father of the lesser Ajax' },
+  { headword: 'Argivi', lemma: 'Argivi, -orum (m. pl.)', pos: 'noun (proper, pl.)', definition: 'the Argives, the Greeks collectively (a poetic synonym for Danai)' },
   // Pliny's letters: the ghost story of Curtius Rufus and Athenodorus
   // (Ep. 7.27), Ummidia Quadratilla (Ep. 7.24).
   { headword: 'Curtius', lemma: 'Curtius, -i', pos: 'noun (proper)', definition: 'Curtius Rufus, a Roman who rose from humble origins to the proconsulship of Africa, said to have been visited there by a prophetic apparition' },
