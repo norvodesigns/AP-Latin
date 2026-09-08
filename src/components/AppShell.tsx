@@ -583,7 +583,17 @@ function ThemeToggle({
   setTheme: (t: 'light' | 'dark') => void;
   mounted: boolean;
 }) {
-  const next = theme === 'light' ? 'dark' : 'light';
+  /*
+   * Both gated on `mounted`, not just `theme` — `theme` itself can
+   * legitimately differ between the server render (always the SSR-safe
+   * 'light' fallback) and the client's first render (whatever
+   * `prefersDarkDefault()` resolves to right now, e.g. 'dark' outside
+   * 6am-6pm local time), which is exactly the kind of per-request state a
+   * server can't know and hydration mismatches are made of. Freezing both
+   * to one fixed string until `mounted` flips true post-hydration keeps
+   * the very first client render textually identical to the server's.
+   */
+  const next = !mounted ? 'dark' : theme === 'light' ? 'dark' : 'light';
   const label = !mounted ? 'Theme' : theme === 'dark' ? 'Dark theme' : 'Light theme';
   return (
     <button
