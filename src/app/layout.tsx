@@ -45,6 +45,28 @@ export const metadata: Metadata = {
   },
   description:
     'Lectio — a study environment for the AP Latin exam (2025–26 framework): Vergil’s Aeneid and Pliny’s Letters.',
+  /**
+   * "Add to Home Screen" in Safari has never fully read the web manifest —
+   * it takes the name from `apple-mobile-web-app-title` (set here) and the
+   * icon from the nearest `apple-touch-icon` link (generated automatically
+   * from apple-icon.tsx), rather than manifest.ts's `name`/`icons`. Both are
+   * kept in step so every install path — Safari's own and a manifest-aware
+   * one — lands on the same name and mark.
+   */
+  appleWebApp: {
+    capable: true,
+    title: 'Lectio',
+    statusBarStyle: 'default',
+  },
+  /**
+   * `appleWebApp.capable` above only emits the newer unprefixed
+   * `mobile-web-app-capable` tag. Safari has honored the `apple-` prefixed
+   * one for standalone mode since long before it recognized the unprefixed
+   * name, so it stays here alongside it rather than replacing it.
+   */
+  other: {
+    'apple-mobile-web-app-capable': 'yes',
+  },
 };
 
 export const viewport: Viewport = {
@@ -62,6 +84,12 @@ export const viewport: Viewport = {
  * anything is drawn or the reader sees a flash of the wrong thing.
  *
  * 1. Applies the stored theme, so there is no flash of the wrong palette.
+ *    A visitor who has never chosen one gets dark by default outside
+ *    6am-6pm *local* time (`getHours()` is always local, never UTC) — or
+ *    whenever the OS itself prefers dark — matching the same one-time
+ *    default `initialState.theme` computes in useStore.ts, so the two never
+ *    disagree once React hydrates. Left unset otherwise: the CSS
+ *    `prefers-color-scheme` rule paints daytime-default light on its own.
  * 2. Sets `data-motion` when JS is running and the reader has not asked for
  *    reduced motion. Every entrance and scroll-reveal rule in globals.css is
  *    gated on that attribute, so anything that starts hidden only ever does
@@ -75,6 +103,13 @@ const bootScript = `
     var t = localStorage.getItem('ap-latin-theme');
     if (t === 'light' || t === 'dark') {
       document.documentElement.setAttribute('data-theme', t);
+    } else {
+      var hour = new Date().getHours();
+      var isNight = hour >= 18 || hour < 6;
+      var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (isNight || prefersDark) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
     }
   } catch (e) {}
   try {

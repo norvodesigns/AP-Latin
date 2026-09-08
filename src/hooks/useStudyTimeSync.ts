@@ -18,7 +18,8 @@ function sectionFor(pathname: string): AssignableSection | null {
 const FLUSH_MS = 30_000;
 
 /**
- * Tracks active time on assignable sections and syncs it to Supabase.
+ * Tracks active time on assignable sections, syncs it to Supabase, and
+ * (regardless of accounts) feeds it toward today's local study-time goal.
  *
  * "Active" means the tab is visible and focused — a browser left open on a
  * background tab must not count as studying. Time accrues locally in a ref
@@ -26,13 +27,16 @@ const FLUSH_MS = 30_000;
  * being hidden, and on unmount, so nothing is lost to a closed tab between
  * flushes.
  *
- * A no-op in solo mode: `bumpStudySeconds` itself checks for a configured
- * Supabase client and for `authUserId`, so mounting this unconditionally in
- * AppShell is safe regardless of whether accounts are enabled.
+ * The Supabase sync is a no-op in solo mode: `bumpStudySeconds` itself
+ * checks for a configured client and for `authUserId`, so mounting this
+ * unconditionally in AppShell is safe regardless of whether accounts are
+ * enabled. `addStudySeconds` is the opposite — always local, so the daily
+ * goal toast works the same with or without an account.
  */
 export function useStudyTimeSync() {
   const pathname = usePathname();
   const authUserId = useStore((s) => s.authUserId);
+  const addStudySeconds = useStore((s) => s.addStudySeconds);
 
   const section = sectionFor(pathname);
   const sectionRef = useRef(section);
@@ -65,7 +69,10 @@ export function useStudyTimeSync() {
       const elapsed = (now - lastTickRef.current) / 1000;
       lastTickRef.current = now;
       // A large gap (laptop asleep, tab frozen) is not active study time.
-      if (isCounting() && elapsed > 0 && elapsed < 5) pendingRef.current += elapsed;
+      if (isCounting() && elapsed > 0 && elapsed < 5) {
+        pendingRef.current += elapsed;
+        addStudySeconds(elapsed);
+      }
     };
     const interval = window.setInterval(tick, 1000);
     const flushTimer = window.setInterval(() => flush(sectionRef.current), FLUSH_MS);
@@ -84,5 +91,9 @@ export function useStudyTimeSync() {
       window.removeEventListener('pagehide', onVisibility);
       flush(null);
     };
+    // Deliberately mount-once: `flush` and `addStudySeconds` are stable
+    // Zustand action references (never change identity across renders), and
+    // re-running this on every render would restart the tick/flush timers.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 }

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { NAV, NAV_GROUPS } from '@/lib/nav';
-import { useStore, daysUntilExam } from '@/store/useStore';
+import { useStore, daysUntilExam, prefersDarkDefault } from '@/store/useStore';
 import { useStudyTimeSync } from '@/hooks/useStudyTimeSync';
 import type { Profile } from '@/lib/supabase/types';
 import CommandPalette from './CommandPalette';
@@ -12,6 +12,7 @@ import AccountMenu from './AccountMenu';
 import WelcomeGate from './WelcomeGate';
 import FirstLoginWelcome from './FirstLoginWelcome';
 import SplashScreen from './SplashScreen';
+import DailyGoalToast from './DailyGoalToast';
 
 /**
  * The five sections a student moves between constantly. These are always on
@@ -127,9 +128,7 @@ export default function AppShell({
   useEffect(() => {
     if (!mounted) return;
     if (theme !== 'light' && theme !== 'dark') {
-      const prefersDark =
-        typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches;
-      setTheme(prefersDark ? 'dark' : 'light');
+      setTheme(prefersDarkDefault() ? 'dark' : 'light');
       return;
     }
     document.documentElement.setAttribute('data-theme', theme);
@@ -373,6 +372,7 @@ export default function AppShell({
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
 
       {mounted && !isAuthRoute && <SplashScreen />}
+      {mounted && !isAuthRoute && <DailyGoalToast />}
       {mounted && accountsEnabled && !profile && !isAuthRoute && <WelcomeGate />}
       {mounted && accountsEnabled && profile && (
         <FirstLoginWelcome userId={profile.id} displayName={profile.display_name} role={profile.role} />
@@ -585,7 +585,17 @@ function ThemeToggle({
   setTheme: (t: 'light' | 'dark') => void;
   mounted: boolean;
 }) {
-  const next = theme === 'light' ? 'dark' : 'light';
+  /*
+   * Both gated on `mounted`, not just `theme` — `theme` itself can
+   * legitimately differ between the server render (always the SSR-safe
+   * 'light' fallback) and the client's first render (whatever
+   * `prefersDarkDefault()` resolves to right now, e.g. 'dark' outside
+   * 6am-6pm local time), which is exactly the kind of per-request state a
+   * server can't know and hydration mismatches are made of. Freezing both
+   * to one fixed string until `mounted` flips true post-hydration keeps
+   * the very first client render textually identical to the server's.
+   */
+  const next = !mounted ? 'dark' : theme === 'light' ? 'dark' : 'light';
   const label = !mounted ? 'Theme' : theme === 'dark' ? 'Dark theme' : 'Light theme';
   return (
     <button

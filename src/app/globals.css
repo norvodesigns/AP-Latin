@@ -1167,6 +1167,93 @@ h1, h2, h3, h4 {
     pointer-events: none;
   }
 
+  /* — The daily-goal toast ——————————————————————————————————————————
+     Drops from the corner it has room to drop into. A real pointer usually
+     means a wide-enough viewport to dock at the top-right without crowding
+     the masthead; a narrow one (touch or not) gets a full-width banner
+     across the top instead, since there is no corner to spare. */
+  .goal-toast {
+    position: fixed;
+    z-index: 70;
+    top: 0.875rem;
+    left: 0.875rem;
+    right: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 0.875rem 1rem;
+    animation: goal-toast-in var(--dur-3) var(--ease-spring) both;
+  }
+  .goal-toast[data-closing='true'] {
+    animation: goal-toast-out var(--dur-2) var(--ease-io) both;
+    pointer-events: none;
+  }
+  @media (min-width: 640px) {
+    .goal-toast {
+      left: auto;
+      width: 21rem;
+    }
+  }
+
+  .goal-toast-close {
+    color: var(--fg-faint);
+    flex-shrink: 0;
+    align-self: flex-start;
+    padding: 0.25rem;
+    margin: -0.25rem;
+  }
+  .goal-toast-close:hover, .goal-toast-close:focus-visible { color: var(--fg); }
+
+  /* The firework: a center spark plus a ring of ten flying outward and
+     fading, alternating gilt and rubrication red — the same two colors the
+     rest of the app's ornament (the splash screen's rosette) uses, so this
+     reads as this design's own celebration rather than a stock icon. */
+  .goal-firework {
+    position: relative;
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+  }
+  .goal-firework-center {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: var(--r-pill);
+    background: var(--accent);
+    animation: goal-spark-pop var(--dur-2) var(--ease-spring) both;
+  }
+  .goal-spark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0.1875rem;
+    height: 0.1875rem;
+    margin: -0.09375rem;
+    border-radius: var(--r-pill);
+    transform: rotate(var(--goal-spark-angle)) translateX(0) scale(1);
+    animation: goal-spark-fly 700ms var(--ease) both;
+  }
+
+  @keyframes goal-toast-in {
+    from { opacity: 0; transform: translateY(-130%); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes goal-toast-out {
+    from { opacity: 1; transform: none; }
+    to { opacity: 0; transform: translateY(-110%); }
+  }
+  @keyframes goal-spark-pop {
+    from { transform: scale(0); }
+    60% { transform: scale(1.3); }
+    to { transform: scale(1); }
+  }
+  @keyframes goal-spark-fly {
+    from { transform: rotate(var(--goal-spark-angle)) translateX(0) scale(1); opacity: 1; }
+    to { transform: rotate(var(--goal-spark-angle)) translateX(0.95rem) scale(0.3); opacity: 0; }
+  }
+
   /* Rows arrive a beat after the panel, so the panel lands first and the
      contents fill in — rather than everything moving at once. */
   .index-panel .stagger > * { animation-delay: calc(var(--row-delay, 0ms) + 70ms); }
