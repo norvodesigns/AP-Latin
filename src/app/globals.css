@@ -1089,6 +1089,32 @@ h1, h2, h3, h4 {
      animations fighting. */
   .index-panel[data-closing='true'] * { animation: none !important; }
 
+  /* — The splash screen —————————————————————————————————————————————
+     A rectangular dialog over a blurred, dimmed home screen, the same
+     scrim-plus-panel shape as the index above but centered rather than
+     docked, and one the reader dismisses by dissolving rather than by
+     retreating off an edge — there's nowhere for a centered card to
+     retreat to. */
+  .splash-scrim {
+    background: color-mix(in srgb, var(--bg-sunk) 55%, transparent);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    animation: scrim-in var(--dur-2) var(--ease-io) both;
+  }
+  .splash-scrim[data-closing='true'] { animation: scrim-out var(--dur-2) var(--ease-io) both; }
+
+  .splash-card {
+    background: var(--bg-raised);
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--r-lg);
+    box-shadow: 0 24px 60px -24px var(--shadow), 0 2px 8px -4px var(--shadow2);
+    animation: pop-in var(--dur-2) var(--ease) both;
+  }
+  .splash-card[data-closing='true'] {
+    animation: pop-out var(--dur-2) var(--ease-io) both;
+    pointer-events: none;
+  }
+
   /* Rows arrive a beat after the panel, so the panel lands first and the
      contents fill in — rather than everything moving at once. */
   .index-panel .stagger > * { animation-delay: calc(var(--row-delay, 0ms) + 70ms); }
@@ -1276,6 +1302,10 @@ h1, h2, h3, h4 {
 @keyframes pop-in {
   from { opacity: 0; transform: translateY(4px) scale(0.98); }
   to { opacity: 1; transform: none; }
+}
+@keyframes pop-out {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: scale(0.98); }
 }
 
 /* Quantity marks land above their syllable rather than fading in place. */
