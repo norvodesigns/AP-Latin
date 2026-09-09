@@ -1,5 +1,6 @@
 import { coreVocabulary } from '@/data/vocabulary';
 import { supplementaryVocabulary } from '@/data/supplementaryVocabulary';
+import { VOCAB_DISAMBIGUATION, type VocabDisambiguationEntry } from '@/data/vocabDisambiguation';
 import type { VocabEntry } from '@/data/types';
 
 /* ------------------------------------------------------------------ */
@@ -357,7 +358,11 @@ const EXTRA_FORMS: Record<string, string> = {
   // 3-character floor, so no form of these ever indexed via `byStem`.
   meus: 'meus', mea: 'meus', meum: 'meus', meam: 'meus', mei: 'meus', meae: 'meus', meo: 'meus',
   meorum: 'meus', mearum: 'meus', meis: 'meus', meos: 'meus', meas: 'meus', mi: 'meus',
-  tuus: 'tuus', tua: 'tuus', tuum: 'tuus', tuam: 'tuus', tui: 'tuus', tuae: 'tuus', tuo: 'tuus',
+  // "tui" is deliberately not mapped to tuus here even though it is a
+  // grammatically real genitive of it — every actual occurrence of "tui" in
+  // this corpus is instead the personal pronoun tu's own genitive ("desiderium
+  // tui", "longing for you"), mapped to tu below instead.
+  tuus: 'tuus', tua: 'tuus', tuum: 'tuus', tuam: 'tuus', tuae: 'tuus', tuo: 'tuus',
   tuorum: 'tuus', tuarum: 'tuus', tuis: 'tuus', tuos: 'tuus', tuas: 'tuus',
   suus: 'suus', sua: 'suus', suum: 'suus', suam: 'suus', suae: 'suus', suo: 'suus',
   suorum: 'suus', suarum: 'suus', suis: 'suus', suos: 'suus', suas: 'suus',
@@ -539,6 +544,161 @@ const EXTRA_FORMS: Record<string, string> = {
   // ("de-") is under the stemmer's floor the same way dei/deo above are, so
   // this never reached deus at all before.
   deos: 'deus',
+  // Full-corpus audit: every actual occurrence of each spelling below reads
+  // as one specific word throughout this corpus, even though the bare
+  // stem also collides with an unrelated word by coincidence. Each was
+  // checked against every line it appears in, not just assumed from the
+  // first hit — see VOCAB_DISAMBIGUATION instead for the (much rarer) cases
+  // where the same spelling really is two different words in two different
+  // lines and a single global answer would be wrong half the time.
+  //
+  // prima/primo — always primus ("first"), including its adverbial neuter
+  // accusative use ("prima gesserat", "did first") and its ablative-
+  // adverbial use ("primo", "at first") — never the distinct adverb
+  // "primum", which never actually appears under this stem in the corpus.
+  prima: 'primus', primo: 'primus',
+  // animum/animo — always animus ("mind, spirit"), never anima ("breath,
+  // life-force"), whose stem this only coincidentally matches.
+  animum: 'animus', animo: 'animus',
+  // multa/multae/multas/multi — always the adjective multus ("much, many"),
+  // agreeing with a noun or standing for one ("many things"), never the
+  // distinct adverb multum ("greatly"), which needs a verb to modify and
+  // never appears under this stem here.
+  multa: 'multus', multae: 'multus', multas: 'multus', multi: 'multus',
+  // terras/terris/terram/terrae — always terra ("earth, land"). None of
+  // these is a real inflected form of terreo ("to frighten") at all —
+  // terreo's own forms are terreo/terres/terret/terrean-t — so every match
+  // against it here was a pure stem-collision artifact, not a real second
+  // reading of the word.
+  terras: 'terra', terris: 'terra', terram: 'terra', terrae: 'terra',
+  // metu — always metus ("fear"), ablative singular. Not a real form of
+  // metuo ("to fear") either — its forms are metuo/metuis/metuit — so this
+  // is the same kind of artifact as terras/terreo above.
+  metu: 'metus',
+  // tecta/tectis — always tectum ("roof, building, house"), plural, never
+  // the participle of tego ("to cover") in this corpus (tego's own
+  // "tectus, -a, -um" would need an explicit subject it's agreeing with,
+  // which none of these lines give it).
+  tecta: 'tectum', tectis: 'tectum',
+  // manu/manum — always manus ("hand"). Not a real form of the indeclinable
+  // adverb mane ("in the morning") or of maneo ("to remain") either —
+  // maneo's own forms are maneo/manes/manet, never "manu"/"manum".
+  manu: 'manus', manum: 'manus',
+  // animis/animae — always animus ("mind, spirit") for animis, always anima
+  // ("breath, life-force") for animae — different from the animum/animo
+  // pair above, which are always animus; the corpus genuinely uses these
+  // two forms for the two different underlying words.
+  animis: 'animus', animae: 'anima',
+  // consulas — always consulo ("to consult, take care for"), never a form
+  // of the noun consul at all (consul's own oblique forms are
+  // consulis/consuli/consule/consules, never "consulas").
+  consulas: 'consulo',
+  // uoluere (voluere) — always volvo ("to turn over, roll, experience"),
+  // its historical infinitive, never volo ("to wish").
+  uoluere: 'volvo',
+  // metuens — the present participle of metuo ("to fear"), never a form of
+  // the noun metus, which has no participle at all.
+  metuens: 'metuo',
+  // soluuntur (solvuntur) — always solvo ("to loosen, undo"; here
+  // "solvuntur frigore membra", "the limbs go slack with cold/fear"), not
+  // solus ("alone"), which this only coincidentally shares a stem with.
+  soluuntur: 'solvo',
+  // uoce (voce) — always vox ("voice"), ablative singular. Not a form of
+  // voco ("to call") — voco's own forms are voco/vocas/vocat.
+  uoce: 'vox',
+  // fert/ferunt — always fero ("to carry, bear"), never ferus ("wild"),
+  // which has no verb forms at all.
+  fert: 'fero', ferunt: 'fero',
+  // superant — always supero ("to rise above, surpass"), not the
+  // preposition super or the adjective superus, neither of which has verb
+  // forms.
+  superant: 'supero',
+  // undas — always unda ("wave"), never the adverb unde ("whence"), which
+  // does not decline and only coincidentally shares a stem.
+  undas: 'unda',
+  // parua (parva) — always parvus ("small"), never the adverb parum ("too
+  // little"), which does not inflect for gender/case at all.
+  parua: 'parvus',
+  // celerem — always celer ("swift"), never celo ("to hide"), whose own
+  // forms are celo/celas/celat and share this stem only by coincidence.
+  celerem: 'celer',
+  // caeli — always caelum ("sky, heaven"), genitive singular, never the
+  // proper name Caelius, which this only coincidentally stem-matches.
+  caeli: 'caelum',
+  // sedet — always sedeo ("to sit"), never sedes ("seat") or the
+  // conjunction sed ("but"), neither of which has verb forms.
+  sedet: 'sedeo',
+  // fugis — always fugio ("to flee"), never the noun fuga, which has no
+  // verb forms.
+  fugis: 'fugio',
+  // lacrimas/lacrimis — always lacrima ("tear"), accusative/dative-ablative
+  // plural, never lacrimo ("to weep"), whose own forms are
+  // lacrimo/lacrimas(1st sg pres!)/lacrimat — "lacrimas" only collides with
+  // lacrimo's 2nd singular present by coincidence of spelling, but every
+  // actual occurrence here is the noun's plural, not "you weep".
+  lacrimas: 'lacrima', lacrimis: 'lacrima',
+  // tui — always tu ("you"), the personal pronoun's own genitive ("of
+  // you"), never the possessive adjective tuus agreeing with a noun.
+  tui: 'tu',
+  // totaque — always totus ("whole, entire") plus the enclitic "-que",
+  // never the indeclinable tot ("so many"), which this only coincidentally
+  // stem-matches.
+  totaque: 'totus',
+  // tantam — always tantus ("so great"), extending the tanto/tanti/tantae/
+  // tanta family above; never the adverb tantum, which needs a verb to
+  // modify and never appears under this stem here.
+  tantam: 'tantus',
+  // altae — always altus ("high, deep"), agreeing with a genitive noun
+  // ("altae Romae", "of lofty Rome"), never the substantive noun altum
+  // ("the deep sea") — contrast "alta"/"alto" in VOCAB_DISAMBIGUATION,
+  // which really do split between the two.
+  altae: 'altus',
+  // somnis — always somnus ("sleep"), dative/ablative plural, in the fixed
+  // idiom "in somnis" ("in one's sleep/in a dream") — never somnium
+  // ("dream"), whose own plural is "somnia", not "somnis".
+  somnis: 'somnus',
+  // auras/auro — auras is always aura ("breeze, air"), accusative plural,
+  // in the common poetic phrase "per auras" ("through the air"); auro is
+  // always aurum ("gold"), ablative singular. Neither is a real form of
+  // auris ("ear"), whose own accusative plural is "aures" and whose
+  // dative/ablative singular is "auri", not "auro".
+  auras: 'aura', auro: 'aurum',
+  // fatis — always fatum ("fate"), dative/ablative plural, never a form of
+  // the deponent verb for ("to speak") — for's own forms are for/faris/
+  // fatur, and its participle "fatus" would need "-tis" for this case,
+  // not "-tis" attached to a bare "fa-" the way fatis reads.
+  fatis: 'fatum',
+  // fugit — always fugio ("to flee"), never the noun fuga, which has no
+  // verb forms.
+  fugit: 'fugio',
+  // sola — always solus ("alone"), never sol ("sun") or soleo ("to be
+  // accustomed"), neither of which has a feminine adjectival form at all.
+  sola: 'solus',
+  // amorem — always amor ("love"), accusative singular, never amo ("to
+  // love"), which has no such noun-looking form.
+  amorem: 'amor',
+  // longa — always longus ("long"), agreeing with a noun in the same line,
+  // never the adverb longe ("far"), which needs a verb to modify and never
+  // appears under this stem here.
+  longa: 'longus',
+  // uulnere (vulnere) — always vulnus ("wound"), ablative singular, never
+  // vulnero ("to wound"), whose own forms are vulnero/vulneras/vulnerat.
+  uulnere: 'vulnus',
+  // libertis — always libertus ("freedman"), dative/ablative plural
+  // (covering mixed-gender groups the way Latin's masculine plural
+  // regularly does), never liberta/libertas/liber/liberi, none of whose
+  // own paradigms actually produce this form.
+  libertis: 'libertus',
+  // mali — always malum ("evil, misfortune"), genitive singular ("tanti
+  // mali", "of so great an evil"), never malus ("bad") or malo ("to
+  // prefer"), neither of which has a genitive-looking form spelled this way
+  // on its own.
+  mali: 'malum',
+  // tanto/tanti/tantae/tanta — always tantus ("so great"), agreeing with a
+  // noun or (ablative) expressing degree of difference, extending the
+  // tantam entry above; never the adverb tantum, which needs a verb to
+  // modify and never appears under this stem here.
+  tanto: 'tantus', tanti: 'tantus', tantae: 'tantus', tanta: 'tantus',
 };
 
 for (const [form, headword] of Object.entries(EXTRA_FORMS)) {
@@ -727,6 +887,70 @@ const SUPPLEMENTARY_EXTRA_FORMS: Record<string, string> = {
   // cuspide — ablative of cuspis ("spear point"), not the rare/obscure verb
   // "cuspido" Whitaker's dictionary also carries under the same stem length.
   cuspide: 'cuspis',
+  // plurima — always plurimus ("very many, most") in this corpus, agreeing
+  // with a noun or standing for one ("very many things"). It coincidentally
+  // also stem-matches a supplementary "multum" entry that is otherwise
+  // unrelated to it.
+  plurima: 'plurimus',
+  // crebris — always creber ("frequent, thick-coming"), agreeing with a
+  // noun ("crebris tremoribus", "crebris ignibus"); not a real form of
+  // whatever "crebrisurus" is in Whitaker's raw data (that headword itself
+  // looks like a parsing artifact, not a real Latin word this ever needs).
+  crebris: 'creber',
+  // glomerantur — always glomero ("to gather, mass together"), never
+  // glomus ("ball of thread"), which has no verb forms.
+  glomerantur: 'glomero',
+  // feta — always fetus, -a, -um ("pregnant with, teeming with"), the
+  // adjective's own feminine form, never a form of the doubtful verb
+  // "feto" this only coincidentally stem-matches.
+  feta: 'fetus',
+  // innuptaeque — always innuptus ("unmarried, virgin") plus "-que", never
+  // innubo ("to marry into"), which has no form spelled this way.
+  innuptaeque: 'innuptus',
+  // corde — always cor ("heart"), ablative singular, never "corda" (this
+  // dictionary's raw data has no sense of "corda" that fits an ablative
+  // "corde" as one of its own forms anyway).
+  corde: 'cor',
+  // foedera is deliberately not mapped here even though "foedus" is
+  // technically its correct headword: Whitaker's data has TWO unrelated
+  // entries sharing that exact spelling (the adjective "foedus, -a, -um",
+  // "foul", and the noun "foedus, foederis", "treaty"), so an EXTRA_FORMS-
+  // style override can't tell them apart by headword string alone — see
+  // VOCAB_DISAMBIGUATION, which picks the noun by its `pos` instead.
+  // mandata — always mandatum ("order, command"), plural, carried through
+  // the air in both Aeneid lines that use it; not a real form of mando ("to
+  // entrust, order") on its own, which needs a different ending pattern.
+  mandata: 'mandatum',
+  // aspectu — always aspectus ("sight, appearance, gaze"), ablative
+  // singular — the noun aspicio's own action regularly forms, not a form
+  // of aspicio itself, which has no such ablative-singular-looking form.
+  aspectu: 'aspectus',
+  // reliquias — always reliquiae ("remains, remnants"), accusative plural,
+  // never relinquo ("to leave behind"), whose own perfect stem "reliqu-"
+  // this only coincidentally matches at the same length.
+  reliquias: 'reliquia',
+  // ossa — always "bones" (the 3rd-declension neuter distinct from "os,
+  // oris", mouth/face, whose own plural is "ora", not "ossa" — see "ora"
+  // in VOCAB_DISAMBIGUATION), never a coincidental stem match against that
+  // unrelated word.
+  ossa: 'ossum',
+  // diuum (divum) — the archaic genitive plural of divus ("god"), alongside
+  // "divom" already above — "domus divum", "interpres divum", every one of
+  // its occurrences in the corpus. Never diu ("for a long time"), diva
+  // ("goddess"), or dives ("rich"), none of which forms a genitive plural
+  // spelled this way.
+  diuum: 'divus',
+  // pugillares — always pugillaris (a real 3rd-declension plural), never
+  // pugillare, whose own neuter plural would be "pugillaria" — Whitaker's
+  // dictionary carries both as separate headwords for the same word
+  // ("writing tablets"), but only one of them actually declines this way.
+  pugillares: 'pugillaris',
+  // specie — always species ("appearance, kind"), ablative singular, never
+  // specio, an archaic/rare verb whose own forms don't include this one.
+  specie: 'species',
+  // pondere — always pondus ("weight"), ablative singular, never pondero
+  // ("to weigh"), whose own forms are pondero/ponderas/ponderat.
+  pondere: 'pondus',
 };
 
 for (const [form, headword] of Object.entries(SUPPLEMENTARY_EXTRA_FORMS)) {
@@ -822,6 +1046,62 @@ export function lookup(word: string): LookupResult[] {
   return results
     .sort((a, b) => b.stemLength - a.stemLength)
     .slice(0, 6);
+}
+
+const disambiguationIndex = new Map<string, VocabDisambiguationEntry[]>();
+for (const entry of VOCAB_DISAMBIGUATION) {
+  const key = `${entry.passageId}|${entry.lineN}|${entry.word}`;
+  const cur = disambiguationIndex.get(key);
+  if (cur) cur.push(entry);
+  else disambiguationIndex.set(key, [entry]);
+}
+
+/**
+ * Narrows `lookup()`'s results down to the one entry known to be correct in
+ * this specific line, when the clicked word's spelling is one of the cases
+ * hand-checked in VOCAB_DISAMBIGUATION (see that file for why this can't be
+ * a global EXTRA_FORMS-style override: the same spelling is genuinely
+ * different words in different sentences, e.g. "quod" as the relative
+ * pronoun "qui" versus the unrelated conjunction "quod"). Falls back to the
+ * unfiltered results whenever nothing in the table applies, or the one
+ * entry it names isn't actually among the candidates lookup() found.
+ *
+ * `tokenIndex` (tokenize()'s per-token `index` for the line) only matters
+ * for the rare line where the same spelling appears twice with two
+ * different correct senses; every other call site can omit it.
+ */
+export function disambiguateInContext(
+  passageId: string,
+  lineN: number,
+  word: string,
+  results: LookupResult[],
+  tokenIndex?: number,
+): LookupResult[] {
+  const candidates = disambiguationIndex.get(`${passageId}|${lineN}|${normalizeWord(word)}`);
+  if (!candidates || candidates.length === 0) return results;
+  const chosen =
+    candidates.length === 1
+      ? candidates[0]
+      : (candidates.find((c) => c.tokenIndex === tokenIndex) ?? candidates[0]);
+  const matches = (r: LookupResult) =>
+    normalizeWord(r.entry.headword) === normalizeWord(chosen.headword) &&
+    (!chosen.pos || r.entry.pos === chosen.pos);
+
+  const direct = results.filter(matches);
+  if (direct.length > 0) return direct;
+
+  // The desired entry isn't among lookup()'s own results — this happens
+  // when the correct answer lives in the tier lookup() never reached,
+  // because the OTHER tier already had an exact match of its own for this
+  // exact spelling (e.g. "solum" the noun "ground" is a supplementary
+  // headword in its own right, which wins outright over "solum" the
+  // adjective solus's neuter form — a real stem/tier collision, not a
+  // hand-picked sense — everywhere except the one line that really does
+  // mean "ground"). Search both tiers directly, bypassing that priority,
+  // since a hand-verified table entry already knows better.
+  const w = normalizeWord(word);
+  const cross = [...lookupWithEnclitic(coreIndex, w), ...lookupWithEnclitic(supplementaryIndex, w)].filter(matches);
+  return cross.length > 0 ? cross : results;
 }
 
 /* ------------------------------------------------------------------ */

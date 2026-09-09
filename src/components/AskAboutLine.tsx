@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Passage } from '@/data/types';
 import { useAiStatus } from '@/lib/useAi';
 import { useStore } from '@/store/useStore';
-import { lookup } from '@/lib/latin';
+import { lookup, disambiguateInContext } from '@/lib/latin';
 
 const SUGGESTED = [
   'Parse every word in this line.',
@@ -99,7 +99,7 @@ export default function AskAboutLine({
   const offlineGloss = latin
     .split(/[^A-Za-zÀ-ÿĀ-ſ]+/)
     .filter((w) => w.length > 1)
-    .map((w) => ({ word: w, hit: lookup(w)[0] }))
+    .map((w) => ({ word: w, hit: disambiguateInContext(passage.id, lineN, w, lookup(w))[0] }))
     .filter((x) => x.hit);
 
   return (

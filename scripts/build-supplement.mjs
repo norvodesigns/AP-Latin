@@ -383,6 +383,26 @@ const otherHandAdded = [
     pos: 'noun',
     definition: 'physical trainer who treats by rubbing with oil, masseur',
   },
+  // Common words the core list's own lookup() never actually fails on (so
+  // the generated pass above never considers them at all) but resolves
+  // WRONG — stem-colliding with an unrelated core word — because neither
+  // tier carries the real headword. "verum" here is the emphatic adversative
+  // conjunction ("but", "but also" — "non solum... verum etiam", "not
+  // only... but also"), not a form of verus; "solum" is the noun ("ground,
+  // soil"), not a form of solus. Added by hand with each word's own gloss,
+  // not a guess.
+  {
+    headword: 'verum',
+    lemma: 'verum',
+    pos: 'conjunction',
+    definition: 'but, but also, however, yet (often "non solum/modo... verum etiam", "not only... but also")',
+  },
+  {
+    headword: 'solum',
+    lemma: 'solum, soli (n.)',
+    pos: 'noun',
+    definition: 'ground, soil, earth, land; sole (of the foot)',
+  },
   // Real Latin words appearing in the corpus that Whitaker's dictionary
   // either lacks under this exact prefix spelling or doesn't carry at all.
   {

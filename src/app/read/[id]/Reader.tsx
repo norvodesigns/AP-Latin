@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Passage } from '@/data/types';
-import { tokenize, lookup, type LookupResult } from '@/lib/latin';
+import { tokenize, lookup, disambiguateInContext, type LookupResult } from '@/lib/latin';
 import { useStore, readingCoverage, type Annotation, type HighlightColor } from '@/store/useStore';
 import { passageVocabIds } from '@/data/passages';
 import { BackLink, CedLink, SupplementaryNotice } from '@/components/ui';
@@ -122,10 +122,10 @@ export default function Reader({
   }, []);
 
   const onWord = useCallback(
-    (e: React.MouseEvent<HTMLButtonElement>, word: string, lineN: number) => {
+    (e: React.MouseEvent<HTMLButtonElement>, word: string, lineN: number, tokenIndex: number) => {
       if (!glossaryEnabled) return;
       const rect = e.currentTarget.getBoundingClientRect();
-      const results = lookup(word);
+      const results = disambiguateInContext(passage.id, lineN, word, lookup(word), tokenIndex);
       // Flip above the word when there isn't reasonably room below for even
       // a short entry, and above actually has more room to offer — never
       // flip a word near the very top of the screen just because it's also
@@ -466,7 +466,7 @@ export default function Reader({
                           className={`word ${hlClass} ${
                             sel?.word === t.text && sel?.lineN === line.n ? 'word-active' : ''
                           }`}
-                          onClick={(e) => onWord(e, t.text, line.n)}
+                          onClick={(e) => onWord(e, t.text, line.n, t.index)}
                           tabIndex={glossaryEnabled ? 0 : -1}
                           style={{ cursor: glossaryEnabled ? 'pointer' : 'text' }}
                         >
