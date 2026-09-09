@@ -19,7 +19,7 @@ export const NAV: NavItem[] = [
   { href: '/translate', label: 'Translate', key: 't', group: 'drill', blurb: 'Literal translation drills with AP scoring segments', short: 'Translate' },
   { href: '/sight', label: 'Sight Reading', key: 'i', group: 'drill', blurb: 'Timed unseen prose and poetry' },
   { href: '/quiz', label: 'Quiz Engine', key: 'q', group: 'drill', blurb: 'Configurable AP-style multiple choice', short: 'Quiz' },
-  { href: '/vocab', label: 'Vocabulary', key: 'v', group: 'drill', blurb: 'Spaced repetition over the 990-word core list', short: 'Vocab' },
+  { href: '/vocab', label: 'Vocabulary', key: 'v', group: 'drill', blurb: 'Spaced repetition over every word the passages use', short: 'Vocab' },
   { href: '/grammar', label: 'Grammar & Syntax', key: 'g', group: 'reference', blurb: 'The constructions AP actually tests' },
   { href: '/scansion', label: 'Scansion Lab', key: 's', group: 'drill', blurb: 'Mark quantities, elisions and caesurae', short: 'Scansion' },
   { href: '/devices', label: 'Literary Devices', key: 'l', group: 'reference', blurb: 'Style reference and spot-the-device drill' },

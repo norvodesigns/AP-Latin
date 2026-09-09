@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { coreVocabulary } from '@/data/vocabulary';
+import { supplementaryVocabulary } from '@/data/supplementaryVocabulary';
 import { allPassages, getPassage, passageVocabIds } from '@/data/passages';
 import { useStore, dueVocab, newCard, sm2 } from '@/store/useStore';
 import { Page, PageHeader, Empty, CedLink, SourceNote } from '@/components/ui';
@@ -11,7 +12,15 @@ import { normalizeWord } from '@/lib/latin';
 type Direction = 'la-en' | 'en-la' | 'context';
 type Mode = 'idle' | 'review' | 'browse';
 
-const byId = new Map(coreVocabulary.map((e) => [e.id, e]));
+/**
+ * Every word this app can gloss, core and supplementary alike, as one
+ * undivided pool — a word encountered while reading is added to the deck
+ * exactly the same way regardless of which list it came from, and this page
+ * needs to find and display it either way. `AP` badges below are the only
+ * remaining trace of the split.
+ */
+const allVocabulary: VocabEntry[] = [...coreVocabulary, ...supplementaryVocabulary];
+const byId = new Map(allVocabulary.map((e) => [e.id, e]));
 
 /**
  * Two responses, not SM-2's four. A first-time visitor does not have an
@@ -73,7 +82,7 @@ export default function Vocabulary() {
 
   /* ---------------- selection ---------------- */
   const scoped = useMemo(() => {
-    let list = coreVocabulary;
+    let list = allVocabulary;
     if (unit !== 'all') list = list.filter((e) => e.units.includes(unit));
     if (passageId !== 'all') {
       const p = getPassage(passageId);
@@ -192,8 +201,9 @@ export default function Vocabulary() {
         <div className="flex justify-center px-5 py-10 sm:px-10 sm:py-14">
           <div className="panel lift w-full max-w-[660px] px-7 py-10 sm:px-14 sm:py-13">
             <div className="mb-8 flex items-baseline justify-between gap-4">
-              <span className="rubric">
-                {entry.readings[0] ? `CED ${entry.readings[0]}` : 'Core list'}
+              <span className="flex items-center gap-2">
+                <span className="rubric">{entry.readings[0] ? `CED ${entry.readings[0]}` : 'Vocabulary'}</span>
+                {!entry.supplementary && <span className="ap-badge">AP</span>}
               </span>
               <span className="slab-sm">
                 {card.reviews > 0 ? `Seen ${card.reviews}×` : 'New card'}
@@ -392,9 +402,9 @@ export default function Vocabulary() {
     return (
       <Page wide>
         <PageHeader
-          eyebrow="Core list"
+          eyebrow="Vocabulary"
           title="Browse vocabulary"
-          lede={`${scoped.length} words in scope, from the ${coreVocabulary.length}-word required list in CED Appendix 2.`}
+          lede={`${scoped.length} words in scope. Words on the CED's required list carry an AP badge; everything else is real Latin from the passages themselves.`}
           actions={
             <button type="button" className="btn" onClick={() => setMode('idle')}>
               Back
@@ -419,14 +429,19 @@ export default function Vocabulary() {
                 style={{ borderTop: i === 0 ? undefined : '1px solid var(--hair)' }}
               >
                 <span
-                  style={{
-                    fontFamily: 'var(--font-latin)',
-                    fontSize: '1.25rem',
-                    color: 'var(--fg)',
-                    minWidth: '11rem',
-                  }}
+                  className="inline-flex items-center gap-2"
+                  style={{ minWidth: '11rem' }}
                 >
-                  {e.lemma}
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-latin)',
+                      fontSize: '1.25rem',
+                      color: 'var(--fg)',
+                    }}
+                  >
+                    {e.lemma}
+                  </span>
+                  {!e.supplementary && <span className="ap-badge">AP</span>}
                 </span>
                 <span className="slab-sm" style={{ minWidth: '5rem' }}>
                   {e.pos}
@@ -471,10 +486,11 @@ export default function Vocabulary() {
         title="Vocabulary"
         lede={
           <>
-            The full {coreVocabulary.length}-word required list from{' '}
-            <CedLink to="vocabulary">CED Appendix 2</CedLink>, with the reading each word is
-            introduced in. Get one wrong and it comes back tomorrow; get it
-            right repeatedly and the interval stretches.
+            Every word this app can gloss, {allVocabulary.length} in all — including the{' '}
+            {coreVocabulary.length}-word required list from{' '}
+            <CedLink to="vocabulary">CED Appendix 2</CedLink>, marked with an AP badge below.
+            Get one wrong and it comes back tomorrow; get it right repeatedly and the interval
+            stretches.
           </>
         }
         actions={
@@ -490,7 +506,7 @@ export default function Vocabulary() {
         <Count
           label="In rotation"
           value={mounted ? inRotation : null}
-          meter={{ value: mounted ? inRotation : 0, max: coreVocabulary.length }}
+          meter={{ value: mounted ? inRotation : 0, max: allVocabulary.length }}
         />
         <Count label="Not yet seen" value={mounted ? untouched.length : null} />
       </div>
@@ -619,8 +635,9 @@ export default function Vocabulary() {
       )}
 
       <SourceNote to="vocabulary">
-        All Latin words outside this list are glossed on the exam, so this list is the floor — not
-        a suggestion.
+        The AP badge marks the CED&rsquo;s required 990-word list — the floor the exam holds you
+        to, not the ceiling. Everything else here is real Latin drawn straight from the passages,
+        just as worth knowing.
       </SourceNote>
     </Page>
   );

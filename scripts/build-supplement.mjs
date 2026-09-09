@@ -182,12 +182,84 @@ function reconstructVerb(e) {
   return { headword: pres1sg, lemma: lemmaParts.join(', ') };
 }
 
+/**
+ * Whitaker's DICTLINE stores nouns and adjectives as bare stems too, exactly
+ * like verbs (see reconstructVerb above), but ONLY when `parts[0]` equals
+ * `parts[1]` — that's Whitaker's own signal that no real citation form is on
+ * file and the stem is duplicated as a placeholder (e.g. "rip"/"rip" for
+ * ripa, "gall"/"gall" for gallus, "speci"/"speci" for species). When they
+ * differ, `parts[0]` is already the genuine nominative singular (e.g.
+ * "abdicatio"/"abdication") and must be used as-is, never run through this
+ * reconstruction.
+ *
+ * The `n: [declension, variant]` code says which declension and sub-pattern
+ * applies, and `form: [gender, kind]` gives the gender. Checked against real
+ * dictionary data, only these declension/variant combinations reconstruct
+ * safely and unambiguously from the bare stem alone:
+ *   - nouns, declension 1, variant 1 -> "-a" (the ordinary puella/nauta
+ *     type; other variants sharing declension 1 are Greek-declension nouns
+ *     with irregular endings like "-e"/"-es", not "-a")
+ *   - nouns, declension 2, variants 1-2 -> "-us" (any gender) or "-um"
+ *     (neuter) — e.g. "morb" -> morbus, "frigidari" -> frigidarium
+ *   - nouns, declension 4, variant 1 -> "-us" or (neuter) "-u"
+ *   - nouns, declension 5, variant 1 -> "-es"
+ *   - adjectives, declension 1, variant 1 -> "-us, -a, -um" (the regular
+ *     bonus/bona/bonum type; other variants are the irregular pronominal
+ *     adjectives — solus, totus, alius, alter — whose declension doesn't
+ *     follow from the stem this way)
+ * Everything else (declension 3 nouns/adjectives, every other variant, a
+ * missing/unrecognized code) is excluded rather than guessed at — e.g.
+ * "grand" is n=[3,2], the adjective "grandis, grande", not "grandus".
+ */
+function genderTag(g) {
+  if (g === 'M') return ' (m.)';
+  if (g === 'F') return ' (f.)';
+  if (g === 'N') return ' (n.)';
+  return '';
+}
+function reconstructNounOrAdjective(e) {
+  const p0 = e.parts?.[0];
+  if (!p0 || p0 === '-') return null;
+  const [n0, n1] = e.n ?? [];
+  const gender = e.form?.[0];
+
+  if (e.pos === 'N') {
+    const tag = genderTag(gender);
+    if (n0 === 1 && n1 === 1) return { headword: `${p0}a`, lemma: `${p0}a, -ae${tag}` };
+    if (n0 === 2 && (n1 === 1 || n1 === 2)) {
+      return gender === 'N'
+        ? { headword: `${p0}um`, lemma: `${p0}um, -i${tag}` }
+        : { headword: `${p0}us`, lemma: `${p0}us, -i${tag}` };
+    }
+    if (n0 === 4 && n1 === 1) {
+      return gender === 'N'
+        ? { headword: `${p0}u`, lemma: `${p0}u, -us${tag}` }
+        : { headword: `${p0}us`, lemma: `${p0}us, -us${tag}` };
+    }
+    if (n0 === 5 && n1 === 1) return { headword: `${p0}es`, lemma: `${p0}es, -ei${tag}` };
+    return null;
+  }
+  if (e.pos === 'ADJ' && n0 === 1 && n1 === 1) {
+    return { headword: `${p0}us`, lemma: `${p0}us, -a, -um` };
+  }
+  return null;
+}
+
 const dict = JSON.parse(fs.readFileSync(CACHE_PATH, 'utf8'));
 const dictEntries = [];
 for (const e of dict) {
   if (!e.orth || !e.parts?.length || !e.senses?.length) continue;
   const pos = POS_LABEL[e.pos] ?? e.pos.toLowerCase();
-  const rebuilt = e.pos === 'V' ? reconstructVerb(e) : null;
+  // Only a bare, unreconstructed stem (parts[0] === parts[1], Whitaker's own
+  // "no citation form on file" signal) needs rebuilding; when they differ,
+  // parts[0] is already the real nominative/citation form.
+  const isBareStem = (e.pos === 'N' || e.pos === 'ADJ') && e.parts[0] === e.parts[1];
+  const rebuilt = e.pos === 'V' ? reconstructVerb(e) : isBareStem ? reconstructNounOrAdjective(e) : null;
+  // A bare stem that couldn't be safely reconstructed (declension 3, an
+  // irregular variant, or an unrecognized n/form code) is excluded outright
+  // rather than kept with a garbled headword like "rip" or "speci" — a
+  // missing entry is far better than a confidently wrong one.
+  if (isBareStem && !rebuilt) continue;
   const lemma = rebuilt?.lemma ?? [...new Set(e.parts)].join(', ');
   dictEntries.push({
     id: `sup-${e.id}`,
@@ -603,6 +675,7 @@ const properNouns = [
   { headword: 'Ummidia', lemma: 'Ummidia, -ae', pos: 'noun (proper)', definition: 'Ummidia Quadratilla, a wealthy Roman matron who died at nearly eighty, grandmother of Pliny’s friend Quadratus' },
   { headword: 'Quadratilla', lemma: 'Quadratilla, -ae', pos: 'noun (proper)', definition: 'Quadratilla — see Ummidia Quadratilla' },
   { headword: 'Cassianus', lemma: 'Cassianus, -a, -um', pos: 'adjective', definition: 'of (Gaius) Cassius (Longinus); Cassiana schola, the law school he founded' },
+  { headword: 'Quadratus', lemma: 'Quadratus, -i', pos: 'noun (proper)', definition: "Quadratus, Ummidia Quadratilla's grandson and Pliny's friend, addressee of Epistula 7.24" },
 ];
 
 /* ---- write the file ---- */
@@ -630,11 +703,12 @@ const out = `import type { VocabEntry } from './types';
 
 /**
  * Words that appear in the syllabus and supplementary passages but are not
- * on the CED's required 990-word list — exactly the words the real exam
- * glosses in the margin. The Reading Room's glossary already told a student
- * as much ("Not in the CED core vocabulary list — which means the exam
- * would gloss it for you"), but said nothing else, because until this file
- * existed the app had nowhere to get an actual gloss from. It has one now.
+ * on the CED's required 990-word list — real Latin the exam itself would
+ * gloss in the margin, not a lesser or provisional entry. The app treats it
+ * exactly like \`coreVocabulary\`: addable to the flashcard deck, reviewable,
+ * searchable, all the same. \`supplementary: true\` on every entry exists only
+ * so the UI can show a small "AP" badge on the words that ARE on the CED
+ * list — it draws no other line.
  *
  * Generated by scripts/build-supplement.mjs from William Whitaker's WORDS
  * dictionary data — the standard open Latin dictionary dataset, itself built
@@ -648,11 +722,6 @@ const out = `import type { VocabEntry } from './types';
  * verify in context" — already does. A short block of proper nouns
  * (mythological/historical figures and places named in Vergil and Pliny)
  * that dictionary does not carry is appended by hand at the end.
- *
- * This list must never be treated as CED-required vocabulary:
- * \`supplementary: true\` on every entry keeps it out of the vocab flashcard
- * deck and out of any CED reading/unit accounting, exactly like the real
- * appendix boundary.
  */
 export const supplementaryVocabulary: VocabEntry[] = [
 ${generated.map((e, i) => entryToTs(e, i)).join('\n')}

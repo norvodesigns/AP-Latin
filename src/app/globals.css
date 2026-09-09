@@ -689,6 +689,25 @@ h1, h2, h3, h4 {
   .chip-gilt { border-color: color-mix(in srgb, var(--gilt) 42%, transparent); color: var(--gilt); }
   .chip-on { border-color: var(--accent); background: var(--redtint); color: var(--accent); }
 
+  /* A small, unobtrusive marker for words on the CED's required list — the
+     only distinction the vocabulary draws between "AP" and everything else,
+     which is otherwise one undivided pool with no separate messaging. */
+  .ap-badge {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid color-mix(in srgb, var(--gilt) 45%, transparent);
+    border-radius: var(--r-pill);
+    padding: 0.0625rem 0.375rem;
+    font-family: var(--font-sans);
+    font-size: 0.5625rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    line-height: 1.4;
+    color: var(--gilt);
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+
   /* — Meters ———————————————————————————————————————————————————————
      Square troughs, 5px. Gilt for progress, red when a skill is the weak one. */
 

@@ -457,11 +457,14 @@ const EXTRA_FORMS: Record<string, string> = {
   quendam: 'quidam', quandam: 'quidam', quorundam: 'quidam', quarundam: 'quidam',
   quibusdam: 'quidam', quosdam: 'quidam', quasdam: 'quidam',
   // qui/quibus + the postpositive enclitic "-cum" ("with whom"), and
-  // ego + the same enclitic ("mecum", "with me") — neither "cum" attached
-  // this way is in the ordinary ENCLITICS list, since unlike -que/-ve/-ne it
-  // only ever attaches to a handful of ablative pronouns.
+  // ego/nos/vos + the same enclitic ("mecum", "with me") — neither "cum"
+  // attached this way is in the ordinary ENCLITICS list, since unlike
+  // -que/-ve/-ne it only ever attaches to a handful of ablative pronouns.
+  // (secum, the reflexive's own turn in this family, is in
+  // SUPPLEMENTARY_EXTRA_FORMS below — sui/sibi/se has no entry on the CED
+  // core list, only the supplementary one, so its stem lives there.)
   quocum: 'qui', quacum: 'qui', quibuscum: 'qui',
-  mecum: 'ego', tecum: 'tu',
+  mecum: 'ego', tecum: 'tu', nobiscum: 'nos', vobiscum: 'vos',
   // utor, uti, usus sum — root "ut-" is fine at 2 letters plus a vowel, but
   // still under the stemmer's 3-character floor.
   utantur: 'utor', utaris: 'utor',
@@ -491,6 +494,51 @@ const EXTRA_FORMS: Record<string, string> = {
   // sum compounds again: insum, inesse — "to be in/among" — not common
   // enough on its own to warrant a separate dictionary entry.
   inest: 'sum',
+  // Real, confirmed misreadings found auditing the corpus: an oblique form
+  // ties in stem length with an entirely different word sharing the same
+  // reduced stem, and the wrong one was winning the tie.
+  // domine — vocative of dominus ("master, lord"), not a form of domina
+  // ("mistress") at all: domina's own vocative is unchanged "domina", so
+  // nothing about this spelling can ever actually be domina.
+  domine: 'dominus',
+  // manibus — dative/ablative plural of manus ("hand"), not "mane"
+  // (adverb, "in the morning" — adverbs do not inflect for case at all)
+  // or maneo ("to remain"), whose stem this only coincidentally matches.
+  manibus: 'manus',
+  // sedibus — dative/ablative plural of sedes ("seat, dwelling place"),
+  // not the indeclinable conjunction sed ("but") or sedeo ("to sit").
+  sedibus: 'sedes',
+  // vocibus — dative/ablative plural of vox ("voice"), not voco ("to
+  // call") — a different, if related, word.
+  vocibus: 'vox',
+  // opera/opere — overwhelmingly opus ("work, task") in its neuter
+  // plural/ablative forms in this corpus, not operio ("to cover"), whose
+  // stem this only coincidentally matches.
+  opera: 'opus', opere: 'opus', operis: 'opus', operi: 'opus',
+  // casu — ablative of casus ("chance, accident"), not cado ("to fall"):
+  // casus's own supine "casum" gives cado a same-length "cas-" stem that
+  // otherwise wins the tie.
+  casu: 'casus',
+  // arces/arce — forms of arx ("citadel, stronghold"), not arcus ("bow,
+  // arch"), whose stem this only coincidentally matches at the same length.
+  arces: 'arx', arce: 'arx',
+  // totus, -a, -um — "whole, entire": an irregular pronominal adjective
+  // (genitive totius, dative toti, like unus/alius/solus/nullus above), so
+  // none of its oblique forms fit the regular 1st/2nd-declension endings —
+  // and every one of them ties in stem length with the indeclinable "tot"
+  // ("so many"), an entirely different word, which was winning the tie.
+  totius: 'totus', toti: 'totus', totam: 'totus', toto: 'totus',
+  totos: 'totus', totas: 'totus', totorum: 'totus', totarum: 'totus',
+  // mene — "me" (accusative of ego) plus the postpositive interrogative
+  // enclitic "-ne" ("mene fugis?", "[are you fleeing] FROM ME?"). Not
+  // handled by the ordinary ENCLITICS-stripping fallback below, since that
+  // only runs when a direct lookup finds nothing at all, and "mene" already
+  // (wrongly) matches mens ("mind") by stem coincidence.
+  mene: 'ego',
+  // deos — accusative plural of deus ("god"), whose own 2-letter stem
+  // ("de-") is under the stemmer's floor the same way dei/deo above are, so
+  // this never reached deus at all before.
+  deos: 'deus',
 };
 
 for (const [form, headword] of Object.entries(EXTRA_FORMS)) {
@@ -544,6 +592,19 @@ const NOUN_STEMS: Record<string, string> = {
   coniunx: 'coniug',
   // -er (m./f.) with syncope
   frater: 'fratr', pater: 'patr', mater: 'matr',
+  // -er, -era/-ra, -erum/-rum adjectives that drop the "e" outside the
+  // nominative masculine singular (pulcher, pulchra — not every -er
+  // adjective does this: miser/tener/liber keep it, "misera" not "misra",
+  // and already resolve fine since their own headword-as-stem then equals
+  // the query word's stem directly). Every one of these is spelled with the
+  // dictionary's abbreviated "-gra"/"-tra"/etc. lemma form (e.g. "noster,
+  // -stra, -strum"), which the generic lemma-alternate-forms parser above
+  // deliberately skips (it only takes full, unabbreviated words) — so
+  // without an entry here, no oblique form of any of these — including,
+  // for noster/vester, the extremely common "nostra"/"vestra"/"nostrum"/
+  // "vestrum" — ever resolved at all.
+  aeger: 'aegr', niger: 'nigr', sacer: 'sacr', pulcher: 'pulchr',
+  noster: 'nostr', vester: 'vestr',
   pallas: 'pallant', laocoon: 'laocoont', harpocras: 'harpocrat',
   // Present-participle-type adjectives and nouns, stem in -nt-
   ardens: 'ardent', diligens: 'diligent', ingens: 'ingent', infans: 'infant',
@@ -581,8 +642,13 @@ const SUPPLEMENTARY_EXTRA_FORMS: Record<string, string> = {
   // Aeneas, -ae — Greek 1st-declension accusative in "-an", not the Latin
   // "-am" the stemmer expects (e.g. Aeneid 1.617 "ipse... Aenean acciri").
   aenean: 'aeneas',
-  // sui, sibi, se — the emphatic/poetic doubled form "sese" alongside "se".
-  sese: 'sui',
+  // sui, sibi, se — the emphatic/poetic doubled form "sese" alongside "se",
+  // and "secum" ("with himself/herself/itself/themselves"), the reflexive's
+  // turn in the mecum/tecum/nobiscum/vobiscum family of pronoun + postpositive
+  // "-cum" (see EXTRA_FORMS above for the rest of that family) — without
+  // this, "secum" stemmed to "sec-" and landed on the unrelated verb seco
+  // ("to cut"), a real, confirmed misreading this maps around directly.
+  sese: 'sui', secum: 'sui',
   // odi, odisse — perfect-in-form-only, so its "3rd plural" is the
   // syncopated "odere" alongside the regular "oderunt".
   odere: 'odi',
@@ -658,6 +724,9 @@ const SUPPLEMENTARY_EXTRA_FORMS: Record<string, string> = {
   // "imas" above); Argivom, archaic genitive plural of Argivi.
   divom: 'divus', aeole: 'aeolus', aiacis: 'aiax', oilei: 'oileus',
   imis: 'imus', argivom: 'argivi',
+  // cuspide — ablative of cuspis ("spear point"), not the rare/obscure verb
+  // "cuspido" Whitaker's dictionary also carries under the same stem length.
+  cuspide: 'cuspis',
 };
 
 for (const [form, headword] of Object.entries(SUPPLEMENTARY_EXTRA_FORMS)) {

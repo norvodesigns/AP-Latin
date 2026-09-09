@@ -191,10 +191,10 @@ export default function AskAboutLine({
               )}
 
               <div>
-                <div className="eyebrow mb-2">Words in this line, from the core list</div>
+                <div className="eyebrow mb-2">Words in this line</div>
                 {offlineGloss.length === 0 ? (
                   <p className="text-sm" style={{ color: 'var(--fg-faint)' }}>
-                    No core-vocabulary matches — on the exam these words would be glossed for you.
+                    No vocabulary matches for this line.
                   </p>
                 ) : (
                   <ul className="flex flex-col gap-2">

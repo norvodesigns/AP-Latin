@@ -13,6 +13,7 @@ import {
 } from '@/store/useStore';
 import { requiredPassages } from '@/data/passages';
 import { coreVocabulary } from '@/data/vocabulary';
+import { supplementaryVocabulary } from '@/data/supplementaryVocabulary';
 import { CalledOut, CedLink, Roman, SkillMeter, SourceNote, toRoman } from '@/components/ui';
 import { useRevealChildren } from '@/hooks/useRevealChildren';
 import { loadIndex } from '@/data/scansionCorpus';
@@ -236,7 +237,7 @@ export default function Dashboard({
                 {
                   label: 'Vocabulary in rotation',
                   value: mounted ? Object.keys(vocab).length : 0,
-                  max: coreVocabulary.length,
+                  max: coreVocabulary.length + supplementaryVocabulary.length,
                   href: '/vocab',
                 },
                 {
