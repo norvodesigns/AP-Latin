@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { EB_Garamond, Literata, Inter, Italianno } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/next';
 import './globals.css';
 import AppShell from '@/components/AppShell';
 import { getCurrentProfile } from '@/lib/supabase/server';
@@ -152,6 +153,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <AppShell profile={profile} accountsEnabled={supabaseConfigured}>
           {children}
         </AppShell>
+        <Analytics />
       </body>
     </html>
   );
