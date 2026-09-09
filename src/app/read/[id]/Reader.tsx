@@ -46,6 +46,19 @@ const HIGHLIGHT_COLORS: { id: HighlightColor; label: string }[] = [
   { id: 'rubric', label: 'Rubric' },
 ];
 
+/** The short gloss for one word of one line, resolved against this exact
+ *  occurrence — the basis of the word-for-word row under "Reveal English".
+ *  Only the first sense of the entry's definition is kept, since a compact
+ *  crib next to the Latin isn't the place for the full multi-sense entry
+ *  (that's still one click away in the glossary popover). Sourced entirely
+ *  from the app's own audited dictionary data rather than freshly generated
+ *  prose, so it can't echo any published translator's wording. */
+function wordGloss(passageId: string, lineN: number, tokenIndex: number, word: string) {
+  const top = disambiguateInContext(passageId, lineN, word, lookup(word), tokenIndex)[0];
+  if (!top) return null;
+  return { sense: top.entry.definition.split(';')[0].trim(), tentative: top.match === 'stem' };
+}
+
 export default function Reader({
   passage,
   prev,
@@ -402,7 +415,8 @@ export default function Reader({
               color: 'var(--fg-faint)',
             }}
           >
-            Tip: select a word or phrase in the text to highlight it or attach a note.
+            Tip: select a word or phrase in the text to highlight it, attach a note, or ask about
+            it.
           </p>
 
           {!passage.required && (
@@ -440,47 +454,78 @@ export default function Reader({
                     {line.n}
                   </button>
 
-                  <p
-                    className={isVerse ? 'latin-verse' : 'latin'}
-                    style={{
-                      margin: 0,
-                      flex: 1,
-                      boxShadow: isFlagged
-                        ? 'inset 0 -0.42em 0 color-mix(in srgb, var(--gilt) 22%, transparent)'
-                        : undefined,
-                    }}
-                  >
-                    {tokens.map((t) => {
-                      const ann = lineAnnotations.find(
-                        (a) => t.index >= a.startTok && t.index <= a.endTok,
-                      );
-                      const hlClass = ann?.color ? `hl hl-${ann.color}` : '';
-                      // The note marker sits once, after the last token of
-                      // the span it belongs to, however many words that is.
-                      const showNoteMark = Boolean(ann?.note) && ann?.endTok === t.index;
-                      return t.isWord ? (
-                        <button
-                          key={t.index}
-                          type="button"
-                          data-tok={t.index}
-                          className={`word ${hlClass} ${
-                            sel?.word === t.text && sel?.lineN === line.n ? 'word-active' : ''
-                          }`}
-                          onClick={(e) => onWord(e, t.text, line.n, t.index)}
-                          tabIndex={glossaryEnabled ? 0 : -1}
-                          style={{ cursor: glossaryEnabled ? 'pointer' : 'text' }}
-                        >
-                          {t.text}
-                          {showNoteMark && ann && <NoteMark onOpen={(e) => openAnnotationForEdit(e, ann)} />}
-                        </button>
-                      ) : (
-                        <span key={t.index} data-tok={t.index} className={hlClass}>
-                          {t.text}
-                          {showNoteMark && ann && <NoteMark onOpen={(e) => openAnnotationForEdit(e, ann)} />}
-                        </span>
-                      );
-                    })}
-                  </p>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p
+                      className={isVerse ? 'latin-verse' : 'latin'}
+                      style={{
+                        margin: 0,
+                        boxShadow: isFlagged
+                          ? 'inset 0 -0.42em 0 color-mix(in srgb, var(--gilt) 22%, transparent)'
+                          : undefined,
+                      }}
+                    >
+                      {tokens.map((t) => {
+                        const ann = lineAnnotations.find(
+                          (a) => t.index >= a.startTok && t.index <= a.endTok,
+                        );
+                        const hlClass = ann?.color ? `hl hl-${ann.color}` : '';
+                        // The note marker sits once, after the last token of
+                        // the span it belongs to, however many words that is.
+                        const showNoteMark = Boolean(ann?.note) && ann?.endTok === t.index;
+                        return t.isWord ? (
+                          <button
+                            key={t.index}
+                            type="button"
+                            data-tok={t.index}
+                            className={`word ${hlClass} ${
+                              sel?.word === t.text && sel?.lineN === line.n ? 'word-active' : ''
+                            }`}
+                            onClick={(e) => onWord(e, t.text, line.n, t.index)}
+                            tabIndex={glossaryEnabled ? 0 : -1}
+                            style={{ cursor: glossaryEnabled ? 'pointer' : 'text' }}
+                          >
+                            {t.text}
+                            {showNoteMark && ann && <NoteMark onOpen={(e) => openAnnotationForEdit(e, ann)} />}
+                          </button>
+                        ) : (
+                          <span key={t.index} data-tok={t.index} className={hlClass}>
+                            {t.text}
+                            {showNoteMark && ann && <NoteMark onOpen={(e) => openAnnotationForEdit(e, ann)} />}
+                          </span>
+                        );
+                      })}
+                    </p>
+
+                    {showSummary && (
+                      <p
+                        style={{
+                          margin: '0.3rem 0 0',
+                          fontFamily: 'var(--font-sans)',
+                          fontSize: '0.8125rem',
+                          lineHeight: 1.7,
+                        }}
+                      >
+                        {tokens
+                          .filter((t) => t.isWord)
+                          .map((t) => {
+                            const g = wordGloss(passage.id, line.n, t.index, t.text);
+                            return (
+                              <span key={t.index} style={{ marginRight: '0.7em', whiteSpace: 'nowrap' }}>
+                                <span style={{ color: 'var(--fg-faint)' }}>{t.text}</span>{' '}
+                                {g ? (
+                                  <span style={{ color: 'var(--ink2)', fontStyle: g.tentative ? 'italic' : 'normal' }}>
+                                    {g.sense}
+                                    {g.tentative && <span aria-hidden="true">?</span>}
+                                  </span>
+                                ) : (
+                                  <span style={{ color: 'var(--fg-faint)' }}>—</span>
+                                )}
+                              </span>
+                            );
+                          })}
+                      </p>
+                    )}
+                  </div>
 
                   <button
                     type="button"
@@ -892,6 +937,17 @@ export default function Reader({
                 }}
               >
                 Copy
+              </button>
+              <button
+                type="button"
+                className="slab-sm"
+                onClick={() => {
+                  setAskLine({ n: annotate.lineN, latin: annotate.text });
+                  window.getSelection()?.removeAllRanges();
+                  setAnnotate(null);
+                }}
+              >
+                Ask
               </button>
               <button
                 type="button"

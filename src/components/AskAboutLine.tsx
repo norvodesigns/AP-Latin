@@ -191,10 +191,10 @@ export default function AskAboutLine({
               )}
 
               <div>
-                <div className="eyebrow mb-2">Words in this line</div>
+                <div className="eyebrow mb-2">Words here</div>
                 {offlineGloss.length === 0 ? (
                   <p className="text-sm" style={{ color: 'var(--fg-faint)' }}>
-                    No vocabulary matches for this line.
+                    No vocabulary matches here.
                   </p>
                 ) : (
                   <ul className="flex flex-col gap-2">
