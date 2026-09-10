@@ -705,7 +705,7 @@ export default function Reader({
                   <li key={a.id}>
                     <button
                       type="button"
-                      className="latin text-left"
+                      className="squish latin text-left"
                       style={{
                         margin: 0,
                         fontSize: '1.0625rem',
