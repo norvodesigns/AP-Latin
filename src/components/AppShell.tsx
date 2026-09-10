@@ -288,7 +288,10 @@ export default function AppShell({
               and needing to open a menu first to find either one is a tax on
               the two controls most likely to be wanted mid-sentence. They are
               icon-only so that four controls still clear a 360px phone. */}
-          <div className="flex shrink-0 items-center gap-3 sm:gap-3.5">
+          {/* The gap is tight because each control now carries its own 36px
+              hit box (see `.icon-btn`); a wider gap on top of that would
+              push four controls past the edge of a 360px phone. */}
+          <div className="flex shrink-0 items-center gap-0.5 sm:gap-1.5">
             <button
               type="button"
               onClick={() => setPaletteOpen(true)}

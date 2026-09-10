@@ -684,6 +684,14 @@ h1, h2, h3, h4 {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    /* The glyphs are 17–19px, which is a 17–19px tap target — well under the
+       24px floor, and nowhere near a thumb. The box is grown around them
+       rather than the icons being enlarged, so nothing about the masthead's
+       look changes; the negative block margin keeps it from making the
+       masthead taller in the process. */
+    min-width: 2.25rem;
+    min-height: 2.25rem;
+    margin-block: -0.5rem;
     color: var(--fg-muted);
     border-radius: var(--r-pill);
     cursor: pointer;

@@ -67,7 +67,12 @@ export function PageHeader({
             </p>
           )}
         </div>
-        {actions && <div className="flex shrink-0 flex-wrap items-center gap-2.5">{actions}</div>}
+        {/* No `shrink-0` here: it and `flex-wrap` contradict each other —
+            shrink-0 pins this to its max-content width, so it never becomes
+            narrow enough for the wrap to engage and it overflows the page
+            instead. Allowed to shrink, the actions wrap onto their own line
+            on a narrow screen, which is what was wanted. */}
+        {actions && <div className="flex flex-wrap items-center gap-2.5">{actions}</div>}
       </div>
     </header>
   );

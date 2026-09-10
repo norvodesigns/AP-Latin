@@ -169,7 +169,7 @@ export default function StudyPlan() {
               </ul>
             )}
           </div>
-          <div className="flex shrink-0 flex-wrap gap-2.5">
+          <div className="flex flex-wrap gap-2.5">
             {due > 0 && (
               <Link href="/vocab" className="btn btn-primary">
                 Vocabulary ({due})
