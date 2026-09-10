@@ -117,6 +117,31 @@ export default function AppShell({
   }, []);
 
   /**
+   * `--vw`: the viewport's content width, which is what every anchored
+   * popover in the app (the glossary, the annotate bar) needs to clamp
+   * itself against. CSS's own `100vw` is the wrong number for that — it
+   * includes a classic scrollbar's width, so a popover clamped against it
+   * can still end up a scrollbar's width past the right edge. `clientWidth`
+   * is the honest measurement, so it is published once here rather than
+   * re-measured by each popover.
+   */
+  useEffect(() => {
+    const apply = () =>
+      document.documentElement.style.setProperty(
+        '--vw',
+        `${document.documentElement.clientWidth}px`,
+      );
+    apply();
+    window.addEventListener('resize', apply);
+    const ro = new ResizeObserver(apply);
+    ro.observe(document.documentElement);
+    return () => {
+      window.removeEventListener('resize', apply);
+      ro.disconnect();
+    };
+  }, []);
+
+  /**
    * Keeps the DOM attribute in sync once the store rehydrates from
    * localStorage, and heals a value left over from the retired "system"
    * mode: a theme persisted before that removal is still, literally, the
@@ -267,10 +292,9 @@ export default function AppShell({
             <button
               type="button"
               onClick={() => setPaletteOpen(true)}
-              className="squish"
+              className="icon-btn"
               title="Search everything (⌘K)"
               aria-label="Search passages, words and drills"
-              style={{ color: 'var(--fg-muted)' }}
             >
               <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                 <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.4" />
@@ -287,8 +311,8 @@ export default function AppShell({
               onClick={() => (indexOpen ? closeIndex() : setIndexOpen(true))}
               aria-expanded={indexOpen}
               aria-controls="section-index"
-              className="squish flex items-center gap-2.5"
-              style={{ color: 'var(--fg)' }}
+              className="icon-btn gap-2.5"
+              style={{ color: indexOpen ? 'var(--fg)' : undefined }}
             >
               <span className="slab-sm hidden sm:inline" style={{ color: 'inherit' }}>
                 {indexOpen ? 'Close' : 'Index'}
@@ -603,8 +627,11 @@ function ThemeToggle({
       onClick={() => setTheme(next)}
       title={`${label} — click for ${next}`}
       aria-label={`${label}. Switch to ${next}.`}
-      className="transition-transform duration-300 hover:rotate-[24deg]"
-      style={{ color: 'var(--fg-muted)' }}
+      /* Shares `.icon-btn` with the search and index buttons beside it, so
+         all three warm and sink identically; `.theme-toggle` adds the turn
+         of the glyph on top. It used to rotate on hover and then answer a
+         real press with nothing at all. */
+      className="icon-btn theme-toggle"
     >
       <svg width="17" height="17" viewBox="0 0 16 16" fill="none" aria-hidden="true">
         {mounted && theme === 'dark' ? (

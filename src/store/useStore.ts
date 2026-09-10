@@ -478,16 +478,41 @@ export const useStore = create<StoreState>()(
         // `setAnnotationNote` giving it a note. Dropping it here first would
         // leave that note with no annotation left to attach to.
         const drop = Boolean(existing) && !next.color && !next.note.trim();
+
+        /**
+         * Marks the reader has drawn *over* are absorbed by the new one.
+         *
+         * Without this, highlighting a phrase on top of two words already
+         * marked inside it left those two underneath it — invisible, since
+         * the newest mark is the one rendered, but very much still there:
+         * removing the phrase's highlight made them reappear, which reads as
+         * the highlighter undoing itself halfway.
+         *
+         * Only spans wholly inside the new one, and only when they carry no
+         * note of their own — a note is the reader's own writing and is never
+         * discarded as a side effect of colouring over it. Partial overlaps
+         * are left alone too: half a mark is still a mark the reader made
+         * deliberately, and the renderer already resolves which one shows.
+         */
+        const subsumed = (a: Annotation) =>
+          a.id !== next.id &&
+          a.lineN === lineN &&
+          a.startTok >= startTok &&
+          a.endTok <= endTok &&
+          !a.note.trim();
+
+        const kept = cur.annotations.filter((a) => !(next.color && subsumed(a)));
+
         set({
           passages: {
             ...get().passages,
             [passageId]: {
               ...cur,
               annotations: drop
-                ? cur.annotations.filter((a) => a.id !== next.id)
+                ? kept.filter((a) => a.id !== next.id)
                 : existing
-                  ? cur.annotations.map((a) => (a.id === next.id ? next : a))
-                  : [...cur.annotations, next],
+                  ? kept.map((a) => (a.id === next.id ? next : a))
+                  : [...kept, next],
             },
           },
         });
