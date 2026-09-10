@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { NAV, NAV_GROUPS } from '@/lib/nav';
+import { NAV, NAV_GROUPS, navFor, type NavItem } from '@/lib/nav';
 import { useStore, daysUntilExam, prefersDarkDefault } from '@/store/useStore';
 import { useStudyTimeSync } from '@/hooks/useStudyTimeSync';
 import type { Profile } from '@/lib/supabase/types';
@@ -375,6 +375,7 @@ export default function AppShell({
       {indexOpen && (
         <SectionIndex
           pathname={pathname}
+          nav={navFor(profile?.role ?? null)}
           days={days}
           mounted={mounted}
           theme={theme}
@@ -429,6 +430,7 @@ export default function AppShell({
  */
 function SectionIndex({
   pathname,
+  nav,
   days,
   mounted,
   theme,
@@ -439,6 +441,8 @@ function SectionIndex({
   onDismiss,
 }: {
   pathname: string;
+  /** Role-adjusted — a teacher's home screen is their classrooms. */
+  nav: NavItem[];
   days: number;
   mounted: boolean;
   theme: 'light' | 'dark';
@@ -513,7 +517,7 @@ function SectionIndex({
                   {group.label}
                 </div>
                 <ul className="stagger flex flex-col">
-                  {NAV.filter((n) => n.group === group.id).map((item) => {
+                  {nav.filter((n) => n.group === group.id).map((item) => {
                     const active = isActive(item.href);
                     return (
                       <li key={item.href}>

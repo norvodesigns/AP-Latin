@@ -1,12 +1,5 @@
 import type { LeaderboardRow } from '@/lib/supabase/types';
-
-/** "3h 24m" / "45m" / "0m" from a seconds count. */
-function formatDuration(seconds: number): string {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.round((seconds % 3600) / 60);
-  if (h === 0) return `${m}m`;
-  return `${h}h ${m}m`;
-}
+import { formatDuration } from '@/lib/format';
 
 /**
  * Ranked by time studied, not accuracy. Accuracy on a handful of drills is
