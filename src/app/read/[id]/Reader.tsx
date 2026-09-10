@@ -592,7 +592,7 @@ export default function Reader({
 
         {/* ─────────── Apparatus ─────────── */}
         <aside
-          className="flex flex-col gap-8 border-t px-5 py-10 sm:px-10 lg:border-t-0 lg:py-14 lg:pl-9 lg:pr-10"
+          className="flex min-w-0 flex-col gap-8 border-t px-5 py-10 sm:px-10 lg:border-t-0 lg:py-14 lg:pl-9 lg:pr-10"
           style={{ borderColor: 'var(--rule)' }}
         >
           <RailSection title="English summary">

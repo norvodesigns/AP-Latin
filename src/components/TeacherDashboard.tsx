@@ -69,7 +69,7 @@ export default function TeacherDashboard({ overview }: { overview: TeacherOvervi
     <div className="mx-auto w-full max-w-[1160px] px-5 sm:px-10">
       <div className="grid lg:grid-cols-[1fr_1px_minmax(340px,400px)]">
         {/* ────────── Left ────────── */}
-        <div className="flex flex-col gap-11 py-10 lg:py-12 lg:pr-12">
+        <div className="flex min-w-0 flex-col gap-11 py-10 lg:py-12 lg:pr-12">
           {/* The lead number is the one a teacher actually wants first: how
               much of the class is still moving. The student dashboard leads
               with days-to-exam for the same reason — one number that frames
@@ -120,7 +120,7 @@ export default function TeacherDashboard({ overview }: { overview: TeacherOvervi
 
         {/* ────────── Right ────────── */}
         <div
-          className="flex flex-col gap-8 border-t py-10 lg:border-t-0 lg:py-12 lg:pl-10"
+          className="flex min-w-0 flex-col gap-8 border-t py-10 lg:border-t-0 lg:py-12 lg:pl-10"
           style={{ borderColor: 'var(--rule)' }}
         >
           <CalledOut rubric="Worth a look">
