@@ -762,6 +762,49 @@ h1, h2, h3, h4 {
   .meter-red > span { background: var(--accent); }
   .meter-thin { height: 3px; }
 
+  /* — The study calendar ————————————————————————————————————————————
+     Fourteen weeks of squares on the dashboard. Gilt rather than the usual
+     green, because gilt is already this design's colour for "progress
+     counted" — the meters use it — and a green grid would be the one thing
+     on the page borrowed from somewhere else.
+
+     Squares, not rounded: this is ruling, part of the page's own hard
+     geometry, not a control to press. */
+  .cal {
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-rows: repeat(7, 1fr);
+    gap: 3px;
+    /* The grid is the one thing here allowed to outrun its column — a phone
+       cannot show fourteen weeks and squares any smaller stop reading as
+       squares. It scrolls itself; the page never scrolls sideways. */
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+  .cal::-webkit-scrollbar { display: none; }
+
+  .cal-day {
+    width: 11px;
+    height: 11px;
+    border-radius: 2px;
+    background: var(--track);
+    transition: background-color var(--dur-2) var(--ease-io);
+  }
+  .cal-day[data-level='1'] { background: color-mix(in srgb, var(--gilt) 28%, var(--track)); }
+  .cal-day[data-level='2'] { background: color-mix(in srgb, var(--gilt) 50%, var(--track)); }
+  .cal-day[data-level='3'] { background: color-mix(in srgb, var(--gilt) 74%, var(--track)); }
+  .cal-day[data-level='4'] { background: var(--gilt); }
+  /* Days that have not happened yet keep the grid rectangular without
+     claiming to be missed. */
+  .cal-day[data-future='true'] {
+    background: transparent;
+    box-shadow: inset 0 0 0 1px var(--hair);
+  }
+  .cal-day[data-today='true'] {
+    box-shadow: 0 0 0 1.5px var(--accent);
+  }
+
   /* — Reader ————————————————————————————————————————————————————————
      A word under the finger is marked with a red underscore and a wash, the
      way a reader would mark it — never a rounded highlight chip. */
