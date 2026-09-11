@@ -144,7 +144,7 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
                   router.push(it.href);
                   onClose();
                 }}
-                className="flex w-full items-baseline gap-2.5 px-3.5 py-2 text-left"
+                className="squish flex w-full items-baseline gap-2.5 px-3.5 py-2 text-left"
                 style={{ background: i === active ? 'var(--bg-sunk)' : 'transparent' }}
               >
                 <span

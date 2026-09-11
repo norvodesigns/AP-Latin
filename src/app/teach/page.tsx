@@ -3,17 +3,27 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { supabaseConfigured } from '@/lib/supabase/config';
 import { getSupabaseServer, getCurrentProfile, getCurrentUser } from '@/lib/supabase/server';
-import { Page, PageHeader, Section, Panel, CalledOut, Steps, SourceNote } from '@/components/ui';
+import { Page, PageHeader, Section, Panel, SourceNote } from '@/components/ui';
 import { signOut } from '@/app/(auth)/actions';
 import CreateClassroomForm from './CreateClassroomForm';
 
-export const metadata: Metadata = { title: 'Teach' };
+export const metadata: Metadata = { title: 'Classrooms' };
 
+/**
+ * Classroom management.
+ *
+ * This used to be the teacher's home — the only page in the app that knew
+ * they taught anybody. That job belongs to the dashboard now (see
+ * TeacherDashboard), which is where a teacher lands and where the actual
+ * numbers live. What is left here is the administration the dashboard has no
+ * business carrying: the full list including archived classrooms, making a
+ * new one, and signing out.
+ */
 export default async function TeachPage() {
   if (!supabaseConfigured) {
     return (
       <Page>
-        <PageHeader eyebrow="Accounts" title="Teach" />
+        <PageHeader eyebrow="Accounts" title="Classrooms" />
         <Panel>
           <p className="measure" style={{ margin: 0, color: 'var(--fg-muted)', fontSize: '1.0625rem' }}>
             This deployment has no backend configured, so classroom management is unavailable.
@@ -52,17 +62,22 @@ export default async function TeachPage() {
     for (const m of members ?? []) counts.set(m.classroom_id, (counts.get(m.classroom_id) ?? 0) + 1);
   }
 
-  const firstRun = !classrooms || classrooms.length === 0;
+  const live = (classrooms ?? []).filter((c) => !c.archived);
+  const archived = (classrooms ?? []).filter((c) => c.archived);
 
   return (
     <Page>
       <PageHeader
         eyebrow="Accounts"
-        title={firstRun ? `Welcome, ${profile.display_name}` : 'Teach'}
+        title="Classrooms"
         lede={
-          firstRun
-            ? 'Name a classroom and you get a code to hand out. That is the whole setup.'
-            : 'Your classrooms, their join codes, and how everyone is doing.'
+          <>
+            Join codes, archives and new classrooms. How everyone is actually doing is on your{' '}
+            <Link href="/" className="link-rule" style={{ color: 'var(--accent)' }}>
+              dashboard
+            </Link>
+            .
+          </>
         }
         actions={
           <form action={signOut}>
@@ -73,66 +88,22 @@ export default async function TeachPage() {
         }
       />
 
-      {firstRun ? (
-        <>
-          <CalledOut rubric="Create your first classroom" className="mb-12">
-            <CreateClassroomForm />
-          </CalledOut>
+      {live.length > 0 && (
+        <Section title="Your classrooms" className="mb-12">
+          <ClassroomList rooms={live} counts={counts} />
+        </Section>
+      )}
 
-          <Section title="Then what">
-            <Steps
-              items={[
-                {
-                  title: 'Read out the join code',
-                  body: 'Six characters, no vowels and no 0/O or 1/I/L — so it survives being read off a whiteboard. Students enter it once.',
-                },
-                {
-                  title: 'Assign target minutes',
-                  body: 'Pick a section and a number of minutes, with a due date if you want one. Students see their own progress toward it.',
-                },
-                {
-                  title: 'Watch the roster',
-                  body: 'Time studied and accuracy per student, updating as they work. You never have to collect anything.',
-                },
-              ]}
-            />
-          </Section>
-        </>
-      ) : (
-        <>
-          <Section title="Your classrooms" className="mb-12">
-            <ul className="stagger flex flex-col pl-0" style={{ listStyle: 'none' }}>
-              {(classrooms ?? []).map((c) => (
-                <li key={c.id}>
-                  <Link
-                    href={`/teach/${c.id}`}
-                    className="squish row-hover block w-full border-t px-3 py-5"
-                    style={{ borderColor: 'var(--rule)', marginLeft: '-0.75rem' }}
-                  >
-                    <div className="flex flex-wrap items-baseline justify-between gap-3">
-                      <span style={{ fontFamily: 'var(--font-latin)', fontSize: '1.25rem', fontWeight: 600 }}>
-                        {c.name}
-                        {c.archived && <span className="slab-sm ml-2">archived</span>}
-                      </span>
-                      <span className="chip">{c.join_code}</span>
-                    </div>
-                    <div className="mt-1.5" style={{ color: 'var(--fg-faint)', fontSize: '0.9375rem' }}>
-                      {counts.get(c.id) ?? 0} student{counts.get(c.id) === 1 ? '' : 's'}
-                      {c.exam_date &&
-                        ` · exam ${new Date(c.exam_date + 'T00:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}`}
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </Section>
+      <Section title={live.length > 0 ? 'New classroom' : 'Create your first classroom'} className="mb-12">
+        <Panel>
+          <CreateClassroomForm />
+        </Panel>
+      </Section>
 
-          <Section title="New classroom">
-            <Panel>
-              <CreateClassroomForm />
-            </Panel>
-          </Section>
-        </>
+      {archived.length > 0 && (
+        <Section title="Archived" className="mb-12">
+          <ClassroomList rooms={archived} counts={counts} />
+        </Section>
       )}
 
       <SourceNote>
@@ -140,5 +111,43 @@ export default async function TeachPage() {
         aggregates and display names, enforced in the database rather than the client.
       </SourceNote>
     </Page>
+  );
+}
+
+function ClassroomList({
+  rooms,
+  counts,
+}: {
+  rooms: Array<{ id: string; name: string; join_code: string; archived: boolean; exam_date: string | null }>;
+  counts: Map<string, number>;
+}) {
+  return (
+    <ul className="stagger flex flex-col pl-0" style={{ listStyle: 'none' }}>
+      {rooms.map((c) => {
+        const n = counts.get(c.id) ?? 0;
+        return (
+          <li key={c.id}>
+            <Link
+              href={`/teach/${c.id}`}
+              className="squish row-hover block w-full border-t px-3 py-5"
+              style={{ borderColor: 'var(--rule)', marginLeft: '-0.75rem' }}
+            >
+              <div className="flex flex-wrap items-baseline justify-between gap-3">
+                <span style={{ fontFamily: 'var(--font-latin)', fontSize: '1.25rem', fontWeight: 600 }}>
+                  {c.name}
+                  {c.archived && <span className="slab-sm ml-2">archived</span>}
+                </span>
+                <span className="chip">{c.join_code}</span>
+              </div>
+              <div className="mt-1.5" style={{ color: 'var(--fg-faint)', fontSize: '0.9375rem' }}>
+                {n} student{n === 1 ? '' : 's'}
+                {c.exam_date &&
+                  ` · exam ${new Date(c.exam_date + 'T00:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}`}
+              </div>
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
   );
 }

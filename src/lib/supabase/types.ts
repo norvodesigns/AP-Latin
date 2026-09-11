@@ -10,6 +10,11 @@
 export type Role = 'student' | 'teacher';
 export type GradingSource = 'auto' | 'self';
 
+/** Loosely-typed JSON, for columns (like user_progress.data) whose real
+ *  shape is owned by the application rather than the schema — see
+ *  `SyncableData` in src/store/useStore.ts for what actually lives here. */
+export type Json = Record<string, unknown>;
+
 /** Sections a teacher can assign time on. Mirrors the CHECK constraint. */
 export const ASSIGNABLE_SECTIONS = [
   'read', 'translate', 'sight', 'quiz', 'vocab', 'grammar',
@@ -88,6 +93,18 @@ export type SectionTimeRow = {
   seconds: number;
 };
 
+/**
+ * One signed-in user's cloud copy of their local progress — the cross-device
+ * sync row. `data` is `SyncableData` (src/store/useStore.ts) round-tripped
+ * through JSON; kept as the loose `Json` here rather than that concrete type
+ * so this low-level schema file stays independent of the store's shape.
+ */
+export type UserProgress = {
+  user_id: string;
+  data: Json;
+  updated_at: string;
+};
+
 export interface Database {
   public: {
     Tables: {
@@ -130,6 +147,15 @@ export interface Database {
         Row: ActivityStat;
         Insert: Omit<ActivityStat, 'updated_at'> & { updated_at?: string };
         Update: Partial<Pick<ActivityStat, 'correct' | 'total' | 'updated_at'>>;
+        Relationships: [];
+      };
+      user_progress: {
+        Row: UserProgress;
+        // `user_id` is omitted: the column defaults to auth.uid() and RLS's
+        // `with check` enforces it server-side, so the client never needs
+        // (and — under RLS — is not trusted) to state whose row this is.
+        Insert: Omit<UserProgress, 'user_id' | 'updated_at'> & { updated_at?: string };
+        Update: Partial<Pick<UserProgress, 'data' | 'updated_at'>>;
         Relationships: [];
       };
     };

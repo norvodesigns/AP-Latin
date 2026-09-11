@@ -54,13 +54,29 @@ export default function QuizEngine() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  const [filters, setFilters] = useState<Filters>({
-    author: 'all',
-    passageId: 'all',
-    unit: 'all',
-    skill: 'all',
-    types: new Set(ALL_TYPES),
-    count: 10,
+  /**
+   * `?type=` narrows the set to one question type before the student has
+   * touched anything. The dashboard's weak-spot rows link here that way, so
+   * "Drill it" next to "Form identification — 52% right" opens a set of
+   * exactly that rather than the full mixed pool with the work of finding
+   * the filter left to the student.
+   *
+   * Read once, as the initial state, not as a live subscription: after the
+   * first render the filter chips are the source of truth, and a URL that
+   * kept overriding them would make the chips look broken.
+   */
+  const [filters, setFilters] = useState<Filters>(() => {
+    const wanted = params.get('type');
+    const one = ALL_TYPES.find((t) => t === wanted);
+    const skill = params.get('skill');
+    return {
+      author: 'all',
+      passageId: 'all',
+      unit: 'all',
+      skill: skill === '1' || skill === '2' || skill === '3' ? skill : 'all',
+      types: one ? new Set<QuestionType>([one]) : new Set(ALL_TYPES),
+      count: 10,
+    };
   });
 
   const [session, setSession] = useState<Question[] | null>(null);

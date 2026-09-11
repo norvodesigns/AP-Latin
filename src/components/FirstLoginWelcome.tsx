@@ -18,7 +18,7 @@ const TEACHER_STEPS = [
   },
   {
     title: 'Assign and watch',
-    body: 'Pick a section and a target — minutes or a due date — then watch the roster fill in as students work. Nothing to collect by hand.',
+    body: 'Pick a section and a target — minutes or a due date — then watch your dashboard fill in as students work: who is still going, who has gone quiet, and how much of the class has met each assignment. Nothing to collect by hand.',
   },
 ];
 
@@ -113,8 +113,7 @@ export default function FirstLoginWelcome({
           type="button"
           onClick={dismiss}
           aria-label="Close"
-          className="squish absolute right-4 top-4"
-          style={{ color: 'var(--fg-faint)' }}
+          className="icon-btn absolute right-4 top-4"
         >
           <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <path
@@ -138,7 +137,7 @@ export default function FirstLoginWelcome({
 
           <div className="mt-7 flex flex-col gap-2.5 sm:flex-row">
             {teacher ? (
-              <Link href="/teach" onClick={dismiss} className="btn btn-primary flex-1 justify-center">
+              <Link href="/" onClick={dismiss} className="btn btn-primary flex-1 justify-center">
                 Set up your classroom
               </Link>
             ) : (

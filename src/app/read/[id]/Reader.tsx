@@ -33,11 +33,35 @@ interface Annotate {
   startTok: number;
   endTok: number;
   text: string;
+  /** The selection's horizontal centre. The popup's own offset and its
+   *  edge stops are done in CSS beside its width — see `.annotate-bar`. */
   x: number;
+  /** The selection's bottom edge, or its top edge when `above` is set. */
   y: number;
+  /** Set when there is no room below the selection, so the bar grows
+   *  upward off its top edge instead of running past the fold. */
+  above: boolean;
   existing: Annotation | null;
   noteOpen: boolean;
 }
+
+/**
+ * Where an anchored popup should sit relative to the thing it belongs to.
+ * Flips above only when there genuinely isn't room below *and* above has
+ * more to offer — never near the top of the screen just because it also
+ * isn't near the bottom. Shared by the glossary slip and the annotate bar,
+ * which used to disagree about this: the glossary flipped, the annotate bar
+ * never did, so a phrase selected low on a long passage got a toolbar half
+ * off the bottom of the screen.
+ */
+function anchorFor(rect: DOMRect, minHeight: number): { y: number; above: boolean } {
+  const spaceBelow = window.innerHeight - rect.bottom;
+  const above = spaceBelow < minHeight && rect.top > spaceBelow;
+  return { y: above ? rect.top : rect.bottom, above };
+}
+
+/** Height the annotate bar needs below a selection before it flips above it. */
+const ANNOTATE_MIN_SPACE = 190;
 
 const HIGHLIGHT_COLORS: { id: HighlightColor; label: string }[] = [
   { id: 'gilt', label: 'Gilt' },
@@ -93,52 +117,59 @@ export default function Reader({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [passage.id]);
 
-  useEffect(
-    () => setNoteDraft(annotate?.existing?.note ?? ''),
-    // Reset the draft only when the *identity* of the open annotation
-    // changes (a different selection, or none) — reacting to its `.note`
-    // too would stomp whatever the reader is mid-typing every time this
-    // same effect's own save writes that note back to the store.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [annotate?.existing?.id],
-  );
+  /**
+   * The draft is seeded at the moment the popup opens (see `openAnnotate`)
+   * rather than by an effect watching the open annotation's id.
+   *
+   * That effect is what made a new note open pre-filled with the last one.
+   * Its dependency was `annotate?.existing?.id`, which is `undefined` both
+   * when nothing is open and when the open selection has no annotation yet
+   * — so going from "editing an existing note" to "closed" to "a fresh
+   * selection with no note" moved that dependency undefined → undefined →
+   * undefined and the effect simply never re-ran. The textarea kept the
+   * previous note's text, and saving it copied that note onto the new span.
+   *
+   * Setting it where the popup is opened has no such blind spot: every path
+   * that opens one states what the draft should be, and there is no
+   * dependency to compare.
+   */
+  const openAnnotate = useCallback((a: Annotate) => {
+    setNoteDraft(a.existing?.note ?? '');
+    setAnnotate(a);
+  }, []);
 
   /** Reopens the annotate popup, in note-editing mode, for an annotation the
    *  reader already made — the note mark next to its highlighted text is the
    *  only way back into it once the original selection is gone. */
-  const openAnnotationForEdit = useCallback((e: React.SyntheticEvent, ann: Annotation) => {
-    e.stopPropagation();
-    const rect = e.currentTarget.getBoundingClientRect();
-    setAnnotate({
-      lineN: ann.lineN,
-      startTok: ann.startTok,
-      endTok: ann.endTok,
-      text: ann.text,
-      x: rect.left + rect.width / 2,
-      y: rect.bottom,
-      existing: ann,
-      noteOpen: true,
-    });
-  }, []);
+  const openAnnotationForEdit = useCallback(
+    (e: React.SyntheticEvent, ann: Annotation) => {
+      e.stopPropagation();
+      const rect = e.currentTarget.getBoundingClientRect();
+      openAnnotate({
+        lineN: ann.lineN,
+        startTok: ann.startTok,
+        endTok: ann.endTok,
+        text: ann.text,
+        x: rect.left + rect.width / 2,
+        ...anchorFor(rect, ANNOTATE_MIN_SPACE),
+        existing: ann,
+        noteOpen: true,
+      });
+    },
+    [openAnnotate],
+  );
 
   const onWord = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>, word: string, lineN: number, tokenIndex: number) => {
       if (!glossaryEnabled) return;
       const rect = e.currentTarget.getBoundingClientRect();
       const results = disambiguateInContext(passage.id, lineN, word, lookup(word), tokenIndex);
-      // Flip above the word when there isn't reasonably room below for even
-      // a short entry, and above actually has more room to offer — never
-      // flip a word near the very top of the screen just because it's also
-      // not near the bottom.
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const above = spaceBelow < 260 && rect.top > spaceBelow;
       setSel({
         word,
         lineN,
         results,
         x: rect.left + rect.width / 2,
-        y: above ? rect.top : rect.bottom,
-        above,
+        ...anchorFor(rect, 260),
       });
       // Reading is the primary way vocabulary gets tracked here: an exact
       // dictionary match seeds the word into the SM-2 rotation automatically,
@@ -160,21 +191,32 @@ export default function Reader({
     [passage.id, setHighlight],
   );
 
+  /** Commits the note editor and closes the popup. */
+  const saveNote = useCallback(() => {
+    if (annotate) {
+      const a = ensureAnnotation(annotate);
+      setAnnotationNote(passage.id, a.id, noteDraft.trim());
+    }
+    setAnnotate(null);
+    window.getSelection()?.removeAllRanges();
+  }, [annotate, noteDraft, ensureAnnotation, passage.id, setAnnotationNote]);
+
   /** Closes the annotate popup, flushing an in-progress note edit first so
    *  clicking away never silently discards what was typed. */
   const closeAnnotate = useCallback(() => {
-    setAnnotate((prev) => {
-      if (prev?.noteOpen) {
-        const trimmed = noteDraft.trim();
-        if (trimmed !== (prev.existing?.note ?? '')) {
-          const a = ensureAnnotation(prev);
-          setAnnotationNote(passage.id, a.id, trimmed);
-        }
+    // Reads `annotate` rather than using the updater form: writing to the
+    // store from inside a state updater makes the write a side effect React
+    // is free to run twice (it does, in StrictMode).
+    if (annotate?.noteOpen) {
+      const trimmed = noteDraft.trim();
+      if (trimmed !== (annotate.existing?.note ?? '')) {
+        const a = ensureAnnotation(annotate);
+        setAnnotationNote(passage.id, a.id, trimmed);
       }
-      return null;
-    });
+    }
+    setAnnotate(null);
     window.getSelection()?.removeAllRanges();
-  }, [noteDraft, ensureAnnotation, passage.id, setAnnotationNote]);
+  }, [annotate, noteDraft, ensureAnnotation, passage.id, setAnnotationNote]);
 
   /* Dismiss the glossary or the annotate popup on outside click or Escape. */
   useEffect(() => {
@@ -239,13 +281,13 @@ export default function Reader({
         annotations.find((a) => a.lineN === lineN && a.startTok === startTok && a.endTok === endTok) ??
         null;
       const rect = range.getBoundingClientRect();
-      setAnnotate({
+      openAnnotate({
         lineN,
         startTok,
         endTok,
         text,
         x: rect.left + rect.width / 2,
-        y: rect.bottom,
+        ...anchorFor(rect, ANNOTATE_MIN_SPACE),
         existing,
         noteOpen: false,
       });
@@ -256,7 +298,7 @@ export default function Reader({
       document.removeEventListener('mouseup', onUp);
       document.removeEventListener('touchend', onUp);
     };
-  }, [passage.lines, annotations]);
+  }, [passage.lines, annotations, openAnnotate]);
 
   /* Section shortcuts: c = cold read, s = summary, b = bookmark. */
   useEffect(() => {
@@ -452,18 +494,39 @@ export default function Reader({
                     }}
                   >
                     {tokens.map((t) => {
-                      const ann = lineAnnotations.find(
+                      // Last match wins, not first. Two annotations can
+                      // overlap — highlight "arma virumque", then highlight
+                      // "virumque cano" — and `find` handed the shared word
+                      // to whichever was made *first*, so a fresh highlight
+                      // appeared to skip the words it shared with an older
+                      // one. Annotations are stored oldest-first, so taking
+                      // the last match means the most recent mark is the one
+                      // you see, which is what drawing over something means.
+                      const ann = lineAnnotations.findLast(
                         (a) => t.index >= a.startTok && t.index <= a.endTok,
                       );
                       const hlClass = ann?.color ? `hl hl-${ann.color}` : '';
+                      // Rounded only at the two ends of a run — see `.hl`.
+                      // Which token is an end depends on the annotation that
+                      // actually won this token above, not on the range the
+                      // reader dragged.
+                      const hlStart = Boolean(ann?.color) && ann?.startTok === t.index;
+                      const hlEnd = Boolean(ann?.color) && ann?.endTok === t.index;
                       // The note marker sits once, after the last token of
                       // the span it belongs to, however many words that is.
-                      const showNoteMark = Boolean(ann?.note) && ann?.endTok === t.index;
+                      const noteAnn = lineAnnotations.find(
+                        (a) => a.note.trim() && a.endTok === t.index,
+                      );
+                      const mark = noteAnn ? (
+                        <NoteMark onOpen={(e) => openAnnotationForEdit(e, noteAnn)} />
+                      ) : null;
                       return t.isWord ? (
                         <button
                           key={t.index}
                           type="button"
                           data-tok={t.index}
+                          data-hl-start={hlStart || undefined}
+                          data-hl-end={hlEnd || undefined}
                           className={`word ${hlClass} ${
                             sel?.word === t.text && sel?.lineN === line.n ? 'word-active' : ''
                           }`}
@@ -472,12 +535,18 @@ export default function Reader({
                           style={{ cursor: glossaryEnabled ? 'pointer' : 'text' }}
                         >
                           {t.text}
-                          {showNoteMark && ann && <NoteMark onOpen={(e) => openAnnotationForEdit(e, ann)} />}
+                          {mark}
                         </button>
                       ) : (
-                        <span key={t.index} data-tok={t.index} className={hlClass}>
+                        <span
+                          key={t.index}
+                          data-tok={t.index}
+                          data-hl-start={hlStart || undefined}
+                          data-hl-end={hlEnd || undefined}
+                          className={hlClass}
+                        >
                           {t.text}
-                          {showNoteMark && ann && <NoteMark onOpen={(e) => openAnnotationForEdit(e, ann)} />}
+                          {mark}
                         </span>
                       );
                     })}
@@ -524,7 +593,7 @@ export default function Reader({
 
         {/* ─────────── Apparatus ─────────── */}
         <aside
-          className="flex flex-col gap-8 border-t px-5 py-10 sm:px-10 lg:border-t-0 lg:py-14 lg:pl-9 lg:pr-10"
+          className="flex min-w-0 flex-col gap-8 border-t px-5 py-10 sm:px-10 lg:border-t-0 lg:py-14 lg:pl-9 lg:pr-10"
           style={{ borderColor: 'var(--rule)' }}
         >
           <RailSection title="English summary">
@@ -637,7 +706,7 @@ export default function Reader({
                   <li key={a.id}>
                     <button
                       type="button"
-                      className="latin text-left"
+                      className="squish latin text-left"
                       style={{
                         margin: 0,
                         fontSize: '1.0625rem',
@@ -669,8 +738,8 @@ export default function Reader({
                     </p>
                     <button
                       type="button"
-                      className="slab-sm mt-1.5"
-                      style={{ color: 'var(--fg-faint)' }}
+                      className="btn btn-ghost btn-sm mt-1"
+                      style={{ marginLeft: '-0.8125rem' }}
                       onClick={() => removeAnnotation(passage.id, a.id)}
                     >
                       Remove
@@ -712,12 +781,11 @@ export default function Reader({
           className={`glossary ${sel.above ? 'glossary-above' : ''}`}
           style={
             {
-              // Clamped so the slip never runs off the right edge on desktop;
-              // ignored entirely at touch widths, where it docks full-width.
-              '--gx': `${Math.min(
-                Math.max(sel.x - 176, 16),
-                (typeof window !== 'undefined' ? window.innerWidth : 1200) - 368,
-              )}px`,
+              // Just the word's centre; the slip's own half-width offset and
+              // its edge stops are applied in CSS beside its width, so the
+              // two can never fall out of step. Ignored entirely at touch
+              // widths, where it docks full-width.
+              '--gx': `${sel.x}px`,
               // Below the word: anchor its top 10px under the word's bottom
               // edge. Above the word (not enough room below): anchor its
               // bottom 10px above the word's top edge instead, so the slip
@@ -732,7 +800,12 @@ export default function Reader({
         >
           <div className="mb-3 flex items-baseline justify-between gap-3">
             <span className="rubric">Glossārium</span>
-            <button type="button" className="slab-sm" onClick={() => setSel(null)}>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              style={{ marginRight: '-0.5rem' }}
+              onClick={() => setSel(null)}
+            >
               Close
             </button>
           </div>
@@ -809,8 +882,7 @@ export default function Reader({
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
             <button
               type="button"
-              className="slab-sm"
-              style={{ color: 'var(--accent)' }}
+              className="btn btn-rubric btn-sm"
               onClick={() => {
                 const top = sel.results[0];
                 if (top) seedVocab([top.entry.id]);
@@ -822,7 +894,7 @@ export default function Reader({
             </button>
             <button
               type="button"
-              className="slab-sm"
+              className="btn btn-ghost btn-sm"
               onClick={() => {
                 const line = passage.lines.find((l) => l.n === sel.lineN);
                 if (line) setAskLine({ n: line.n, latin: line.latin });
@@ -841,91 +913,113 @@ export default function Reader({
           ref={annotateRef}
           role="dialog"
           aria-label="Highlight or annotate selection"
-          className="annotate-bar"
+          className={`annotate-bar ${annotate.above ? 'annotate-bar-above' : ''}`}
           style={
             {
-              '--gx': `${Math.min(
-                Math.max(annotate.x - 110, 16),
-                (typeof window !== 'undefined' ? window.innerWidth : 1200) - 236,
-              )}px`,
+              /* Just the anchor. The half-width offset and both edge stops
+                 live in the stylesheet next to the bar's own width, so the
+                 two cannot fall out of step — which is what put Copy, Note
+                 and Remove off the right-hand edge. */
+              '--gx': `${annotate.x}px`,
               '--gy': `${annotate.y + 10}px`,
+              '--gy-above': `${
+                (typeof window !== 'undefined' ? window.innerHeight : 800) - annotate.y + 10
+              }px`,
             } as React.CSSProperties
           }
         >
           {!annotate.noteOpen ? (
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5">
-                {HIGHLIGHT_COLORS.map((c) => (
+            <div className="flex flex-col gap-2.5">
+              {/* The pigments get their own row. Four swatches and three
+                  labelled actions never fitted on one, which is the whole
+                  reason the actions used to hang off the edge. */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  {HIGHLIGHT_COLORS.map((c) => {
+                    const on = annotate.existing?.color === c.id;
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        className={`swatch swatch-${c.id} ${on ? 'swatch-active' : ''}`}
+                        title={on ? `Remove the ${c.label} highlight` : c.label}
+                        aria-label={`Highlight in ${c.label}`}
+                        aria-pressed={on}
+                        onClick={() => {
+                          const nextColor = on ? null : c.id;
+                          const a = setHighlight(
+                            passage.id,
+                            annotate.lineN,
+                            annotate.startTok,
+                            annotate.endTok,
+                            annotate.text,
+                            nextColor,
+                          );
+                          // Un-colouring a span that carries a note leaves
+                          // the annotation alive — it still holds the note.
+                          // Treating that as "no annotation" (which is what
+                          // testing `nextColor` alone did) lost the Remove
+                          // button and reopened the note editor empty.
+                          const stillThere = Boolean(a.color || a.note.trim());
+                          setAnnotate({ ...annotate, existing: stillThere ? a : null });
+                          // The browser's own blue selection band would
+                          // otherwise sit on top of the highlight's color
+                          // and muddy it.
+                          window.getSelection()?.removeAllRanges();
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+                {annotate.existing && (
                   <button
-                    key={c.id}
                     type="button"
-                    className={`swatch swatch-${c.id} ${
-                      annotate.existing?.color === c.id ? 'swatch-active' : ''
-                    }`}
-                    title={c.label}
-                    aria-label={`Highlight in ${c.label}`}
+                    className="btn btn-ghost btn-sm shrink-0"
+                    style={{ marginRight: '-0.375rem' }}
                     onClick={() => {
-                      const nextColor = annotate.existing?.color === c.id ? null : c.id;
-                      const a = setHighlight(
-                        passage.id,
-                        annotate.lineN,
-                        annotate.startTok,
-                        annotate.endTok,
-                        annotate.text,
-                        nextColor,
-                      );
-                      setAnnotate({ ...annotate, existing: nextColor ? a : null });
-                      // The browser's own blue selection band would otherwise
-                      // sit on top of the highlight's color and muddy it.
+                      if (annotate.existing) removeAnnotation(passage.id, annotate.existing.id);
                       window.getSelection()?.removeAllRanges();
+                      setAnnotate(null);
                     }}
-                  />
-                ))}
+                  >
+                    Remove
+                  </button>
+                )}
               </div>
-              <div className="hair-v" aria-hidden="true" />
-              <button
-                type="button"
-                className="slab-sm"
-                onClick={() => {
-                  navigator.clipboard?.writeText(annotate.text).catch(() => {});
-                  window.getSelection()?.removeAllRanges();
-                  setAnnotate(null);
-                }}
-              >
-                Copy
-              </button>
-              <button
-                type="button"
-                className="slab-sm"
-                onClick={() => {
-                  setAskLine({ n: annotate.lineN, latin: annotate.text });
-                  window.getSelection()?.removeAllRanges();
-                  setAnnotate(null);
-                }}
-              >
-                Ask
-              </button>
-              <button
-                type="button"
-                className="slab-sm"
-                onClick={() => setAnnotate({ ...annotate, noteOpen: true })}
-              >
-                {annotate.existing?.note ? 'Edit note' : 'Note'}
-              </button>
-              {annotate.existing && (
+
+              <div className="hair" aria-hidden="true" />
+
+              <div className="flex items-center gap-1.5">
                 <button
                   type="button"
-                  className="slab-sm"
-                  style={{ color: 'var(--fg-faint)' }}
+                  className="btn btn-ghost btn-sm flex-1"
+                  onClick={() => openAnnotate({ ...annotate, noteOpen: true })}
+                >
+                  {annotate.existing?.note ? 'Edit note' : 'Note'}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm flex-1"
                   onClick={() => {
-                    if (annotate.existing) removeAnnotation(passage.id, annotate.existing.id);
+                    navigator.clipboard?.writeText(annotate.text).catch(() => {});
                     window.getSelection()?.removeAllRanges();
                     setAnnotate(null);
                   }}
                 >
-                  Remove
+                  Copy
                 </button>
-              )}
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm flex-1"
+                  onClick={() => {
+                    setAskLine({ n: annotate.lineN, latin: annotate.text });
+                    window.getSelection()?.removeAllRanges();
+                    setAnnotate(null);
+                  }}
+                >
+                  Ask
+                </button>
+              </div>
             </div>
           ) : (
             <div className="flex flex-col gap-2.5">
@@ -939,22 +1033,36 @@ export default function Reader({
                 autoFocus
                 value={noteDraft}
                 onChange={(e) => setNoteDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  // Enter saves, shift-enter breaks the line. A note is a
+                  // sentence, not a document, and reaching for the mouse to
+                  // commit one word is the wrong shape of gesture.
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    saveNote();
+                  }
+                }}
                 rows={3}
                 className="textarea"
                 style={{ resize: 'vertical', fontSize: '0.9375rem' }}
                 placeholder="What's worth remembering about this?"
               />
-              <div className="flex justify-end">
+              <div className="flex items-center gap-1.5">
                 <button
                   type="button"
-                  className="btn btn-rubric"
+                  className="btn btn-ghost btn-sm flex-1"
                   onClick={() => {
-                    const a = ensureAnnotation(annotate);
-                    setAnnotationNote(passage.id, a.id, noteDraft.trim());
-                    window.getSelection()?.removeAllRanges();
+                    // Back out without writing: re-seed the draft from what
+                    // is actually stored, so `closeAnnotate`'s flush sees no
+                    // change and there is nothing to save.
+                    setNoteDraft(annotate.existing?.note ?? '');
                     setAnnotate(null);
+                    window.getSelection()?.removeAllRanges();
                   }}
                 >
+                  Cancel
+                </button>
+                <button type="button" className="btn btn-rubric btn-sm flex-1" onClick={saveNote}>
                   Save
                 </button>
               </div>

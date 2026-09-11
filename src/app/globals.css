@@ -116,6 +116,14 @@
 
   /* How far a control sinks when pressed. */
   --squish: 0.96;
+
+  /* The viewport's *content* width — what `100vw` should have been. AppShell
+     keeps this in sync with document.documentElement.clientWidth, which
+     excludes a classic scrollbar where `100vw` includes it. Every anchored
+     popover clamps itself against this, so none of them can be pushed a
+     scrollbar's width off the right edge. The fallback matters only for the
+     frames before that effect runs. */
+  --vw: 100vw;
 }
 
 [data-theme='dark'] {
@@ -571,25 +579,40 @@ h1, h2, h3, h4 {
     border-color: var(--accent);
   }
 
-  /* Ghost buttons underline rather than fill — a wipe would be too loud for
-     something that is meant to sit inside running text. */
+  /* Ghost buttons carry no rule until you reach for them. They used to
+     animate with an underline instead of the wipe, which made a row of
+     "Cancel / Confirm" read as two unrelated kinds of control — the ghost
+     drawing a line under itself while its neighbour stamped. It is the same
+     object as every other button, so it moves the same way; only its resting
+     border is absent. */
   .btn-ghost {
     border-color: transparent;
     color: var(--fg-muted);
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
-    overflow: visible;
-  }
-  .btn-ghost::before {
-    inset: auto 0 0 0;
-    top: auto;
-    height: 1px;
-    background: var(--accent);
   }
   .btn-ghost:hover,
   .btn-ghost:focus-visible {
-    color: var(--accent);
-    border-color: transparent;
+    color: var(--oninv);
+    border-color: var(--fg);
+  }
+  .btn-ghost:disabled:hover { color: var(--fg-muted); border-color: transparent; }
+
+  /* Compact. For toolbars and popovers, where a full-size button would eat
+     the row — the annotate bar, the glossary's close, the scansion controls.
+     These were bare `.slab-sm` text before, which is why some presses in the
+     app answered with nothing at all. */
+  .btn-sm {
+    gap: 0.375rem;
+    padding: 0.4375rem 0.8125rem;
+    font-size: 0.625rem;
+    letter-spacing: 0.12em;
+  }
+
+  /* Square-ish, for a button whose whole label is one glyph or icon. Keeps
+     the wipe and the squish; just stops a pill forming around a single
+     character. */
+  .btn-icon {
+    padding: 0.5rem;
+    min-width: 2rem;
   }
 
   /* Fields are soft-cornered troughs — something to write into rather than a
@@ -651,6 +674,45 @@ h1, h2, h3, h4 {
     letter-spacing: 0.06em;
     color: var(--fg-muted);
   }
+
+  /* Icon-only controls: the masthead's search, theme and index buttons, the
+     glossary's close. One treatment for all of them — the glyph warms toward
+     full ink under the pointer and the whole control sinks on press — so a
+     row of icons answers as one set rather than each inventing its own
+     feedback (search had none at all, the theme toggle only rotated). */
+  .icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /* The glyphs are 17–19px, which is a 17–19px tap target — well under the
+       24px floor, and nowhere near a thumb. The box is grown around them
+       rather than the icons being enlarged, so nothing about the masthead's
+       look changes; the negative block margin keeps it from making the
+       masthead taller in the process. */
+    min-width: 2.25rem;
+    min-height: 2.25rem;
+    margin-block: -0.5rem;
+    color: var(--fg-muted);
+    border-radius: var(--r-pill);
+    cursor: pointer;
+    transition:
+      color var(--dur-2) var(--ease-io),
+      transform var(--dur-3) var(--ease-spring);
+  }
+  .icon-btn:hover,
+  .icon-btn:focus-visible { color: var(--fg); }
+  .icon-btn:active {
+    transform: scale(var(--squish));
+    transition-duration: 90ms;
+    transition-timing-function: var(--ease-io);
+  }
+
+  /* The sun/moon turns a little as you reach for it. On the glyph rather
+     than the button, so it composes with the button's own press instead of
+     the two fighting over one `transform`. */
+  .theme-toggle svg { transition: rotate var(--dur-3) var(--ease); }
+  .theme-toggle:hover svg,
+  .theme-toggle:focus-visible svg { rotate: 24deg; }
 
   /* Press-feedback for anything interactive that is not a `.btn` — grade
      buttons, chips, syllables, list rows. Pairs with `.row-hover`. */
@@ -727,6 +789,49 @@ h1, h2, h3, h4 {
   .meter-red > span { background: var(--accent); }
   .meter-thin { height: 3px; }
 
+  /* — The study calendar ————————————————————————————————————————————
+     Fourteen weeks of squares on the dashboard. Gilt rather than the usual
+     green, because gilt is already this design's colour for "progress
+     counted" — the meters use it — and a green grid would be the one thing
+     on the page borrowed from somewhere else.
+
+     Squares, not rounded: this is ruling, part of the page's own hard
+     geometry, not a control to press. */
+  .cal {
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-rows: repeat(7, 1fr);
+    gap: 3px;
+    /* The grid is the one thing here allowed to outrun its column — a phone
+       cannot show fourteen weeks and squares any smaller stop reading as
+       squares. It scrolls itself; the page never scrolls sideways. */
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+  .cal::-webkit-scrollbar { display: none; }
+
+  .cal-day {
+    width: 11px;
+    height: 11px;
+    border-radius: 2px;
+    background: var(--track);
+    transition: background-color var(--dur-2) var(--ease-io);
+  }
+  .cal-day[data-level='1'] { background: color-mix(in srgb, var(--gilt) 28%, var(--track)); }
+  .cal-day[data-level='2'] { background: color-mix(in srgb, var(--gilt) 50%, var(--track)); }
+  .cal-day[data-level='3'] { background: color-mix(in srgb, var(--gilt) 74%, var(--track)); }
+  .cal-day[data-level='4'] { background: var(--gilt); }
+  /* Days that have not happened yet keep the grid rectangular without
+     claiming to be missed. */
+  .cal-day[data-future='true'] {
+    background: transparent;
+    box-shadow: inset 0 0 0 1px var(--hair);
+  }
+  .cal-day[data-today='true'] {
+    box-shadow: 0 0 0 1.5px var(--accent);
+  }
+
   /* — Reader ————————————————————————————————————————————————————————
      A word under the finger is marked with a red underscore and a wash, the
      way a reader would mark it — never a rounded highlight chip. */
@@ -744,11 +849,13 @@ h1, h2, h3, h4 {
     user-select: text;
     -webkit-user-select: text;
   }
-  .word:hover {
+  /* `:not(.hl)` so the wash is only painted where there is no pigment
+     underneath it to paint over — see `.word.hl:hover` below. */
+  .word:not(.hl):hover {
     background: var(--redtint);
     box-shadow: 0 2px 0 var(--redborder);
   }
-  .word-active {
+  .word-active:not(.hl) {
     background: var(--redtint);
     box-shadow: 0 2px 0 var(--accent);
   }
@@ -757,18 +864,39 @@ h1, h2, h3, h4 {
     box-shadow: inset 0 -0.09em 0 color-mix(in srgb, var(--gilt) 45%, transparent);
   }
 
-  /* A reader-made highlight — a wash under the text, the same shape as a
-     word's own hover state so a highlighted run of words reads as one
-     continuous mark rather than four separate boxes bumping together. */
+  /* A reader-made highlight — a wash under the text.
+   *
+   * Every word in the reader is its own element, so a highlight over four
+   * words is four boxes side by side. Rounding all four gave a scalloped
+   * edge at every word gap: the mark read as four separate stabs rather
+   * than one drawn stroke. The radius is now applied only at the two ends
+   * of a run, which the component marks with data-hl-start / data-hl-end,
+   * and the middle stays square so the pieces butt together seamlessly. */
   .hl {
-    border-radius: 5px;
+    border-radius: 0;
     box-decoration-break: clone;
     -webkit-box-decoration-break: clone;
+  }
+  .hl[data-hl-start='true'] {
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+  }
+  .hl[data-hl-end='true'] {
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
   }
   .hl-gilt { background: var(--hl-gilt); }
   .hl-verdigris { background: var(--hl-verdigris); }
   .hl-woad { background: var(--hl-woad); }
   .hl-rubric { background: var(--hl-rubric); }
+
+  /* Hovering a highlighted word keeps its pigment and answers with the
+     underline alone — the wash is suppressed at the source above rather
+     than painted over here, since `background: inherit` would have taken
+     the line's own transparent background and wiped the highlight out
+     exactly the way the bug did. */
+  .word.hl:hover { box-shadow: 0 2px 0 var(--redborder); }
+  .word.hl.word-active { box-shadow: 0 2px 0 var(--accent); }
 
   /* The small dot marking a highlight that also carries a note — sits right
      after the marked text, never before it, so it reads as an endnote mark. */
@@ -791,6 +919,7 @@ h1, h2, h3, h4 {
      compact bar instead of a tall card, since its content never needs the
      room. */
   .annotate-bar {
+    --pop-w: 15.75rem;
     position: fixed;
     left: 0;
     right: 0;
@@ -806,30 +935,62 @@ h1, h2, h3, h4 {
   }
   @media (min-width: 1024px) {
     .annotate-bar {
-      left: var(--gx);
+      /* `--gx` is the anchor's centre, not a pre-computed left edge: the
+         offset and both edge stops are done here, where the width is, so
+         the two can't drift apart. They did — the bar was pinned to 236px
+         while its row of swatches, Copy, Note and Remove needed rather
+         more than that, and the last buttons simply hung off the side.
+         The row is two rows now (see the component) and the box is sized
+         in rem, so it grows with the reader's text size instead of
+         clipping. */
+      left: clamp(
+        1rem,
+        calc(var(--gx) - var(--pop-w) / 2),
+        calc(var(--vw) - var(--pop-w) - 1rem)
+      );
       top: var(--gy);
       right: auto;
       bottom: auto;
-      width: 236px;
+      width: var(--pop-w);
       border: 1px solid var(--rule-strong);
       border-radius: var(--r-lg);
       box-shadow: 0 10px 26px var(--shadow);
-      padding: 0.75rem 0.875rem;
+      padding: 0.8125rem 0.875rem;
       animation: pop-in var(--dur-2) var(--ease) both;
+    }
+    /* Flipped up when the selection sits too low for the bar to fit under
+       it — the glossary already did this; the annotate bar never did, so a
+       phrase selected near the bottom of a long passage put its toolbar
+       partly below the fold. */
+    .annotate-bar-above {
+      top: auto;
+      bottom: var(--gy-above);
     }
   }
 
+  /* A pigment dot. The selected ring is drawn *outside* the dot with a
+     box-shadow rather than as a border, so choosing a colour no longer eats
+     2px off the dot it is marking and the four of them stay the same size
+     whichever is active. */
   .swatch {
-    width: 20px;
-    height: 20px;
+    width: 1.25rem;
+    height: 1.25rem;
+    flex: none;
     border-radius: var(--r-pill);
-    border: 2px solid transparent;
+    border: 0;
     cursor: pointer;
     padding: 0;
-    transition: transform var(--dur-1) var(--ease-spring), border-color var(--dur-1) var(--ease-io);
+    box-shadow: 0 0 0 0 var(--fg);
+    transition:
+      transform var(--dur-1) var(--ease-spring),
+      box-shadow var(--dur-1) var(--ease-io);
   }
   .swatch:hover { transform: scale(1.12); }
-  .swatch-active { border-color: var(--fg); }
+  .swatch:active { transform: scale(0.9); transition-duration: 90ms; }
+  .swatch-active {
+    box-shadow: 0 0 0 2px var(--panel), 0 0 0 3.5px var(--fg);
+  }
+  .swatch-active:active { transform: scale(0.94); }
   .swatch-gilt { background: var(--hl-gilt-fill); }
   .swatch-verdigris { background: var(--hl-verdigris-fill); }
   .swatch-woad { background: var(--hl-woad-fill); }
@@ -845,6 +1006,7 @@ h1, h2, h3, h4 {
      full-width sheet, which keeps the tapped line visible above the thumb
      instead of hidden behind a popover. */
   .glossary {
+    --pop-w: 22rem;
     position: fixed;
     left: 0;
     right: 0;
@@ -862,11 +1024,17 @@ h1, h2, h3, h4 {
   }
   @media (min-width: 1024px) {
     .glossary {
-      left: var(--gx);
+      /* Same anchoring rule as the annotate bar: `--gx` is the word's
+         centre and the clamp lives beside the width. */
+      left: clamp(
+        1rem,
+        calc(var(--gx) - var(--pop-w) / 2),
+        calc(var(--vw) - var(--pop-w) - 1rem)
+      );
       top: var(--gy);
       right: auto;
       bottom: auto;
-      width: 352px;
+      width: var(--pop-w);
       /* A safety net, not the common case — most entries are far shorter
          than the viewport — but a word with several stem-match candidates
          can run long, and unlike the mobile sheet above this was never

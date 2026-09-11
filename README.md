@@ -225,7 +225,7 @@ never signs in.
 1. Create a project at the [Supabase dashboard](https://supabase.com/dashboard).
 2. **Project Settings → API** and copy the Project URL and anon public key.
 3. **SQL Editor → New query**, and run every file in `supabase/migrations/` **in filename order**
-   (0001, then 0002, then 0003 — each depends on tables or functions the one before it created).
+   (0001 through 0005 — each depends on tables or functions the one before it created).
 4. Add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` to `.env.local`, and to Vercel
    the same way as the AI keys above (Environment Variables, then redeploy). Both are safe to expose
    to the browser — see the comment above them in `.env.example` for why.
@@ -246,8 +246,17 @@ never signs in.
 - The leaderboard ranks by time studied, not accuracy. A student who has answered three questions
   perfectly should not outrank one who has done three hundred at 90% — accuracy on a handful of
   attempts is mostly noise. Accuracy is still shown, just not used to rank.
+- **Everything else follows a signed-in student across devices too** — Reading Room highlights and
+  notes, the vocabulary deck, quiz/translation/scansion/exam history, the study plan, the streak
+  calendar. It lives in the browser's own storage first (so it's instant and works offline, in
+  solo mode exactly as it always did), and a background sync keeps a cloud copy in step with it —
+  see `src/hooks/useCloudSync.ts`. Signing in on a second device pulls that copy down and merges it
+  with whatever is already on the new device, rather than either one overwriting the other: quiz
+  attempts, highlights and vocabulary progress from both devices are combined (see
+  `src/lib/mergeProgress.ts` for exactly how each kind of data merges), so studying on your phone
+  during the day and your laptop in the evening never costs you either session's work.
 
-### What a student cannot see about classmates
+### What a student cannot see about classmates — or a teacher about a student's own study material
 
 Nobody's raw activity reaches another student's browser. `study_sessions` and `activity_stats` rows
 are protected by row-level security scoped to their own owner; the leaderboard and roster are
@@ -256,6 +265,10 @@ aggregates and a display name, and only after confirming the caller actually bel
 classroom. The policies themselves are commented in `supabase/migrations/0001_init.sql` and
 `0002_rpc.sql` — the database enforces this, not application code, so a mistake in a query cannot
 leak one classroom's data into another.
+
+The cross-device sync row (`user_progress`, `0005_user_progress.sql`) is stricter still: it is
+owner-only, with no policy granting a teacher read access at all — unlike time and accuracy, a
+student's highlights, notes and drafts are never a teacher's to see.
 
 ---
 
@@ -393,11 +406,18 @@ no server-side storage of anything you write. Progress lives in `localStorage` u
 `ap-latin-store`. **Clearing your browser data deletes it**, so use the export button in Settings
 periodically — that JSON file is your only backup, and Import restores it.
 
-Classroom mode does add server-side storage, but only of what a teacher's dashboard needs: your
-display name and role, which classrooms you belong to, minutes studied per section per day, and
-correct/total counts for graded work. It never stores your translations, essays, or anything you
-wrote — those stay local, exactly as in solo mode. See **Classrooms and accounts** above for what a
-classmate can and cannot see of that data.
+Classroom mode adds two, separate kinds of server-side storage, and it matters which one a piece of
+data ends up in:
+
+- What a teacher's dashboard needs — your display name and role, which classrooms you belong to,
+  minutes studied per section per day, and correct/total counts for graded work. Nothing you wrote
+  is in this bucket, just whether it was right.
+- Your own cross-device copy (`user_progress`) — everything else Settings can export as JSON:
+  Reading Room highlights and notes, your vocabulary deck, and yes, your typed translations and FRQ
+  answers along with the rest of your quiz/exam history. This exists so signing in on a second
+  device shows the same progress, not so a teacher can read it — the table has no policy granting
+  a teacher (or anyone but you) access to it, at all. See **Classrooms and accounts** above for
+  exactly what does and doesn't reach a teacher or a classmate.
 
 ---
 

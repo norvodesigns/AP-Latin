@@ -62,6 +62,7 @@ export function useRevealChildren<T extends HTMLElement>() {
 
     const fold = window.innerHeight * ABOVE_FOLD;
     const waiting: HTMLElement[] = [];
+    const cleanups: Array<() => void> = [];
     let seen = 0;
 
     for (const el of blocks) {
@@ -70,6 +71,7 @@ export function useRevealChildren<T extends HTMLElement>() {
         // rolling down it rather than an entrance.
         el.style.setProperty('--enter-delay', `${Math.min(seen, 5) * 55}ms`);
         el.setAttribute('data-enter', '');
+        cleanups.push(settleAfter(el, 'animationend', 'data-enter'));
         seen += 1;
       } else {
         el.setAttribute('data-reveal', 'pending');
@@ -77,16 +79,22 @@ export function useRevealChildren<T extends HTMLElement>() {
       }
     }
 
-    if (waiting.length === 0) return;
+    if (waiting.length === 0) {
+      return () => {
+        for (const off of cleanups) off();
+      };
+    }
 
     const io = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (!entry.isIntersecting) continue;
-          entry.target.setAttribute('data-reveal', 'in');
+          const el = entry.target as HTMLElement;
+          el.setAttribute('data-reveal', 'in');
+          cleanups.push(settleAfter(el, 'transitionend', 'data-reveal'));
           // Once revealed, always revealed. Re-hiding on the way back up
           // would make scrolling a page you have already read flicker.
-          io.unobserve(entry.target);
+          io.unobserve(el);
         }
       },
       /*
@@ -105,8 +113,50 @@ export function useRevealChildren<T extends HTMLElement>() {
     );
 
     for (const el of waiting) io.observe(el);
-    return () => io.disconnect();
+    return () => {
+      io.disconnect();
+      for (const off of cleanups) off();
+    };
   }, [root, pathname]);
 
   return ref;
+}
+
+/**
+ * Takes the entrance marker back off once it has finished playing, and
+ * returns a function that stops waiting for that.
+ *
+ * This is not tidiness. A block whose entrance has run keeps a *resolved*
+ * transform — Chromium reports `matrix(1, 0, 0, 1, 0, 0)` rather than
+ * `none`, because the value came from a filled animation — and an identity
+ * matrix creates a containing block for `position: fixed` descendants just
+ * as readily as a real one does. Anything fixed inside such a block is then
+ * positioned against the block instead of the viewport.
+ *
+ * That is not hypothetical: it put the Scansion Lab's quantity chooser —
+ * which docks to the bottom edge of the screen on a phone — 86px below the
+ * fold, where it could not be reached at all. Tapping a syllable on a phone
+ * appeared to do nothing, because the two buttons for answering were off
+ * the bottom of the screen.
+ *
+ * Removing the attribute leaves the element matching no rule here, which is
+ * the fully-visible resting state, with no transform of any kind. If the
+ * event never arrives the attribute simply stays, which is exactly the old
+ * behaviour — so this can only improve matters.
+ */
+function settleAfter(
+  el: HTMLElement,
+  event: 'animationend' | 'transitionend',
+  attr: 'data-enter' | 'data-reveal',
+): () => void {
+  const onEnd = (e: Event) => {
+    // Descendants animate too — `.stagger` children, for one — and those
+    // events bubble. Only this block's own is the one to act on.
+    if (e.target !== el) return;
+    el.removeAttribute(attr);
+    el.style.removeProperty('--enter-delay');
+    el.removeEventListener(event, onEnd);
+  };
+  el.addEventListener(event, onEnd);
+  return () => el.removeEventListener(event, onEnd);
 }
