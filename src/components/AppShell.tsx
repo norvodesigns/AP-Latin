@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { NAV, NAV_GROUPS, navFor, type NavItem } from '@/lib/nav';
 import { useStore, daysUntilExam, prefersDarkDefault } from '@/store/useStore';
 import { useStudyTimeSync } from '@/hooks/useStudyTimeSync';
+import { useCloudSync } from '@/hooks/useCloudSync';
 import type { Profile } from '@/lib/supabase/types';
 import CommandPalette from './CommandPalette';
 import AccountMenu from './AccountMenu';
@@ -48,6 +49,10 @@ export default function AppShell({
   }, [profile?.id, setAuthUserId]);
 
   useStudyTimeSync();
+  // Cross-device sync: reconciles local progress with the signed-in user's
+  // cloud copy on sign-in, then keeps the two in step. A no-op in solo
+  // mode or while signed out — see the hook's own doc comment.
+  useCloudSync();
   const [indexOpen, setIndexOpen] = useState(false);
   /** Held true for the length of the exit animation, so the panel can play it
    *  before unmounting. Without this the index vanishes on the frame the

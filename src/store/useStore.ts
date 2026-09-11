@@ -1,7 +1,7 @@
 'use client';
 
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { persist, createJSONStorage, subscribeWithSelector } from 'zustand/middleware';
 import type { SkillCategory, QuestionType, UnitId } from '@/data/types';
 import { bumpActivityStats } from '@/lib/supabase/sync';
 
@@ -198,6 +198,40 @@ export interface WordEncounter {
   passageIds: string[];
 }
 
+/**
+ * The subset of the store that is "a student's progress" — the same field
+ * list the Settings page's JSON export already uses (see `getSyncableData`
+ * below and `exportJSON`, which now just calls it), and what cloud sync
+ * moves between devices.
+ *
+ * Deliberately excludes: `version` (a local storage-format marker, meaningless
+ * off this device); `authUserId`, `lastSyncedUserId`, `lastSyncedAt` (session
+ * and sync bookkeeping, not progress); `studySecondsToday` / `studyGoalDate`
+ * / `goalCelebratedDate` / `goalJustReached` (the daily-goal toast's
+ * own day-local counters — `studyDays`, the actual streak record, is
+ * synced; today's live tally is not worth reconciling across devices and
+ * rolls over on its own every morning regardless).
+ */
+export interface SyncableData {
+  theme: 'light' | 'dark';
+  glossaryEnabled: boolean;
+  showMacrons: boolean;
+  passages: Record<string, PassageState>;
+  vocab: Record<string, VocabCard>;
+  quizAttempts: QuizAttempt[];
+  reviewQueue: string[];
+  translationAttempts: TranslationAttempt[];
+  frqResponses: FrqResponse[];
+  examResults: ExamResult[];
+  projectPassages: ProjectPassage[];
+  studyPlan: StudyPlanSettings;
+  studyDays: string[];
+  aiUsage: AiUsageDay[];
+  scansionAttempts: ScansionAttempt[];
+  scansionDrafts: Record<string, ScansionDraft>;
+  wordEncounters: Record<string, WordEncounter>;
+}
+
 /* ------------------------------------------------------------------ */
 /* Store                                                              */
 /* ------------------------------------------------------------------ */
@@ -244,8 +278,41 @@ export interface StoreState {
    */
   authUserId: string | null;
 
+  /**
+   * Whose cloud progress the *local* data below currently represents — set
+   * by `useCloudSync` once it has reconciled with the cloud, unlike
+   * `authUserId` this IS persisted, so a reload doesn't forget it.
+   *
+   * This is what lets the sync hook tell three situations apart, which
+   * otherwise all look identical from a fresh `authUserId` alone:
+   *   - null: this device's local data has never been tied to any account
+   *     (solo use, or a browser that has never signed in). Safe to adopt —
+   *     merge it into whatever the newly signed-in account already has in
+   *     the cloud, the same way a guest's work "becomes" their account's
+   *     work on their first sign-up.
+   *   - equals authUserId: continuing the same account. Merge normally.
+   *   - a different id: a *different* account just signed in on this
+   *     device (a shared computer). The local blob belongs to someone else
+   *     — merging it into the new account's cloud row would leak one
+   *     student's highlights and history into another's. Replace local
+   *     with the new account's cloud data instead (or a clean slate, if
+   *     they have none yet).
+   */
+  lastSyncedUserId: string | null;
+  /** The cloud row's `updated_at` as of the last successful pull or push —
+   *  how the sync hook tells a genuinely new cloud change (pushed by
+   *  another device since we last looked) from the same row we already
+   *  merged. Also persisted, for the same reason as `lastSyncedUserId`. */
+  lastSyncedAt: string | null;
+
   /* actions ------------------------------------------------------- */
   setAuthUserId: (id: string | null) => void;
+  /** Records that local data now reflects the cloud as of `at`, owned by `userId`. */
+  setLastSynced: (userId: string | null, at: string | null) => void;
+  /** Shallow-merges a reconciled `SyncableData` (or any subset of it) over
+   *  the current state — the one place `useCloudSync` writes merge results
+   *  back, so the merge logic itself never has to reach into the store. */
+  applySyncedData: (data: Partial<SyncableData>) => void;
   setTheme: (t: StoreState['theme']) => void;
   toggleGlossary: () => void;
 
@@ -360,6 +427,8 @@ const initialState = {
   scansionDrafts: {} as Record<string, ScansionDraft>,
   wordEncounters: {} as Record<string, WordEncounter>,
   authUserId: null as string | null,
+  lastSyncedUserId: null as string | null,
+  lastSyncedAt: null as string | null,
 };
 
 /**
@@ -411,9 +480,16 @@ export const newCard = (id: string): VocabCard => ({
 });
 
 export const useStore = create<StoreState>()(
-  persist(
-    (set, get) => ({
-      ...initialState,
+  // `subscribeWithSelector` wraps `persist` (the order Zustand's own docs
+  // use) so `useStore.subscribe` gains the selector+equality-fn overload —
+  // `useCloudSync` needs it to watch only the syncable slice of state
+  // (`getSyncableData`) rather than every field, so that its own
+  // sync-bookkeeping writes (`lastSyncedUserId`/`lastSyncedAt`) don't
+  // retrigger the very push they were just recording the result of.
+  subscribeWithSelector(
+    persist(
+      (set, get) => ({
+        ...initialState,
 
       setTheme: (theme) => {
         set({ theme });
@@ -582,6 +658,8 @@ export const useStore = create<StoreState>()(
         }),
 
       setAuthUserId: (id) => set({ authUserId: id }),
+      setLastSynced: (userId, at) => set({ lastSyncedUserId: userId, lastSyncedAt: at }),
+      applySyncedData: (data) => set((s) => ({ ...s, ...data })),
 
       recordQuiz: (a) =>
         set((s) => {
@@ -708,30 +786,11 @@ export const useStore = create<StoreState>()(
       dismissGoalCelebration: () => set({ goalJustReached: false }),
 
       exportJSON: () => {
-        const s = get();
         const payload = {
           app: 'ap-latin',
           version: STORE_VERSION,
           exportedAt: new Date().toISOString(),
-          data: {
-            theme: s.theme,
-            glossaryEnabled: s.glossaryEnabled,
-            showMacrons: s.showMacrons,
-            passages: s.passages,
-            vocab: s.vocab,
-            quizAttempts: s.quizAttempts,
-            reviewQueue: s.reviewQueue,
-            translationAttempts: s.translationAttempts,
-            frqResponses: s.frqResponses,
-            examResults: s.examResults,
-            projectPassages: s.projectPassages,
-            studyPlan: s.studyPlan,
-            studyDays: s.studyDays,
-            aiUsage: s.aiUsage,
-            scansionAttempts: s.scansionAttempts,
-            scansionDrafts: s.scansionDrafts,
-            wordEncounters: s.wordEncounters,
-          },
+          data: getSyncableData(get()),
         };
         return JSON.stringify(payload, null, 2);
       },
@@ -772,11 +831,53 @@ export const useStore = create<StoreState>()(
       },
     },
   ),
+  ),
 );
 
 /* ------------------------------------------------------------------ */
 /* Derived selectors                                                   */
 /* ------------------------------------------------------------------ */
+
+/**
+ * Pulls the syncable subset out of a full store snapshot — the one place
+ * that field list is written down, shared by the JSON export/import in
+ * Settings and by cloud sync (`useCloudSync`, `mergeProgress.ts`), so the
+ * two can never quietly drift out of step with each other.
+ */
+export function getSyncableData(s: SyncableData): SyncableData {
+  return {
+    theme: s.theme,
+    glossaryEnabled: s.glossaryEnabled,
+    showMacrons: s.showMacrons,
+    passages: s.passages,
+    vocab: s.vocab,
+    quizAttempts: s.quizAttempts,
+    reviewQueue: s.reviewQueue,
+    translationAttempts: s.translationAttempts,
+    frqResponses: s.frqResponses,
+    examResults: s.examResults,
+    projectPassages: s.projectPassages,
+    studyPlan: s.studyPlan,
+    studyDays: s.studyDays,
+    aiUsage: s.aiUsage,
+    scansionAttempts: s.scansionAttempts,
+    scansionDrafts: s.scansionDrafts,
+    wordEncounters: s.wordEncounters,
+  };
+}
+
+/**
+ * A fresh, empty `SyncableData` — what a brand-new visitor's progress looks
+ * like. `useCloudSync` reaches for this in exactly one case: a *different*
+ * account just signed in on a device whose local cache belongs to someone
+ * else, and that new account has no cloud row yet either. Adopting the
+ * previous account's leftover local data as this account's "first sync"
+ * would leak one student's history into another's; starting from a clean
+ * slate is the only safe choice there.
+ */
+export function blankSyncableData(): SyncableData {
+  return getSyncableData(initialState);
+}
 
 export function daysUntilExam(from = new Date()): number {
   const exam = new Date(EXAM_DATE + 'T00:00:00');
