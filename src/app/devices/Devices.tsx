@@ -35,7 +35,7 @@ export default function Devices() {
           </>
         }
         actions={
-          <div className="flex gap-1.5" role="tablist" aria-label="View">
+          <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="View">
             {(['reference', 'study', 'drill'] as Tab[]).map((t) => (
               <button
                 key={t}

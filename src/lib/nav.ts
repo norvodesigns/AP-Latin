@@ -30,6 +30,21 @@ export const NAV: NavItem[] = [
   { href: '/settings', label: 'Settings', key: ',', group: 'reference', blurb: 'Theme, data export, AI usage meter' },
 ];
 
+/**
+ * What the index says about the home screen depends on who is reading it —
+ * a teacher's home is their classrooms, not a countdown to an exam they are
+ * not sitting. Only the dashboard row differs, so this patches that one
+ * entry rather than keeping a second copy of the whole list.
+ */
+export function navFor(role: 'student' | 'teacher' | null): NavItem[] {
+  if (role !== 'teacher') return NAV;
+  return NAV.map((n) =>
+    n.href === '/'
+      ? { ...n, blurb: 'Your classrooms, who is working, what is due' }
+      : n,
+  );
+}
+
 export const NAV_GROUPS: Array<{ id: NavItem['group']; label: string }> = [
   { id: 'study', label: 'Study' },
   { id: 'drill', label: 'Drill' },

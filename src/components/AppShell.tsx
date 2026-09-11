@@ -3,9 +3,10 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { NAV, NAV_GROUPS } from '@/lib/nav';
+import { NAV, NAV_GROUPS, navFor, type NavItem } from '@/lib/nav';
 import { useStore, daysUntilExam, prefersDarkDefault } from '@/store/useStore';
 import { useStudyTimeSync } from '@/hooks/useStudyTimeSync';
+import { useCloudSync } from '@/hooks/useCloudSync';
 import type { Profile } from '@/lib/supabase/types';
 import CommandPalette from './CommandPalette';
 import AccountMenu from './AccountMenu';
@@ -48,6 +49,10 @@ export default function AppShell({
   }, [profile?.id, setAuthUserId]);
 
   useStudyTimeSync();
+  // Cross-device sync: reconciles local progress with the signed-in user's
+  // cloud copy on sign-in, then keeps the two in step. A no-op in solo
+  // mode or while signed out — see the hook's own doc comment.
+  useCloudSync();
   const [indexOpen, setIndexOpen] = useState(false);
   /** Held true for the length of the exit animation, so the panel can play it
    *  before unmounting. Without this the index vanishes on the frame the
@@ -114,6 +119,31 @@ export default function AppShell({
     const ro = new ResizeObserver(apply);
     ro.observe(el);
     return () => ro.disconnect();
+  }, []);
+
+  /**
+   * `--vw`: the viewport's content width, which is what every anchored
+   * popover in the app (the glossary, the annotate bar) needs to clamp
+   * itself against. CSS's own `100vw` is the wrong number for that — it
+   * includes a classic scrollbar's width, so a popover clamped against it
+   * can still end up a scrollbar's width past the right edge. `clientWidth`
+   * is the honest measurement, so it is published once here rather than
+   * re-measured by each popover.
+   */
+  useEffect(() => {
+    const apply = () =>
+      document.documentElement.style.setProperty(
+        '--vw',
+        `${document.documentElement.clientWidth}px`,
+      );
+    apply();
+    window.addEventListener('resize', apply);
+    const ro = new ResizeObserver(apply);
+    ro.observe(document.documentElement);
+    return () => {
+      window.removeEventListener('resize', apply);
+      ro.disconnect();
+    };
   }, []);
 
   /**
@@ -263,14 +293,16 @@ export default function AppShell({
               and needing to open a menu first to find either one is a tax on
               the two controls most likely to be wanted mid-sentence. They are
               icon-only so that four controls still clear a 360px phone. */}
-          <div className="flex shrink-0 items-center gap-3 sm:gap-3.5">
+          {/* The gap is tight because each control now carries its own 36px
+              hit box (see `.icon-btn`); a wider gap on top of that would
+              push four controls past the edge of a 360px phone. */}
+          <div className="flex shrink-0 items-center gap-0.5 sm:gap-1.5">
             <button
               type="button"
               onClick={() => setPaletteOpen(true)}
-              className="squish"
+              className="icon-btn"
               title="Search everything (⌘K)"
               aria-label="Search passages, words and drills"
-              style={{ color: 'var(--fg-muted)' }}
             >
               <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                 <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.4" />
@@ -287,8 +319,8 @@ export default function AppShell({
               onClick={() => (indexOpen ? closeIndex() : setIndexOpen(true))}
               aria-expanded={indexOpen}
               aria-controls="section-index"
-              className="squish flex items-center gap-2.5"
-              style={{ color: 'var(--fg)' }}
+              className="icon-btn gap-2.5"
+              style={{ color: indexOpen ? 'var(--fg)' : undefined }}
             >
               <span className="slab-sm hidden sm:inline" style={{ color: 'inherit' }}>
                 {indexOpen ? 'Close' : 'Index'}
@@ -351,6 +383,7 @@ export default function AppShell({
       {indexOpen && (
         <SectionIndex
           pathname={pathname}
+          nav={navFor(profile?.role ?? null)}
           days={days}
           mounted={mounted}
           theme={theme}
@@ -405,6 +438,7 @@ export default function AppShell({
  */
 function SectionIndex({
   pathname,
+  nav,
   days,
   mounted,
   theme,
@@ -415,6 +449,8 @@ function SectionIndex({
   onDismiss,
 }: {
   pathname: string;
+  /** Role-adjusted — a teacher's home screen is their classrooms. */
+  nav: NavItem[];
   days: number;
   mounted: boolean;
   theme: 'light' | 'dark';
@@ -489,7 +525,7 @@ function SectionIndex({
                   {group.label}
                 </div>
                 <ul className="stagger flex flex-col">
-                  {NAV.filter((n) => n.group === group.id).map((item) => {
+                  {nav.filter((n) => n.group === group.id).map((item) => {
                     const active = isActive(item.href);
                     return (
                       <li key={item.href}>
@@ -603,8 +639,11 @@ function ThemeToggle({
       onClick={() => setTheme(next)}
       title={`${label} — click for ${next}`}
       aria-label={`${label}. Switch to ${next}.`}
-      className="transition-transform duration-300 hover:rotate-[24deg]"
-      style={{ color: 'var(--fg-muted)' }}
+      /* Shares `.icon-btn` with the search and index buttons beside it, so
+         all three warm and sink identically; `.theme-toggle` adds the turn
+         of the glyph on top. It used to rotate on hover and then answer a
+         real press with nothing at all. */
+      className="icon-btn theme-toggle"
     >
       <svg width="17" height="17" viewBox="0 0 16 16" fill="none" aria-hidden="true">
         {mounted && theme === 'dark' ? (

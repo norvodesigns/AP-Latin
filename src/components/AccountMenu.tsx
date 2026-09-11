@@ -43,7 +43,7 @@ export default function AccountMenu({
   }
 
   const home = profile.role === 'teacher' ? '/teach' : '/classroom';
-  const label = profile.role === 'teacher' ? 'Teach' : 'Classroom';
+  const label = profile.role === 'teacher' ? 'Classrooms' : 'Classroom';
 
   return (
     <Link href={home} className="chip squish" title={`Signed in as ${profile.display_name}`}>

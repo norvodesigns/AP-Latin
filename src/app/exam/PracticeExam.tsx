@@ -190,7 +190,7 @@ export default function PracticeExam() {
                 key={i}
                 type="button"
                 onClick={() => setCursor(i)}
-                className="h-7 w-7 text-xs tabular-nums transition-colors"
+                className="squish h-7 w-7 rounded-[var(--r-sm)] text-xs tabular-nums transition-colors"
                 style={{
                   background: i === cursor ? 'var(--accent)' : answered ? 'var(--bg-sunk)' : 'transparent',
                   color: i === cursor ? 'var(--accent-fg)' : answered ? 'var(--fg)' : 'var(--fg-faint)',

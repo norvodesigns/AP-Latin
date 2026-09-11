@@ -17,6 +17,16 @@ import { CalledOut, CedLink, Roman, SkillMeter, SourceNote, toRoman } from '@/co
 import { useRevealChildren } from '@/hooks/useRevealChildren';
 import { loadIndex } from '@/data/scansionCorpus';
 import { sectionLabel } from '@/lib/nav';
+import {
+  recentActivity,
+  sessionsRemaining,
+  studyCalendar,
+  vocabForecast,
+  weakSpots,
+  type CalendarDay,
+  type WeakSpot,
+} from '@/lib/progress';
+import { formatDuration } from '@/lib/format';
 import type { SkillCategory } from '@/data/types';
 import type { UpcomingAssignment } from '@/lib/supabase/dashboard';
 
@@ -28,6 +38,8 @@ const SKILL_LABELS: Record<SkillCategory, string> = {
 
 /** CED exam weighting by skill category (pp. 227–228). */
 const SKILL_WEIGHT: Record<SkillCategory, number> = { '1': 70, '2': 11, '3': 19 };
+
+const WEEKDAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 export default function Dashboard({
   assignments,
@@ -55,10 +67,14 @@ export default function Dashboard({
   const vocab = useStore((s) => s.vocab);
   const quizAttempts = useStore((s) => s.quizAttempts);
   const translationAttempts = useStore((s) => s.translationAttempts);
+  const frqResponses = useStore((s) => s.frqResponses);
   const examResults = useStore((s) => s.examResults);
   const studyDays = useStore((s) => s.studyDays);
   const reviewQueue = useStore((s) => s.reviewQueue);
   const scansionAttempts = useStore((s) => s.scansionAttempts);
+  const studyPlan = useStore((s) => s.studyPlan);
+  const studySecondsToday = useStore((s) => s.studySecondsToday);
+  const studyGoalDate = useStore((s) => s.studyGoalDate);
 
   const days = daysUntilExam();
   const streak = mounted ? currentStreak(studyDays) : 0;
@@ -76,6 +92,53 @@ export default function Dashboard({
     for (const s of scansionStatsByLine(scansionAttempts).values()) if (s.mastered) n += 1;
     return n;
   }, [scansionAttempts, mounted]);
+
+  /* Today's goal. `studySecondsToday` is only meaningful for the day it was
+     last written on — the store rolls it over lazily, on the next tick of
+     study time, so a dashboard opened first thing would otherwise show
+     yesterday's total as today's progress. */
+  const todaySeconds =
+    mounted && studyGoalDate === new Date().toISOString().slice(0, 10) ? studySecondsToday : 0;
+  const goalSeconds = studyPlan.minutesPerDay * 60;
+  const goalPct = goalSeconds > 0 ? Math.min(100, Math.round((todaySeconds / goalSeconds) * 100)) : 0;
+
+  const calendar = useMemo(
+    () =>
+      mounted
+        ? studyCalendar(studyDays, [
+            ...quizAttempts,
+            ...translationAttempts,
+            ...scansionAttempts,
+            ...examResults,
+            ...frqResponses,
+          ])
+        : [],
+    [mounted, studyDays, quizAttempts, translationAttempts, scansionAttempts, examResults, frqResponses],
+  );
+
+  const weak = useMemo(
+    () =>
+      mounted ? weakSpots({ quizAttempts, translationAttempts, scansionAttempts, vocab }) : [],
+    [mounted, quizAttempts, translationAttempts, scansionAttempts, vocab],
+  );
+
+  const forecast = useMemo(() => vocabForecast(mounted ? vocab : {}), [vocab, mounted]);
+
+  const activity = useMemo(
+    () =>
+      mounted
+        ? recentActivity({
+            quizAttempts,
+            translationAttempts,
+            examResults,
+            scansionAttempts,
+            frqResponses,
+          })
+        : [],
+    [mounted, quizAttempts, translationAttempts, examResults, scansionAttempts, frqResponses],
+  );
+
+  const sessions = mounted ? sessionsRemaining(studyPlan.activeDays, EXAM_DATE) : 0;
 
   const bySkill = useMemo(() => {
     const acc: Record<SkillCategory, { correct: number; total: number }> = {
@@ -115,6 +178,8 @@ export default function Dashboard({
     examCount: examResults.length,
     days,
     weakest: weakestSkill,
+    goalMet: goalSeconds > 0 && todaySeconds >= goalSeconds,
+    topWeakness: weak[0] ?? null,
   });
 
   const exam = new Date(EXAM_DATE + 'T00:00:00');
@@ -138,7 +203,7 @@ export default function Dashboard({
             the entrance and scroll-reveal behaviour is attached per column —
             revealing the columns themselves would animate the layout instead
             of its contents. */}
-        <div ref={leftColumn} className="flex flex-col gap-11 py-10 lg:py-12 lg:pr-12">
+        <div ref={leftColumn} className="flex min-w-0 flex-col gap-11 py-10 lg:py-12 lg:pr-12">
           {/* Countdown */}
           <section className="marginal">
             <div className="slab mb-4">Diēs ad exāmen · Days to the exam</div>
@@ -164,10 +229,101 @@ export default function Dashboard({
                 </span>
               </div>
             </div>
+            {/* The bare day count flatters. At three days a week, 120 days is
+                fifty-one sessions — which is the number that should govern
+                how a student paces themselves. */}
+            {mounted && sessions > 0 && (
+              <p
+                className="measure"
+                style={{
+                  margin: '1.25rem 0 0',
+                  fontFamily: 'var(--font-latin)',
+                  fontSize: '1.0625rem',
+                  lineHeight: 1.5,
+                  color: 'var(--ink2)',
+                }}
+              >
+                That is{' '}
+                <strong style={{ fontWeight: 400, color: 'var(--fg)' }}>
+                  {sessions} study session{sessions === 1 ? '' : 's'}
+                </strong>{' '}
+                at the {studyPlan.activeDays.length} day
+                {studyPlan.activeDays.length === 1 ? '' : 's'} a week you have planned —{' '}
+                <Link href="/plan" className="link-rule" style={{ color: 'var(--accent)' }}>
+                  change that
+                </Link>{' '}
+                if it is not true any more.
+              </p>
+            )}
           </section>
 
-          {/* Mastery */}
+          {/* Consistency. Studying at all, on most days, matters more to a
+              language than any single session does — so it gets its own
+              block rather than a line in the rail. */}
           <section>
+            <div className="mb-5 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+              <span className="rubric">Cōnstantia · the last fourteen weeks</span>
+              <span
+                style={{
+                  fontFamily: 'var(--font-latin)',
+                  fontSize: '1.0625rem',
+                  color: 'var(--fg-muted)',
+                }}
+              >
+                {mounted && streak > 0 ? (
+                  <>
+                    {streak} day{streak === 1 ? '' : 's'} unbroken · <Roman value={streak} />
+                  </>
+                ) : (
+                  'no streak running'
+                )}
+              </span>
+            </div>
+            <StudyGrid weeks={calendar} mounted={mounted} />
+            <div className="mt-4 flex flex-wrap items-baseline justify-between gap-x-5 gap-y-2">
+              <span style={{ fontSize: '0.875rem', color: 'var(--fg-faint)' }}>
+                {mounted
+                  ? `${studyDays.length} day${studyDays.length === 1 ? '' : 's'} studied in all · longest run ${best}`
+                  : ' '}
+              </span>
+              <span className="flex items-center gap-2" style={{ fontSize: '0.875rem', color: 'var(--fg-faint)' }}>
+                quieter
+                {[0, 1, 2, 3, 4].map((l) => (
+                  <span key={l} className="cal-day" data-level={l} aria-hidden="true" />
+                ))}
+                busier
+              </span>
+            </div>
+          </section>
+
+          {/* Weak spots. The meters below say how it is going; this says what
+              to do about it, which is the question that changes what a
+              student opens next. */}
+          {mounted && weak.length > 0 && (
+            <section className="border-t pt-9" style={{ borderColor: 'var(--rule)' }}>
+              <div className="mb-5 flex items-baseline justify-between gap-4">
+                <span className="rubric">Work on these</span>
+                <span
+                  className="hidden sm:inline"
+                  style={{
+                    fontFamily: 'var(--font-latin)',
+                    fontSize: '0.9375rem',
+                    color: 'var(--fg-muted)',
+                  }}
+                >
+                  from everything you have been graded on
+                </span>
+              </div>
+              <div className="flex flex-col">
+                {weak.map((w, i) => (
+                  <WeakRow key={w.id} spot={w} first={i === 0} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Mastery */}
+          <section className="border-t pt-9" style={{ borderColor: 'var(--rule)' }}>
             <div className="rubric mb-6">Mastery by skill</div>
             <div className="flex flex-col gap-5">
               {(['1', '2', '3'] as SkillCategory[]).map((c) => {
@@ -216,6 +372,7 @@ export default function Dashboard({
             <div className="mb-6 flex items-baseline justify-between gap-4">
               <span className="rubric">Ratiō · the ledger</span>
               <span
+                className="hidden sm:inline"
                 style={{
                   fontFamily: 'var(--font-latin)',
                   fontSize: '0.9375rem',
@@ -246,6 +403,21 @@ export default function Dashboard({
                   href: '/scansion',
                 },
                 {
+                  label: 'Translations graded',
+                  value: mounted ? translationAttempts.length : 0,
+                  max: Math.max(20, mounted ? translationAttempts.length : 0),
+                  href: '/translate',
+                },
+                {
+                  label: 'Free responses written',
+                  value: mounted ? frqResponses.filter((f) => f.submitted).length : 0,
+                  max: Math.max(
+                    10,
+                    mounted ? frqResponses.filter((f) => f.submitted).length : 0,
+                  ),
+                  href: '/frq',
+                },
+                {
                   label: 'Practice exams sat',
                   value: mounted ? examResults.length : 0,
                   max: 6,
@@ -266,28 +438,42 @@ export default function Dashboard({
         <div className="hidden lg:block" style={{ background: 'var(--rule)' }} />
 
         {/* ────────── Right ────────── */}
-        <div ref={rightRail} className="flex flex-col gap-8 border-t py-10 lg:border-t-0 lg:py-12 lg:pl-10" style={{ borderColor: 'var(--rule)' }}>
-          {/* Streak */}
-          <div
-            className="flex items-baseline gap-4 border-b pb-6"
-            style={{ borderColor: 'var(--rule)' }}
-          >
-            <div className="numeral" style={{ fontSize: '3.5rem', lineHeight: 0.9 }}>
-              {mounted ? streak : '—'}
+        <div ref={rightRail} className="flex min-w-0 flex-col gap-8 border-t py-10 lg:border-t-0 lg:py-12 lg:pl-10" style={{ borderColor: 'var(--rule)' }}>
+          {/* Today's goal. This was only ever visible as a toast at the moment
+              it was met, which meant the one number a student can still do
+              something about today was the one number the dashboard never
+              showed. */}
+          <div className="border-b pb-7" style={{ borderColor: 'var(--rule)' }}>
+            <div className="mb-3 flex items-baseline justify-between gap-3">
+              <span className="slab">Today</span>
+              <span
+                className="tabular-nums"
+                style={{ fontFamily: 'var(--font-latin)', fontSize: '1.125rem' }}
+              >
+                {mounted ? formatDuration(todaySeconds) : '—'}
+                <span style={{ color: 'var(--fg-faint)' }}>
+                  {' '}
+                  / {studyPlan.minutesPerDay}m
+                </span>
+              </span>
             </div>
-            <div
-              style={{
-                fontFamily: 'var(--font-latin)',
-                fontSize: '0.9375rem',
-                lineHeight: 1.3,
-                color: 'var(--fg-muted)',
-              }}
-            >
-              <div>
-                days unbroken{mounted && streak > 0 && <> · <Roman value={streak} /></>}
+            <div className="meter">
+              <span style={{ width: `${mounted ? goalPct : 0}%` }} />
+            </div>
+            <div className="mt-3 flex items-baseline gap-4">
+              <div className="numeral" style={{ fontSize: '2.25rem', lineHeight: 0.9 }}>
+                {mounted ? streak : '—'}
               </div>
-              <div>
-                longest streak {mounted && best > 0 ? <Roman value={best} /> : '—'}
+              <div
+                style={{
+                  fontFamily: 'var(--font-latin)',
+                  fontSize: '0.9375rem',
+                  lineHeight: 1.3,
+                  color: 'var(--fg-muted)',
+                }}
+              >
+                <div>day{streak === 1 ? '' : 's'} unbroken</div>
+                <div>longest {mounted && best > 0 ? <Roman value={best} /> : '—'}</div>
               </div>
             </div>
           </div>
@@ -321,17 +507,33 @@ export default function Dashboard({
             </Link>
           </CalledOut>
 
-          {/* Today: only things that are actually due today, so the rail stays
-              a to-do list. Cumulative totals — lines scanned included — live in
-              the ledger on the left, where they have a bar to be read against. */}
-          <div className="flex flex-col gap-2.5">
-            <TodayRow label="Cards due today" value={mounted ? due.length : 0} href="/vocab" />
-            <div className="hair" />
-            <TodayRow
-              label="Review queue"
-              value={mounted ? reviewQueue.length : 0}
-              href="/quiz?mode=review"
-            />
+          {/* The queue: what is due now, and what is about to be. A count of
+              cards due today says nothing about whether tomorrow is five
+              minutes or a fifty-card wall. */}
+          <div>
+            <div className="mb-4 flex items-baseline justify-between gap-3">
+              <span className="slab">The queue</span>
+              {mounted && forecast.total > 0 && (
+                <span style={{ fontSize: '0.875rem', color: 'var(--fg-faint)' }}>
+                  {forecast.mature} of {forecast.total} words settled
+                </span>
+              )}
+            </div>
+            <div className="flex flex-col gap-2.5">
+              <TodayRow label="Cards due now" value={mounted ? due.length : 0} href="/vocab" />
+              <div className="hair" />
+              <TodayRow
+                label="Review queue"
+                value={mounted ? reviewQueue.length : 0}
+                href="/quiz?mode=review"
+              />
+            </div>
+            {mounted && forecast.total > 0 && (
+              <div className="mt-5">
+                <div className="slab-sm mb-2.5">Next seven days</div>
+                <Forecast week={forecast.week} />
+              </div>
+            )}
           </div>
 
           {/* Classroom assignments due. Server-rendered via a prop rather than
@@ -345,6 +547,10 @@ export default function Dashboard({
               <ul className="flex flex-col pl-0" style={{ listStyle: 'none' }}>
                 {assignments.map((a, i) => {
                   const overdue = Boolean(a.dueDate && a.dueDate < new Date().toISOString().slice(0, 10));
+                  const pct = Math.min(
+                    100,
+                    Math.round((a.seconds / Math.max(1, a.targetMinutes * 60)) * 100),
+                  );
                   return (
                     <li key={a.id}>
                       <Link
@@ -374,7 +580,21 @@ export default function Dashboard({
                             </span>
                           )}
                         </div>
-                        <div style={{ color: 'var(--fg-faint)', fontSize: '0.8125rem' }}>{a.classroomName}</div>
+                        {/* How far along it is, not just that it exists —
+                            the student's own copy of the meter their teacher
+                            is watching. */}
+                        <div className={`meter meter-thin mt-2 ${overdue ? 'meter-red' : ''}`}>
+                          <span style={{ width: `${pct}%` }} />
+                        </div>
+                        <div
+                          className="mt-1.5 flex items-baseline justify-between gap-3"
+                          style={{ color: 'var(--fg-faint)', fontSize: '0.8125rem' }}
+                        >
+                          <span>{a.classroomName}</span>
+                          <span className="tabular-nums">
+                            {Math.round(a.seconds / 60)} / {a.targetMinutes}m
+                          </span>
+                        </div>
                       </Link>
                     </li>
                   );
@@ -383,39 +603,41 @@ export default function Dashboard({
             </div>
           )}
 
-          {/* Recent exams */}
-          {mounted && examResults.length > 0 && (
+          {/* Recent work */}
+          {mounted && activity.length > 0 && (
             <div className="border-t pt-7" style={{ borderColor: 'var(--rule)' }}>
-              <div className="slab mb-4">Recent practice exams</div>
-              <ul className="flex flex-col gap-3">
-                {examResults
-                  .slice(-4)
-                  .reverse()
-                  .map((r) => (
-                    <li key={r.id} className="flex items-baseline justify-between gap-3">
-                      <span
-                        style={{
-                          fontFamily: 'var(--font-latin)',
-                          fontSize: '1.0625rem',
-                          color: 'var(--fg-muted)',
-                        }}
-                      >
-                        {new Date(r.at).toLocaleDateString(undefined, {
-                          day: 'numeric',
-                          month: 'long',
-                        })}
-                      </span>
-                      <span
-                        style={{
-                          fontFamily: 'var(--font-latin)',
-                          fontSize: '1.0625rem',
-                          color: 'var(--fg)',
-                        }}
-                      >
-                        MCQ {r.mcqCorrect}/{r.mcqTotal} · FRQ {r.frqPoints}/{r.frqMax}
-                      </span>
-                    </li>
-                  ))}
+              <div className="slab mb-4">Recently</div>
+              <ul className="flex flex-col pl-0" style={{ listStyle: 'none' }}>
+                {activity.map((a, i) => (
+                  <li key={a.id}>
+                    <Link
+                      href={a.href}
+                      className="squish row-hover -mx-3 block px-3 py-2.5"
+                      style={{ borderTop: i === 0 ? undefined : '1px solid var(--hair)' }}
+                    >
+                      <div className="flex items-baseline justify-between gap-3">
+                        <span
+                          style={{
+                            fontFamily: 'var(--font-latin)',
+                            fontSize: '1.0625rem',
+                            color: 'var(--fg)',
+                          }}
+                        >
+                          {a.label}
+                        </span>
+                        <span
+                          className="shrink-0 tabular-nums"
+                          style={{ fontSize: '0.8125rem', color: 'var(--fg-faint)' }}
+                        >
+                          {relativeDay(a.at)}
+                        </span>
+                      </div>
+                      <div style={{ color: 'var(--fg-muted)', fontSize: '0.875rem' }}>
+                        {a.detail}
+                      </div>
+                    </Link>
+                  </li>
+                ))}
               </ul>
             </div>
           )}
@@ -423,6 +645,202 @@ export default function Dashboard({
       </div>
     </div>
   );
+}
+
+/* ------------------------------------------------------------------ */
+/* Pieces                                                             */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Fourteen weeks of squares. Rendered empty until mounted, so the server's
+ * markup and the client's first render agree — every square's shading comes
+ * out of localStorage, which the server cannot see.
+ */
+function StudyGrid({ weeks, mounted }: { weeks: CalendarDay[][]; mounted: boolean }) {
+  const today = new Date().toISOString().slice(0, 10);
+
+  if (!mounted || weeks.length === 0) {
+    // A grid of the right shape, so nothing jumps when the real one arrives.
+    return (
+      <div className="flex items-start gap-2">
+        <WeekdayGutter />
+        <div className="cal" aria-hidden="true">
+          {Array.from({ length: 14 * 7 }, (_, i) => (
+            <span key={i} className="cal-day" data-level={0} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-start gap-2">
+      <WeekdayGutter />
+      <div className="cal" role="img" aria-label="Study activity over the last fourteen weeks">
+        {weeks.flat().map((d) => (
+          <span
+            key={d.date}
+            className="cal-day"
+            data-level={d.level}
+            data-future={d.future || undefined}
+            data-today={d.date === today || undefined}
+            title={
+              d.future
+                ? ''
+                : `${new Date(d.date + 'T00:00:00').toLocaleDateString(undefined, {
+                    weekday: 'short',
+                    day: 'numeric',
+                    month: 'short',
+                  })} — ${
+                    d.count > 0
+                      ? `${d.count} piece${d.count === 1 ? '' : 's'} of graded work`
+                      : d.studied
+                        ? 'studied'
+                        : 'nothing'
+                  }`
+            }
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Mon/Wed/Fri only — labelling all seven turns the gutter into noise. */
+function WeekdayGutter() {
+  return (
+    <div
+      className="grid shrink-0"
+      style={{ gridTemplateRows: 'repeat(7, 1fr)', gap: '3px' }}
+      aria-hidden="true"
+    >
+      {WEEKDAY_LABELS.map((d, i) => (
+        <span
+          key={i}
+          style={{
+            height: '11px',
+            lineHeight: '11px',
+            fontSize: '0.5625rem',
+            color: 'var(--fg-faint)',
+            fontFamily: 'var(--font-sans)',
+          }}
+        >
+          {i % 2 === 1 ? d : ''}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function WeakRow({ spot, first }: { spot: WeakSpot; first: boolean }) {
+  return (
+    <Link
+      href={spot.href}
+      className="squish row-hover -mx-3 block px-3 py-4"
+      style={{ borderTop: first ? undefined : '1px solid var(--hair)' }}
+    >
+      <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <span
+          style={{
+            fontFamily: 'var(--font-latin)',
+            fontSize: '1.25rem',
+            color: 'var(--fg)',
+          }}
+        >
+          {spot.label}
+        </span>
+        <span
+          style={{
+            fontFamily: 'var(--font-latin)',
+            fontSize: '1.25rem',
+            color: 'var(--accent)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {spot.pct === null ? spot.cta : `${spot.pct}%`}
+        </span>
+      </div>
+      {spot.pct !== null && (
+        <div className="meter meter-thin meter-red mb-2">
+          <span style={{ width: `${spot.pct}%` }} />
+        </div>
+      )}
+      <div style={{ color: 'var(--fg-muted)', fontSize: '0.875rem' }}>{spot.detail}</div>
+    </Link>
+  );
+}
+
+/** Height of the plot the bars grow inside, in px. */
+const FORECAST_PLOT = 30;
+
+/**
+ * Seven bars, today first, scaled to the busiest day in the window.
+ *
+ * The bars grow upward inside a fixed-height plot rather than the row being
+ * given a height and its contents bottom-aligned. The latter is what I wrote
+ * first, and any column taller than that height — a big count above a tall
+ * bar above a label — simply overflowed upward, straight over the heading.
+ */
+function Forecast({ week }: { week: number[] }) {
+  const peak = Math.max(1, ...week);
+  const labels = ['today', ...Array.from({ length: 6 }, (_, i) => dayInitial(i + 1))];
+  return (
+    <div className="flex items-end gap-1.5">
+      {week.map((n, i) => (
+        <div key={i} className="flex min-w-0 flex-1 flex-col items-center gap-1">
+          <span
+            className="tabular-nums"
+            style={{
+              fontSize: '0.6875rem',
+              lineHeight: 1.2,
+              color: n > 0 ? 'var(--fg-muted)' : 'var(--fg-faint)',
+            }}
+          >
+            {n > 0 ? n : '·'}
+          </span>
+          <span
+            className="flex w-full items-end"
+            style={{ height: `${FORECAST_PLOT}px` }}
+            title={`${n} card${n === 1 ? '' : 's'} ${i === 0 ? 'due now' : `due ${labels[i]}`}`}
+          >
+            <span
+              style={{
+                width: '100%',
+                // A day with cards always shows at least a sliver, so "a few"
+                // never rounds to the same nothing as "none".
+                height: `${n === 0 ? 2 : Math.max(4, Math.round((n / peak) * FORECAST_PLOT))}px`,
+                borderRadius: '2px',
+                background: n === 0 ? 'var(--track)' : i === 0 ? 'var(--accent)' : 'var(--gilt)',
+              }}
+            />
+          </span>
+          <span style={{ fontSize: '0.5625rem', lineHeight: 1.2, color: 'var(--fg-faint)' }}>
+            {i === 0 ? 'now' : labels[i]}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** The single-letter weekday `n` days from today. */
+function dayInitial(n: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return WEEKDAY_LABELS[d.getDay()];
+}
+
+/** "today" / "yesterday" / "3d ago" / "14 Mar". */
+function relativeDay(at: string): string {
+  const then = new Date(at);
+  const a = new Date(then.getFullYear(), then.getMonth(), then.getDate());
+  const now = new Date();
+  const b = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const days = Math.round((b.getTime() - a.getTime()) / 86_400_000);
+  if (days <= 0) return 'today';
+  if (days === 1) return 'yesterday';
+  if (days < 7) return `${days}d ago`;
+  return then.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
 }
 
 /**
@@ -442,7 +860,7 @@ function Ledger({
           <Link
             key={r.label}
             href={r.href}
-            className="row-hover -mx-3 block px-3 py-4"
+            className="squish row-hover -mx-3 block px-3 py-4"
             style={{ borderTop: i === 0 ? undefined : '1px solid var(--hair)' }}
           >
             <div className="mb-2.5 flex items-baseline justify-between gap-4">
@@ -485,7 +903,10 @@ function TodayRow({
   href: string;
 }) {
   return (
-    <Link href={href} className="row-hover -mx-2 flex items-baseline justify-between gap-3 px-2 py-1">
+    <Link
+      href={href}
+      className="squish row-hover -mx-2 flex items-baseline justify-between gap-3 px-2 py-1"
+    >
       <span
         style={{ fontFamily: 'var(--font-latin)', fontSize: '1.125rem', color: 'var(--ink2)' }}
       >
@@ -509,6 +930,8 @@ function nextAction(s: {
   examCount: number;
   days: number;
   weakest: { c: SkillCategory; pct: number; total: number } | null;
+  goalMet: boolean;
+  topWeakness: WeakSpot | null;
 }): { title: string; body: string; cta: string; href: string } {
   if (!s.mounted) {
     return {
@@ -542,12 +965,23 @@ function nextAction(s: {
       href: '/quiz?mode=review',
     };
   }
+  /* The specific weakness beats the broad category: "form identification, 52%"
+     is something a student can act on, where "read & comprehend is your
+     thinnest ground" is a diagnosis without a prescription. */
+  if (s.topWeakness && s.topWeakness.pct !== null && s.topWeakness.pct < 70) {
+    return {
+      title: `${s.topWeakness.label} is your thinnest ground`,
+      body: `${s.topWeakness.detail}. Half an hour on exactly this is worth more than an hour of mixed practice.`,
+      cta: s.topWeakness.cta,
+      href: s.topWeakness.href,
+    };
+  }
   if (s.weakest && s.weakest.pct < 60 && s.weakest.total >= 5) {
     return {
       title: `${SKILL_LABELS[s.weakest.c]} is your thinnest ground`,
       body: `You are at ${s.weakest.pct}% across ${s.weakest.total} graded questions there, against an exam weighting of ${SKILL_WEIGHT[s.weakest.c]}%.`,
       cta: 'Drill that skill',
-      href: '/quiz',
+      href: `/quiz?skill=${s.weakest.c}`,
     };
   }
   if (s.translationCount === 0) {
@@ -582,9 +1016,17 @@ function nextAction(s: {
       href: '/exam',
     };
   }
+  if (!s.goalMet) {
+    return {
+      title: 'Nothing overdue',
+      body: 'The queue is clear and nothing is waiting. Read something new, or put the rest of today’s time into the weakest thing on the left.',
+      cta: 'Reading Room',
+      href: '/read',
+    };
+  }
   return {
-    title: 'Everything is up to date',
-    body: 'Pick a weak spot from the ledger, or read something new.',
+    title: 'Today is done',
+    body: 'You have hit your daily target and the queue is clear. Anything more today is a bonus.',
     cta: 'Reading Room',
     href: '/read',
   };

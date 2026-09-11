@@ -501,7 +501,7 @@ export default function ScansionLab() {
           </span>
           <button
             type="button"
-            className="slab-sm"
+            className="btn btn-ghost btn-sm"
             onClick={() => setShowTutorial((v) => !v)}
             aria-expanded={showTutorial}
           >
@@ -527,7 +527,7 @@ export default function ScansionLab() {
             Drawn at random from {corpusTotal ? corpusTotal.toLocaleString() : '6,500+'} lines of
             the <em>Aeneid</em>. Lines you have mastered never come back.
           </span>
-          <button type="button" className="slab-sm" onClick={() => void practiseWeakest()}>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => void practiseWeakest()}>
             ↯ Weakest line
           </button>
         </div>
