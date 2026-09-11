@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Passage } from '@/data/types';
 import { useAiStatus } from '@/lib/useAi';
 import { useStore } from '@/store/useStore';
-import { lookup } from '@/lib/latin';
+import { lookup, disambiguateInContext } from '@/lib/latin';
 
 const SUGGESTED = [
   'Parse every word in this line.',
@@ -99,7 +99,7 @@ export default function AskAboutLine({
   const offlineGloss = latin
     .split(/[^A-Za-zÀ-ÿĀ-ſ]+/)
     .filter((w) => w.length > 1)
-    .map((w) => ({ word: w, hit: lookup(w)[0] }))
+    .map((w) => ({ word: w, hit: disambiguateInContext(passage.id, lineN, w, lookup(w))[0] }))
     .filter((x) => x.hit);
 
   return (
@@ -191,10 +191,10 @@ export default function AskAboutLine({
               )}
 
               <div>
-                <div className="eyebrow mb-2">Words in this line, from the core list</div>
+                <div className="eyebrow mb-2">Words here</div>
                 {offlineGloss.length === 0 ? (
                   <p className="text-sm" style={{ color: 'var(--fg-faint)' }}>
-                    No core-vocabulary matches — on the exam these words would be glossed for you.
+                    No vocabulary matches here.
                   </p>
                 ) : (
                   <ul className="flex flex-col gap-2">

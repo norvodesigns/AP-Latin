@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Passage } from '@/data/types';
-import { tokenize, lookup, type LookupResult } from '@/lib/latin';
+import { tokenize, lookup, disambiguateInContext, type LookupResult } from '@/lib/latin';
 import { useStore, readingCoverage, type Annotation, type HighlightColor } from '@/store/useStore';
 import { passageVocabIds } from '@/data/passages';
 import { BackLink, CedLink, SupplementaryNotice } from '@/components/ui';
@@ -160,10 +160,10 @@ export default function Reader({
   );
 
   const onWord = useCallback(
-    (e: React.MouseEvent<HTMLButtonElement>, word: string, lineN: number) => {
+    (e: React.MouseEvent<HTMLButtonElement>, word: string, lineN: number, tokenIndex: number) => {
       if (!glossaryEnabled) return;
       const rect = e.currentTarget.getBoundingClientRect();
-      const results = lookup(word);
+      const results = disambiguateInContext(passage.id, lineN, word, lookup(word), tokenIndex);
       setSel({
         word,
         lineN,
@@ -444,7 +444,8 @@ export default function Reader({
               color: 'var(--fg-faint)',
             }}
           >
-            Tip: select a word or phrase in the text to highlight it or attach a note.
+            Tip: select a word or phrase in the text to highlight it, attach a note, or ask about
+            it.
           </p>
 
           {!passage.required && (
@@ -529,7 +530,7 @@ export default function Reader({
                           className={`word ${hlClass} ${
                             sel?.word === t.text && sel?.lineN === line.n ? 'word-active' : ''
                           }`}
-                          onClick={(e) => onWord(e, t.text, line.n)}
+                          onClick={(e) => onWord(e, t.text, line.n, t.index)}
                           tabIndex={glossaryEnabled ? 0 : -1}
                           style={{ cursor: glossaryEnabled ? 'pointer' : 'text' }}
                         >
@@ -830,7 +831,7 @@ export default function Reader({
                   color: 'var(--ink2)',
                 }}
               >
-                Not in the CED core vocabulary list — which means the exam would gloss it for you.
+                No entry found for this word.
               </p>
             </>
           ) : (
@@ -859,12 +860,7 @@ export default function Reader({
                     {r.match === 'stem' && (
                       <span style={{ color: 'var(--fg-faint)' }}> · stem match, verify in context</span>
                     )}
-                    {r.entry.supplementary && (
-                      <span style={{ color: 'var(--fg-faint)' }}>
-                        {' '}
-                        · not on the CED core list — the exam would gloss this one for you too
-                      </span>
-                    )}
+                    {!r.entry.supplementary && <span className="ap-badge ml-2">AP</span>}
                   </div>
                   <div
                     style={{
@@ -892,12 +888,7 @@ export default function Reader({
                 if (top) seedVocab([top.entry.id]);
                 setSel(null);
               }}
-              disabled={sel.results.length === 0 || Boolean(sel.results[0]?.entry.supplementary)}
-              title={
-                sel.results[0]?.entry.supplementary
-                  ? 'Not on the CED core list, so it has no flashcard deck entry'
-                  : undefined
-              }
+              disabled={sel.results.length === 0}
             >
               ＋ Add to deck
             </button>
@@ -1016,6 +1007,17 @@ export default function Reader({
                   }}
                 >
                   Copy
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm flex-1"
+                  onClick={() => {
+                    setAskLine({ n: annotate.lineN, latin: annotate.text });
+                    window.getSelection()?.removeAllRanges();
+                    setAnnotate(null);
+                  }}
+                >
+                  Ask
                 </button>
               </div>
             </div>

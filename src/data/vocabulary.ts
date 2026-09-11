@@ -7701,10 +7701,10 @@ export const coreVocabulary: VocabEntry[] = [
   },
   {
     id: 'sum',
-    lemma: `sum (or placitum)`,
+    lemma: `sum, esse, fui`,
     headword: `sum`,
     pos: 'verb',
-    definition: `acceptable, suit, satisfy`,
+    definition: `to be, exist; (with dat.) belong to`,
     readings: ['1.1', '1.2'],
     units: ['1'],
   },

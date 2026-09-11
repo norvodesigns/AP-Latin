@@ -29,7 +29,7 @@ const STUDENT_STEPS = [
   },
   {
     title: 'Vocabulary, Quiz, Scansion',
-    body: 'Spaced repetition over the 990-word core list, AP-style multiple choice, and a scansion lab that grades your own foot-marking.',
+    body: 'Spaced repetition over every word the passages use — the 990-word AP list included — AP-style multiple choice, and a scansion lab that grades your own foot-marking.',
   },
   {
     title: 'The Dashboard',
