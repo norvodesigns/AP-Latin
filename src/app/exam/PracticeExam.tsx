@@ -47,6 +47,21 @@ export default function PracticeExam() {
 
   const repeats = MCQ_COUNT - new Set(paper.map((q) => q.id)).size;
 
+  /* The real Section II is five FRQs: short-answer, translation, one
+     short-essay, and the two course-project essays (project-prose and
+     project-poetry are official CED-scored components, not extras — see
+     the point/minute totals documented at the top of data/frq.ts). The
+     bank stores two short-essay prompts — a Pliny option and a Vergil
+     option — as alternate practice material for that one slot, so a
+     retake can land on either. Filtering by type, not array index, means
+     a third short-essay prompt added later still yields exactly one. */
+  const examFrqs = useMemo(() => {
+    const essays = frqPrompts.filter((p) => p.type === 'short-essay');
+    const chosenId = essays[Math.floor(Math.random() * essays.length)]?.id;
+    return frqPrompts.filter((p) => p.type !== 'short-essay' || p.id === chosenId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seed]);
+
   /* timers */
   useEffect(() => {
     if (stage !== 'mcq' && stage !== 'frq') return;
@@ -96,7 +111,7 @@ export default function PracticeExam() {
       byType[q.type]!.total += 1;
       if (ok) byType[q.type]!.correct += 1;
     }
-    const frqMax = frqPrompts.reduce((n, p) => n + p.rubric.reduce((m, r) => m + r.maxPoints, 0), 0);
+    const frqMax = examFrqs.reduce((n, p) => n + p.rubric.reduce((m, r) => m + r.maxPoints, 0), 0);
     const frqPoints = Object.values(frqSelfScore).reduce((n, v) => n + v, 0);
 
     recordExam({
@@ -322,13 +337,13 @@ export default function PracticeExam() {
           label="Section II — Free Response"
           time={clock(frqLeft)}
           urgent={frqLeft < 600}
-          right={`${frqPrompts.length} questions`}
+          right={`${examFrqs.length} questions`}
           onEnd={finish}
           endLabel="Finish and score"
         />
 
         <div className="flex flex-col gap-6">
-          {frqPrompts.map((p) => {
+          {examFrqs.map((p) => {
             const passage = p.passageId ? getPassage(p.passageId) : undefined;
             return (
               <section key={p.id} className="border-t pt-6 pb-8" style={{ borderColor: 'var(--rule)' }}>
@@ -400,7 +415,7 @@ export default function PracticeExam() {
     byType.set(q.type, t);
   }
 
-  const frqMax = frqPrompts.reduce((n, p) => n + p.rubric.reduce((m, r) => m + r.maxPoints, 0), 0);
+  const frqMax = examFrqs.reduce((n, p) => n + p.rubric.reduce((m, r) => m + r.maxPoints, 0), 0);
   const frqPoints = Object.values(frqSelfScore).reduce((n, v) => n + v, 0);
 
   return (
@@ -486,7 +501,7 @@ export default function PracticeExam() {
           here, or take each question into the FRQ Workshop for the full guidelines and a sample.
         </p>
         <ul className="flex flex-col gap-3">
-          {frqPrompts.map((p) => (
+          {examFrqs.map((p) => (
             <li key={p.id}>
               <div className="mb-1.5 text-sm" style={{ fontWeight: 550 }}>{p.title}</div>
               <div className="flex flex-wrap gap-3">

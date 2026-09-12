@@ -64,7 +64,7 @@ notes.push(`${drills.length} translation drills`);
 notes.push(`${scansion.length} scanned lines`);
 notes.push(`${sight.length} vetted sight passages`);
 notes.push(`${grammarTopics.length} grammar topics, ${deviceCards.length} device cards, ${contextCards.length} context cards`);
-notes.push(`${frqPrompts.length} free-response prompts`);
+notes.push(`${frqPrompts.length} free-response prompts (5 graded per sitting; short-essay offers 2 alternates)`);
 
 /* --- passages ---------------------------------------------------- */
 const seenPassage = new Set();
@@ -242,6 +242,28 @@ for (const f of frqPrompts) {
                      'project-prose': 11, 'project-poetry': 11 }[f.type];
   if (expected && total !== expected) {
     fail(`frq ${f.id}: rubric totals ${total} points, but ${f.type} is worth ${expected} on the exam`);
+  }
+}
+
+// The graded Practice Exam administers exactly one prompt per FRQ type — a
+// type with more than one stored prompt (short-essay currently has two, a
+// Pliny option and a Vergil option) is alternate practice material for that
+// one slot, not extra questions. This only checks the data shape (exactly
+// five distinct types, summing to the CED's 53-point Section II); the
+// one-prompt-per-type selection itself lives in PracticeExam.tsx.
+{
+  const types = [...new Set(frqPrompts.map((f) => f.type))];
+  if (types.length !== 5) {
+    fail(`frq: expected exactly 5 FRQ types on the graded exam, found ${types.length} (${types.join(', ')})`);
+  }
+  const perTypeMax = new Map();
+  for (const f of frqPrompts) {
+    const total = f.rubric.reduce((n, r) => n + r.maxPoints, 0);
+    if (!perTypeMax.has(f.type)) perTypeMax.set(f.type, total);
+  }
+  const gradedTotal = [...perTypeMax.values()].reduce((n, v) => n + v, 0);
+  if (gradedTotal !== 53) {
+    fail(`frq: the graded exam (one prompt per type) totals ${gradedTotal} points, expected 53`);
   }
 }
 
