@@ -245,28 +245,159 @@ function reconstructNounOrAdjective(e) {
   return null;
 }
 
+/**
+ * Regular 3rd-declension nouns and adjectives (n=[3,*]) are stored with
+ * parts[0] as the genuine nominative and parts[1] as the oblique stem — the
+ * standard citation is "nominative, stem+is" (e.g. "rex"/"reg" ->
+ * "rex, regis"; "ingens"/"ingent" -> "ingens, ingentis"). Left alone, the
+ * fallback below discarded parts[1] into a raw comma-joined stem list
+ * instead ("amans, amant" rather than "amans, amantis") — and because that
+ * bare stem ("amant") is also a real inflected verb form ("they love"),
+ * every one of these malformed lemmas was registering a spurious exact-match
+ * lookup key, not just a cosmetic typo.
+ *
+ * Checked stem+"is" against every 3rd-declension entry this cache actually
+ * produces here, across every gender and n[1] variant it uses, including
+ * the Greek-pattern loanwords (basis/tigris/nomas/herois/karthago/regio):
+ * it holds everywhere except the two ids excluded below, neither of which
+ * fits any general rule — "Achilleus" is the Greek -eus 2nd-declension
+ * pattern (genitive "Achillei", not "-is"), and "Mammon" is an indeclinable
+ * Semitic loanword (Vulgate Latin, not a real 3rd-declension noun at all).
+ */
+const THIRD_DECLENSION_EXCEPTIONS = new Set([541 /* achilleus */, 26342 /* mammon */]);
+function reconstructThirdDeclensionCitation(e) {
+  if (THIRD_DECLENSION_EXCEPTIONS.has(e.id)) return { headword: e.parts[0], lemma: e.parts[0] };
+  const [p0, p1] = e.parts;
+  if (!p0 || !p1 || p1 === '-' || p0 === p1) return null;
+  const genitive = `${p1}is`;
+  if (e.pos === 'N') return { headword: p0, lemma: `${p0}, ${genitive}${genderTag(e.form?.[0])}` };
+  if (e.pos === 'ADJ') return { headword: p0, lemma: `${p0}, ${genitive}` };
+  return null;
+}
+
+/**
+ * 2nd-declension "-er" nouns (auster/austr, culter/cultr, liber/libr — n=[2,3])
+ * are stored the same way: parts[0] is the real nominative, parts[1] the
+ * stem, but the 2nd-declension genitive suffix is "-i", not the 3rd
+ * declension's "-is" (auster, austri — not austris).
+ */
+function reconstructSecondDeclensionErNoun(e) {
+  const [n0, n1] = e.n ?? [];
+  if (e.pos !== 'N' || n0 !== 2 || n1 !== 3) return null;
+  const [p0, p1] = e.parts;
+  if (!p0 || !p1 || p1 === '-' || p0 === p1) return null;
+  return { headword: p0, lemma: `${p0}, ${p1}i${genderTag(e.form?.[0])}` };
+}
+
+/**
+ * Adverbs capable of comparison are stored as [positive, comparative,
+ * superlative] (bene/melius/optime) — three different words, not principal
+ * parts of one, so a raw comma join ("bene, melius, optime") read like a
+ * garbled headword rather than the conventional dictionary citation
+ * "bene (melius, optime)". One adverb in this cache has no positive degree
+ * at all (only "uberius"/"uberrime" exist) — parts[0] is "-" — so the
+ * comparative becomes the headword instead.
+ */
+function reconstructAdverbDegrees(e) {
+  if (e.pos !== 'ADV' || e.parts.length !== 3) return null;
+  const [p0, p1, p2] = e.parts;
+  if (p0 && p0 !== '-') return { headword: p0, lemma: `${p0} (${p1}, ${p2})` };
+  if (p1) return { headword: p1, lemma: `${p1} (${p2})` };
+  return null;
+}
+
+/**
+ * A handful of numerals store their cardinal/ordinal/distributive/adverbial
+ * forms together (centum/centesim/centen/cent) — again different words, not
+ * principal parts, so only the cardinal belongs in the headword and lemma.
+ * "du" is the one bare stem among them (real Latin "duo, duae, duo" is
+ * irregular across three genders, unlike the indeclinable cardinals here).
+ */
+function reconstructNumeral(e) {
+  if (e.pos !== 'NUM' || e.parts.length <= 1) return null;
+  if (e.id === 18516) return { headword: 'duo', lemma: 'duo, duae, duo' };
+  const p0 = e.parts[0];
+  if (!p0 || p0 === '-') return null;
+  return { headword: p0, lemma: p0 };
+}
+
+/** The one archaic pronoun stem this cache stores as a bare duplicate. */
+function reconstructPronoun(e) {
+  if (e.pos !== 'PRON' || e.parts[0] !== e.parts[1]) return null;
+  return { headword: e.parts[0], lemma: e.parts[0] };
+}
+
+// Whitaker's raw data is one entry per dictionary "line", so an occasional
+// id is a genuine duplicate of a word this script already adds correctly by
+// hand — id 37493 ("tr, terti, tern, ter") is a second, worse copy of the
+// irregular numeral "tres, tria" already in otherHandAdded below, with a
+// headword ("tr") that isn't a word at all.
+const EXCLUDED_IDS = new Set([37493 /* tr — duplicate of the hand-added tres */]);
+
+// Whitaker's data spells every word with "u", including consonantal v
+// (uideo, not video) — this app's core vocabulary and the rest of this file
+// use standard modern orthography (v for the consonant). Word-initial u
+// immediately before a vowel is unambiguously consonantal in Classical Latin
+// (there is no real word beginning with a genuine vowel-u followed directly
+// by another vowel), so converting it is safe with no known exceptions.
+// Deliberately NOT extended to mid-word u (e.g. compounds like "aduenio"):
+// that same shape also occurs in genuine diphthongs (audio, gaudeo), and
+// telling the two apart needs syllable-level judgment this pass doesn't
+// attempt — better to leave a mid-word "u" alone than risk minting a new
+// misspelling.
+function toConsonantalV(s) {
+  return s.replace(/\bu([aeiou])/g, 'v$1');
+}
+
+// Whitaker's dictionary tags a handful of senses with a single-letter
+// subject-area code (e.g. "B:tetanus", "G:digress") — meaningful to a
+// lexicographer, but unreadable dropped raw into a student-facing
+// definition. Expanded to a short label where the area is unambiguous;
+// simply stripped for the rare/uncertain "X" code.
+const SENSE_AREA_LABELS = {
+  A: 'agriculture', B: 'biology', D: 'drama', E: 'ecclesiastical', G: 'grammar',
+  L: 'law', P: 'poetic', S: 'science', T: 'technical', W: 'military',
+};
+function formatSense(s) {
+  const m = /^([A-Z]):\s*(.*)$/.exec(s);
+  if (!m) return s;
+  const label = SENSE_AREA_LABELS[m[1]];
+  return label ? `(${label}) ${m[2]}` : m[2];
+}
+
 const dict = JSON.parse(fs.readFileSync(CACHE_PATH, 'utf8'));
 const dictEntries = [];
 for (const e of dict) {
   if (!e.orth || !e.parts?.length || !e.senses?.length) continue;
+  if (EXCLUDED_IDS.has(e.id)) continue;
   const pos = POS_LABEL[e.pos] ?? e.pos.toLowerCase();
   // Only a bare, unreconstructed stem (parts[0] === parts[1], Whitaker's own
   // "no citation form on file" signal) needs rebuilding; when they differ,
   // parts[0] is already the real nominative/citation form.
   const isBareStem = (e.pos === 'N' || e.pos === 'ADJ') && e.parts[0] === e.parts[1];
-  const rebuilt = e.pos === 'V' ? reconstructVerb(e) : isBareStem ? reconstructNounOrAdjective(e) : null;
+  const rebuilt =
+    e.pos === 'V'
+      ? reconstructVerb(e)
+      : isBareStem
+        ? reconstructNounOrAdjective(e)
+        : (reconstructThirdDeclensionCitation(e) ??
+          reconstructSecondDeclensionErNoun(e) ??
+          reconstructAdverbDegrees(e) ??
+          reconstructNumeral(e) ??
+          reconstructPronoun(e));
   // A bare stem that couldn't be safely reconstructed (declension 3, an
   // irregular variant, or an unrecognized n/form code) is excluded outright
   // rather than kept with a garbled headword like "rip" or "speci" — a
   // missing entry is far better than a confidently wrong one.
   if (isBareStem && !rebuilt) continue;
   const lemma = rebuilt?.lemma ?? [...new Set(e.parts)].join(', ');
+  const headword = rebuilt?.headword ?? e.parts[0] ?? e.orth;
   dictEntries.push({
     id: `sup-${e.id}`,
-    lemma,
-    headword: rebuilt?.headword ?? e.parts[0] ?? e.orth,
+    lemma: toConsonantalV(lemma),
+    headword: toConsonantalV(headword),
     pos,
-    definition: e.senses.slice(0, 5).join('; '),
+    definition: e.senses.slice(0, 5).map(formatSense).join('; '),
     readings: [],
     units: [],
     supplementary: true,
@@ -302,6 +433,23 @@ for (const w of noMatch.keys()) {
 }
 console.log(`words newly covered: ${coveredWords} / ${noMatch.size}`);
 console.log(`distinct dictionary entries kept: ${used.size}`);
+
+// Whitaker's data records some words twice under different ids — usually two
+// attested spellings of the same principal part (e.g. "abscondi" vs.
+// "abscondidi" as the perfect of abscondo) — which read identically to a
+// student once reduced to headword+definition. Keeping both teaches nothing
+// extra and doubles the entry for no reason, so only the lower (first-seen)
+// id survives; which specific attested spelling "wins" isn't a judgment this
+// pass makes, since the two are already indistinguishable in the app.
+{
+  const seenByMeaning = new Map(); // "headword|||pos|||definition" -> id
+  for (const [id, entry] of [...used.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
+    const key = `${entry.headword}|||${entry.pos}|||${entry.definition}`;
+    if (seenByMeaning.has(key)) used.delete(id);
+    else seenByMeaning.set(key, id);
+  }
+  console.log(`distinct dictionary entries after de-duplication: ${used.size}`);
+}
 
 const generated = [...used.values()]
   .sort((a, b) => a.headword.localeCompare(b.headword))
@@ -360,6 +508,63 @@ const otherHandAdded = [
     lemma: 'tres, tria',
     pos: 'numeral',
     definition: 'three',
+  },
+  // Multiplicative numeral adverbs: real, common words in their own right,
+  // not principal parts of anything. Each one used to resolve only by
+  // accident, as a stray comma-fragment of a different numeral's mangled
+  // lemma (e.g. "bis" surfaced from "du, secund, bin, bis", the unreconstructed
+  // stems of "duo") — fixing that lemma's display in reconstructNumeral()
+  // above correctly removed the accident, so each now needs its own entry.
+  {
+    headword: 'semel',
+    lemma: 'semel',
+    pos: 'adverb',
+    definition: 'once, a single time; once and for all',
+  },
+  {
+    headword: 'bis',
+    lemma: 'bis',
+    pos: 'adverb',
+    definition: 'twice',
+  },
+  // Ordinary 1st/2nd-declension ordinal adjective; regular stem matching
+  // already resolves any inflected form (quartum, quartam, ...) once the
+  // headword itself is registered — no different from any other adjective.
+  {
+    headword: 'quartus',
+    lemma: 'quartus, -a, -um',
+    pos: 'adjective',
+    definition: 'fourth',
+  },
+  // "Sub dio" ("under the open sky, in the open air, outdoors") is a fixed
+  // idiom built on an archaic word for "sky/daylight" (related to divus/dius,
+  // ultimately to Diespiter/Jupiter) that survives only in this one phrase —
+  // there is no separate paradigm of "dium" forms to derive it from, so it
+  // is entered directly as it actually occurs (Pliny, Ep. 6.16.16).
+  {
+    headword: 'dio',
+    lemma: 'dio (archaic, only in this idiom; cf. divus)',
+    pos: 'noun',
+    definition: '(only in "sub dio") the open sky, open air — sub dio, "in the open air, outdoors"',
+  },
+  // Not on the CED core list, and Whitaker's dictionary carries only the
+  // compound "appareo"; verified against the actual CED Appendix 2 list
+  // before adding (Phase 9 of the master fix pass).
+  {
+    headword: 'pareo',
+    lemma: 'pareo, parere, parui, paritum',
+    pos: 'verb',
+    definition: '(with dat.) to be obedient to, obey, comply with, submit to',
+  },
+  // Comparative-only adjective (no positive degree survives in Classical
+  // Latin) — absent from Whitaker's cache entirely, so it never had any
+  // entry, accidental or otherwise. Its earlier apparent coverage before
+  // this pass was through an unrelated stem collision.
+  {
+    headword: 'ulterior',
+    lemma: 'ulterior, ulterius',
+    pos: 'adjective',
+    definition: 'farther, more distant; on the farther/other side',
   },
   // 2nd-declension noun whose 2-letter stem ("re-") is under the stemmer's
   // 3-character floor and collides with the unrelated 5th-declension "res".
