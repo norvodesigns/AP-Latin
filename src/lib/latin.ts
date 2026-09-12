@@ -1085,7 +1085,8 @@ export function disambiguateInContext(
       : (candidates.find((c) => c.tokenIndex === tokenIndex) ?? candidates[0]);
   const matches = (r: LookupResult) =>
     normalizeWord(r.entry.headword) === normalizeWord(chosen.headword) &&
-    (!chosen.pos || r.entry.pos === chosen.pos);
+    (!chosen.pos || r.entry.pos === chosen.pos) &&
+    (!chosen.entryId || r.entry.id === chosen.entryId);
 
   const direct = results.filter(matches);
   if (direct.length > 0) return direct;

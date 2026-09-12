@@ -41,6 +41,13 @@ export interface VocabDisambiguationEntry {
    * apart and the entry's own `pos` string is the only thing that can.
    */
   pos?: string;
+  /**
+   * Rarer still: two entries that share both `headword` and `pos` — e.g.
+   * "frons, frontis" ("brow") and "frons, frondis" ("foliage") are both
+   * nouns, so `pos` can't separate them either. Matches the dictionary
+   * entry's own unique `id` directly, bypassing `headword`/`pos` entirely.
+   */
+  entryId?: string;
 }
 
 export const VOCAB_DISAMBIGUATION: VocabDisambiguationEntry[] = [
@@ -294,4 +301,54 @@ export const VOCAB_DISAMBIGUATION: VocabDisambiguationEntry[] = [
   { passageId: 'pliny-6-20-a', lineN: 1, word: 'uerum', headword: 'uerum' },
   { passageId: 'aen-11-532-594', lineN: 587, word: 'uerum', headword: 'uerum' },
   { passageId: 'pliny-10-39', lineN: 6, word: 'uerum', headword: 'uerum' },
+
+  // ---- oris/ora: with macrons stripped, "ōrīs" (ablative plural of ora,
+  // -ae, "shore") and "ōris" (genitive singular of os, oris, "face/mouth")
+  // are spelled identically. "Troiae qui primus ab oris" (Aen. 1.1) is
+  // "from the shores of Troy" — ora, not os. "ante ora patrum" (Aen.
+  // 1.95) is "before the faces of their fathers" — os (its plural), not
+  // the singular of ora.
+  { passageId: 'aen-1-1-33', lineN: 1, word: 'oris', headword: 'ora' },
+  { passageId: 'aen-1-88-107', lineN: 95, word: 'ora', headword: 'os' },
+
+  // ---- parent: two lines apart, two different verbs that happen to share
+  // this 3rd-plural-present spelling. Line 290 is jussive "arma parent"
+  // ("let them prepare arms" — paro). Line 295 is "imperio laeti parent"
+  // ("gladly they obey the command" — pareo). pareo itself was missing
+  // from both dictionaries entirely before this pass (only the compound
+  // appareo existed) — added to supplementaryVocabulary.ts alongside this
+  // entry, since it is not on the CED's required list.
+  { passageId: 'aen-4-259-295', lineN: 290, word: 'parent', headword: 'paro' },
+  { passageId: 'aen-4-259-295', lineN: 295, word: 'parent', headword: 'pareo' },
+
+  // ---- reliqui: "nihil ipsa reliqui" (Aen. 4.315) is relinquo's first-
+  // singular perfect ("I myself have left nothing"), not a form of
+  // reliquiae ("remains"), which the stem-matcher offers first because the
+  // core list has no exact inflected-form entry for this perfect tense.
+  { passageId: 'aen-4-305-361', lineN: 315, word: 'reliqui', headword: 'relinquo' },
+
+  // ---- frons: a true homograph — frons, frontis (f.) "brow" and frons,
+  // frondis (f.) "foliage" share not just their headword spelling but also
+  // `pos` ("noun" for both), so `pos` alone can't tell them apart either;
+  // pinned by the supplementary entry's own id. "sed frons laeta parum"
+  // (Aen. 6.862) is Marcellus's brow, not foliage.
+  { passageId: 'aen-6-854-899', lineN: 862, word: 'frons', headword: 'frons', entryId: 'sup-21087' },
+
+  // ---- propago: "sit Romana potens Itala virtute propago" (Aen. 12.827)
+  // is the noun ("stock, offspring" — Rome's future line), not the verb
+  // "to propagate, extend" that the supplementary index returns first.
+  { passageId: 'aen-12-818-828', lineN: 827, word: 'propago', headword: 'propago', pos: 'noun' },
+
+  // ---- victum: "victum tendere palmas" (Aen. 12.936) is vinco's perfect
+  // passive participle used as a substantive ("[Turnus] beaten, stretching
+  // out his hands") — the correct reading for this line. A form of victus,
+  // -us (m.), "livelihood" (itself derived from vivo), is also an exact
+  // match for the bare spelling and is left in the dictionary as the
+  // right answer elsewhere; this pins only this one occurrence.
+  { passageId: 'aen-12-919-952', lineN: 936, word: 'uictum', headword: 'uinco' },
+
+  // ---- sipo: "nullus usquam in publico sipo" (Pliny 10.33.2) is the
+  // noun — "no fire-engine/siphon anywhere in public" — not the verb
+  // "to throw, pour, scatter" the supplementary index returns first.
+  { passageId: 'pliny-10-33', lineN: 2, word: 'sipo', headword: 'sipo', pos: 'noun' },
 ];

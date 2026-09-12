@@ -15434,6 +15434,16 @@ export const supplementaryVocabulary: VocabEntry[] = [
     supplementary: true,
   },
   {
+    id: "sup-29359",
+    lemma: "pareo, parere, parui, paritum",
+    headword: "pareo",
+    pos: "verb",
+    definition: "(with dat.) to be obedient to, obey, comply with, submit to",
+    readings: [],
+    units: [],
+    supplementary: true,
+  },
+  {
     id: "sup-29368",
     lemma: "paries, pariet",
     headword: "paries",
