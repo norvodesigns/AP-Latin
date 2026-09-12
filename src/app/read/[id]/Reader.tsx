@@ -724,6 +724,12 @@ export default function Reader({
                     >
                       {a.color && <span className={`hl hl-${a.color} rounded-sm`}>{a.text}</span>}
                       {!a.color && <>&ldquo;{a.text}&rdquo;</>}
+                      <span
+                        className="slab-sm"
+                        style={{ marginLeft: '0.5rem', color: 'var(--fg-faint)' }}
+                      >
+                        · line {a.lineN}
+                      </span>
                     </button>
                     <p
                       style={{
