@@ -7,6 +7,8 @@ import { questions, QUESTION_TYPE_LABELS, SKILL_LABELS, getQuestion } from '@/da
 import { allPassages, getPassage } from '@/data/passages';
 import { useStore } from '@/store/useStore';
 import { Page, PageHeader, Section, Panel, CalledOut, Empty, SourceNote } from '@/components/ui';
+import { GlossedLatin } from '@/components/GlossedLatin';
+import { glossWords, normalizeWord, type GlossedWord } from '@/lib/latin';
 import type { Question, QuestionType, SkillCategory, UnitId } from '@/data/types';
 
 type Filters = {
@@ -121,6 +123,53 @@ export default function QuizEngine() {
   }
 
   const current = session?.[index];
+
+  /**
+   * Words this question's stimulus would gloss on the real exam — anything
+   * not on the CED's required vocabulary list. `perLine` is keyed by line
+   * number because a syllabus passage's per-line disambiguation can (rarely)
+   * decide the same spelling means something different on two different
+   * lines; `stimulusSet` covers a sight passage's single block of text,
+   * which has no passage/line to key that disambiguation on in the first
+   * place. `footnote` is the deduplicated list rendered below the passage,
+   * exactly like the exam's own margin gloss.
+   */
+  const glossData = useMemo(() => {
+    const perLine = new Map<number, Set<string>>();
+    const stimulusSet = new Set<string>();
+    const footnote: GlossedWord[] = [];
+    const seen = new Set<string>();
+    const addToFootnote = (words: GlossedWord[]) => {
+      for (const g of words) {
+        const norm = normalizeWord(g.word);
+        if (seen.has(norm)) continue;
+        seen.add(norm);
+        footnote.push(g);
+      }
+    };
+    if (!current) return { perLine, stimulusSet, footnote };
+
+    const passage = current.passageId ? getPassage(current.passageId) : undefined;
+    const lines =
+      passage && current.lineRange
+        ? passage.lines.filter((l) => l.n >= current.lineRange![0] && l.n <= current.lineRange![1])
+        : [];
+    if (lines.length > 0 && passage) {
+      for (const l of lines) {
+        const words = glossWords(l.latin, { passageId: passage.id, lineN: l.n });
+        perLine.set(l.n, new Set(words.map((g) => normalizeWord(g.word))));
+        addToFootnote(words);
+      }
+    } else if (current.stimulus?.gloss?.length) {
+      addToFootnote(current.stimulus.gloss);
+      for (const g of current.stimulus.gloss) stimulusSet.add(normalizeWord(g.word));
+    } else if (current.stimulus?.latin) {
+      const words = glossWords(current.stimulus.latin);
+      addToFootnote(words);
+      for (const g of words) stimulusSet.add(normalizeWord(g.word));
+    }
+    return { perLine, stimulusSet, footnote };
+  }, [current]);
 
   function submit(optionId: string) {
     if (!current || revealed) return;
@@ -305,7 +354,7 @@ export default function QuizEngine() {
                     className={passage?.genre === 'poetry' ? 'latin-verse' : 'latin'}
                     style={{ margin: 0 }}
                   >
-                    {l.latin}
+                    <GlossedLatin latin={l.latin} glossed={glossData.perLine.get(l.n) ?? new Set()} />
                   </p>
                 </div>
               ))
@@ -314,30 +363,32 @@ export default function QuizEngine() {
                 className={current.stimulus?.genre === 'poetry' ? 'latin-verse' : 'latin'}
                 style={{ margin: 0, whiteSpace: 'pre-line' }}
               >
-                {current.stimulus?.latin}
+                <GlossedLatin latin={current.stimulus?.latin ?? ''} glossed={glossData.stimulusSet} />
               </p>
             )}
 
-            {current.stimulus?.gloss && current.stimulus.gloss.length > 0 && (
-              <ul
-                className="mt-5 flex flex-col gap-1.5 border-t pt-4 pl-0"
-                style={{ borderColor: 'var(--redborder)', listStyle: 'none' }}
-              >
-                {current.stimulus.gloss.map((g) => (
-                  <li
-                    key={g.word}
-                    style={{
-                      fontFamily: 'var(--font-latin)',
-                      fontSize: '1rem',
-                      color: 'var(--ink2)',
-                    }}
-                  >
-                    <span style={{ fontWeight: 600 }}>{g.word}</span>
-                    {' — '}
-                    {g.meaning}
-                  </li>
-                ))}
-              </ul>
+            {glossData.footnote.length > 0 && (
+              <div className="mt-5 border-t pt-4" style={{ borderColor: 'var(--redborder)' }}>
+                <p className="slab-sm mb-2" style={{ color: 'var(--fg-faint)' }}>
+                  Glossed for you, as it would be on the exam
+                </p>
+                <ul className="flex flex-col gap-1.5 pl-0" style={{ listStyle: 'none' }}>
+                  {glossData.footnote.map((g) => (
+                    <li
+                      key={g.word}
+                      style={{
+                        fontFamily: 'var(--font-latin)',
+                        fontSize: '1rem',
+                        color: 'var(--ink2)',
+                      }}
+                    >
+                      <span style={{ fontWeight: 600 }}>{g.word}</span>
+                      {' — '}
+                      {g.meaning}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
           </CalledOut>
         )}
@@ -445,8 +496,8 @@ export default function QuizEngine() {
         title={reviewMode ? 'Review what you missed' : 'Quiz Engine'}
         lede={
           reviewMode
-            ? 'Questions you got wrong, in the order you missed them. Answering one correctly removes it from the queue.'
-            : 'Build a set filtered by author, passage, unit, skill category, or question type. Every question explains its answer, and missed questions go to the review queue.'
+            ? 'Questions you got wrong, in the order you missed them. Answering one correctly removes it from the queue. Just as on the real exam, a word outside the required vocabulary is glossed for you — look for it underlined in red.'
+            : 'Build a set filtered by author, passage, unit, skill category, or question type. Every question explains its answer, and missed questions go to the review queue. Just as on the real exam, a word outside the required vocabulary is glossed for you — look for it underlined in red, defined just beneath the passage.'
         }
         actions={
           reviewMode ? (
