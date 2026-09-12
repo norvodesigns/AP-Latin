@@ -56,12 +56,19 @@ export default function Dashboard({
   useEffect(() => setMounted(true), []);
 
   // The scansion pool is the whole Aeneid, fetched as an index rather than
-  // bundled — the ledger needs its size, not its contents.
+  // bundled — the ledger needs its size, not its contents. A failed fetch
+  // used to be swallowed silently, leaving scansionTotal at its initial 0 —
+  // which the ledger then rendered as an indistinguishable, and wrong,
+  // "0 / 0 lines scanned" instead of a missing-data state.
   const [scansionTotal, setScansionTotal] = useState(0);
+  const [scansionUnavailable, setScansionUnavailable] = useState(false);
   useEffect(() => {
     loadIndex()
       .then((i) => setScansionTotal(i.total))
-      .catch(() => {});
+      .catch((err) => {
+        console.error('[dashboard] failed to load scansion index:', err);
+        setScansionUnavailable(true);
+      });
   }, []);
 
   const passages = useStore((s) => s.passages);
@@ -402,6 +409,7 @@ export default function Dashboard({
                   value: linesScanned,
                   max: scansionTotal,
                   href: '/scansion',
+                  unavailable: scansionUnavailable,
                 },
                 {
                   label: 'Translations graded',
@@ -851,7 +859,7 @@ function relativeDay(at: string): string {
 function Ledger({
   rows,
 }: {
-  rows: Array<{ label: string; value: number; max: number; href: string }>;
+  rows: Array<{ label: string; value: number; max: number; href: string; unavailable?: boolean }>;
 }) {
   return (
     <div className="flex flex-col">
@@ -870,22 +878,30 @@ function Ledger({
               >
                 {r.label}
               </span>
-              <span
-                style={{
-                  fontFamily: 'var(--font-latin)',
-                  fontSize: '1.25rem',
-                  color: 'var(--fg)',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {r.value} / {r.max}
-                {r.value > 0 && (
-                  <span style={{ color: 'var(--fg-faint)' }}> · {toRoman(r.value)}</span>
-                )}
-              </span>
+              {r.unavailable ? (
+                <span
+                  style={{ fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--fg-faint)' }}
+                >
+                  data unavailable
+                </span>
+              ) : (
+                <span
+                  style={{
+                    fontFamily: 'var(--font-latin)',
+                    fontSize: '1.25rem',
+                    color: 'var(--fg)',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {r.value} / {r.max}
+                  {r.value > 0 && (
+                    <span style={{ color: 'var(--fg-faint)' }}> · {toRoman(r.value)}</span>
+                  )}
+                </span>
+              )}
             </div>
             <div className="meter meter-thin">
-              <span style={{ width: `${pct}%` }} />
+              <span style={{ width: `${r.unavailable ? 0 : pct}%` }} />
             </div>
           </Link>
         );

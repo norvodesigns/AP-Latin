@@ -137,8 +137,14 @@ export default function ScansionLab() {
 
   useEffect(() => setMounted(true), []);
 
+  const [corpusError, setCorpusError] = useState(false);
   useEffect(() => {
-    loadIndex().then(setCorpus).catch(() => {});
+    loadIndex()
+      .then(setCorpus)
+      .catch((err) => {
+        console.error('[scansion] failed to load corpus index:', err);
+        setCorpusError(true);
+      });
   }, []);
 
   /* Open on a random line once the index says what the corpus holds. */
@@ -204,6 +210,7 @@ export default function ScansionLab() {
 
   const stats = useMemo(() => scansionStatsByLine(scansionAttempts), [scansionAttempts]);
   const corpusTotal = corpus?.total ?? 0;
+  const corpusSourceTotal = corpus?.sourceTotal ?? 0;
   const badges = useMemo(
     () => scansionBadges(scansionAttempts, Math.max(1, corpusTotal)),
     [scansionAttempts, corpusTotal],
@@ -401,6 +408,20 @@ export default function ScansionLab() {
     );
   }
 
+  if (corpusError) {
+    return (
+      <Page>
+        <PageHeader eyebrow="Dactylic hexameter" title="Scansion Lab" />
+        <p className="mb-4" style={{ color: 'var(--fg-muted)' }}>
+          The scansion corpus could not be loaded. Check your connection and try again.
+        </p>
+        <button type="button" className="btn" onClick={() => window.location.reload()}>
+          Try again
+        </button>
+      </Page>
+    );
+  }
+
   if (loading || !line) {
     return (
       <Page>
@@ -524,8 +545,12 @@ export default function ScansionLab() {
               color: 'var(--fg-muted)',
             }}
           >
-            Drawn at random from {corpusTotal ? corpusTotal.toLocaleString() : '6,500+'} lines of
-            the <em>Aeneid</em>. Lines you have mastered never come back.
+            Drawn at random from{' '}
+            {corpusTotal
+              ? `${corpusTotal.toLocaleString()} of the ${corpusSourceTotal ? corpusSourceTotal.toLocaleString() : '~9,900'} lines`
+              : '6,500+ lines'}{' '}
+            of the <em>Aeneid</em> with an unambiguous scansion. Lines you have mastered never come
+            back.
           </span>
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => void practiseWeakest()}>
             ↯ Weakest line
@@ -972,12 +997,14 @@ export default function ScansionLab() {
         )}
 
         <SourceNote to="requiredReading">
-          {corpusTotal ? corpusTotal.toLocaleString() : '6,500+'} lines drawn from the whole{' '}
-          <em>Aeneid</em>. Nothing here is guessed: each line&rsquo;s scansion is the one foot
-          division the metre permits, given its syllable count, its elisions and the syllables
-          closed by two consonants. Lines that allow more than one reading are left out rather than
-          resolved by preference — about a third of the poem. The final syllable of every line is
-          anceps, so either mark is accepted there.
+          {corpusTotal && corpusSourceTotal
+            ? `${corpusTotal.toLocaleString()} of the ${corpusSourceTotal.toLocaleString()} lines`
+            : `${corpusTotal ? corpusTotal.toLocaleString() : '6,500+'} lines`}{' '}
+          of the whole <em>Aeneid</em> are available here — not the entire poem. Nothing here is
+          guessed: each line&rsquo;s scansion is the one foot division the metre permits, given its
+          syllable count, its elisions and the syllables closed by two consonants. The rest of the
+          poem allows more than one legal reading and is left out rather than resolved by
+          preference. The final syllable of every line is anceps, so either mark is accepted there.
         </SourceNote>
       </div>
     </div>

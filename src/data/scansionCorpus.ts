@@ -38,8 +38,12 @@ export interface CorpusIndex {
   author: string;
   source: string;
   generated: string;
-  books: Array<{ book: number; count: number }>;
+  books: Array<{ book: number; count: number; sourceCount: number }>;
   total: number;
+  /** Verse lines across the whole source text, before ambiguous or
+   *  unsolvable ones are dropped — `total` out of `sourceTotal` is the
+   *  corpus's real, honest coverage of the poem. */
+  sourceTotal: number;
 }
 
 const CAESURA_TYPES = {

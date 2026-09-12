@@ -494,6 +494,7 @@ function extractLines(html) {
 /* ------------------------------------------------------------------ */
 
 const stats = { total: 0, unique: 0, ambiguous: 0, unscannable: 0 };
+const perBook = [];
 const index = [];
 
 await mkdir(OUT, { recursive: true });
@@ -502,15 +503,17 @@ for (const book of BOOKS) {
   const html = await loadBook(book);
   const lines = extractLines(html);
   const solved = [];
+  const bookStats = { book, total: 0, unique: 0, ambiguous: 0, unscannable: 0 };
 
   for (const { n, latin } of lines) {
     stats.total += 1;
+    bookStats.total += 1;
     const syllables = analyseLine(latin);
-    if (!syllables) { stats.unscannable += 1; continue; }
+    if (!syllables) { stats.unscannable += 1; bookStats.unscannable += 1; continue; }
 
     const solutions = solveFeet(syllables);
-    if (solutions.length === 0) { stats.unscannable += 1; continue; }
-    if (solutions.length > 1) { stats.ambiguous += 1; continue; }
+    if (solutions.length === 0) { stats.unscannable += 1; bookStats.unscannable += 1; continue; }
+    if (solutions.length > 1) { stats.ambiguous += 1; bookStats.ambiguous += 1; continue; }
 
     const feet = solutions[0];
     const metrical = syllables.filter((s) => !s.elides);
@@ -564,13 +567,15 @@ for (const book of BOOKS) {
         .join(','),
     });
     stats.unique += 1;
+    bookStats.unique += 1;
   }
 
   await writeFile(
     path.join(OUT, `aen${book}.json`),
     JSON.stringify({ b: book, n: solved.length, l: solved }),
   );
-  index.push({ book, count: solved.length });
+  index.push({ book, count: solved.length, sourceCount: lines.length });
+  perBook.push(bookStats);
   process.stdout.write(`  Book ${String(book).padStart(2)}: ${String(solved.length).padStart(4)} lines\n`);
 }
 
@@ -583,13 +588,33 @@ await writeFile(
     generated: new Date().toISOString().slice(0, 10),
     books: index,
     total: index.reduce((a, b) => a + b.count, 0),
+    // How many verse lines this book's source text actually has, before any
+    // are dropped for ambiguous or unsolvable scansion — so a consumer can
+    // report "X of Y lines available" honestly instead of presenting the
+    // scanned count as the whole poem.
+    sourceTotal: index.reduce((a, b) => a + b.sourceCount, 0),
   }),
 );
 
-const pct = (x) => `${((x / stats.total) * 100).toFixed(1)}%`;
+const pct = (x, of) => `${((x / of) * 100).toFixed(1)}%`;
+
+/* Per-book coverage: how much of each book actually made it into the
+   corpus, and why the rest was dropped. Reporting only — this does not
+   change which lines get dropped, just makes the gaps visible instead of
+   a single opaque aggregate. */
+console.log(`
+  book  in source  emitted  dropped (ambiguous)  dropped (no solution)`);
+for (const b of perBook) {
+  console.log(
+    `  ${String(b.book).padStart(4)}  ${String(b.total).padStart(9)}  ` +
+      `${String(b.unique).padStart(7)} (${pct(b.unique, b.total)})  ` +
+      `${String(b.ambiguous).padStart(19)}  ${String(b.unscannable).padStart(21)}`,
+  );
+}
+
 console.log(`
   lines read      ${stats.total}
-  scanned         ${stats.unique}  (${pct(stats.unique)})
-  ambiguous       ${stats.ambiguous}  (${pct(stats.ambiguous)})  — dropped
-  no solution     ${stats.unscannable}  (${pct(stats.unscannable)})  — dropped
+  scanned         ${stats.unique}  (${pct(stats.unique, stats.total)})
+  ambiguous       ${stats.ambiguous}  (${pct(stats.ambiguous, stats.total)})  — dropped
+  no solution     ${stats.unscannable}  (${pct(stats.unscannable, stats.total)})  — dropped
 `);
