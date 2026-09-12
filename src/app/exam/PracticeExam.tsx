@@ -7,6 +7,8 @@ import { frqPrompts, FRQ_TYPE_LABELS } from '@/data/frq';
 import { getPassage } from '@/data/passages';
 import { useStore } from '@/store/useStore';
 import { Page, PageHeader, Panel, CalledOut, SourceNote } from '@/components/ui';
+import { GlossedLatin } from '@/components/GlossedLatin';
+import { glossWords, normalizeWord, type GlossedWord } from '@/lib/latin';
 import type { Question, SkillCategory, QuestionType } from '@/data/types';
 
 /** The real exam: 52 MCQ in 65 minutes, then 5 FRQ in 115. */
@@ -47,6 +49,51 @@ export default function PracticeExam() {
 
   const repeats = MCQ_COUNT - new Set(paper.map((q) => q.id)).size;
 
+  /**
+   * Words the current MC stimulus would gloss on the real exam — anything
+   * not on the CED's required vocabulary list. See QuizEngine.tsx, which
+   * computes this identically; kept local here rather than shared because
+   * the two components' stimulus markup differs enough that a shared
+   * component would need as many branches as just having two copies.
+   */
+  const glossData = useMemo(() => {
+    const perLine = new Map<number, Set<string>>();
+    const stimulusSet = new Set<string>();
+    const footnote: GlossedWord[] = [];
+    const seen = new Set<string>();
+    const addToFootnote = (words: GlossedWord[]) => {
+      for (const g of words) {
+        const norm = normalizeWord(g.word);
+        if (seen.has(norm)) continue;
+        seen.add(norm);
+        footnote.push(g);
+      }
+    };
+    const q = paper[cursor];
+    if (!q) return { perLine, stimulusSet, footnote };
+
+    const passage = q.passageId ? getPassage(q.passageId) : undefined;
+    const lines =
+      passage && q.lineRange
+        ? passage.lines.filter((l) => l.n >= q.lineRange![0] && l.n <= q.lineRange![1])
+        : [];
+    if (lines.length > 0 && passage) {
+      for (const l of lines) {
+        const words = glossWords(l.latin, { passageId: passage.id, lineN: l.n });
+        perLine.set(l.n, new Set(words.map((g) => normalizeWord(g.word))));
+        addToFootnote(words);
+      }
+    } else if (q.stimulus?.gloss?.length) {
+      addToFootnote(q.stimulus.gloss);
+      for (const g of q.stimulus.gloss) stimulusSet.add(normalizeWord(g.word));
+    } else if (q.stimulus?.latin) {
+      const words = glossWords(q.stimulus.latin);
+      addToFootnote(words);
+      for (const g of words) stimulusSet.add(normalizeWord(g.word));
+    }
+    return { perLine, stimulusSet, footnote };
+  }, [paper, cursor]);
+
   /* The real Section II is five FRQs: short-answer, translation, one
      short-essay, and the two course-project essays (project-prose and
      project-poetry are official CED-scored components, not extras — see
@@ -61,6 +108,36 @@ export default function PracticeExam() {
     return frqPrompts.filter((p) => p.type !== 'short-essay' || p.id === chosenId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seed]);
+
+  /**
+   * Words the shown excerpt of each FRQ's passage would gloss on the real
+   * exam — same rule as the MC stimulus above, keyed by passage id since
+   * this section shows several passages at once rather than one at a time.
+   * Translation FRQs in particular are graded on the whole excerpt, so a
+   * gloss here is not a nicety — the real exam would supply one too.
+   */
+  const frqGloss = useMemo(() => {
+    const byPassage = new Map<string, { perLine: Map<number, Set<string>>; footnote: GlossedWord[] }>();
+    for (const p of examFrqs) {
+      const passage = p.passageId ? getPassage(p.passageId) : undefined;
+      if (!passage || byPassage.has(passage.id)) continue;
+      const perLine = new Map<number, Set<string>>();
+      const footnote: GlossedWord[] = [];
+      const seen = new Set<string>();
+      for (const l of passage.lines.slice(0, 12)) {
+        const words = glossWords(l.latin, { passageId: passage.id, lineN: l.n });
+        perLine.set(l.n, new Set(words.map((g) => normalizeWord(g.word))));
+        for (const g of words) {
+          const norm = normalizeWord(g.word);
+          if (seen.has(norm)) continue;
+          seen.add(norm);
+          footnote.push(g);
+        }
+      }
+      byPassage.set(passage.id, { perLine, footnote });
+    }
+    return byPassage;
+  }, [examFrqs]);
 
   /* timers */
   useEffect(() => {
@@ -167,6 +244,20 @@ export default function PracticeExam() {
               is less so. Add questions in <code>src/data/questions.ts</code> to fix that.
             </p>
           )}
+          <p className="mt-4 text-sm" style={{ color: 'var(--fg-muted)' }}>
+            Just as on the real exam, a word outside the required vocabulary list is glossed for
+            you rather than left for you to guess — look for it{' '}
+            <span
+              style={{
+                textDecoration: 'underline',
+                textDecorationColor: 'var(--incorrect)',
+                textDecorationThickness: '1.5px',
+              }}
+            >
+              underlined in red
+            </span>{' '}
+            in the passage, defined just beneath it.
+          </p>
         </Panel>
         <button type="button" className="btn btn-primary" onClick={start}>
           Begin Section I
@@ -229,14 +320,31 @@ export default function PracticeExam() {
                     {l.n}
                   </span>
                   <p className={passage?.genre === 'poetry' ? 'latin-verse' : 'latin'} style={{ margin: 0 }}>
-                    {l.latin}
+                    <GlossedLatin latin={l.latin} glossed={glossData.perLine.get(l.n) ?? new Set()} />
                   </p>
                 </div>
               ))
             ) : (
               <p className={q.stimulus?.genre === 'poetry' ? 'latin-verse' : 'latin'} style={{ margin: 0, whiteSpace: 'pre-line' }}>
-                {q.stimulus?.latin}
+                <GlossedLatin latin={q.stimulus?.latin ?? ''} glossed={glossData.stimulusSet} />
               </p>
+            )}
+
+            {glossData.footnote.length > 0 && (
+              <div className="mt-5 border-t pt-4" style={{ borderColor: 'var(--redborder)' }}>
+                <p className="slab-sm mb-2" style={{ color: 'var(--fg-faint)' }}>
+                  Glossed for you, as it would be on the exam
+                </p>
+                <ul className="flex flex-col gap-1.5 pl-0" style={{ listStyle: 'none' }}>
+                  {glossData.footnote.map((g) => (
+                    <li key={g.word} style={{ fontFamily: 'var(--font-latin)', fontSize: '1rem', color: 'var(--ink2)' }}>
+                      <span style={{ fontWeight: 600 }}>{g.word}</span>
+                      {' — '}
+                      {g.meaning}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
           </CalledOut>
         )}
@@ -345,6 +453,7 @@ export default function PracticeExam() {
         <div className="flex flex-col gap-6">
           {examFrqs.map((p) => {
             const passage = p.passageId ? getPassage(p.passageId) : undefined;
+            const gloss = passage ? frqGloss.get(passage.id) : undefined;
             return (
               <section key={p.id} className="border-t pt-6 pb-8" style={{ borderColor: 'var(--rule)' }}>
                 <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
@@ -363,10 +472,26 @@ export default function PracticeExam() {
                           {l.n}
                         </span>
                         <p className={passage.genre === 'poetry' ? 'latin-verse' : 'latin'} style={{ margin: 0, fontSize: '1.125rem' }}>
-                          {l.latin}
+                          <GlossedLatin latin={l.latin} glossed={gloss?.perLine.get(l.n) ?? new Set()} />
                         </p>
                       </div>
                     ))}
+                    {gloss && gloss.footnote.length > 0 && (
+                      <div className="mt-4 border-t pt-3" style={{ borderColor: 'var(--redborder)' }}>
+                        <p className="slab-sm mb-2" style={{ color: 'var(--fg-faint)' }}>
+                          Glossed for you, as it would be on the exam
+                        </p>
+                        <ul className="flex flex-col gap-1.5 pl-0" style={{ listStyle: 'none' }}>
+                          {gloss.footnote.map((g) => (
+                            <li key={g.word} style={{ fontFamily: 'var(--font-latin)', fontSize: '0.9375rem', color: 'var(--ink2)' }}>
+                              <span style={{ fontWeight: 600 }}>{g.word}</span>
+                              {' — '}
+                              {g.meaning}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 )}
 
