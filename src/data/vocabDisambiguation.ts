@@ -349,4 +349,10 @@ export const VOCAB_DISAMBIGUATION: VocabDisambiguationEntry[] = [
   // noun — "no fire-engine/siphon anywhere in public" — not the verb
   // "to throw, pour, scatter" the supplementary index returns first.
   { passageId: 'pliny-10-33', lineN: 2, word: 'sipo', headword: 'sipo', pos: 'noun' },
+
+  // ---- spirisque: "corripiunt spirisque ligant ingentibus" (Aen. 2.217)
+  // is spira, -ae ("coil" — the serpents bind Laocoon "with huge coils"),
+  // not a form of spiro ("breathe"), which core lookup returns first via
+  // the shared "spir-" stem.
+  { passageId: 'aen-2-201-249', lineN: 217, word: 'spirisque', headword: 'spira' },
 ];

@@ -566,6 +566,20 @@ const otherHandAdded = [
     pos: 'adjective',
     definition: 'farther, more distant; on the farther/other side',
   },
+  // Whitaker's cache does carry this one (id 35615, "coil"), but the
+  // automated pass above never reaches it: "spiris" already resolves to the
+  // unrelated verb "spiro" ("breathe") via the shared "spir-" stem before
+  // this word is ever counted as unresolved. Real case in point: Aeneid
+  // 2.217, "spirisque ligant ingentibus" — the serpents bind Laocoon "with
+  // huge coils," not "with huge breaths." Pinned to this line specifically
+  // in vocabDisambiguation.ts, since "spiro" still wins the tier order
+  // everywhere it is not overridden.
+  {
+    headword: 'spira',
+    lemma: 'spira, -ae (f.)',
+    pos: 'noun',
+    definition: 'coil, twist, spiral (of a serpent); a snail-shell spiral',
+  },
   // 2nd-declension noun whose 2-letter stem ("re-") is under the stemmer's
   // 3-character floor and collides with the unrelated 5th-declension "res".
   {

@@ -22554,6 +22554,16 @@ export const supplementaryVocabulary: VocabEntry[] = [
     supplementary: true,
   },
   {
+    id: "sup-word-spira",
+    lemma: "spira, -ae (f.)",
+    headword: "spira",
+    pos: "noun",
+    definition: "coil, twist, spiral (of a serpent); a snail-shell spiral",
+    readings: [],
+    units: [],
+    supplementary: true,
+  },
+  {
     id: "sup-word-reus",
     lemma: "reus, rei (m.)",
     headword: "reus",
