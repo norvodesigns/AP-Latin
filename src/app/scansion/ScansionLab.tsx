@@ -463,7 +463,7 @@ export default function ScansionLab() {
     void advance(active.id);
   }
 
-  const allMarked = metricalIdx.every((i) => marks[i] !== null);
+  const allMarked = metricalIdx.every((i) => studentElisions.has(i) || marks[i] !== null);
   const dividedRight = divisions.length === 5;
   const ready = allMarked && dividedRight;
 
@@ -835,7 +835,7 @@ export default function ScansionLab() {
                 >
                   {allMarked
                     ? '✓ every syllable marked'
-                    : `${metricalIdx.filter((i) => marks[i] === null).length} syllables unmarked`}
+                    : `${metricalIdx.filter((i) => !studentElisions.has(i) && marks[i] === null).length} syllables unmarked`}
                 </span>
                 <span
                   className="slab-sm"
