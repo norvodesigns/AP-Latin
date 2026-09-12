@@ -124,6 +124,20 @@ ad mea perpetuum deducite tempora carmen!`,
 export const sightQuestions: Question[] = [
   {
     id: 'sight-cat5-1', type: 'grammar-syntax', skill: '1.B', skillCategory: '1', unit: '1',
+    stimulus: {
+      latin: `Vivamus mea Lesbia, atque amemus,
+rumoresque senum severiorum
+omnes unius aestimemus assis!
+soles occidere et redire possunt:
+nobis cum semel occidit brevis lux,
+nox est perpetua una dormienda.`,
+      citation: 'Catullus 5.1–6',
+      genre: 'poetry',
+      gloss: [
+        { word: 'as, assis (m.)', meaning: 'a small coin, a penny' },
+        { word: 'aestimo, -are', meaning: 'to value, reckon (+ gen. of value)' },
+      ],
+    },
     prompt: 'In line 1, Vivamus and amemus are best identified as',
     options: [
       { id: 'a', text: 'hortatory subjunctives' },
@@ -138,6 +152,20 @@ export const sightQuestions: Question[] = [
   },
   {
     id: 'sight-cat5-2', type: 'grammar-syntax', skill: '1.B', skillCategory: '1', unit: '1',
+    stimulus: {
+      latin: `Vivamus mea Lesbia, atque amemus,
+rumoresque senum severiorum
+omnes unius aestimemus assis!
+soles occidere et redire possunt:
+nobis cum semel occidit brevis lux,
+nox est perpetua una dormienda.`,
+      citation: 'Catullus 5.1–6',
+      genre: 'poetry',
+      gloss: [
+        { word: 'as, assis (m.)', meaning: 'a small coin, a penny' },
+        { word: 'aestimo, -are', meaning: 'to value, reckon (+ gen. of value)' },
+      ],
+    },
     prompt: 'In line 3, assis is',
     options: [
       { id: 'a', text: 'genitive of value with aestimemus' },
@@ -152,6 +180,20 @@ export const sightQuestions: Question[] = [
   },
   {
     id: 'sight-cat5-3', type: 'literary-device', skill: '2.A', skillCategory: '2', unit: '1',
+    stimulus: {
+      latin: `Vivamus mea Lesbia, atque amemus,
+rumoresque senum severiorum
+omnes unius aestimemus assis!
+soles occidere et redire possunt:
+nobis cum semel occidit brevis lux,
+nox est perpetua una dormienda.`,
+      citation: 'Catullus 5.1–6',
+      genre: 'poetry',
+      gloss: [
+        { word: 'as, assis (m.)', meaning: 'a small coin, a penny' },
+        { word: 'aestimo, -are', meaning: 'to value, reckon (+ gen. of value)' },
+      ],
+    },
     prompt: 'The contrast between soles occidere et redire possunt (4) and nox est perpetua una dormienda (6) chiefly conveys that',
     options: [
       { id: 'a', text: 'human life, unlike the sun, does not return once it has set' },
@@ -167,6 +209,18 @@ export const sightQuestions: Question[] = [
 
   {
     id: 'sight-ovid-1', type: 'grammar-syntax', skill: '1.B', skillCategory: '1', unit: '1',
+    stimulus: {
+      latin: `In nova fert animus mutatas dicere formas
+corpora; di, coeptis (nam vos mutastis et illas)
+adspirate meis primaque ab origine mundi
+ad mea perpetuum deducite tempora carmen!`,
+      citation: 'Metamorphoses 1.1–4',
+      genre: 'poetry',
+      gloss: [
+        { word: 'adspiro, -are', meaning: 'to breathe upon, favour, be favourable to' },
+        { word: 'mutastis', meaning: '= mutavistis' },
+      ],
+    },
     prompt: 'In lines 1–2, mutatas … formas / corpora is best understood as',
     options: [
       { id: 'a', text: 'formas as the object of dicere, with in nova … corpora as the goal of the change' },
@@ -181,6 +235,18 @@ export const sightQuestions: Question[] = [
   },
   {
     id: 'sight-ovid-2', type: 'form-identification', skill: '1.B', skillCategory: '1', unit: '1',
+    stimulus: {
+      latin: `In nova fert animus mutatas dicere formas
+corpora; di, coeptis (nam vos mutastis et illas)
+adspirate meis primaque ab origine mundi
+ad mea perpetuum deducite tempora carmen!`,
+      citation: 'Metamorphoses 1.1–4',
+      genre: 'poetry',
+      gloss: [
+        { word: 'adspiro, -are', meaning: 'to breathe upon, favour, be favourable to' },
+        { word: 'mutastis', meaning: '= mutavistis' },
+      ],
+    },
     prompt: 'In line 3, adspirate and in line 4 deducite are',
     options: [
       { id: 'a', text: 'present active imperatives, plural' },
@@ -196,6 +262,16 @@ export const sightQuestions: Question[] = [
 
   {
     id: 'sight-sen-1', type: 'grammar-syntax', skill: '1.B', skillCategory: '1', unit: '1',
+    stimulus: {
+      latin: `Ita fac, mi Lucili: vindica te tibi, et tempus quod adhuc aut auferebatur aut subripiebatur aut excidebat collige et serva. Persuade tibi hoc sic esse ut scribo: quaedam tempora eripiuntur nobis, quaedam subducuntur, quaedam effluunt. Turpissima tamen est iactura quae per neglegentiam fit.`,
+      citation: 'Epistulae 1.1',
+      genre: 'prose',
+      gloss: [
+        { word: 'vindico, -are', meaning: 'to claim, lay claim to, reclaim' },
+        { word: 'subripio, -ere', meaning: 'to snatch away secretly, steal' },
+        { word: 'iactura, -ae (f.)', meaning: 'loss, throwing away' },
+      ],
+    },
     prompt: 'In the first sentence, collige and serva are',
     options: [
       { id: 'a', text: 'singular imperatives governing tempus' },
@@ -210,6 +286,16 @@ export const sightQuestions: Question[] = [
   },
   {
     id: 'sight-sen-2', type: 'grammar-syntax', skill: '1.B', skillCategory: '1', unit: '1',
+    stimulus: {
+      latin: `Ita fac, mi Lucili: vindica te tibi, et tempus quod adhuc aut auferebatur aut subripiebatur aut excidebat collige et serva. Persuade tibi hoc sic esse ut scribo: quaedam tempora eripiuntur nobis, quaedam subducuntur, quaedam effluunt. Turpissima tamen est iactura quae per neglegentiam fit.`,
+      citation: 'Epistulae 1.1',
+      genre: 'prose',
+      gloss: [
+        { word: 'vindico, -are', meaning: 'to claim, lay claim to, reclaim' },
+        { word: 'subripio, -ere', meaning: 'to snatch away secretly, steal' },
+        { word: 'iactura, -ae (f.)', meaning: 'loss, throwing away' },
+      ],
+    },
     prompt: 'In Persuade tibi hoc sic esse ut scribo, the phrase hoc … esse is',
     options: [
       { id: 'a', text: 'an indirect statement after persuade' },
@@ -224,6 +310,16 @@ export const sightQuestions: Question[] = [
   },
   {
     id: 'sight-sen-3', type: 'inference', skill: '3.A', skillCategory: '3', unit: '1',
+    stimulus: {
+      latin: `Ita fac, mi Lucili: vindica te tibi, et tempus quod adhuc aut auferebatur aut subripiebatur aut excidebat collige et serva. Persuade tibi hoc sic esse ut scribo: quaedam tempora eripiuntur nobis, quaedam subducuntur, quaedam effluunt. Turpissima tamen est iactura quae per neglegentiam fit.`,
+      citation: 'Epistulae 1.1',
+      genre: 'prose',
+      gloss: [
+        { word: 'vindico, -are', meaning: 'to claim, lay claim to, reclaim' },
+        { word: 'subripio, -ere', meaning: 'to snatch away secretly, steal' },
+        { word: 'iactura, -ae (f.)', meaning: 'loss, throwing away' },
+      ],
+    },
     prompt: 'Seneca singles out the loss quae per neglegentiam fit because it is',
     options: [
       { id: 'a', text: 'the only kind of loss of time that is entirely our own fault' },
@@ -239,6 +335,16 @@ export const sightQuestions: Question[] = [
 
   {
     id: 'sight-nep-1', type: 'grammar-syntax', skill: '1.B', skillCategory: '1', unit: '1',
+    stimulus: {
+      latin: `Nam quotienscumque cum eo congressus est in Italia, semper discessit superior. Quod nisi domi civium suorum invidia debilitatus esset, Romanos videtur superare potuisse. Sed multorum obtrectatio devicit unius virtutem.`,
+      citation: 'Hannibal 1.2–3',
+      genre: 'prose',
+      gloss: [
+        { word: 'congredior, -i, -gressus sum', meaning: 'to meet, engage (in battle)' },
+        { word: 'debilito, -are', meaning: 'to weaken, disable' },
+        { word: 'obtrectatio, -onis (f.)', meaning: 'detraction, disparagement, envy' },
+      ],
+    },
     prompt: 'In Quod nisi … debilitatus esset, Romanos videtur superare potuisse, the condition is',
     options: [
       { id: 'a', text: 'past contrary to fact' },
@@ -253,6 +359,16 @@ export const sightQuestions: Question[] = [
   },
   {
     id: 'sight-nep-2', type: 'vocabulary-in-context', skill: '1.A', skillCategory: '1', unit: '1',
+    stimulus: {
+      latin: `Nam quotienscumque cum eo congressus est in Italia, semper discessit superior. Quod nisi domi civium suorum invidia debilitatus esset, Romanos videtur superare potuisse. Sed multorum obtrectatio devicit unius virtutem.`,
+      citation: 'Hannibal 1.2–3',
+      genre: 'prose',
+      gloss: [
+        { word: 'congredior, -i, -gressus sum', meaning: 'to meet, engage (in battle)' },
+        { word: 'debilito, -are', meaning: 'to weaken, disable' },
+        { word: 'obtrectatio, -onis (f.)', meaning: 'detraction, disparagement, envy' },
+      ],
+    },
     prompt: 'In this passage, discessit superior means',
     options: [
       { id: 'a', text: 'he came away the winner' },
@@ -267,6 +383,16 @@ export const sightQuestions: Question[] = [
   },
   {
     id: 'sight-nep-3', type: 'literary-device', skill: '2.A', skillCategory: '2', unit: '1',
+    stimulus: {
+      latin: `Nam quotienscumque cum eo congressus est in Italia, semper discessit superior. Quod nisi domi civium suorum invidia debilitatus esset, Romanos videtur superare potuisse. Sed multorum obtrectatio devicit unius virtutem.`,
+      citation: 'Hannibal 1.2–3',
+      genre: 'prose',
+      gloss: [
+        { word: 'congredior, -i, -gressus sum', meaning: 'to meet, engage (in battle)' },
+        { word: 'debilito, -are', meaning: 'to weaken, disable' },
+        { word: 'obtrectatio, -onis (f.)', meaning: 'detraction, disparagement, envy' },
+      ],
+    },
     prompt: 'The contrast in multorum obtrectatio devicit unius virtutem is sharpened chiefly by',
     options: [
       { id: 'a', text: 'the juxtaposition of multorum and unius' },
@@ -282,6 +408,17 @@ export const sightQuestions: Question[] = [
 
   {
     id: 'sight-livy-1', type: 'grammar-syntax', skill: '1.B', skillCategory: '1', unit: '1',
+    stimulus: {
+      latin: `Facturusne operae pretium sim si a primordio urbis res populi Romani perscripserim nec satis scio nec, si sciam, dicere ausim, quippe qui cum veterem tum volgatam esse rem videam, dum novi semper scriptores aut in rebus certius aliquid allaturos se aut scribendi arte rudem vetustatem superaturos credunt.`,
+      citation: 'Praefatio 1',
+      genre: 'prose',
+      gloss: [
+        { word: 'operae pretium', meaning: 'worth the effort, worthwhile' },
+        { word: 'primordium, -i (n.)', meaning: 'first beginning, origin' },
+        { word: 'volgatus, -a, -um', meaning: '(= vulgatus) commonly known, hackneyed' },
+        { word: 'ausim', meaning: 'archaic perfect subjunctive of audeo, "I would dare"' },
+      ],
+    },
     prompt: 'Facturusne operae pretium sim … is best identified as',
     options: [
       { id: 'a', text: 'an indirect question dependent on scio' },
@@ -296,6 +433,17 @@ export const sightQuestions: Question[] = [
   },
   {
     id: 'sight-livy-2', type: 'inference', skill: '3.A', skillCategory: '3', unit: '1',
+    stimulus: {
+      latin: `Facturusne operae pretium sim si a primordio urbis res populi Romani perscripserim nec satis scio nec, si sciam, dicere ausim, quippe qui cum veterem tum volgatam esse rem videam, dum novi semper scriptores aut in rebus certius aliquid allaturos se aut scribendi arte rudem vetustatem superaturos credunt.`,
+      citation: 'Praefatio 1',
+      genre: 'prose',
+      gloss: [
+        { word: 'operae pretium', meaning: 'worth the effort, worthwhile' },
+        { word: 'primordium, -i (n.)', meaning: 'first beginning, origin' },
+        { word: 'volgatus, -a, -um', meaning: '(= vulgatus) commonly known, hackneyed' },
+        { word: 'ausim', meaning: 'archaic perfect subjunctive of audeo, "I would dare"' },
+      ],
+    },
     prompt: 'In this opening sentence Livy presents his undertaking as',
     options: [
       { id: 'a', text: 'doubtful in value, because the subject is old and much written about' },
