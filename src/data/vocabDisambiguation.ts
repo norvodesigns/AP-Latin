@@ -302,14 +302,12 @@ export const VOCAB_DISAMBIGUATION: VocabDisambiguationEntry[] = [
   { passageId: 'aen-11-532-594', lineN: 587, word: 'uerum', headword: 'uerum' },
   { passageId: 'pliny-10-39', lineN: 6, word: 'uerum', headword: 'uerum' },
 
-  // ---- oris/ora: with macrons stripped, "ōrīs" (ablative plural of ora,
-  // -ae, "shore") and "ōris" (genitive singular of os, oris, "face/mouth")
-  // are spelled identically. "Troiae qui primus ab oris" (Aen. 1.1) is
-  // "from the shores of Troy" — ora, not os. "ante ora patrum" (Aen.
-  // 1.95) is "before the faces of their fathers" — os (its plural), not
-  // the singular of ora.
+  // ---- oris: with macrons stripped, "ōrīs" (ablative plural of ora, -ae,
+  // "shore") and "ōris" (genitive singular of os, oris, "face/mouth") are
+  // spelled identically. "Troiae qui primus ab oris" (Aen. 1.1) is "from
+  // the shores of Troy" — ora, not os. (Its converse, "ante ora patrum" at
+  // Aen. 1.95, os not ora, is already covered in the "ora" block above.)
   { passageId: 'aen-1-1-33', lineN: 1, word: 'oris', headword: 'ora' },
-  { passageId: 'aen-1-88-107', lineN: 95, word: 'ora', headword: 'os' },
 
   // ---- parent: two lines apart, two different verbs that happen to share
   // this 3rd-plural-present spelling. Line 290 is jussive "arma parent"

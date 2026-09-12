@@ -48,6 +48,8 @@ const passages = [...vergil, ...pliny, ...caesar, ...catullus];
 const byId = new Map(passages.map((p) => [p.id, p]));
 
 const { coreVocabulary: vocab } = await load('src/data/vocabulary.ts');
+const { supplementaryVocabulary: suppVocab } = await load('src/data/supplementaryVocabulary.ts');
+const { VOCAB_DISAMBIGUATION: disambig } = await load('src/data/vocabDisambiguation.ts');
 const { questions } = await load('src/data/questions.ts');
 const { translationDrills: drills } = await load('src/data/translation.ts');
 const { scansionLines: scansion } = await load('src/data/scansion.ts');
@@ -58,7 +60,8 @@ const { contextCards } = await load('src/data/context.ts');
 const { frqPrompts } = await load('src/data/frq.ts');
 
 notes.push(`${passages.length} passages (${passages.filter((p) => p.required).length} required)`);
-notes.push(`${vocab.length} vocabulary entries`);
+notes.push(`${vocab.length} core vocabulary entries, ${suppVocab.length} supplementary`);
+notes.push(`${disambig.length} per-line disambiguation overrides`);
 notes.push(`${questions.length + sightQs.length} questions`);
 notes.push(`${drills.length} translation drills`);
 notes.push(`${scansion.length} scanned lines`);
@@ -83,6 +86,10 @@ for (const p of passages) {
   }
   for (const l of p.lines) {
     if (!l.latin?.trim()) fail(`${p.id}: empty text at line ${l.n}`);
+  }
+  // A required passage must carry the CED reading number that put it there.
+  if (p.required && (!p.cedReading?.trim() || !p.unit)) {
+    fail(`${p.id}: required passage is missing cedReading/unit`);
   }
   // A supplementary passage must say so in its context note.
   if (!p.required && !/not on the official/i.test(p.context)) {
@@ -200,12 +207,71 @@ for (const sp of sight) {
 }
 
 /* --- vocabulary --------------------------------------------------- */
+// A lemma's headword may legitimately be an inflected form actually attested
+// in a passage (e.g. "Dardanidum", genitive plural, alongside the dictionary
+// headword "Dardanidae") rather than the lemma's own first word, so the
+// check tolerates a shared stem instead of requiring exact equality.
+function lemmaHead(lemma) {
+  return lemma.replace(/\([^)]*\)/g, '').split(',')[0].split(/\bor\b/)[0].trim();
+}
+function sharesStem(a, b) {
+  let i = 0;
+  while (i < a.length && i < b.length && a[i] === b[i]) i++;
+  return i >= 4 && i >= Math.min(a.length, b.length) * 0.6;
+}
+
 const seenVocab = new Set();
-for (const v of vocab) {
-  if (seenVocab.has(v.id)) fail(`duplicate vocabulary id: ${v.id}`);
+const allVocab = [...vocab, ...suppVocab];
+for (const v of allVocab) {
+  if (seenVocab.has(v.id)) fail(`duplicate vocabulary id (core+supplementary): ${v.id}`);
   seenVocab.add(v.id);
   if (!v.definition?.trim()) fail(`vocab ${v.id}: no definition`);
   if (!v.pos?.trim()) fail(`vocab ${v.id}: no part of speech`);
+  const first = norm(lemmaHead(v.lemma));
+  const head = norm(v.headword);
+  if (first !== head && !sharesStem(first, head)) {
+    fail(`vocab ${v.id}: lemma "${v.lemma}" does not start with headword "${v.headword}"`);
+  }
+}
+
+/* --- per-line disambiguation overrides ----------------------------- */
+const byNormHeadword = new Map();
+for (const v of allVocab) {
+  const key = norm(v.headword);
+  if (!byNormHeadword.has(key)) byNormHeadword.set(key, []);
+  byNormHeadword.get(key).push(v);
+}
+const seenDisambig = new Set();
+for (const d of disambig) {
+  const dupKey = `${d.passageId}|${d.lineN}|${d.word}|${d.tokenIndex ?? ''}`;
+  if (seenDisambig.has(dupKey)) fail(`disambiguation: duplicate entry for ${dupKey}`);
+  seenDisambig.add(dupKey);
+
+  if (norm(d.word) !== d.word) {
+    fail(`disambiguation ${dupKey}: word "${d.word}" is not pre-normalized (expected "${norm(d.word)}")`);
+  }
+  const p = byId.get(d.passageId);
+  if (!p) {
+    fail(`disambiguation ${dupKey}: unknown passageId ${d.passageId}`);
+    continue;
+  }
+  if (!p.lines.some((l) => l.n === d.lineN)) {
+    fail(`disambiguation ${dupKey}: line ${d.lineN} does not exist in ${p.citation}`);
+  }
+  const candidates = byNormHeadword.get(norm(d.headword)) ?? [];
+  if (candidates.length === 0) {
+    fail(`disambiguation ${dupKey}: headword "${d.headword}" matches no dictionary entry`);
+  } else {
+    const matches = candidates.filter(
+      (v) => (!d.pos || v.pos === d.pos) && (!d.entryId || v.id === d.entryId)
+    );
+    if (matches.length === 0) {
+      fail(`disambiguation ${dupKey}: no entry for headword "${d.headword}" with pos/entryId as given`);
+    }
+  }
+  if (d.entryId && !seenVocab.has(d.entryId)) {
+    fail(`disambiguation ${dupKey}: entryId "${d.entryId}" matches no vocabulary id`);
+  }
 }
 
 /* --- grammar, devices, context ------------------------------------ */
