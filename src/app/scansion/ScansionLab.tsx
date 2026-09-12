@@ -33,30 +33,43 @@ interface Group {
 }
 
 /**
- * Split the line at the student's boundaries. An elided syllable is carried
- * along with the foot it sits inside and never counts toward filling it, so a
- * boundary after a metrical syllable absorbs any elided syllables that follow.
+ * Split the line at the student's boundaries. `divisions` holds raw syllable
+ * indices, not metrical ones — a boundary is anchored to "immediately after
+ * this syllable," a position that never moves. `elidesAt(i)` says whether
+ * syllable `i` currently counts as elided: the real answer once checked, but
+ * before that, only what the student has themselves claimed. A syllable that
+ * truly elides but hasn't been claimed must be indistinguishable from an
+ * ordinary one here, or the foot boundaries would hand the answer over
+ * before the student ever taps to claim it — that is the whole point of
+ * keying this off `elidesAt` rather than `syllables[i].elides` directly.
+ * An elided (per the current view) syllable is carried along with the foot
+ * it sits inside and never counts toward filling it, so a boundary after a
+ * counted syllable absorbs any elided ones that immediately follow.
  */
-function groupsFrom(syllables: ScannedSyllable[], divisions: number[]): Group[] {
+function groupsFrom(
+  syllables: ScannedSyllable[],
+  divisions: number[],
+  elidesAt: (i: number) => boolean,
+): Group[] {
   const cuts = new Set(divisions);
   const out: Group[] = [];
   let current: number[] = [];
-  let m = -1;
+  let lastCounted = -1;
 
   for (let i = 0; i < syllables.length; i += 1) {
     current.push(i);
-    if (syllables[i].elides) continue;
-    m += 1;
-    if (cuts.has(m)) {
-      while (i + 1 < syllables.length && syllables[i + 1].elides) {
+    if (elidesAt(i)) continue;
+    lastCounted = i;
+    if (cuts.has(i)) {
+      while (i + 1 < syllables.length && elidesAt(i + 1)) {
         i += 1;
         current.push(i);
       }
-      out.push({ syllables: current, endsAt: m, closed: true });
+      out.push({ syllables: current, endsAt: lastCounted, closed: true });
       current = [];
     }
   }
-  if (current.length) out.push({ syllables: current, endsAt: m, closed: false });
+  if (current.length) out.push({ syllables: current, endsAt: lastCounted, closed: false });
   return out;
 }
 
@@ -64,9 +77,12 @@ function groupsFrom(syllables: ScannedSyllable[], divisions: number[]): Group[] 
  * What the student's own marks make this group, if anything. Reading their
  * work back to them is fair — it is what they would see on paper — whereas
  * naming the foot before they have marked it would be giving the answer.
+ * `elidesAt` is the same current-view predicate `groupsFrom` uses, so a
+ * syllable the student hasn't yet claimed elides still needs its own mark
+ * to complete the foot, exactly as it looks on screen.
  */
-function footNameFrom(marks: Mark[], group: Group, syllables: ScannedSyllable[]): string | null {
-  const metrical = group.syllables.filter((i) => !syllables[i].elides);
+function footNameFrom(marks: Mark[], group: Group, elidesAt: (i: number) => boolean): string | null {
+  const metrical = group.syllables.filter((i) => !elidesAt(i));
   if (metrical.some((i) => marks[i] === null)) return null;
   const shape = metrical.map((i) => marks[i]);
   if (shape.length === 3 && shape[0] === 'long' && shape[1] === 'short' && shape[2] === 'short') {
@@ -221,10 +237,32 @@ export default function ScansionLab() {
   );
   const streak = mounted ? currentStreak(studyDays) : 0;
 
-  /** Indices of syllables that actually count metrically. */
+  /** Indices of syllables that actually count metrically, per the real answer. */
   const metricalIdx = useMemo(
     () => (line ? line.syllables.map((s, i) => (s.elides ? -1 : i)).filter((i) => i >= 0) : []),
     [line],
+  );
+
+  /**
+   * Whether syllable `i` currently counts as elided — the real answer once
+   * checked, but before that, only what the student has themselves claimed.
+   * Everything the student interacts with pre-check (placing foot
+   * boundaries, naming a foot, keyboard navigation) goes through this, never
+   * through `syllables[i].elides` directly: a syllable that truly elides but
+   * hasn't been claimed has to look and behave exactly like an ordinary one,
+   * or the foot math would be handing over the answer before the student
+   * ever taps to claim it.
+   */
+  const elidesAt = useCallback(
+    (i: number) => (checked ? Boolean(line?.syllables[i]?.elides) : studentElisions.has(i)),
+    [checked, line, studentElisions],
+  );
+
+  /** Indices of syllables that count metrically from the student's own
+   *  current view (see `elidesAt`) — used for everything pre-check. */
+  const studentMetricalIdx = useMemo(
+    () => (line ? line.syllables.map((_, i) => i).filter((i) => !elidesAt(i)) : []),
+    [line, elidesAt],
   );
 
   /**
@@ -244,13 +282,17 @@ export default function ScansionLab() {
   );
 
   /**
-   * The foot divisions the STUDENT has drawn, as metrical indices after which
-   * a boundary falls. This is deliberately not derived from the answer: the
+   * The foot divisions the STUDENT has drawn, as raw syllable indices after
+   * which a boundary falls — a boundary sits "after this syllable" and never
+   * moves on its own. This is deliberately not derived from the answer: the
    * app used to draw the feet itself and label them "Dactyl"/"Spondee", which
    * handed over half the exercise. Dividing the line is the other half of
    * scanning, so the student does it.
    */
-  const groups = useMemo(() => groupsFrom(line?.syllables ?? [], divisions), [line, divisions]);
+  const groups = useMemo(
+    () => groupsFrom(line?.syllables ?? [], divisions, elidesAt),
+    [line, divisions, elidesAt],
+  );
 
   /** The divisions the metre actually requires — used only after checking. */
   const correctDivisions = useMemo(() => {
@@ -277,7 +319,10 @@ export default function ScansionLab() {
    *  word. Claiming it clears any quantity mark already on it — an elided
    *  syllable does not take one — so the two controls never disagree on
    *  screen; un-claiming it leaves a mark in place rather than discarding
-   *  work the student may want to keep. */
+   *  work the student may want to keep. A foot boundary anchored to this
+   *  exact syllable stops making sense the moment it is absorbed into the
+   *  previous foot, so claiming clears that too — the student re-places it
+   *  wherever it now belongs, rather than the app guessing for them. */
   const toggleElision = useCallback((i: number) => {
     setStudentElisions((prev) => {
       const claiming = !prev.has(i);
@@ -286,6 +331,7 @@ export default function ScansionLab() {
       else next.delete(i);
       if (claiming) {
         setMarks((m) => (m[i] === null ? m : m.map((v, j) => (j === i ? null : v))));
+        setDivisions((d) => d.filter((x) => x !== i));
       }
       return next;
     });
@@ -303,14 +349,19 @@ export default function ScansionLab() {
       if (k === '0' || k === 'backspace') { e.preventDefault(); setMark(selected, null); return; }
       if (k === 'arrowright' || k === 'arrowleft') {
         e.preventDefault();
-        const pos = metricalIdx.indexOf(selected);
+        // The student's own view, not the answer — arrow-key navigation
+        // must not silently skip past a syllable that truly elides but
+        // hasn't been claimed, or landing on every OTHER syllable would
+        // itself be a tell.
+        const idx = checked ? metricalIdx : studentMetricalIdx;
+        const pos = idx.indexOf(selected);
         const nextPos = k === 'arrowright' ? pos + 1 : pos - 1;
-        if (nextPos >= 0 && nextPos < metricalIdx.length) setSelected(metricalIdx[nextPos]);
+        if (nextPos >= 0 && nextPos < idx.length) setSelected(idx[nextPos]);
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [selected, checked, line, metricalIdx, setMark]);
+  }, [selected, checked, line, metricalIdx, studentMetricalIdx, setMark]);
 
   /**
    * Draw the next line at random from the whole corpus.
@@ -466,11 +517,19 @@ export default function ScansionLab() {
    * divisions and elisions are scored alongside the syllables rather than
    * treated as decoration.
    */
+  // `divisions` are raw syllable indices; the answer (`correctDivisions`) is
+  // in metrical-index terms, so boundaries are translated into that space to
+  // score them. A boundary the student placed on a syllable that turns out
+  // to truly elide (never claimed) has no real metrical position at all —
+  // `metricalIdx.indexOf` returns -1 for it, which can never match a real
+  // division, so it simply scores as wrong rather than crashing the count.
+  const divisionsAsMetrical = divisions.map((d) => metricalIdx.indexOf(d));
+
   function check() {
     setChecked(true);
     setSelected(null);
     const syllablesRight = metricalIdx.filter(isCorrect).length;
-    const boundariesRight = divisions.filter((d) => correctDivisions.includes(d)).length;
+    const boundariesRight = divisionsAsMetrical.filter((m) => correctDivisions.includes(m)).length;
     const elisionsCorrectCount = elidableIdx.filter(elisionCorrect).length;
     recordScansion(
       active.id,
@@ -484,7 +543,11 @@ export default function ScansionLab() {
     void advance(active.id);
   }
 
-  const allMarked = metricalIdx.every((i) => studentElisions.has(i) || marks[i] !== null);
+  // The student's own current view (see `elidesAt`): every syllable they
+  // have not themselves claimed elides still needs a quantity mark, exactly
+  // as it looks to them on screen — including one that truly elides but
+  // hasn't been spotted yet.
+  const allMarked = studentMetricalIdx.every((i) => marks[i] !== null);
   const dividedRight = divisions.length === 5;
   const ready = allMarked && dividedRight;
 
@@ -493,18 +556,18 @@ export default function ScansionLab() {
     ? [active.caesurae.find((c) => c.type === 'penthemimeral') ?? active.caesurae[0]]
     : [];
 
-  /** Toggle a foot boundary after a metrical syllable. */
-  function toggleDivision(m: number) {
+  /** Toggle a foot boundary after raw syllable index `i`. */
+  function toggleDivision(i: number) {
     if (checked) return;
     setDivisions((prev) =>
-      prev.includes(m) ? prev.filter((x) => x !== m) : [...prev, m].sort((a, b) => a - b),
+      prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i].sort((a, b) => a - b),
     );
     setSelected(null);
   }
 
   const divisionsRight =
-    divisions.length === correctDivisions.length &&
-    divisions.every((d, i) => d === correctDivisions[i]);
+    divisionsAsMetrical.length === correctDivisions.length &&
+    divisionsAsMetrical.every((d, i) => d === correctDivisions[i]);
 
   return (
     <div className="mx-auto w-full max-w-[1160px]">
@@ -573,12 +636,12 @@ export default function ScansionLab() {
                */
               const isLast = gi === groups.length - 1;
               const isFoot = group.closed || (isLast && divisions.length === 5);
-              const name = footNameFrom(marks, group, active.syllables);
-              const complete = group.syllables.every(
-                (i) => active.syllables[i].elides || marks[i] !== null,
-              );
+              const name = footNameFrom(marks, group, elidesAt);
+              const complete = group.syllables.every((i) => elidesAt(i) || marks[i] !== null);
               const boundaryRight =
-                checked && group.closed ? correctDivisions.includes(group.endsAt) : null;
+                checked && group.closed
+                  ? correctDivisions.includes(metricalIdx.indexOf(group.endsAt))
+                  : null;
 
               return (
                 <div key={gi} className="flex items-stretch">
@@ -598,16 +661,18 @@ export default function ScansionLab() {
                           (c) => metricalIdx[c.afterSyllable] === i,
                         );
 
-                        // The metrical index of this syllable, for boundaries —
-                        // always the real one, so the foot math underneath stays
-                        // correct regardless of what the student has or hasn't
-                        // claimed elides. Only the *display* of a syllable reacts
-                        // to the student's own elision marks; the arithmetic never
-                        // does, or a wrong guess there would cascade into every
-                        // foot boundary after it looking wrong too.
-                        const m = metricalIdx.indexOf(i);
+                        // A boundary can go after any syllable the student's
+                        // own current view treats as counting — including one
+                        // that truly elides but hasn't been claimed, which
+                        // must look exactly like an ordinary syllable here.
+                        // Only claiming the elision (see `elidesAt`) removes
+                        // it as a place to divide; nothing about the real
+                        // answer does.
                         const isLastInGroup = within === group.syllables.length - 1;
-                        const canDivide = !checked && !syl.elides && m >= 0 && m < metricalIdx.length - 1;
+                        const canDivide =
+                          !checked &&
+                          !elidesAt(i) &&
+                          studentMetricalIdx.indexOf(i) < studentMetricalIdx.length - 1;
 
                         // What this syllable looks like right now: the
                         // student's own claim before checking, the real answer
@@ -791,7 +856,7 @@ export default function ScansionLab() {
                               <button
                                 type="button"
                                 className="foot-gap"
-                                onClick={() => toggleDivision(m)}
+                                onClick={() => toggleDivision(i)}
                                 title="Divide the feet here"
                                 aria-label={`Place a foot boundary after ${syl.text}`}
                               />
