@@ -81,6 +81,10 @@ final class AppModel {
     /// Set while a sync write replaces `progress`, so it isn't pushed straight back.
     @ObservationIgnored var applyingSync = false
 
+    /* AI — the website's routes. Nil until checked. */
+    var aiAvailable: Bool? = nil
+    @ObservationIgnored let ai = AIClient()
+
     /* Study time — see AppModel+StudyTime.swift. Device-local, like the
        web's `studySecondsToday`: today's live tally is never synced. */
     var studySecondsToday: Double = 0
@@ -116,6 +120,12 @@ final class AppModel {
     /* -------------------------------------------------------------- */
     /* Content                                                          */
     /* -------------------------------------------------------------- */
+
+    /// Asks the server once whether AI is configured.
+    func checkAI() async {
+        guard aiAvailable == nil else { return }
+        aiAvailable = await ai.isConfigured()
+    }
 
     func loadContent() async {
         guard case .loading = contentState else { return }

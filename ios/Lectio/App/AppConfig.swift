@@ -5,7 +5,7 @@ import Foundation
 /// protects student data) and is already served to every visitor of the
 /// website. The AI provider keys never leave the web server — the app calls
 /// the website's /api/ai routes instead.
-enum AppConfig {
+nonisolated enum AppConfig {
     static let webBaseURL = URL(string: "https://lectio.norvodesigns.com")!
 
     static let supabaseURL = URL(string: "https://sxohsxjfrlfziuxvlqvi.supabase.co")!
