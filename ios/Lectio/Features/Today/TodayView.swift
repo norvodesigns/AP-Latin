@@ -139,6 +139,7 @@ struct TodayView: View {
         SectionLink(title: "FRQ Workshop", systemImage: "pencil.and.list.clipboard", tab: .frq),
         SectionLink(title: "Practice Exam", systemImage: "timer", tab: .exam),
         SectionLink(title: "Study Plan", systemImage: "calendar", tab: .plan),
+        SectionLink(title: "Classroom", systemImage: "person.3", tab: .classroom),
     ]
 }
 

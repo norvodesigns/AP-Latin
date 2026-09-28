@@ -25,7 +25,7 @@ extension AppModel {
         case .frq: "frq"
         case .exam: "exam"
         case .plan: "plan"
-        case .today, .settings, .search: nil
+        case .today, .classroom, .settings, .search: nil
         }
     }
 

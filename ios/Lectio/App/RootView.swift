@@ -7,7 +7,7 @@ nonisolated enum AppTab: Hashable, Sendable {
     case translate, sight, scansion
     case grammar, devices, context
     case frq, exam, plan
-    case settings, search
+    case classroom, settings, search
 }
 
 /// The app's frame.
@@ -60,17 +60,14 @@ private struct Tabs: View {
             .defaultVisibility(.hidden, for: .tabBar)
 
             TabSection("Exam") {
-                Tab("FRQ Workshop", systemImage: "pencil.and.list.clipboard", value: AppTab.frq) {
-                    ComingSoonView(title: "FRQ Workshop", systemImage: "pencil.and.list.clipboard", webPath: "frq",
-                                   blurb: "All five free-response types, timed, with the official rubrics.")
-                }
-                Tab("Practice Exam", systemImage: "timer", value: AppTab.exam) {
-                    ComingSoonView(title: "Practice Exam", systemImage: "timer", webPath: "exam",
-                                   blurb: "The full exam: 52 multiple-choice questions in 65 minutes, then five free responses.")
-                }
+                Tab("FRQ Workshop", systemImage: "pencil.and.list.clipboard", value: AppTab.frq) { FrqWorkshopView() }
+                Tab("Practice Exam", systemImage: "timer", value: AppTab.exam) { PracticeExamView() }
                 Tab("Study Plan", systemImage: "calendar", value: AppTab.plan) { StudyPlanView() }
             }
             .defaultVisibility(.hidden, for: .tabBar)
+
+            Tab("Classroom", systemImage: "person.3", value: AppTab.classroom) { ClassroomView() }
+                .defaultVisibility(.hidden, for: .tabBar)
 
             Tab("Settings", systemImage: "gearshape", value: AppTab.settings) { SettingsView() }
                 .defaultVisibility(.hidden, for: .tabBar)
