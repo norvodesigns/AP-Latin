@@ -1,7 +1,7 @@
 import LectioCore
 import SwiftUI
 
-/// One review session over the cards due today.
+/// One review session.
 ///
 /// Same two answers as the web: "Practice again" (SM-2 quality 0 — the card
 /// comes back later this session and tomorrow) and "Got it" (quality 4).
@@ -11,6 +11,7 @@ struct FlashcardSessionView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.library) private var library
     @Environment(\.dismiss) private var dismiss
+    let session: VocabSession
 
     @State private var queue: [String] = []
     @State private var reviewed = 0
@@ -20,13 +21,20 @@ struct FlashcardSessionView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 28) {
+            VStack(spacing: 24) {
                 if let id = queue.first, let entry = library?.vocab(id) {
-                    Text("\(queue.count) to go").quietLabel()
+                    HStack {
+                        Text("\(queue.count) to go").quietLabel()
+                        Spacer()
+                        if let card = model.vocab[id] {
+                            Text(card.reviews > 0 ? "Seen \(card.reviews)× · EF \(card.ef.formatted(.number.precision(.fractionLength(2))))" : "New card")
+                                .quietLabel()
+                        }
+                    }
                     Spacer(minLength: 0)
-                    CardFace(entry: entry, flipped: flipped)
+                    CardFace(entry: entry, direction: session.direction, context: contextLine(for: entry), flipped: flipped)
                         .onTapGesture { withAnimation(.spring(duration: 0.45)) { flipped.toggle() } }
-                        .id(id)
+                        .id(id + "\(reviewed)")
                         .transition(.asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity),
                                                 removal: .move(edge: .leading).combined(with: .opacity)))
                     Spacer(minLength: 0)
@@ -47,8 +55,9 @@ struct FlashcardSessionView: View {
         }
         .onAppear {
             guard !started else { return }
-            queue = SpacedRepetition.due(model.vocab.values, on: StudyDates.today()).map(\.id)
+            queue = session.queue
             started = true
+            model.update { $0.markStudied() }
         }
     }
 
@@ -63,6 +72,7 @@ struct FlashcardSessionView: View {
                     }
                     .buttonStyle(.glass)
                     .glassEffectID("again", in: glass)
+                    .keyboardShortcut("1", modifiers: [])
 
                     Button { grade(id, quality: 4) } label: {
                         Label("Got it", systemImage: "checkmark")
@@ -70,16 +80,18 @@ struct FlashcardSessionView: View {
                     }
                     .buttonStyle(.glassProminent)
                     .glassEffectID("got", in: glass)
+                    .keyboardShortcut("2", modifiers: [])
                 }
             } else {
                 Button {
                     withAnimation(.spring(duration: 0.45)) { flipped = true }
                 } label: {
-                    Label("Show meaning", systemImage: "eye")
+                    Label("Show answer", systemImage: "eye")
                         .frame(maxWidth: .infinity).padding(.vertical, 6)
                 }
                 .buttonStyle(.glass)
                 .glassEffectID("got", in: glass)
+                .keyboardShortcut(.space, modifiers: [])
             }
         }
         .font(.headline)
@@ -91,10 +103,8 @@ struct FlashcardSessionView: View {
             Image(systemName: "checkmark.seal")
                 .font(.system(size: 56))
                 .foregroundStyle(Palette.correct)
-            Text(reviewed == 0 ? "Nothing due right now" : "Session complete")
-                .font(.system(.title, design: .serif))
-            Text(reviewed == 0 ? "Look words up in the Reading Room, or add a unit, and they'll appear here."
-                               : "\(reviewed) review\(reviewed == 1 ? "" : "s"). The next ones are scheduled.")
+            Text("Session complete").font(.system(.title, design: .serif))
+            Text("\(reviewed) review\(reviewed == 1 ? "" : "s"). The next ones are scheduled.")
                 .font(.prose(.callout))
                 .foregroundStyle(Palette.inkMuted)
                 .multilineTextAlignment(.center)
@@ -106,10 +116,7 @@ struct FlashcardSessionView: View {
     }
 
     private func grade(_ id: String, quality: Int) {
-        model.update {
-            $0.reviewVocab(id, quality: quality)
-            $0.markStudied()
-        }
+        model.update { $0.reviewVocab(id, quality: quality) }
         reviewed += 1
         withAnimation(.spring(duration: 0.4)) {
             flipped = false
@@ -118,11 +125,25 @@ struct FlashcardSessionView: View {
             if quality < 3 { queue.append(id) }
         }
     }
+
+    /// A line from the readings where this very word occurs — found through
+    /// the pre-resolved glossary, so it's the word itself, not a lookalike.
+    private func contextLine(for entry: VocabEntry) -> (latin: String, citation: String)? {
+        guard session.direction == .context, let library else { return nil }
+        for passage in library.passages {
+            for line in passage.lines where line.tokens.contains(where: { $0.glosses.first?.id == entry.id && $0.glosses.first?.isExact == true }) {
+                return (line.latin, passage.isPoetry ? "\(passage.citation) (\(line.n))" : "\(passage.citation).\(line.n)")
+            }
+        }
+        return nil
+    }
 }
 
 /// A card is content — a slip of parchment, not glass.
 private struct CardFace: View {
     let entry: VocabEntry
+    let direction: VocabDirection
+    let context: (latin: String, citation: String)?
     let flipped: Bool
 
     var body: some View {
@@ -137,19 +158,42 @@ private struct CardFace: View {
         .shadow(color: .black.opacity(0.08), radius: 18, y: 8)
         .rotation3DEffect(.degrees(flipped ? 180 : 0), axis: (x: 0, y: 1, z: 0), perspective: 0.6)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(flipped ? "\(entry.lemma). \(entry.definition)" : entry.headword)
-        .accessibilityHint(flipped ? "" : "Double-tap to show the meaning")
+        .accessibilityLabel(flipped ? "\(entry.lemma). \(entry.definition)" : frontLabel)
+        .accessibilityHint(flipped ? "" : "Double-tap to show the answer")
         .accessibilityAddTraits(.isButton)
     }
 
-    private var front: some View {
-        VStack(spacing: 10) {
-            Text(entry.headword)
-                .font(.latin(44, relativeTo: .largeTitle))
-                .foregroundStyle(Palette.ink)
-                .multilineTextAlignment(.center)
-            Text(entry.pos).quietLabel()
+    private var frontLabel: String {
+        switch direction {
+        case .laEn: entry.headword
+        case .enLa: entry.definition
+        case .context: context.map { "\($0.latin). Which meaning of \(entry.headword) fits?" } ?? entry.headword
         }
+    }
+
+    @ViewBuilder
+    private var front: some View {
+        VStack(spacing: 12) {
+            switch direction {
+            case .laEn:
+                Text(entry.headword).font(.latin(44, relativeTo: .largeTitle)).multilineTextAlignment(.center)
+                Text(entry.pos).quietLabel()
+            case .enLa:
+                Text(entry.definition).font(.prose(.title2)).multilineTextAlignment(.center)
+                Text(entry.pos).quietLabel()
+            case .context:
+                if let context {
+                    Text(context.citation).quietLabel()
+                    Text(context.latin).font(.latin(22)).multilineTextAlignment(.center)
+                    Text("Which meaning of \(Text(entry.headword).italic().foregroundStyle(Palette.rubric)) fits this line?")
+                        .font(.footnote).foregroundStyle(Palette.inkMuted)
+                } else {
+                    Text(entry.headword).font(.latin(44, relativeTo: .largeTitle))
+                    Text(entry.pos).quietLabel()
+                }
+            }
+        }
+        .foregroundStyle(Palette.ink)
     }
 
     private var back: some View {

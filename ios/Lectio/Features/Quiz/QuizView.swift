@@ -55,9 +55,18 @@ struct QuizView: View {
                     .fullScreenCover(item: $session) { QuizSessionView(session: $0) }
                     .onAppear {
                         if filters.types.isEmpty { filters.types = Set(library.meta.questionTypeLabels.keys) }
+                        applyPreset()
                     }
+                    .onChange(of: model.quizPresetType) { applyPreset() }
             }
         }
+    }
+
+    /// A weak spot on Today opens the Quiz narrowed to that question type.
+    private func applyPreset() {
+        guard let type = model.quizPresetType else { return }
+        filters = QuizFilters(types: [type])
+        model.quizPresetType = nil
     }
 
     private func setup(_ library: ContentLibrary) -> some View {

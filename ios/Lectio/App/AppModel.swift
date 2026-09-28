@@ -53,6 +53,8 @@ final class AppModel {
     /// The decoded vocabulary deck, kept in step with `progress` so screens
     /// that read it several times per render don't re-decode it each time.
     private(set) var vocab: [String: VocabCard] = [:]
+    /// Set by a dashboard "Drill it" link; the Quiz Engine narrows to it.
+    var quizPresetType: String? = nil
     var selectedTab: AppTab = .today {
         didSet { if oldValue != selectedTab { studySectionChanged() } }
     }

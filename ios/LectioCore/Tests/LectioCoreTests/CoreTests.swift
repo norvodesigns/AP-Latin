@@ -265,3 +265,38 @@ import Testing
         #expect(WatchDeck(context: ["nope": 1]) == nil)
     }
 }
+
+@Suite struct InsightsTests {
+    let now = parseISO("2026-10-15T12:00:00.000Z")
+
+    func quiz(_ type: String, _ correct: Bool, skill: String = "1") -> QuizAttempt {
+        QuizAttempt(id: UUID().uuidString, questionId: "q", correct: correct, chosenId: "a", at: "2026-10-15T00:00:00.000Z",
+                    type: type, skillCategory: skill, unit: "4", passageId: nil, seconds: nil)
+    }
+
+    @Test func weakSpotsNeedASampleAndRankByUrgency() {
+        let attempts = (0..<6).map { quiz("meter", $0 < 2) } + (0..<5).map { _ in quiz("inference", false) }
+            + (0..<10).map { quiz("grammar-syntax", $0 < 9) }
+        let spots = Insights.weakSpots(quizAttempts: attempts, translationAttempts: [], scansionAttempts: [], vocab: [:],
+                                       typeLabels: ["meter": "Metre"])
+        #expect(spots.map(\.id) == ["type-meter"])
+        #expect(spots.first?.pct == 33)
+        #expect(spots.first?.label == "Metre")
+    }
+
+    @Test func forecastBucketsTheWeek() {
+        var vocab: [String: VocabCard] = [:]
+        for (i, due) in ["2026-10-10", "2026-10-15", "2026-10-16", "2026-10-21", "2026-10-22"].enumerated() {
+            vocab["w\(i)"] = VocabCard(id: "w\(i)", ef: 2.5, interval: i * 10, repetitions: 1, due: due, lapses: 0, reviews: 1)
+        }
+        let f = Insights.forecast(vocab, today: now)
+        #expect(f.week == [2, 1, 0, 0, 0, 0, 1])
+        #expect(f.mature == 2)
+    }
+
+    @Test func masteryTalliesBySkill() {
+        let m = Insights.mastery([quiz("meter", true, skill: "2"), quiz("meter", false, skill: "2")])
+        #expect(m["2"] == Tally(correct: 1, total: 2))
+        #expect(m["1"] == Tally(correct: 0, total: 0))
+    }
+}

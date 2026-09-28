@@ -17,6 +17,8 @@ struct TodayView: View {
                     Hairline()
                     nextUp
                     Hairline()
+                    TodayInsights()
+                    Hairline()
                     everything
                 }
                 .padding(.horizontal, 20)
@@ -186,5 +188,107 @@ private struct NextUpRow: View {
             Image(systemName: "chevron.right").font(.footnote).foregroundStyle(Palette.inkFaint)
         }
         .contentShape(Rectangle())
+    }
+}
+
+/// Where the student stands: accuracy by skill (weighted as the exam weights
+/// it), the weakest spots, and the week of vocabulary ahead — the web
+/// dashboard's mastery, weak-spot and forecast panels.
+private struct TodayInsights: View {
+    @Environment(AppModel.self) private var model
+    @Environment(\.library) private var library
+
+    private static let skillLabels = ["1": "Read & comprehend", "2": "Style & context", "3": "Analyze"]
+
+    var body: some View {
+        let quiz = model.progress.quizAttempts
+        let mastery = Insights.mastery(quiz)
+        let scored = mastery.filter { $0.value.total > 0 }
+        let weakest = scored.min { pct($0.value) < pct($1.value) }?.key
+        let spots = Insights.weakSpots(quizAttempts: quiz, translationAttempts: model.progress.translationAttempts,
+                                       scansionAttempts: model.progress.scansionAttempts, vocab: model.vocab,
+                                       typeLabels: library?.meta.questionTypeLabels ?? [:])
+        let forecast = Insights.forecast(model.vocab)
+
+        VStack(alignment: .leading, spacing: 26) {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Mastery by skill").rubricLabel()
+                ForEach(["1", "2", "3"], id: \.self) { k in
+                    let t = mastery[k] ?? Tally(correct: 0, total: 0)
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Text(Self.skillLabels[k] ?? k).font(.subheadline)
+                            Text("\(Insights.skillWeights[k] ?? 0)% of the exam").quietLabel()
+                            Spacer()
+                            Text(t.total > 0 ? "\(Int(pct(t)))%" : "—").font(.subheadline.monospacedDigit())
+                        }
+                        ProgressView(value: t.total > 0 ? pct(t) : 0, total: 100)
+                            .tint(k == weakest ? Palette.rubric : Palette.ink2)
+                    }
+                }
+                Text(quiz.isEmpty
+                     ? "Nothing graded yet. These fill in as you work the Quiz Engine."
+                     : "Your accuracy on \(quiz.count) graded question\(quiz.count == 1 ? "" : "s"). A thin bar on the first skill costs the most.")
+                    .font(.footnote).foregroundStyle(Palette.inkMuted)
+            }
+
+            if !spots.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Weak spots").rubricLabel().padding(.bottom, 8)
+                    ForEach(spots) { spot in
+                        Button { open(spot.destination) } label: {
+                            HStack(alignment: .firstTextBaseline) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(spot.label).foregroundStyle(Palette.ink)
+                                    Text(spot.detail).font(.footnote).foregroundStyle(Palette.inkMuted)
+                                }
+                                Spacer()
+                                if let p = spot.pct { Text("\(p)%").font(.headline.monospacedDigit()).foregroundStyle(Palette.rubric) }
+                                Text(spot.action).font(.footnote.weight(.semibold)).foregroundStyle(Palette.rubric)
+                            }
+                            .padding(.vertical, 8)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        Hairline(color: Palette.hair)
+                    }
+                }
+            }
+
+            if !model.vocab.isEmpty {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Vocabulary this week").rubricLabel()
+                    let peak = max(1, forecast.week.max() ?? 1)
+                    HStack(alignment: .bottom, spacing: 8) {
+                        ForEach(Array(forecast.week.enumerated()), id: \.offset) { i, n in
+                            VStack(spacing: 4) {
+                                Text("\(n)").font(.caption2.monospacedDigit()).foregroundStyle(Palette.inkMuted)
+                                RoundedRectangle(cornerRadius: 3)
+                                    .fill(i == 0 ? Palette.rubric : Palette.ruleStrong)
+                                    .frame(height: max(3, 60 * CGFloat(n) / CGFloat(peak)))
+                                Text(i == 0 ? "Today" : Calendar.current.shortWeekdaySymbols[(Calendar.current.component(.weekday, from: Date()) - 1 + i) % 7])
+                                    .font(.caption2).foregroundStyle(Palette.inkFaint)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .accessibilityElement(children: .combine)
+                        }
+                    }
+                    Text("\(forecast.mature) mature, \(forecast.learning) still learning.").font(.footnote).foregroundStyle(Palette.inkMuted)
+                }
+            }
+        }
+    }
+
+    private func pct(_ t: Tally) -> Double { t.total > 0 ? Double(t.correct) / Double(t.total) * 100 : 0 }
+
+    private func open(_ destination: Insights.Destination) {
+        switch destination {
+        case .quiz(let type):
+            model.quizPresetType = type
+            model.selectedTab = .quiz
+        case .grammar: model.selectedTab = .grammar
+        case .scansion: model.selectedTab = .scansion
+        case .vocab: model.selectedTab = .vocab
+        }
     }
 }

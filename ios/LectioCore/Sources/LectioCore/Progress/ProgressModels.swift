@@ -81,6 +81,20 @@ public struct QuizAttempt: Codable, Sendable, Hashable, Identifiable {
     public var unit: String
     public var passageId: String?
     public var seconds: Double?
+
+    public init(id: String, questionId: String, correct: Bool, chosenId: String, at: String, type: String,
+                skillCategory: String, unit: String, passageId: String?, seconds: Double?) {
+        self.id = id
+        self.questionId = questionId
+        self.correct = correct
+        self.chosenId = chosenId
+        self.at = at
+        self.type = type
+        self.skillCategory = skillCategory
+        self.unit = unit
+        self.passageId = passageId
+        self.seconds = seconds
+    }
 }
 
 public struct StudyPlanSettings: Codable, Sendable, Hashable {
