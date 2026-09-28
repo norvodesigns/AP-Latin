@@ -48,10 +48,7 @@ private struct Tabs: View {
             TabSection("Drill") {
                 Tab("Translate", systemImage: "character.book.closed", value: AppTab.translate) { TranslateView() }
                 Tab("Sight Reading", systemImage: "eye", value: AppTab.sight) { SightReadingView() }
-                Tab("Scansion", systemImage: "waveform.path", value: AppTab.scansion) {
-                    ComingSoonView(title: "Scansion Lab", systemImage: "waveform.path", webPath: "scansion",
-                                   blurb: "Mark quantities, elisions, feet and caesurae across the whole Aeneid.")
-                }
+                Tab("Scansion", systemImage: "waveform.path", value: AppTab.scansion) { ScansionLabView() }
             }
             .defaultVisibility(.hidden, for: .tabBar)
 
@@ -71,10 +68,7 @@ private struct Tabs: View {
                     ComingSoonView(title: "Practice Exam", systemImage: "timer", webPath: "exam",
                                    blurb: "The full exam: 52 multiple-choice questions in 65 minutes, then five free responses.")
                 }
-                Tab("Study Plan", systemImage: "calendar", value: AppTab.plan) {
-                    ComingSoonView(title: "Study Plan", systemImage: "calendar", webPath: "plan",
-                                   blurb: "A schedule measured backwards from exam day.")
-                }
+                Tab("Study Plan", systemImage: "calendar", value: AppTab.plan) { StudyPlanView() }
             }
             .defaultVisibility(.hidden, for: .tabBar)
 

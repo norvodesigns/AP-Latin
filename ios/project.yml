@@ -46,6 +46,10 @@ targets:
       - path: Content
         type: folder
         buildPhase: resources
+      # The Aeneid scansion corpus, straight from the website's own files.
+      - path: ../public/scansion
+        type: folder
+        buildPhase: resources
     dependencies:
       - package: LectioCore
     info:

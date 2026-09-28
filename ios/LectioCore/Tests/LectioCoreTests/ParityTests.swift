@@ -71,3 +71,70 @@ import Testing
         #expect(merged["futureLocalOnly"] == "kept")
     }
 }
+
+@Suite struct ScansionParityTests {
+    @Test func unpackingMatchesTheWebApp() throws {
+        let fixture = try Paths.fixture("scansion.json")
+        for c in try #require(fixture["lines"]?.arrayValue) {
+            let book = try #require(c["book"]?.intValue)
+            let packed: ScansionCorpus.PackedLine = try #require(c["packed"]).decode()
+            let line = ScansionCorpus.unpack(book: book, packed)
+            let diff = firstDifference(try JSONValue(encoding: line), try #require(c["expected"]))
+            #expect(diff == nil, "\(line.id): \(diff ?? "")")
+        }
+    }
+
+    @Test func statsAndBadgesMatchTheWebApp() throws {
+        let fixture = try Paths.fixture("scansion.json")
+        let attempts: [ScansionAttempt] = try #require(fixture["attempts"]).decode()
+        let stats = ScansionStats.byLine(attempts)
+        for (id, expected) in try #require(fixture["stats"]?.objectValue) {
+            let s = try #require(stats[id])
+            #expect(s.attempts == expected["attempts"]?.intValue)
+            #expect(s.bestAccuracy == expected["bestAccuracy"]?.doubleValue)
+            #expect(s.lastAccuracy == expected["lastAccuracy"]?.doubleValue)
+            #expect(s.mastered == expected["mastered"]?.boolValue)
+        }
+        for c in try #require(fixture["badgeCases"]?.arrayValue) {
+            let a: [ScansionAttempt] = try #require(c["attempts"]).decode()
+            let badges = ScansionStats.badges(a, poolSize: try #require(c["poolSize"]?.intValue))
+            let expected = try #require(c["badges"]?.arrayValue)
+            #expect(badges.map(\.id) == expected.compactMap { $0["id"]?.stringValue })
+            #expect(badges.map(\.earned) == expected.compactMap { $0["earned"]?.boolValue })
+            #expect(badges.map(\.detail) == expected.compactMap { $0["detail"]?.stringValue })
+        }
+    }
+
+    @Test func corpusLoadsFromTheWebsitesFiles() throws {
+        let dir = Paths.testsDir.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+            .deletingLastPathComponent().appendingPathComponent("public/scansion")
+        let corpus = try ScansionCorpus(directory: dir)
+        #expect(corpus.index.total > 6000)
+        let book1 = try corpus.loadBook(1)
+        #expect(book1.count == corpus.index.books.first { $0.book == 1 }?.count)
+        #expect(ScansionCorpus.parseLineId(book1[0].id)?.book == 1)
+    }
+
+    @Test func gradingFollowsTheWebRules() throws {
+        let dir = Paths.testsDir.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+            .deletingLastPathComponent().appendingPathComponent("public/scansion")
+        let line = try #require(try ScansionCorpus(directory: dir).loadBook(1).first { !$0.syllables.contains(where: \.isElided) })
+        var work = ScansionWork(line: line, draft: nil)
+        // Mark every syllable correctly and rule the real boundaries.
+        for (i, s) in line.syllables.enumerated() { work.setMark(i, s.quantity) }
+        let metrical = work.metricalIndices
+        for d in work.correctDivisions { work.toggleDivision(after: metrical[d]) }
+        #expect(work.isReady)
+        #expect(work.groups.compactMap(work.footName) == line.feet.map { $0 == "dactyl" ? "Dactyl" : "Spondee" })
+        let score = work.score
+        #expect(score.correct == score.total)
+        // The last syllable is anceps: short is right there too.
+        work.setMark(line.syllables.count - 1, "short")
+        #expect(work.score.correct == score.total)
+        // Claiming a false elision costs that junction and clears its mark.
+        let junction = try #require(work.elidableIndices.first)
+        work.toggleElision(junction)
+        #expect(work.marks[junction] == nil)
+        #expect(work.score.correct < score.total)
+    }
+}

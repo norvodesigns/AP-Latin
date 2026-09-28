@@ -22,7 +22,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { mergeSyncable } from '../src/lib/mergeProgress';
-import { sm2, newCard, currentStreak, longestStreak, blankSyncableData, type SyncableData } from '../src/store/useStore';
+import { sm2, newCard, currentStreak, longestStreak, blankSyncableData, scansionStatsByLine, scansionBadges, type SyncableData } from '../src/store/useStore';
+import { unpackLine } from '../src/data/scansionCorpus';
 
 /** Every "now" the real code sees while this script runs. (The imports above
  *  only read the clock inside the functions called below, never at load
@@ -244,6 +245,24 @@ const streakCases = [
 ].map((days) => ({ studyDays: days, current: currentStreak(days), longest: longestStreak(days) }));
 
 /* ------------------------------------------------------------------ */
+/* Scansion: unpacking the corpus, and per-line stats and badges       */
+/* ------------------------------------------------------------------ */
+
+const scansionLines = [1, 4, 12].flatMap((book) => {
+  const packed = JSON.parse(readFileSync(join(root, 'public', 'scansion', `aen${book}.json`), 'utf8'));
+  return packed.l.slice(0, 20).map((l: Parameters<typeof unpackLine>[1]) => ({ book, packed: l, expected: unpackLine(book, l) }));
+});
+const scansionAttempts = [
+  { id: 'a1', lineId: 'scan-aen-1-1', at: '2026-10-01T00:00:00.000Z', correct: 20, total: 24 },
+  { id: 'a2', lineId: 'scan-aen-1-1', at: '2026-10-02T00:00:00.000Z', correct: 24, total: 24 },
+  { id: 'a3', lineId: 'scan-aen-1-3', at: '2026-10-03T00:00:00.000Z', correct: 10, total: 25 },
+  ...Array.from({ length: 6 }, (_, i) => ({ id: `p${i}`, lineId: `scan-aen-2-${i}`, at: '2026-10-04T00:00:00.000Z', correct: 22, total: 22 })),
+  { id: 'a4', lineId: 'scan-aen-1-3', at: '2026-10-05T00:00:00.000Z', correct: 0, total: 0 },
+];
+const scansionStats = Object.fromEntries(scansionStatsByLine(scansionAttempts));
+const scansionBadgeCases = [[], scansionAttempts].map((attempts) => ({ attempts, poolSize: 7, badges: scansionBadges(attempts, 7) }));
+
+/* ------------------------------------------------------------------ */
 /* Write, or verify                                                    */
 /* ------------------------------------------------------------------ */
 
@@ -251,6 +270,7 @@ const rendered: Record<string, string> = {
   'merge.json': JSON.stringify({ cases: mergeCases }) + '\n',
   'sm2.json': JSON.stringify({ now: new RealDate(FIXED_NOW).toISOString(), cases: sm2Cases }, null, 1) + '\n',
   'streaks.json': JSON.stringify({ now: new RealDate(FIXED_NOW).toISOString(), cases: streakCases }, null, 1) + '\n',
+  'scansion.json': JSON.stringify({ lines: scansionLines, attempts: scansionAttempts, stats: scansionStats, badgeCases: scansionBadgeCases }) + '\n',
 };
 
 if (check) {

@@ -318,11 +318,28 @@ public struct ScannedSyllable: Codable, Sendable, Hashable {
     public let startsWord: Bool?
     public let anceps: Bool?
     public let reason: String?
+
+    public init(text: String, quantity: String, elides: Bool?, startsWord: Bool?, anceps: Bool? = nil, reason: String? = nil) {
+        self.text = text
+        self.quantity = quantity
+        self.elides = elides
+        self.startsWord = startsWord
+        self.anceps = anceps
+        self.reason = reason
+    }
+
+    public var isElided: Bool { elides ?? false }
+    public var isAnceps: Bool { anceps ?? false }
 }
 
 public struct Caesura: Codable, Sendable, Hashable {
     public let afterSyllable: Int
     public let type: String
+
+    public init(afterSyllable: Int, type: String) {
+        self.afterSyllable = afterSyllable
+        self.type = type
+    }
 }
 
 public struct ScansionLine: Codable, Sendable, Hashable, Identifiable {
@@ -334,6 +351,18 @@ public struct ScansionLine: Codable, Sendable, Hashable, Identifiable {
     public let syllables: [ScannedSyllable]
     public let caesurae: [Caesura]
     public let notes: String
+
+    public init(id: String, passageId: String, citation: String, latin: String, feet: [String],
+                syllables: [ScannedSyllable], caesurae: [Caesura], notes: String) {
+        self.id = id
+        self.passageId = passageId
+        self.citation = citation
+        self.latin = latin
+        self.feet = feet
+        self.syllables = syllables
+        self.caesurae = caesurae
+        self.notes = notes
+    }
 }
 
 /* ------------------------------------------------------------------ */
