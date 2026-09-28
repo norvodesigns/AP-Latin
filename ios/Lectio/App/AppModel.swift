@@ -55,6 +55,8 @@ final class AppModel {
     private(set) var vocab: [String: VocabCard] = [:]
     /// Set by a dashboard "Drill it" link; the Quiz Engine narrows to it.
     var quizPresetType: String? = nil
+    /// The Reading Room's navigation stack, so a link can open a passage.
+    var readPath: [Passage] = []
     var selectedTab: AppTab = .today {
         didSet { if oldValue != selectedTab { studySectionChanged() } }
     }

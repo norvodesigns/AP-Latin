@@ -148,10 +148,10 @@ jobs:
               xcrun simctl terminate "$udid" com.norvodesigns.lectio || true
               xcrun simctl launch "$udid" com.norvodesigns.lectio -seedDemo YES
               sleep 10
-              for tab in today read vocab quiz scansion grammar exam plan; do
+              for tab in today read vocab quiz scansion grammar exam plan read/aen-1-1-33 read/pliny-6-16-a; do
                 xcrun simctl openurl "$udid" "lectio://$tab"
                 sleep 3
-                xcrun simctl io "$udid" screenshot "shots/$label-$mode-$tab.png"
+                xcrun simctl io "$udid" screenshot "shots/$label-$mode-${tab//\//-}.png"
               done
             done
             xcrun simctl shutdown "$udid" || true

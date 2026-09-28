@@ -26,7 +26,7 @@ extension AppModel {
                 doc.recordQuiz(questionId: q.id, correct: chosen == q.answerId, chosenId: chosen, type: q.type,
                                skillCategory: q.skillCategory, unit: q.unit, passageId: q.passageId, now: now)
             }
-            if let aeneid = library.passages.first(where: { $0.id.hasPrefix("vergil-1") }) {
+            if let aeneid = library.passage("aen-1-1-33") {
                 doc.markOpened(aeneid.id, now: now)
                 doc.toggleBookmark(aeneid.id)
                 if let line = aeneid.lines.first {

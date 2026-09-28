@@ -37,8 +37,14 @@ struct RootView: View {
             Tabs()
                 .environment(\.library, library)
                 .onOpenURL { url in
-                    // lectio://vocab, lectio://read, … — from the widget.
-                    if let tab = AppTab(host: url.host()) { model.selectedTab = tab }
+                    // lectio://vocab, lectio://read, … (the widget), and
+                    // lectio://read/<passage-id> to open a passage.
+                    guard let tab = AppTab(host: url.host()) else { return }
+                    model.selectedTab = tab
+                    let id = url.lastPathComponent
+                    if tab == .read, id != "/", !id.isEmpty, let passage = library.passage(id) {
+                        model.readPath = [passage]
+                    }
                 }
         }
     }

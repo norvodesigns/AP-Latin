@@ -9,7 +9,8 @@ struct ReadIndexView: View {
     @State private var showSupplementary = true
 
     var body: some View {
-        NavigationStack {
+        @Bindable var model = model
+        NavigationStack(path: $model.readPath) {
             List {
                 if let library {
                     ForEach(library.passagesByUnit) { group in
