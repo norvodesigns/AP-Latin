@@ -25,6 +25,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/context`, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${SITE_URL}/sight`, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${SITE_URL}/plan`, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${SITE_URL}/privacy`, changeFrequency: 'yearly', priority: 0.2 },
+    { url: `${SITE_URL}/support`, changeFrequency: 'yearly', priority: 0.2 },
   ];
 
   const passages: MetadataRoute.Sitemap = allPassages.map((p) => ({

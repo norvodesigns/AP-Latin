@@ -87,6 +87,17 @@ struct SettingsView: View {
                     Link(destination: AppConfig.webBaseURL) {
                         Label("lectio.norvodesigns.com", systemImage: "safari")
                     }
+                    Link(destination: AppConfig.web("privacy")) {
+                        Label("Privacy", systemImage: "hand.raised")
+                    }
+                    Link(destination: AppConfig.web("support")) {
+                        Label("Support", systemImage: "questionmark.circle")
+                    }
+                    NavigationLink {
+                        LicensesView()
+                    } label: {
+                        Label("Acknowledgements", systemImage: "text.book.closed")
+                    }
                 }
             }
             .pageBackground()
@@ -136,5 +147,28 @@ nonisolated struct ProgressExport: Transferable, Sendable {
     static var transferRepresentation: some TransferRepresentation {
         DataRepresentation(exportedContentType: .json) { export in Data(export.json.utf8) }
             .suggestedFileName("lectio-backup.json")
+    }
+}
+
+/// The bundled fonts are under the SIL Open Font License, which asks for the
+/// licence to travel with them; the Latin texts are public domain.
+private struct LicensesView: View {
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                Text("Latin texts are from The Latin Library and are in the public domain. The Course and Exam Description material follows the College Board's published 2025 framework.")
+                    .font(.prose(.callout))
+                ForEach(["EBGaramond-OFL", "Italianno-OFL"], id: \.self) { name in
+                    if let url = Bundle.main.url(forResource: name, withExtension: "txt"),
+                       let text = try? String(contentsOf: url, encoding: .utf8) {
+                        Text(name.replacingOccurrences(of: "-OFL", with: "")).rubricLabel()
+                        Text(text).font(.caption.monospaced()).foregroundStyle(Palette.ink2)
+                    }
+                }
+            }
+            .padding(20)
+        }
+        .pageBackground()
+        .navigationTitle("Acknowledgements")
     }
 }
