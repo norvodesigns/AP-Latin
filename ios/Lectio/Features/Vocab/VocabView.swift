@@ -113,6 +113,7 @@ struct VocabView: View {
             }
         }
         .scrollContentBackground(.hidden)
+        .readableColumn()
         .pageBackground()
         .navigationTitle("Vocabulary")
         .searchable(text: $search, placement: .navigationBarDrawer(displayMode: .automatic), prompt: "Search words or meanings")

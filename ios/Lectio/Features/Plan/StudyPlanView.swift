@@ -139,7 +139,7 @@ struct StudyPlanView: View {
                                 if p.id == current.id {
                                     Text("you are here").font(.caption.weight(.semibold))
                                         .padding(.horizontal, 8).padding(.vertical, 3)
-                                        .foregroundStyle(.white).background(Palette.rubric, in: .capsule)
+                                        .foregroundStyle(Palette.onRubric).background(Palette.rubric, in: .capsule)
                                 }
                                 Spacer()
                                 Text("\(p.from)–\(p.to) days out").quietLabel()

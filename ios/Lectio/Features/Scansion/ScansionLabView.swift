@@ -109,7 +109,7 @@ struct ScansionLabView: View {
                 badges(attempts, pool: corpus.index.total)
             }
             .padding(20)
-            .frame(maxWidth: 900, alignment: .leading)
+            .frame(maxWidth: 760, alignment: .leading)
             .frame(maxWidth: .infinity)
         }
         .safeAreaInset(edge: .bottom) {
@@ -260,67 +260,112 @@ private struct LineScansion: View {
     let tool: ScansionLabView.Tool
     let onTap: (Int) -> Void
 
+    /// Where each syllable sits among the student's feet.
+    private struct Place {
+        let group: ScansionWork.Group
+        let isFoot: Bool
+        let startsGroup: Bool
+        let endsGroup: Bool
+    }
+
     var body: some View {
         let groups = work.groups
-        FlowLayout(lineSpacing: 26) {
-            ForEach(Array(groups.enumerated()), id: \.offset) { gi, group in
-                let isLast = gi == groups.count - 1
-                let isFoot = group.closed || (isLast && work.divisions.count == 5)
-                VStack(spacing: 6) {
-                    HStack(alignment: .bottom, spacing: 0) {
-                        ForEach(group.syllables, id: \.self) { i in syllable(i) }
-                    }
-                    // A ruled bracket under each foot the student has divided,
-                    // named from their own marks, never from the answer.
-                    if isFoot {
-                        VStack(spacing: 2) {
-                            Rectangle().fill(bracketColor(group)).frame(height: 1)
-                            Text(work.footName(group) ?? " ").font(.caption2.weight(.medium)).tracking(1).textCase(.uppercase)
-                                .foregroundStyle(Palette.inkMuted)
-                        }
-                    } else {
-                        Text(" ").font(.caption2)
+        var places: [Int: Place] = [:]
+        for (gi, group) in groups.enumerated() {
+            let isFoot = group.closed || (gi == groups.count - 1 && work.divisions.count == 5)
+            for i in group.syllables {
+                places[i] = Place(group: group, isFoot: isFoot, startsGroup: i == group.syllables.first,
+                                  endsGroup: i == group.syllables.last)
+            }
+        }
+        let placeOf = places
+        // The line wraps between words, never inside one, and a word is never
+        // squeezed: each is laid out at its own size.
+        return FlowLayout(lineSpacing: 18) {
+            ForEach(words, id: \.self) { word in
+                HStack(alignment: .top, spacing: 0) {
+                    ForEach(word, id: \.self) { i in
+                        if let place = placeOf[i] { syllable(i, place: place) }
                     }
                 }
-                .padding(.horizontal, 3)
-                .overlay(alignment: .trailing) {
-                    if group.closed {
-                        Rectangle().fill(boundaryColor(group)).frame(width: 2).offset(x: 2)
-                    }
-                }
-                .padding(.trailing, group.closed ? 8 : 0)
+                .fixedSize()
             }
         }
     }
 
+    /// Syllable indices grouped into words.
+    private var words: [[Int]] {
+        var out: [[Int]] = []
+        for (i, syl) in work.line.syllables.enumerated() {
+            if i == 0 || syl.startsWord != false || out.isEmpty { out.append([i]) } else { out[out.count - 1].append(i) }
+        }
+        return out
+    }
+
     @ViewBuilder
-    private func syllable(_ i: Int) -> some View {
+    private func syllable(_ i: Int, place: Place) -> some View {
         let syl = work.line.syllables[i]
         let showElided = work.checked ? syl.isElided : work.elisions.contains(i)
         let mark = work.marks[i]
         let elidable = work.elidableIndices.contains(i)
-        VStack(spacing: 2) {
-            Text(mark == "long" ? "–" : mark == "short" ? "⏑" : " ")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(markColor(i))
-                .frame(height: 22)
-            HStack(spacing: 0) {
-                Text(syl.text)
-                    .font(.latin(26))
-                    .strikethrough(showElided, color: Palette.inkFaint)
-                    .foregroundStyle(textColor(i, elided: showElided))
-                if caesuraAfter(i) {
-                    Text(" ‖").font(.latin(22)).foregroundStyle(Palette.rubric)
+        let lead: CGFloat = i != 0 && syl.startsWord != false ? 10 : 0
+        let trail: CGFloat = place.endsGroup && place.group.closed ? 10 : 0
+        VStack(alignment: .leading, spacing: 4) {
+            VStack(spacing: 2) {
+                Text(mark == "long" ? "–" : mark == "short" ? "⏑" : " ")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(markColor(i))
+                    .frame(height: 22)
+                HStack(spacing: 0) {
+                    Text(syl.text)
+                        .font(.latin(26))
+                        .strikethrough(showElided, color: Palette.inkFaint)
+                        .foregroundStyle(textColor(i, elided: showElided))
+                    if caesuraAfter(i) {
+                        Text(" ‖").font(.latin(22)).foregroundStyle(Palette.rubric)
+                    }
+                }
+                .fixedSize()
+                // The elision target: shown on every word-final syllable,
+                // whether or not it really elides, so its presence gives
+                // nothing away.
+                Circle()
+                    .fill(elisionColor(i, elidable: elidable))
+                    .frame(width: 7, height: 7)
+                    .opacity(elidable ? 1 : 0)
+            }
+            .padding(.leading, lead)
+            .padding(.trailing, trail)
+            .overlay(alignment: .trailing) {
+                // The student's own boundary after a foot.
+                if place.endsGroup && place.group.closed {
+                    Rectangle().fill(boundaryColor(place.group)).frame(width: 2).padding(.vertical, 4).offset(x: -3)
                 }
             }
-            // The elision target: shown on every word-final syllable, whether
-            // or not it really elides, so its presence gives nothing away.
-            Circle()
-                .fill(elisionColor(i, elidable: elidable))
-                .frame(width: 7, height: 7)
-                .opacity(elidable ? 1 : 0)
+            .padding(.bottom, 6)
+            .overlay(alignment: .bottom) {
+                // A ruled bracket under each foot the student has divided,
+                // named from their own marks, never from the answer. It runs
+                // on across the gap between words inside a foot.
+                HStack(spacing: 0) {
+                    Color.clear.frame(width: place.startsGroup ? lead : 0)
+                    Rectangle().fill(place.isFoot ? bracketColor(place.group) : .clear)
+                    Color.clear.frame(width: trail)
+                }
+                .frame(height: 1)
+            }
+            Text(" ")
+                .font(.caption2)
+                .overlay(alignment: .topLeading) {
+                    if place.isFoot, place.startsGroup {
+                        Text(work.footName(place.group) ?? " ")
+                            .font(.caption2.weight(.medium)).tracking(1).textCase(.uppercase)
+                            .foregroundStyle(Palette.inkMuted)
+                            .fixedSize()
+                            .padding(.leading, lead)
+                    }
+                }
         }
-        .padding(.leading, i != 0 && syl.startsWord != false ? 10 : 0)
         .contentShape(Rectangle())
         .onTapGesture { onTap(i) }
         .accessibilityElement(children: .ignore)

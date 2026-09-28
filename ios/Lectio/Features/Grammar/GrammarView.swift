@@ -47,6 +47,7 @@ struct GrammarView: View {
                 }
             }
             .listStyle(.plain)
+            .readableColumn()
             .pageBackground()
             .navigationTitle("Grammar & Syntax")
             .navigationDestination(for: GrammarTopic.self) { GrammarTopicView(topic: $0) }

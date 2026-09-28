@@ -206,7 +206,7 @@ struct ChipStyle: ButtonStyle {
         configuration.label
             .padding(.horizontal, 12)
             .padding(.vertical, 7)
-            .foregroundStyle(on ? Color.white : Palette.ink)
+            .foregroundStyle(on ? Palette.onRubric : Palette.ink)
             .background(on ? Palette.rubric : Palette.slip, in: .capsule)
             .overlay(Capsule().strokeBorder(on ? Color.clear : Palette.ruleStrong, lineWidth: 0.5))
             .scaleEffect(configuration.isPressed ? 0.96 : 1)

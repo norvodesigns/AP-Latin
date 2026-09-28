@@ -180,7 +180,7 @@ struct ExamSessionView: View {
                         Button("\(i + 1)") { cursor = i }
                             .font(.caption.monospacedDigit())
                             .frame(width: 30, height: 30)
-                            .foregroundStyle(i == cursor ? .white : Palette.ink)
+                            .foregroundStyle(i == cursor ? Palette.onRubric : Palette.ink)
                             .background(i == cursor ? Palette.rubric : answers[i] != nil ? Palette.sunk : .clear, in: .circle)
                             .overlay(alignment: .topTrailing) {
                                 if flagged.contains(i) { Circle().fill(Palette.gilt).frame(width: 7, height: 7) }

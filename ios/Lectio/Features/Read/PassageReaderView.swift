@@ -282,6 +282,7 @@ struct PassageReaderView: View {
 
 private struct LineRow: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.horizontalSizeClass) private var sizeClass
     let passage: Passage
     let line: PassageLine
     let annotations: [Annotation]
@@ -316,7 +317,8 @@ private struct LineRow: View {
                     }
                 }
             }
-            .font(.latin(passage.isPoetry ? 22 : 21, scale: model.latinScale))
+            // A little larger on an iPad, where the page is held further away.
+            .font(.latin(passage.isPoetry ? 22 : 21, scale: model.latinScale * (sizeClass == .regular ? 1.2 : 1)))
             .foregroundStyle(Palette.ink)
         }
         .padding(.vertical, passage.isPoetry ? 3 : 8)

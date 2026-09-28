@@ -15,6 +15,7 @@ struct AccountView: View {
                 SignInForm()
             }
         }
+        .readableColumn()
         .pageBackground()
         .navigationTitle("Account")
         .navigationBarTitleDisplayMode(.inline)

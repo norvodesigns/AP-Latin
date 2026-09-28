@@ -29,6 +29,7 @@ struct ClassroomView: View {
                     }
                 }
             }
+            .readableColumn()
             .pageBackground()
             .navigationTitle("Classroom")
             .navigationDestination(for: AppModel.Classroom.self) { ClassroomDetailView(classroom: $0) }
@@ -183,6 +184,7 @@ struct ClassroomDetailView: View {
             }
         }
         .scrollContentBackground(.hidden)
+        .readableColumn()
         .pageBackground()
         .navigationTitle(classroom.name)
         .task { await load() }

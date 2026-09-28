@@ -115,6 +115,7 @@ struct SettingsView: View {
                     }
                 }
             }
+            .readableColumn()
             .pageBackground()
             .navigationTitle("Settings")
             .fileImporter(isPresented: $importing, allowedContentTypes: [.json]) { result in
@@ -183,6 +184,7 @@ private struct LicensesView: View {
             }
             .padding(20)
         }
+        .readableColumn()
         .pageBackground()
         .navigationTitle("Acknowledgements")
     }

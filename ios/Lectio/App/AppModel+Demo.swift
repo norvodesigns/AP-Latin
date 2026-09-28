@@ -6,7 +6,11 @@ import LectioCore
 /// device with no progress of its own.
 extension AppModel {
     func seedDemoIfRequested() {
-        guard UserDefaults.standard.bool(forKey: "seedDemo"), let library = content, progress.vocab.isEmpty else { return }
+        guard UserDefaults.standard.bool(forKey: "seedDemo"), let library = content else { return }
+        // The same point in the day on every launch, so every screenshot agrees.
+        studySecondsToday = 18 * 60
+        studyGoalDate = StudyDates.today()
+        guard progress.vocab.isEmpty else { return }
         let now = Date()
         let calendar = Calendar.current
         update { doc in
@@ -35,7 +39,5 @@ extension AppModel {
                 }
             }
         }
-        studySecondsToday = 18 * 60
-        studyGoalDate = StudyDates.today()
     }
 }

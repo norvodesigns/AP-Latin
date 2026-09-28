@@ -24,6 +24,9 @@ enum Palette {
 
     /// Rubrication red — the one accent.
     static let rubric = Color("Rubric")
+    /// Text on a rubric fill: the page colour, so it's light on the deep red
+    /// of light mode and dark on the brighter red of dark mode.
+    static let onRubric = Color("Parchment")
     static let redLine = Color("RedLine")
     /// A word marked under the reader's finger.
     static let redTint = Color("RedTint")

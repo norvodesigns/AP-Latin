@@ -39,6 +39,13 @@ struct PageBackground: ViewModifier {
 
 extension View {
     func pageBackground() -> some View { modifier(PageBackground()) }
+
+    /// Keeps a page to a readable column on a wide screen (an iPad). A phone
+    /// is narrower than the column, so it's unaffected. Goes before
+    /// `pageBackground()`, so the parchment still fills the screen.
+    func readableColumn(_ width: CGFloat = 760) -> some View {
+        frame(maxWidth: width).frame(maxWidth: .infinity)
+    }
 }
 
 /// Lays children out left to right, wrapping onto new lines — how a line of

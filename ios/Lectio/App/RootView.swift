@@ -144,6 +144,9 @@ struct PushedSection: View {
             }
         }
         .environment(\.isPushedSection, true)
+        // A pushed page takes an inline title, like the Reader. (A large one
+        // was drawn over the top of a pushed scroll view's content.)
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 

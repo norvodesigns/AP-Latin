@@ -34,6 +34,7 @@ struct ReadIndexView: View {
                 }
             }
             .listStyle(.plain)
+            .readableColumn()
             .pageBackground()
             .navigationTitle("Reading Room")
             .navigationDestination(for: Passage.self) { PassageReaderView(passage: $0) }

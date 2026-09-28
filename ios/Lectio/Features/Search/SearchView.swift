@@ -51,6 +51,7 @@ struct SearchView: View {
                 }
             }
             .listStyle(.plain)
+            .readableColumn()
             .pageBackground()
             .overlay {
                 if trimmed.isEmpty {

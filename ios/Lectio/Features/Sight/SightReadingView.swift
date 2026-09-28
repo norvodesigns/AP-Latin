@@ -61,6 +61,7 @@ struct SightReadingView: View {
                 }
             }
             .listStyle(.plain)
+            .readableColumn()
             .pageBackground()
             .navigationTitle("Sight Reading")
             .navigationDestination(for: SightItem.self) { SightAttemptView(item: $0) }
