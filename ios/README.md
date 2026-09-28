@@ -101,25 +101,36 @@ Either route works:
 The app record has to exist in App Store Connect before the first upload: Apps → + → New App,
 bundle ID `com.norvodesigns.lectio`.
 
-## What's here and what's next
+## What's in the app
 
-**Built so far:**
+Every section of the website, rebuilt natively:
 
-- Today: countdown, streaks, cards due, pick up where you left off.
-- Reading Room: every passage, with tap-any-word glossary, bookmarks, flagged lines, and a cold-read
-  toggle.
-- Vocabulary: SM-2 flashcards, with units added a unit at a time.
-- Grammar reference with paradigm charts.
-- Search across passages, vocabulary and grammar.
-- Settings: appearance, Latin size, backup export and import in the website's own file format.
+| | |
+| --- | --- |
+| **Today** | Countdown, streaks, today's goal, mastery by skill, weak spots (each opens the right drill), the vocabulary week ahead |
+| **Reading Room** | Every passage; tap any word for its gloss; touch and hold to highlight a span in one of four pigments, add a note, or ask the AI tutor about the line; bookmarks, hard-line flags, cold reads, notes and context |
+| **Vocabulary** | SM-2 flashcards: Latin → English, English → Latin, or in context; scope by unit or passage; new-card batches; browse and search |
+| **Quiz Engine** | Filters by author, passage, unit, skill and type; explanations; review queue |
+| **Translate** | FRQ 2 drills, AI-graded per segment or self-scored against the requirements |
+| **Sight Reading** | Vetted passages against the clock, plus the AI generator (labelled machine-selected) |
+| **Scansion Lab** | The whole Aeneid: quantities, feet and elisions, each asked and scored |
+| **Grammar, Devices, Context** | References, study decks, spot-the-device, context quiz |
+| **FRQ Workshop** | All five types, timed, official rubric rows, AI essay and short-answer feedback, Course Project passages |
+| **Practice Exam** | 52 MCQ / 65 min, 5 FRQ / 115 min, scored report |
+| **Study Plan** | Phases back from exam day, schedule, progress |
+| **Classroom** | Join with a code, assignments and leaderboard; teachers see their classes |
+| **Account** | Sign in, two-way sync with the website, delete account |
 
-The remaining sections open their web version for now.
+Also: Home Screen and Lock Screen **widgets**, a daily **reminder**, and an **Apple Watch** app for
+the day's flashcards (the iPhone schedules; grades made on the wrist sync back through it).
 
-**Next:**
+### Targets
 
-1. Sign-in and two-way sync with the website.
-2. Quiz Engine.
-3. Highlights and notes in the Reader.
-4. The rest of the drills and exam sections.
-5. Widgets and reminders.
-6. Apple Watch flashcards (a watchOS target on the same LectioCore).
+- `Lectio`: the iPhone and iPad app.
+- `LectioWidgets`: the widget extension. It reads a snapshot from the `group.com.norvodesigns.lectio`
+  app group.
+- `LectioWatch`: the watchOS app. It talks to the phone over WatchConnectivity.
+- `LectioCore`: shared by all three.
+
+The app group and the watch app's bundle ID (`com.norvodesigns.lectio.watchkitapp`) are registered
+automatically the first time Xcode signs each target.

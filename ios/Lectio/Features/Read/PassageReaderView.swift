@@ -139,10 +139,36 @@ struct PassageReaderView: View {
     }
 
     private var footer: some View {
-        Text("Tap a word for its gloss. Touch and hold to highlight, add a note, or ask about the line.")
-            .font(.footnote)
-            .foregroundStyle(Palette.inkFaint)
-            .padding(.top, 28)
+        let all = library?.passages ?? []
+        let i = all.firstIndex { $0.id == passage.id }
+        let prev = i.flatMap { $0 > 0 ? all[$0 - 1] : nil }
+        let next = i.flatMap { $0 + 1 < all.count ? all[$0 + 1] : nil }
+        return VStack(alignment: .leading, spacing: 18) {
+            Text("Tap a word for its gloss. Touch and hold to highlight, add a note, or ask about the line.")
+                .font(.footnote)
+                .foregroundStyle(Palette.inkFaint)
+            Hairline()
+            HStack(alignment: .top) {
+                if let prev {
+                    NavigationLink(value: prev) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("← Previous").quietLabel()
+                            Text(prev.citation).font(.latin(17)).foregroundStyle(Palette.ink)
+                        }
+                    }
+                }
+                Spacer()
+                if let next {
+                    NavigationLink(value: next) {
+                        VStack(alignment: .trailing, spacing: 2) {
+                            Text("Next →").quietLabel()
+                            Text(next.citation).font(.latin(17)).foregroundStyle(Palette.ink)
+                        }
+                    }
+                }
+            }
+        }
+        .padding(.top, 28)
     }
 
     @ToolbarContentBuilder
