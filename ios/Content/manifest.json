@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "contentHash": "64de914d3defcee01f150f80eec2a4854bc99835190f9a7a42fa4bda311457e4",
+  "files": {
+    "passages.json": "eabfd92aee41c220d44e6e693419b7cf514e4520243cd594a7726850434416e8",
+    "vocabulary.json": "82d850ac355d38e7dca50d5d876a089edd468d430c6af7303c540d06d5f602c2",
+    "questions.json": "a9fe17b84f5a83c7c53409b4d3aaafd88fdc42edae6820e8ee67367083d24500",
+    "grammar.json": "f272da913cc476fd6d6172b8d76224bfd440f3e87263c2d8d4e29bc10ac931d6",
+    "devices.json": "fc4e104877506b03b3a6de93b9a096436820185ecaefb5654b90cc73497915d6",
+    "context.json": "cbd515fb1b3422a7282ddf0ff95881eafb7f8c24c2fdabd433eac4d69203aa43",
+    "frq.json": "e52aa14c0a4aabaf15653accbcb38e5230de184f06e1d9e42891f5caf891d184",
+    "sight.json": "95f79762b62b8a48880b57fb593cca65514c5737d6a8a4be38e7c01d35335afa",
+    "translation.json": "a1abd95c629102e1038f414fba2fccb4b6fd619da2b302e7a9f676b0885be131",
+    "scansion.json": "ab7211ef183bcfe02b9c7d918fc0047abba016f85d629a147535c3640ac712a7",
+    "meta.json": "efd00c603b7c2a1dd44933f4642867306c93df6d887b6c4aab5afb0b28eaff7d"
+  }
+}

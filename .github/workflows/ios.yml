@@ -1,0 +1,133 @@
+name: iOS
+
+# Builds and tests the native app. Everything under ios/ is written on a Linux
+# machine that can't compile for iOS, so this workflow is the proof that the
+# Swift builds before anyone opens Xcode.
+#
+# Manual runs (Actions → iOS → Run workflow) can also upload a TestFlight
+# build. That needs three repository secrets — ASC_KEY_ID, ASC_ISSUER_ID and
+# ASC_KEY_P8 (the contents of the App Store Connect API key's .p8 file,
+# created with the Admin role so Xcode can manage the distribution
+# certificate). See ios/README.md.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ios/**'
+      - 'src/data/**'
+      - 'src/lib/latin.ts'
+      - 'src/lib/mergeProgress.ts'
+      - 'src/store/useStore.ts'
+      - 'scripts/export-*.ts'
+      - '.github/workflows/ios.yml'
+  pull_request:
+    paths:
+      - 'ios/**'
+      - 'src/data/**'
+      - 'src/lib/latin.ts'
+      - 'src/lib/mergeProgress.ts'
+      - 'src/store/useStore.ts'
+      - 'scripts/export-*.ts'
+      - '.github/workflows/ios.yml'
+  workflow_dispatch:
+    inputs:
+      testflight:
+        description: Upload a build to TestFlight
+        type: boolean
+        default: false
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core:
+    name: LectioCore tests (Linux)
+    runs-on: ubuntu-latest
+    container: swift:6.2
+    steps:
+      - uses: actions/checkout@v4
+      - name: swift test
+        working-directory: ios/LectioCore
+        run: swift test
+
+  app:
+    name: Build app (iPhone + iPad simulator)
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          brew install xcodegen
+      - name: Generate project
+        working-directory: ios
+        run: xcodegen generate
+      - name: LectioCore tests (macOS)
+        working-directory: ios/LectioCore
+        run: swift test
+      - name: Build
+        working-directory: ios
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project Lectio.xcodeproj \
+            -scheme Lectio \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            | tee build.log | grep -E '(error|warning: .*(deprecated|isolat|Sendable))|BUILD (SUCCEEDED|FAILED)' || true
+          grep -q 'BUILD SUCCEEDED' build.log
+      - name: Upload build log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcodebuild-log
+          path: ios/build.log
+
+  testflight:
+    name: Upload to TestFlight
+    if: github.event_name == 'workflow_dispatch' && inputs.testflight
+    needs: [core, app]
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain
+        run: brew install xcodegen
+      - name: Generate project
+        working-directory: ios
+        run: xcodegen generate
+      - name: App Store Connect key
+        env:
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/asc"
+          printf '%s' "$ASC_KEY_P8" > "$RUNNER_TEMP/asc/key.p8"
+      - name: Archive
+        working-directory: ios
+        run: |
+          xcodebuild archive \
+            -project Lectio.xcodeproj \
+            -scheme Lectio \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/Lectio.xcarchive \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/asc/key.p8" \
+            -authenticationKeyID "${{ secrets.ASC_KEY_ID }}" \
+            -authenticationKeyIssuerID "${{ secrets.ASC_ISSUER_ID }}" \
+            CURRENT_PROJECT_VERSION=${{ github.run_number }}
+      - name: Upload
+        working-directory: ios
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath build/Lectio.xcarchive \
+            -exportOptionsPlist ExportOptions.plist \
+            -exportPath build/export \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/asc/key.p8" \
+            -authenticationKeyID "${{ secrets.ASC_KEY_ID }}" \
+            -authenticationKeyIssuerID "${{ secrets.ASC_ISSUER_ID }}"
+      - name: Remove key
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/asc"

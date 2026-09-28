@@ -1,0 +1,103 @@
+# XcodeGen spec for the Lectio iOS/iPadOS app.
+#
+# The .xcodeproj is generated from this file and not committed, so it can
+# never drift or conflict. After pulling:
+#
+#     brew install xcodegen      # once
+#     cd ios && xcodegen
+#     open Lectio.xcodeproj
+#
+# Re-run `xcodegen` whenever files are added or removed.
+
+name: Lectio
+
+options:
+  bundleIdPrefix: com.norvodesigns
+  deploymentTarget:
+    iOS: "26.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    DEVELOPMENT_TEAM: M46ZNP323Y
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "6.0"
+    # Xcode 26's defaults for new app projects: UI code is main-actor
+    # isolated unless it says otherwise.
+    SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+    SWIFT_APPROACHABLE_CONCURRENCY: "YES"
+    ENABLE_USER_SCRIPT_SANDBOXING: "YES"
+
+packages:
+  LectioCore:
+    path: LectioCore
+
+targets:
+  Lectio:
+    type: application
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - path: Lectio
+      # The exported content bundle (npm run export:content), copied in as a
+      # folder so the app reads it with Bundle.main.url(forResource: "Content").
+      - path: Content
+        type: folder
+        buildPhase: resources
+    dependencies:
+      - package: LectioCore
+    info:
+      path: Lectio/Info.plist
+      properties:
+        CFBundleDisplayName: Lectio
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSApplicationCategoryType: public.app-category.education
+        ITSAppUsesNonExemptEncryption: false
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        UIAppFonts:
+          - EBGaramond-VF.ttf
+          - EBGaramond-Italic-VF.ttf
+          - Italianno.ttf
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        # lectio://auth-callback — where Supabase confirmation emails return.
+        CFBundleURLTypes:
+          - CFBundleURLName: com.norvodesigns.lectio
+            CFBundleURLSchemes: [lectio]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.norvodesigns.lectio
+        PRODUCT_NAME: Lectio
+        TARGETED_DEVICE_FAMILY: "1,2"
+        CODE_SIGN_STYLE: Automatic
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        # Colors are referenced through `Palette` (Design/Palette.swift) by name.
+        ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: "NO"
+        ENABLE_PREVIEWS: "YES"
+        SUPPORTS_MACCATALYST: "NO"
+
+schemes:
+  Lectio:
+    build:
+      targets:
+        Lectio: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - package: LectioCore/LectioCoreTests
+    archive:
+      config: Release
