@@ -93,11 +93,15 @@ Data collection: **yes**, only when the user creates an account.
 The app uses only standard HTTPS, so it's exempt. `ITSAppUsesNonExemptEncryption` is already set to
 `false` in the build.
 
-## Screenshots needed
+## Screenshots
 
-- iPhone 6.9" (1320 × 2868)
-- iPad 13" (2064 × 2752)
-- Apple Watch
+Every push to `main` that touches the app captures them. Open the latest run under Actions → iOS
+and download the **screenshots** artifact. It has the iPhone 17 Pro Max (1320 × 2868, the 6.9"
+size) and the 13" iPad Pro (2064 × 2752), in light and dark, for Today, the Reading Room, Vocab,
+Quiz, Scansion, Grammar, Practice Exam, Study Plan, Settings and two passages. They're taken with
+sample progress (`-seedDemo YES`), so the dashboard has something to show. Those two sizes are all
+App Store Connect requires; it scales them for smaller devices.
 
-Suggested shots: Today, the Reading Room with the glossary sheet open, a flashcard, the Scansion
-Lab, the Quiz, and the Practice Exam report.
+Suggested for the listing, in order: Today, the Aeneid passage, Vocab, Scansion, Quiz, Study Plan.
+The watch needs its own screenshots (from the watch simulator in Xcode) only if you want the watch
+app shown on the listing.

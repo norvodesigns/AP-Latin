@@ -256,6 +256,7 @@ struct ScansionLabView: View {
 /* ------------------------------------------------------------------ */
 
 private struct LineScansion: View {
+    @Environment(\.horizontalSizeClass) private var sizeClass
     let work: ScansionWork
     let tool: ScansionLabView.Tool
     let onTap: (Int) -> Void
@@ -318,11 +319,11 @@ private struct LineScansion: View {
                     .frame(height: 22)
                 HStack(spacing: 0) {
                     Text(syl.text)
-                        .font(.latin(26))
+                        .font(.latin(sizeClass == .regular ? 32 : 26))
                         .strikethrough(showElided, color: Palette.inkFaint)
                         .foregroundStyle(textColor(i, elided: showElided))
                     if caesuraAfter(i) {
-                        Text(" ‖").font(.latin(22)).foregroundStyle(Palette.rubric)
+                        Text(" ‖").font(.latin(sizeClass == .regular ? 27 : 22)).foregroundStyle(Palette.rubric)
                     }
                 }
                 .fixedSize()
