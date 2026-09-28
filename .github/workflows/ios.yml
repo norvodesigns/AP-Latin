@@ -102,6 +102,68 @@ jobs:
           name: xcodebuild-log
           path: ios/*build.log
 
+  screenshots:
+    name: Screenshots (iPhone + iPad, light + dark)
+    if: github.event_name != 'pull_request'
+    needs: [app]
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain
+        run: brew install xcodegen
+      - name: Generate project
+        working-directory: ios
+        run: xcodegen generate
+      - name: Build for the simulator
+        working-directory: ios
+        run: |
+          set -o pipefail
+          xcodebuild build -project Lectio.xcodeproj -scheme Lectio \
+            -destination 'generic/platform=iOS Simulator' -derivedDataPath build CODE_SIGNING_ALLOWED=NO \
+            | grep -E 'error|BUILD (SUCCEEDED|FAILED)' || true
+          test -d build/Build/Products/Debug-iphonesimulator/Lectio.app
+      - name: Capture
+        working-directory: ios
+        run: |
+          mkdir -p shots
+          pick() {
+            xcrun simctl list devices available -j | python3 -c "
+          import json, sys
+          want = sys.argv[1:]
+          devices = [d for runtime, ds in json.load(sys.stdin)['devices'].items() if 'iOS' in runtime for d in ds]
+          for w in want:
+              for d in devices:
+                  if w in d['name']:
+                      print(d['udid']); sys.exit()
+          " "$@"
+          }
+          shoot() {
+            local udid="$1" label="$2"
+            xcrun simctl boot "$udid" || true
+            xcrun simctl bootstatus "$udid" -b
+            xcrun simctl status_bar "$udid" override --time 9:41 --batteryState charged --batteryLevel 100 || true
+            xcrun simctl install "$udid" build/Build/Products/Debug-iphonesimulator/Lectio.app
+            for mode in light dark; do
+              xcrun simctl ui "$udid" appearance "$mode"
+              xcrun simctl terminate "$udid" com.norvodesigns.lectio || true
+              xcrun simctl launch "$udid" com.norvodesigns.lectio -seedDemo YES
+              sleep 10
+              for tab in today read vocab quiz scansion grammar exam plan; do
+                xcrun simctl openurl "$udid" "lectio://$tab"
+                sleep 3
+                xcrun simctl io "$udid" screenshot "shots/$label-$mode-$tab.png"
+              done
+            done
+            xcrun simctl shutdown "$udid" || true
+          }
+          shoot "$(pick 'iPhone 17 Pro Max' 'Pro Max' 'iPhone')" iphone
+          shoot "$(pick '13-inch' 'iPad Pro' 'iPad')" ipad
+          ls -la shots
+      - uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: ios/shots
+
   testflight:
     name: Upload to TestFlight
     if: github.event_name == 'workflow_dispatch' && inputs.testflight

@@ -144,6 +144,7 @@ final class AppModel {
                 return try ContentLibrary(directory: url)
             }.value
             contentState = .ready(library)
+            seedDemoIfRequested()
             refreshWidgets()
             startWatchBridge()
         } catch {
