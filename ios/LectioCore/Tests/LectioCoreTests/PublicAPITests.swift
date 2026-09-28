@@ -23,5 +23,10 @@ import LectioCore
         _ = ProgressMerge.merge(local: doc.raw, cloud: doc.raw, cloudIsNewer: true)
         _ = CloudSync.reconcile(userId: "u", local: doc, bookkeeping: SyncBookkeeping(), cloud: nil)
         _ = try JSONValue.parse("{}").serialized()
+        _ = Question(id: "g", type: "inference", skill: "1.B", skillCategory: "1", prompt: "?",
+                     options: [QuestionOption(id: "a", text: "A")], answerId: "a", explanation: "", unit: "1", difficulty: 2)
+        _ = GlossNote(word: "w", meaning: "m")
+        _ = ScansionDraft(marks: [nil], divisions: [])
+        _ = Tally(correct: 1, total: 2)
     }
 }

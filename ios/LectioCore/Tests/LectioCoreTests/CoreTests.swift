@@ -189,3 +189,51 @@ import Testing
         #expect(day?["byRoute"]?["ask"] == 2)
     }
 }
+
+@Suite struct RecordingTests {
+    let now = parseISO("2026-10-15T12:00:00.000Z")
+
+    @Test func translationAttemptsAreCappedAndDecodable() {
+        var doc = ProgressDocument.blank(now: now)
+        for _ in 0..<505 {
+            doc.recordTranslation(drillId: "d", segmentResults: ["s1": "partial"], text: "t", score: 7.5, maxScore: 15,
+                                  missedTags: ["ablative"], gradedBy: "self", now: now)
+        }
+        #expect(doc.translationAttempts.count == 500)
+        #expect(doc.translationAttempts.first?.score == 7.5)
+    }
+
+    @Test func frqSavesReplaceTheSameResponse() {
+        var doc = ProgressDocument.blank(now: now)
+        let id = doc.saveFrq(id: nil, promptId: "p", answers: ["a": "draft"], selfScore: [:], secondsSpent: 10, submitted: false, now: now)
+        doc.saveFrq(id: id, promptId: "p", answers: ["a": "final"], selfScore: ["r1": 2], secondsSpent: 60, submitted: true, now: now)
+        #expect(doc.frqResponses.count == 1)
+        #expect(doc.frqResponses.first?.answers["a"] == "final")
+    }
+
+    @Test func draftsEvictTheOldestFirst() {
+        var doc = ProgressDocument.blank(now: now)
+        for i in 0..<305 { doc.saveScansionDraft(lineId: "aen1-\(i)", draft: ScansionDraft(marks: ["long", nil], divisions: [])) }
+        let keys = doc.raw.object("scansionDrafts").keys
+        #expect(keys.count == 300)
+        #expect(keys.first == "aen1-5")
+        #expect(doc.raw.object("scansionDrafts")["aen1-5"]?["marks"] == ["long", .null])
+        #expect(doc.scansionDraft("aen1-304")?.marks == ["long", nil])
+    }
+
+    @Test func examAndProjectPassagesRoundTrip() {
+        var doc = ProgressDocument.blank(now: now)
+        doc.recordExam(mcqCorrect: 40, mcqTotal: 52, frqPoints: 20, frqMax: 30,
+                       bySkill: ["1": Tally(correct: 10, total: 12)], byType: [:], mcqSeconds: 3600, frqSeconds: 6000, now: now)
+        #expect(doc.examResults.first?.bySkill["1"]?.total == 12)
+        let p = ProjectPassage(id: "pp", title: "t", author: "Ovid", citation: "Met. 1", genre: "poetry", latin: "in nova",
+                               notes: "", checkpoint1: "", checkpoint2: "")
+        doc.upsertProjectPassage(p)
+        var edited = p
+        edited.notes = "edited"
+        doc.upsertProjectPassage(edited)
+        #expect(doc.projectPassages.map(\.notes) == ["edited"])
+        doc.removeProjectPassage("pp")
+        #expect(doc.projectPassages.isEmpty)
+    }
+}

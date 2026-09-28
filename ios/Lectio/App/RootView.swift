@@ -46,14 +46,8 @@ private struct Tabs: View {
             Tab("Quiz", systemImage: "checklist", value: AppTab.quiz) { QuizView() }
 
             TabSection("Drill") {
-                Tab("Translate", systemImage: "character.book.closed", value: AppTab.translate) {
-                    ComingSoonView(title: "Translate", systemImage: "character.book.closed", webPath: "translate",
-                                   blurb: "Literal-translation drills in the exam's own 15-segment shape, with self- and AI-grading.")
-                }
-                Tab("Sight Reading", systemImage: "eye", value: AppTab.sight) {
-                    ComingSoonView(title: "Sight Reading", systemImage: "eye", webPath: "sight",
-                                   blurb: "Timed unseen prose and poetry from the authors the exam draws on.")
-                }
+                Tab("Translate", systemImage: "character.book.closed", value: AppTab.translate) { TranslateView() }
+                Tab("Sight Reading", systemImage: "eye", value: AppTab.sight) { SightReadingView() }
                 Tab("Scansion", systemImage: "waveform.path", value: AppTab.scansion) {
                     ComingSoonView(title: "Scansion Lab", systemImage: "waveform.path", webPath: "scansion",
                                    blurb: "Mark quantities, elisions, feet and caesurae across the whole Aeneid.")
@@ -63,14 +57,8 @@ private struct Tabs: View {
 
             TabSection("Reference") {
                 Tab("Grammar", systemImage: "text.book.closed", value: AppTab.grammar) { GrammarView() }
-                Tab("Devices", systemImage: "wand.and.stars", value: AppTab.devices) {
-                    ComingSoonView(title: "Literary Devices", systemImage: "wand.and.stars", webPath: "devices",
-                                   blurb: "Style reference cards and a spot-the-device drill.")
-                }
-                Tab("Context", systemImage: "building.columns", value: AppTab.context) {
-                    ComingSoonView(title: "Context & Culture", systemImage: "building.columns", webPath: "context",
-                                   blurb: "Vergil, Augustan Rome, Pliny's world, Vesuvius, and the Roman background the syllabus assumes.")
-                }
+                Tab("Devices", systemImage: "wand.and.stars", value: AppTab.devices) { DevicesView() }
+                Tab("Context", systemImage: "building.columns", value: AppTab.context) { ContextView() }
             }
             .defaultVisibility(.hidden, for: .tabBar)
 

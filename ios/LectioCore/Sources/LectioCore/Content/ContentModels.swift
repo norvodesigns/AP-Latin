@@ -99,11 +99,19 @@ struct VocabularyFile: Codable, Sendable {
 public struct QuestionOption: Codable, Sendable, Hashable, Identifiable {
     public let id: String
     public let text: String
+    public init(id: String, text: String) {
+        self.id = id
+        self.text = text
+    }
 }
 
 public struct GlossNote: Codable, Sendable, Hashable {
     public let word: String
     public let meaning: String
+    public init(word: String, meaning: String) {
+        self.word = word
+        self.meaning = meaning
+    }
 }
 
 public struct Stimulus: Codable, Sendable, Hashable {
@@ -127,6 +135,24 @@ public struct Question: Codable, Sendable, Hashable, Identifiable {
     public let explanation: String
     public let unit: String
     public let difficulty: Int
+
+    public init(id: String, type: String, skill: String, skillCategory: String, passageId: String? = nil,
+                lineRange: [Int]? = nil, stimulus: Stimulus? = nil, prompt: String, options: [QuestionOption],
+                answerId: String, explanation: String, unit: String, difficulty: Int) {
+        self.id = id
+        self.type = type
+        self.skill = skill
+        self.skillCategory = skillCategory
+        self.passageId = passageId
+        self.lineRange = lineRange
+        self.stimulus = stimulus
+        self.prompt = prompt
+        self.options = options
+        self.answerId = answerId
+        self.explanation = explanation
+        self.unit = unit
+        self.difficulty = difficulty
+    }
 }
 
 public struct QuestionSet: Codable, Sendable, Hashable, Identifiable {

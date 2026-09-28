@@ -5,6 +5,7 @@ import SwiftUI
 /// then the syntax AP tests, then the rest.
 struct GrammarView: View {
     @Environment(\.library) private var library
+    @State private var studying = false
 
     private struct Level: Identifiable {
         let id: String
@@ -49,6 +50,33 @@ struct GrammarView: View {
             .pageBackground()
             .navigationTitle("Grammar & Syntax")
             .navigationDestination(for: GrammarTopic.self) { GrammarTopicView(topic: $0) }
+            .navigationDestination(for: Passage.self) { PassageReaderView(passage: $0) }
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Study", systemImage: "rectangle.on.rectangle.angled") { studying = true }
+                }
+            }
+            .sheet(isPresented: $studying) {
+                NavigationStack {
+                    ScrollView {
+                        if let library {
+                            StudyDeck(items: library.grammarTopics, noun: "topic") { t in
+                                Text(t.name).font(.system(.title, design: .serif)).multilineTextAlignment(.center)
+                            } back: { t in
+                                VStack(alignment: .leading, spacing: 12) {
+                                    Text(t.summary).font(.prose(.title3))
+                                    ForEach(t.recognition, id: \.self) { Text("· \($0)").font(.prose(.callout)).foregroundStyle(Palette.ink2) }
+                                }
+                            }
+                            .padding(20)
+                        }
+                    }
+                    .background(Palette.parchment.ignoresSafeArea())
+                    .navigationTitle("Study grammar")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Done") { studying = false } } }
+                }
+            }
         }
     }
 }

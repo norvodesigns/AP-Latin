@@ -247,6 +247,88 @@ public struct ProgressDocument: Sendable, Equatable {
         raw["aiUsage"] = .array(Array(days.suffix(ProgressMerge.Caps.aiUsage)))
     }
 
+    /* -------------------------------------------------------------- */
+    /* Graded work — ports of recordTranslation, saveFrq, recordExam,    */
+    /* upsertProjectPassage, recordScansion, saveScansionDraft           */
+    /* -------------------------------------------------------------- */
+
+    public var translationAttempts: [TranslationAttempt] { raw.array("translationAttempts").compactMap { try? $0.decode() } }
+    public var frqResponses: [FrqResponse] { raw.array("frqResponses").compactMap { try? $0.decode() } }
+    public var examResults: [ExamResult] { raw.array("examResults").compactMap { try? $0.decode() } }
+    public var projectPassages: [ProjectPassage] { raw.array("projectPassages").compactMap { try? $0.decode() } }
+    public var scansionAttempts: [ScansionAttempt] { raw.array("scansionAttempts").compactMap { try? $0.decode() } }
+
+    public func scansionDraft(_ lineId: String) -> ScansionDraft? { try? raw.object("scansionDrafts")[lineId]?.decode() }
+
+    public mutating func recordTranslation(drillId: String, segmentResults: [String: String], text: String, score: Double,
+                                           maxScore: Int, missedTags: [String], gradedBy: String, now: Date = Date()) {
+        let attempt = TranslationAttempt(id: Self.uid(now: now), drillId: drillId, at: StudyDates.isoTimestamp(now),
+                                         segmentResults: segmentResults, text: text, score: score, maxScore: maxScore,
+                                         missedTags: missedTags, gradedBy: gradedBy)
+        append(attempt, to: "translationAttempts", cap: ProgressMerge.Caps.translationAttempts)
+    }
+
+    /// Saves an FRQ response, replacing the one with the same id if it exists
+    /// (an in-progress answer being updated), and returns its id.
+    @discardableResult
+    public mutating func saveFrq(id: String?, promptId: String, answers: [String: String], selfScore: [String: Double],
+                                 secondsSpent: Double, submitted: Bool, now: Date = Date()) -> String {
+        let id = id ?? Self.uid(now: now)
+        let record = FrqResponse(id: id, promptId: promptId, at: StudyDates.isoTimestamp(now), answers: answers,
+                                 selfScore: selfScore, secondsSpent: secondsSpent, submitted: submitted)
+        guard let value = try? JSONValue(encoding: record) else { return id }
+        var list = raw.array("frqResponses")
+        if let i = list.firstIndex(where: { $0["id"]?.stringValue == id }) { list[i] = value } else { list.append(value) }
+        raw["frqResponses"] = .array(Array(list.suffix(ProgressMerge.Caps.frqResponses)))
+        return id
+    }
+
+    public mutating func recordExam(mcqCorrect: Int, mcqTotal: Int, frqPoints: Double, frqMax: Double,
+                                    bySkill: [String: Tally], byType: [String: Tally], mcqSeconds: Double,
+                                    frqSeconds: Double, now: Date = Date()) {
+        let result = ExamResult(id: Self.uid(now: now), at: StudyDates.isoTimestamp(now), mcqCorrect: mcqCorrect,
+                                mcqTotal: mcqTotal, frqPoints: frqPoints, frqMax: frqMax, bySkill: bySkill, byType: byType,
+                                mcqSeconds: mcqSeconds, frqSeconds: frqSeconds)
+        append(result, to: "examResults", cap: nil)
+    }
+
+    public mutating func upsertProjectPassage(_ passage: ProjectPassage) {
+        guard let value = try? JSONValue(encoding: passage) else { return }
+        var list = raw.array("projectPassages")
+        if let i = list.firstIndex(where: { $0["id"]?.stringValue == passage.id }) {
+            list[i] = .object((list[i].objectValue ?? JSONObject()).overlaid(with: value.objectValue ?? JSONObject()))
+        } else {
+            list.append(value)
+        }
+        raw["projectPassages"] = .array(list)
+    }
+
+    public mutating func removeProjectPassage(_ id: String) {
+        raw["projectPassages"] = .array(raw.array("projectPassages").filter { $0["id"]?.stringValue != id })
+    }
+
+    public mutating func recordScansion(lineId: String, correct: Int, total: Int, now: Date = Date()) {
+        let attempt = ScansionAttempt(id: Self.uid(now: now), lineId: lineId, at: StudyDates.isoTimestamp(now),
+                                      correct: correct, total: total)
+        append(attempt, to: "scansionAttempts", cap: ProgressMerge.Caps.scansionAttempts)
+    }
+
+    /// Keeps a line's in-progress marks. Bounded to the 300 most recently
+    /// added lines, evicting in insertion order exactly as the web store does.
+    public mutating func saveScansionDraft(lineId: String, draft: ScansionDraft) {
+        guard let value = try? JSONValue(encoding: draft) else { return }
+        var drafts = raw.object("scansionDrafts")
+        drafts[lineId] = value
+        if drafts.count > ProgressMerge.Caps.scansionDrafts { drafts.removeFirst(drafts.count - ProgressMerge.Caps.scansionDrafts) }
+        raw["scansionDrafts"] = .object(drafts)
+    }
+
+    private mutating func append<T: Encodable>(_ record: T, to key: String, cap: Int?) {
+        guard let value = try? JSONValue(encoding: record) else { return }
+        let list = raw.array(key) + [value]
+        raw[key] = .array(cap.map { Array(list.suffix($0)) } ?? list)
+    }
+
     /// Adds today to the streak calendar.
     public mutating func markStudied(now: Date = Date()) {
         let today = StudyDates.today(now)
