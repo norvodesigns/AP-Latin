@@ -33,6 +33,12 @@ public struct Profile: Sendable, Equatable {
     public var role: String
     public var displayName: String
     public var isTeacher: Bool { role == "teacher" }
+
+    public init(id: String, role: String, displayName: String) {
+        self.id = id
+        self.role = role
+        self.displayName = displayName
+    }
 }
 
 public struct SupabaseError: Error, Sendable, Equatable, CustomStringConvertible {
@@ -40,6 +46,12 @@ public struct SupabaseError: Error, Sendable, Equatable, CustomStringConvertible
     public let code: String?
     public let message: String
     public var description: String { message }
+
+    public init(status: Int, code: String?, message: String) {
+        self.status = status
+        self.code = code
+        self.message = message
+    }
 
     /// The session is no longer usable (expired refresh token, deleted user).
     public var isAuthFailure: Bool { status == 401 || code == "invalid_grant" || code == "refresh_token_not_found" }

@@ -141,3 +141,51 @@ import Testing
         }
     }
 }
+
+@Suite struct AnnotationTests {
+    let now = parseISO("2026-10-15T12:00:00.000Z")
+
+    @Test func highlightingOverMarksAbsorbsThemButKeepsNotes() {
+        var doc = ProgressDocument.blank(now: now)
+        doc.setHighlight(passageId: "p", lineN: 3, startTok: 2, endTok: 2, text: "a", color: .woad, now: now)
+        let noted = doc.setHighlight(passageId: "p", lineN: 3, startTok: 4, endTok: 4, text: "b", color: .gilt, now: now)
+        doc.setAnnotationNote(passageId: "p", annotationId: noted.id, note: "keep me")
+        doc.setHighlight(passageId: "p", lineN: 3, startTok: 0, endTok: 6, text: "a b c", color: .rubric, now: now)
+        let spans = doc.passage("p").annotations.map { "\($0.startTok)-\($0.endTok)" }
+        #expect(spans == ["4-4", "0-6"])
+    }
+
+    @Test func clearingTheColorOfAnUnnotedMarkRemovesIt() {
+        var doc = ProgressDocument.blank(now: now)
+        doc.setHighlight(passageId: "p", lineN: 1, startTok: 0, endTok: 2, text: "x", color: .gilt, now: now)
+        doc.setHighlight(passageId: "p", lineN: 1, startTok: 0, endTok: 2, text: "x", color: nil, now: now)
+        #expect(doc.passage("p").annotations.isEmpty)
+    }
+
+    @Test func aNoteCanLiveWithoutAColor() {
+        var doc = ProgressDocument.blank(now: now)
+        let a = doc.setHighlight(passageId: "p", lineN: 1, startTok: 0, endTok: 0, text: "x", color: nil, now: now)
+        #expect(doc.passage("p").annotations.count == 1)
+        doc.setAnnotationNote(passageId: "p", annotationId: a.id, note: "a thought")
+        #expect(doc.passage("p").annotations.first?.note == "a thought")
+        doc.setAnnotationNote(passageId: "p", annotationId: a.id, note: "  ")
+        #expect(doc.passage("p").annotations.isEmpty)
+    }
+
+    @Test func colorIsWrittenAsExplicitNull() {
+        var doc = ProgressDocument.blank(now: now)
+        doc.setHighlight(passageId: "p", lineN: 1, startTok: 0, endTok: 0, text: "x", color: nil, now: now)
+        let stored = doc.raw.object("passages")["p"]?["annotations"]?.arrayValue?.first
+        #expect(stored?["color"] == .null)
+    }
+
+    @Test func aiUsageCountsPerDayAndRoute() {
+        var doc = ProgressDocument.blank(now: now)
+        doc.recordAiCall(route: "ask", now: now)
+        doc.recordAiCall(route: "ask", now: now)
+        doc.recordAiCall(route: "grade-translation", now: now)
+        let day = doc.raw.array("aiUsage").first
+        #expect(day?["calls"] == 3)
+        #expect(day?["byRoute"]?["ask"] == 2)
+    }
+}

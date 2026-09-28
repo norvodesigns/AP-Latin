@@ -20,6 +20,18 @@ public struct Annotation: Codable, Sendable, Hashable, Identifiable {
     public var note: String
     public var createdAt: String
 
+    public init(id: String, lineN: Int, startTok: Int, endTok: Int, text: String, color: HighlightColor?,
+                note: String, createdAt: String) {
+        self.id = id
+        self.lineN = lineN
+        self.startTok = startTok
+        self.endTok = endTok
+        self.text = text
+        self.color = color
+        self.note = note
+        self.createdAt = createdAt
+    }
+
     // `color` is written as an explicit null, as the web does, rather than omitted.
     public func encode(to encoder: any Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)

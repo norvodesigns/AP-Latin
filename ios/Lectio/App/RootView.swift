@@ -43,10 +43,7 @@ private struct Tabs: View {
             Tab("Today", systemImage: "sun.horizon", value: AppTab.today) { TodayView() }
             Tab("Read", systemImage: "book.closed", value: AppTab.read) { ReadIndexView() }
             Tab("Vocab", systemImage: "rectangle.on.rectangle.angled", value: AppTab.vocab) { VocabView() }
-            Tab("Quiz", systemImage: "checklist", value: AppTab.quiz) {
-                ComingSoonView(title: "Quiz Engine", systemImage: "checklist", webPath: "quiz",
-                               blurb: "AP-style multiple choice, filtered by author, passage, unit, skill or question type, with a review queue for anything you miss.")
-            }
+            Tab("Quiz", systemImage: "checklist", value: AppTab.quiz) { QuizView() }
 
             TabSection("Drill") {
                 Tab("Translate", systemImage: "character.book.closed", value: AppTab.translate) {

@@ -174,6 +174,79 @@ public struct ProgressDocument: Sendable, Equatable {
         updateRecord(in: "passages", key: passageId, with: p)
     }
 
+    /* -------------------------------------------------------------- */
+    /* Highlights and notes — ports of setHighlight / setAnnotationNote   */
+    /* / removeAnnotation                                               */
+    /* -------------------------------------------------------------- */
+
+    /// Creates or recolors the highlight spanning exactly this token range on
+    /// one line, and returns it. A colorless highlight with no note is
+    /// dropped (unless it's brand new — the note flow creates one just to
+    /// have an id to attach the note to). Marks drawn wholly inside a new
+    /// colored one are absorbed by it, unless they carry a note: a note is
+    /// the reader's own writing and is never discarded as a side effect.
+    @discardableResult
+    public mutating func setHighlight(passageId: String, lineN: Int, startTok: Int, endTok: Int, text: String,
+                                      color: HighlightColor?, now: Date = Date()) -> Annotation {
+        var p = passage(passageId)
+        let existing = p.annotations.first { $0.lineN == lineN && $0.startTok == startTok && $0.endTok == endTok }
+        var next = existing ?? Annotation(id: Self.uid(now: now), lineN: lineN, startTok: startTok, endTok: endTok,
+                                          text: text, color: color, note: "", createdAt: StudyDates.isoTimestamp(now))
+        next.color = color
+        next.text = text
+        let drop = existing != nil && next.color == nil && next.note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+
+        func subsumed(_ a: Annotation) -> Bool {
+            a.id != next.id && a.lineN == lineN && a.startTok >= startTok && a.endTok <= endTok
+                && a.note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        }
+        let kept = p.annotations.filter { !(next.color != nil && subsumed($0)) }
+        if drop {
+            p.annotations = kept.filter { $0.id != next.id }
+        } else if existing != nil {
+            p.annotations = kept.map { $0.id == next.id ? next : $0 }
+        } else {
+            p.annotations = kept + [next]
+        }
+        updateRecord(in: "passages", key: passageId, with: p)
+        return next
+    }
+
+    public mutating func setAnnotationNote(passageId: String, annotationId: String, note: String) {
+        var p = passage(passageId)
+        p.annotations = p.annotations
+            .map { a in
+                var a = a
+                if a.id == annotationId { a.note = note }
+                return a
+            }
+            // A colorless annotation with no note carries nothing worth keeping.
+            .filter { $0.color != nil || !$0.note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        updateRecord(in: "passages", key: passageId, with: p)
+    }
+
+    public mutating func removeAnnotation(passageId: String, annotationId: String) {
+        var p = passage(passageId)
+        p.annotations.removeAll { $0.id == annotationId }
+        updateRecord(in: "passages", key: passageId, with: p)
+    }
+
+    /// Counts an AI call against today's usage meter — the web's `recordAiCall`.
+    public mutating func recordAiCall(route: String, now: Date = Date()) {
+        let today = StudyDates.today(now)
+        var days = raw.array("aiUsage")
+        if let i = days.firstIndex(where: { $0["date"]?.stringValue == today }), var day = days[i].objectValue {
+            day["calls"] = .number((day["calls"]?.doubleValue ?? 0) + 1)
+            var byRoute = day["byRoute"]?.objectValue ?? JSONObject()
+            byRoute[route] = .number((byRoute[route]?.doubleValue ?? 0) + 1)
+            day["byRoute"] = .object(byRoute)
+            days[i] = .object(day)
+        } else {
+            days.append(["date": .string(today), "calls": 1, "byRoute": .object(JSONObject([(route, 1)]))])
+        }
+        raw["aiUsage"] = .array(Array(days.suffix(ProgressMerge.Caps.aiUsage)))
+    }
+
     /// Adds today to the streak calendar.
     public mutating func markStudied(now: Date = Date()) {
         let today = StudyDates.today(now)
