@@ -38,22 +38,32 @@ final class WatchStore {
         }
     }
 
-    func card(_ id: String) -> WatchDeck.Card? { deck?.cards.first { $0.id == id } }
+    /// Cards missed this session. The phone reschedules a miss for tomorrow
+    /// and drops it from the next deck it sends, but it still comes back once
+    /// more before this session ends, so it's kept here until answered.
+    @ObservationIgnored private var retry: [String: WatchDeck.Card] = [:]
+
+    func card(_ id: String) -> WatchDeck.Card? { deck?.cards.first { $0.id == id } ?? retry[id] }
 
     func receive(_ deck: WatchDeck) {
         self.deck = deck
         if let data = try? JSONEncoder().encode(deck) { UserDefaults.standard.set(data, forKey: "deck") }
         // Keep the current session's order; add anything new at the end.
         let ids = deck.cards.map(\.id)
-        queue = queue.filter(ids.contains) + ids.filter { !queue.contains($0) }
+        queue = queue.filter { ids.contains($0) || retry[$0] != nil } + ids.filter { !queue.contains($0) }
     }
 
     func grade(_ id: String, quality: Int) {
         link?.send(WatchReview(cardId: id, quality: quality))
         reviewed += 1
+        let graded = card(id)
         queue.removeAll { $0 == id }
+        retry[id] = nil
         // A miss comes back at the end of this session, as on the phone.
-        if quality < 3 { queue.append(id) }
+        if quality < 3, let graded {
+            retry[id] = graded
+            queue.append(id)
+        }
     }
 }
 
