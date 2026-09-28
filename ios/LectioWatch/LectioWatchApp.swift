@@ -1,0 +1,177 @@
+import LectioCore
+import Observation
+import SwiftUI
+import WatchConnectivity
+import WatchKit
+
+/// Lectio on the wrist: the vocabulary cards due today, flipped and graded
+/// with the same two answers as the phone. The iPhone owns the schedule —
+/// it sends the due cards here and applies each grade sent back — so the
+/// watch works offline and nothing is ever scheduled twice.
+@main
+struct LectioWatchApp: App {
+    @State private var store = WatchStore()
+
+    var body: some Scene {
+        WindowGroup {
+            WatchHome()
+                .environment(store)
+        }
+    }
+}
+
+@Observable
+final class WatchStore {
+    private(set) var deck: WatchDeck?
+    /// Card ids still to go this session, in order.
+    var queue: [String] = []
+    var reviewed = 0
+
+    @ObservationIgnored private var link: WatchLink?
+
+    init() {
+        if let data = UserDefaults.standard.data(forKey: "deck"), let saved = try? JSONDecoder().decode(WatchDeck.self, from: data) {
+            receive(saved)
+        }
+        link = WatchLink { [weak self] deck in
+            Task { @MainActor in self?.receive(deck) }
+        }
+    }
+
+    func card(_ id: String) -> WatchDeck.Card? { deck?.cards.first { $0.id == id } }
+
+    func receive(_ deck: WatchDeck) {
+        self.deck = deck
+        if let data = try? JSONEncoder().encode(deck) { UserDefaults.standard.set(data, forKey: "deck") }
+        // Keep the current session's order; add anything new at the end.
+        let ids = deck.cards.map(\.id)
+        queue = queue.filter(ids.contains) + ids.filter { !queue.contains($0) }
+    }
+
+    func grade(_ id: String, quality: Int) {
+        link?.send(WatchReview(cardId: id, quality: quality))
+        reviewed += 1
+        queue.removeAll { $0 == id }
+        // A miss comes back at the end of this session, as on the phone.
+        if quality < 3 { queue.append(id) }
+    }
+}
+
+/// The watch's end of the phone link.
+nonisolated final class WatchLink: NSObject, WCSessionDelegate, @unchecked Sendable {
+    private let onDeck: @Sendable (WatchDeck) -> Void
+
+    init(onDeck: @escaping @Sendable (WatchDeck) -> Void) {
+        self.onDeck = onDeck
+        super.init()
+        guard WCSession.isSupported() else { return }
+        WCSession.default.delegate = self
+        WCSession.default.activate()
+    }
+
+    /// Queued and delivered even if the phone is out of reach right now.
+    func send(_ review: WatchReview) {
+        guard WCSession.isSupported() else { return }
+        WCSession.default.transferUserInfo(review.userInfo)
+    }
+
+    func session(_ session: WCSession, activationDidCompleteWith state: WCSessionActivationState, error: (any Error)?) {
+        if let deck = WatchDeck(context: session.receivedApplicationContext) { onDeck(deck) }
+    }
+
+    func session(_ session: WCSession, didReceiveApplicationContext context: [String: Any]) {
+        if let deck = WatchDeck(context: context) { onDeck(deck) }
+    }
+}
+
+/* ------------------------------------------------------------------ */
+
+struct WatchHome: View {
+    @Environment(WatchStore.self) private var store
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 10) {
+                    if let deck = store.deck {
+                        Text("\(deck.daysUntilExam)")
+                            .font(.system(size: 40, weight: .semibold, design: .serif))
+                            .foregroundStyle(.red)
+                        Text("DAYS TO THE EXAM").font(.system(size: 10, weight: .semibold)).foregroundStyle(.secondary)
+                        HStack {
+                            Label("\(store.queue.count)", systemImage: "rectangle.on.rectangle.angled")
+                            Spacer()
+                            Label("\(deck.streak)", systemImage: "flame")
+                        }
+                        .font(.headline)
+                        NavigationLink {
+                            WatchReviewView()
+                        } label: {
+                            Text(store.queue.isEmpty ? "All caught up" : "Review").frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.glassProminent)
+                        .disabled(store.queue.isEmpty)
+                    } else {
+                        Text("Open Lectio on your iPhone to send today's cards.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .navigationTitle("Lectio")
+        }
+    }
+}
+
+struct WatchReviewView: View {
+    @Environment(WatchStore.self) private var store
+    @State private var flipped = false
+
+    var body: some View {
+        if let id = store.queue.first, let card = store.card(id) {
+            VStack(spacing: 8) {
+                Spacer(minLength: 0)
+                if flipped {
+                    Text(card.lemma).font(.system(.headline, design: .serif)).italic().multilineTextAlignment(.center)
+                    Text(card.definition).font(.footnote).multilineTextAlignment(.center).foregroundStyle(.secondary)
+                } else {
+                    Text(card.headword).font(.system(.title2, design: .serif)).multilineTextAlignment(.center)
+                    Text(card.pos).font(.caption2).foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 0)
+                if flipped {
+                    HStack {
+                        Button { grade(id, 0) } label: { Image(systemName: "arrow.counterclockwise") }
+                            .buttonStyle(.glass)
+                            .accessibilityLabel("Practice again")
+                        Button { grade(id, 4) } label: { Image(systemName: "checkmark") }
+                            .buttonStyle(.glassProminent)
+                            .accessibilityLabel("Got it")
+                    }
+                } else {
+                    Button("Show") { withAnimation { flipped = true } }.buttonStyle(.glass)
+                }
+            }
+            .contentShape(Rectangle())
+            .onTapGesture { withAnimation { flipped.toggle() } }
+            .navigationTitle("\(store.queue.count) left")
+        } else {
+            VStack(spacing: 6) {
+                Image(systemName: "checkmark.seal").font(.largeTitle).foregroundStyle(.green)
+                Text("\(store.reviewed) reviewed").font(.headline)
+                Text("Synced to your iPhone.").font(.caption2).foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private func grade(_ id: String, _ quality: Int) {
+        store.grade(id, quality: quality)
+        WKInterfaceDeviceFeedback.play(quality >= 3 ? .success : .retry)
+        flipped = false
+    }
+}
+
+/// Haptics, kept to one call site.
+enum WKInterfaceDeviceFeedback {
+    static func play(_ type: WKHapticType) { WKInterfaceDevice.current().play(type) }
+}

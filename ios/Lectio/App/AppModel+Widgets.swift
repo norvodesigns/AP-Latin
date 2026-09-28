@@ -16,6 +16,7 @@ extension AppModel {
             studySeconds: studySecondsToday,
             studyDay: studyGoalDate
         )
+        sendWatchDeck()
         guard snapshot != lastWidgetSnapshot else { return }
         lastWidgetSnapshot = snapshot
         snapshot.save()

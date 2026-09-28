@@ -83,12 +83,24 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             | tee build.log | grep -E '(error|warning: .*(deprecated|isolat|Sendable))|BUILD (SUCCEEDED|FAILED)' || true
           grep -q 'BUILD SUCCEEDED' build.log
+      - name: Build Apple Watch app
+        working-directory: ios
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project Lectio.xcodeproj \
+            -scheme LectioWatch \
+            -destination 'generic/platform=watchOS Simulator' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            | tee watch-build.log | grep -E '(error|warning: .*(deprecated|isolat|Sendable))|BUILD (SUCCEEDED|FAILED)' || true
+          grep -q 'BUILD SUCCEEDED' watch-build.log
       - name: Upload build log
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: xcodebuild-log
-          path: ios/build.log
+          path: ios/*build.log
 
   testflight:
     name: Upload to TestFlight

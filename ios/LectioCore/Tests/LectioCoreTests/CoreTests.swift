@@ -254,3 +254,14 @@ import Testing
         #expect(WidgetSnapshot.load(from: defaults) == snap)
     }
 }
+
+@Suite struct WatchMessageTests {
+    @Test func deckAndReviewRoundTrip() {
+        let deck = WatchDeck(cards: [WatchDeck.Card(id: "arma", headword: "arma", lemma: "arma, -orum (n. pl.)", pos: "noun", definition: "arms")],
+                             dueCount: 7, streak: 3, daysUntilExam: 211, sentAt: Date(timeIntervalSince1970: 1_800_000_000))
+        #expect(WatchDeck(context: deck.context) == deck)
+        let review = WatchReview(cardId: "arma", quality: 4, at: Date(timeIntervalSince1970: 1_800_000_100))
+        #expect(WatchReview(userInfo: review.userInfo) == review)
+        #expect(WatchDeck(context: ["nope": 1]) == nil)
+    }
+}

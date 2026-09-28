@@ -81,8 +81,10 @@ final class AppModel {
     /// Set while a sync write replaces `progress`, so it isn't pushed straight back.
     @ObservationIgnored var applyingSync = false
 
-    /* Widgets — see AppModel+Widgets.swift. */
+    /* Widgets and the watch — see AppModel+Widgets.swift, WatchBridge.swift. */
     @ObservationIgnored var lastWidgetSnapshot: WidgetSnapshot? = nil
+    @ObservationIgnored var watchBridge: WatchBridge? = nil
+    @ObservationIgnored var lastWatchDeck: WatchDeck? = nil
 
     /* AI — the website's routes. Nil until checked. */
     var aiAvailable: Bool? = nil
@@ -141,6 +143,7 @@ final class AppModel {
             }.value
             contentState = .ready(library)
             refreshWidgets()
+            startWatchBridge()
         } catch {
             contentState = .failed(String(describing: error))
         }
