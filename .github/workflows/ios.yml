@@ -39,9 +39,11 @@ on:
         type: boolean
         default: false
 
+# Pushes to main queue rather than cancel each other, so every commit gets
+# its own build result; a pull request's newer push replaces its older one.
 concurrency:
   group: ios-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   core:
