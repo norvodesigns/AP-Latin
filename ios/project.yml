@@ -52,6 +52,12 @@ targets:
         buildPhase: resources
     dependencies:
       - package: LectioCore
+      - target: LectioWidgets
+    entitlements:
+      path: Lectio/Lectio.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.norvodesigns.lectio
     info:
       path: Lectio/Info.plist
       properties:
@@ -91,6 +97,37 @@ targets:
         ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: "NO"
         ENABLE_PREVIEWS: "YES"
         SUPPORTS_MACCATALYST: "NO"
+
+  LectioWidgets:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - path: LectioWidgets
+    dependencies:
+      - package: LectioCore
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework
+    entitlements:
+      path: LectioWidgets/LectioWidgets.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.norvodesigns.lectio
+    info:
+      path: LectioWidgets/Info.plist
+      properties:
+        CFBundleDisplayName: Lectio
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.norvodesigns.lectio.widgets
+        PRODUCT_NAME: LectioWidgets
+        TARGETED_DEVICE_FAMILY: "1,2"
+        CODE_SIGN_STYLE: Automatic
+        SKIP_INSTALL: "YES"
 
 schemes:
   Lectio:

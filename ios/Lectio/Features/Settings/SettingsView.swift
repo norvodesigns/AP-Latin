@@ -8,6 +8,7 @@ struct SettingsView: View {
     @State private var importing = false
     @State private var pendingImport: ProgressDocument?
     @State private var importError: String?
+    @State private var reminderOn = UserDefaults.standard.bool(forKey: "reminderEnabled")
 
     var body: some View {
         @Bindable var model = model
@@ -73,10 +74,24 @@ struct SettingsView: View {
                     ), in: 5...240, step: 5) {
                         LabeledContent("Daily goal", value: "\(model.progress.studyPlan.minutesPerDay) min")
                     }
+                    Toggle("Daily reminder", isOn: Binding(
+                        get: { reminderOn },
+                        set: { on in Task { reminderOn = await model.setReminder(enabled: on) } }
+                    ))
+                    if reminderOn {
+                        DatePicker("Remind me at", selection: Binding(
+                            get: { Calendar.current.date(bySettingHour: model.reminderMinutes / 60, minute: model.reminderMinutes % 60, second: 0, of: Date()) ?? Date() },
+                            set: { d in
+                                let c = Calendar.current.dateComponents([.hour, .minute], from: d)
+                                model.reminderMinutes = (c.hour ?? 16) * 60 + (c.minute ?? 0)
+                                Task { await model.rescheduleReminder() }
+                            }
+                        ), displayedComponents: .hourAndMinute)
+                    }
                 } header: {
                     Text("Study")
                 } footer: {
-                    Text("Time counts while a study section is open on screen, the same way the website counts it.")
+                    Text("Time counts while a study section is open on screen, the same way the website counts it. The reminder says how many cards are due.")
                 }
 
                 Section("About") {

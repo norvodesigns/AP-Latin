@@ -2,12 +2,18 @@ import LectioCore
 import SwiftUI
 
 /// Every section of the app — the web's NAV (src/lib/nav.ts), plus search.
-nonisolated enum AppTab: Hashable, Sendable {
+nonisolated enum AppTab: String, Hashable, Sendable {
     case today, read, vocab, quiz
     case translate, sight, scansion
     case grammar, devices, context
     case frq, exam, plan
     case classroom, settings, search
+
+    /// A deep link's host — lectio://vocab opens Vocabulary.
+    init?(host: String?) {
+        guard let host else { return nil }
+        self.init(rawValue: host)
+    }
 }
 
 /// The app's frame.
@@ -30,6 +36,10 @@ struct RootView: View {
         case .ready(let library):
             Tabs()
                 .environment(\.library, library)
+                .onOpenURL { url in
+                    // lectio://vocab, lectio://read, … — from the widget.
+                    if let tab = AppTab(host: url.host()) { model.selectedTab = tab }
+                }
         }
     }
 }

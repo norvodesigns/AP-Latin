@@ -11,3 +11,6 @@ LectioCore/.build/
 xcuserdata/
 *.ipa
 *.xcarchive
+Lectio/Lectio.entitlements
+LectioWidgets/Info.plist
+LectioWidgets/LectioWidgets.entitlements

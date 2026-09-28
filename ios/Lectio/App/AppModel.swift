@@ -81,6 +81,9 @@ final class AppModel {
     /// Set while a sync write replaces `progress`, so it isn't pushed straight back.
     @ObservationIgnored var applyingSync = false
 
+    /* Widgets — see AppModel+Widgets.swift. */
+    @ObservationIgnored var lastWidgetSnapshot: WidgetSnapshot? = nil
+
     /* AI — the website's routes. Nil until checked. */
     var aiAvailable: Bool? = nil
     @ObservationIgnored let ai = AIClient()
@@ -137,6 +140,7 @@ final class AppModel {
                 return try ContentLibrary(directory: url)
             }.value
             contentState = .ready(library)
+            refreshWidgets()
         } catch {
             contentState = .failed(String(describing: error))
         }
@@ -161,6 +165,7 @@ final class AppModel {
 
     func progressChanged() {
         scheduleSave()
+        refreshWidgets()
         if !applyingSync { schedulePush() }
     }
 
@@ -197,6 +202,8 @@ final class AppModel {
         saveNow()
         flushStudyTime()
         pushNowIfPending()
+        refreshWidgets()
+        Task { await rescheduleReminder() }
     }
 
     /* -------------------------------------------------------------- */

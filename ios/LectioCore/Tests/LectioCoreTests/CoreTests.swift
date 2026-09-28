@@ -237,3 +237,20 @@ import Testing
         #expect(doc.projectPassages.isEmpty)
     }
 }
+
+@Suite struct WidgetSnapshotTests {
+    @Test func countsFromRawIngredients() {
+        let now = parseISO("2026-10-15T12:00:00.000Z")
+        let snap = WidgetSnapshot(examDate: "2027-05-14", dueDates: ["2026-10-14", "2026-10-15", "2026-10-16"],
+                                  studyDays: ["2026-10-14", "2026-10-15"], goalMinutes: 30, studySeconds: 600, studyDay: "2026-10-15")
+        #expect(snap.cardsDue(on: now) == 2)
+        #expect(snap.cardsDue(on: now.addingTimeInterval(86_400)) == 3)
+        #expect(snap.streak(on: now, calendar: utc) == 2)
+        #expect(snap.minutesToday(on: now) == 10)
+        #expect(snap.minutesToday(on: now.addingTimeInterval(86_400)) == 0)
+        #expect(snap.daysUntilExam(on: now, calendar: utc) == 211)
+        let defaults = UserDefaults(suiteName: "lectio-tests")!
+        snap.save(to: defaults)
+        #expect(WidgetSnapshot.load(from: defaults) == snap)
+    }
+}
