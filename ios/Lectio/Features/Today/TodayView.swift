@@ -53,6 +53,7 @@ struct TodayView: View {
         let due = SpacedRepetition.due(model.vocab.values, on: StudyDates.today()).count
         return VStack(alignment: .leading, spacing: 18) {
             Figure(value: "\(days)", caption: days == 1 ? "day until the exam" : "days until the exam", tint: Palette.rubric)
+            GoalMeter(seconds: model.studySecondsToday, goalMinutes: progress.studyPlan.minutesPerDay)
             HStack(alignment: .top, spacing: 32) {
                 Figure(value: "\(Streaks.current(progress.studyDays))", caption: "day streak")
                 Figure(value: "\(Streaks.longest(progress.studyDays))", caption: "longest")
@@ -139,6 +140,29 @@ struct TodayView: View {
         SectionLink(title: "Practice Exam", systemImage: "timer", tab: .exam),
         SectionLink(title: "Study Plan", systemImage: "calendar", tab: .plan),
     ]
+}
+
+/// Today's study time against the daily goal, as a ruled track.
+private struct GoalMeter: View {
+    let seconds: Double
+    let goalMinutes: Int
+
+    var body: some View {
+        let fraction = goalMinutes > 0 ? min(1, seconds / Double(goalMinutes * 60)) : 0
+        VStack(alignment: .leading, spacing: 6) {
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Palette.hair)
+                    Capsule().fill(fraction >= 1 ? Palette.correct : Palette.rubric)
+                        .frame(width: max(6, geo.size.width * fraction))
+                }
+            }
+            .frame(height: 6)
+            Text("\(Int(seconds / 60)) of \(goalMinutes) minutes today").quietLabel()
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(Int(seconds / 60)) of \(goalMinutes) minutes studied today")
+    }
 }
 
 private struct NextUpRow: View {

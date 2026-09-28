@@ -3,12 +3,13 @@ import LectioCore
 import Observation
 import SwiftUI
 
-/// The app's single source of state: the content library and the student's
-/// progress document, plus a few device-only preferences.
+/// The app's single source of state: the content library, the student's
+/// progress document, their account, and a few device-only preferences.
 ///
 /// Progress is written to Application Support after every edit (debounced),
 /// the way the web app writes localStorage — local first, always, so nothing
-/// waits on a network. Cloud sync layers on top of this in the next phase.
+/// waits on a network. When signed in, cloud sync (AppModel+Sync.swift)
+/// keeps a copy in step with the website's.
 @Observable
 final class AppModel {
     enum ContentState {
@@ -30,14 +31,31 @@ final class AppModel {
         }
     }
 
+    struct Account: Equatable {
+        var userId: String
+        var email: String?
+        var profile: Profile?
+        var displayName: String { profile?.displayName ?? email ?? "Your account" }
+        var isTeacher: Bool { profile?.isTeacher ?? false }
+    }
+
+    enum SyncStatus: Equatable {
+        case idle
+        case syncing
+        case synced(Date)
+        case offline(String)
+    }
+
     private(set) var contentState: ContentState = .loading
-    private(set) var progress: ProgressDocument {
+    var progress: ProgressDocument {
         didSet { vocab = progress.vocab }
     }
     /// The decoded vocabulary deck, kept in step with `progress` so screens
     /// that read it several times per render don't re-decode it each time.
     private(set) var vocab: [String: VocabCard] = [:]
-    var selectedTab: AppTab = .today
+    var selectedTab: AppTab = .today {
+        didSet { if oldValue != selectedTab { studySectionChanged() } }
+    }
 
     /// Device-only: whether this device follows the system appearance. Kept
     /// out of the synced document on purpose — a phone following the system's
@@ -51,8 +69,31 @@ final class AppModel {
         didSet { UserDefaults.standard.set(latinScale, forKey: "latinScale") }
     }
 
+    /* Account and sync — see AppModel+Sync.swift. */
+    var account: Account? = nil
+    var syncStatus: SyncStatus = .idle
+    @ObservationIgnored let auth: AuthManager
+    @ObservationIgnored var bookkeeping: SyncBookkeeping {
+        didSet { Self.storeBookkeeping(bookkeeping) }
+    }
+    @ObservationIgnored var pushTask: Task<Void, Never>? = nil
+    @ObservationIgnored var pullLoop: Task<Void, Never>? = nil
+    /// Set while a sync write replaces `progress`, so it isn't pushed straight back.
+    @ObservationIgnored var applyingSync = false
+
+    /* Study time — see AppModel+StudyTime.swift. Device-local, like the
+       web's `studySecondsToday`: today's live tally is never synced. */
+    var studySecondsToday: Double = 0
+    var goalJustReached = false
+    @ObservationIgnored var studyGoalDate: String = ""
+    @ObservationIgnored var goalCelebratedDate: String? = nil
+    @ObservationIgnored var pendingStudySeconds: Double = 0
+    @ObservationIgnored var pendingStudySection: String? = nil
+    @ObservationIgnored var studyTicker: Task<Void, Never>? = nil
+    @ObservationIgnored var sceneActive = false
+
     private let progressURL = URL.applicationSupportDirectory.appending(path: "progress.json")
-    @ObservationIgnored private var saveTask: Task<Void, Never>?
+    @ObservationIgnored private var saveTask: Task<Void, Never>? = nil
 
     init() {
         let stored = Self.readProgress(from: progressURL) ?? .blank()
@@ -61,6 +102,11 @@ final class AppModel {
         appearance = Appearance(rawValue: UserDefaults.standard.string(forKey: "appearance") ?? "") ?? .system
         let scale = UserDefaults.standard.double(forKey: "latinScale")
         latinScale = scale > 0 ? scale : 1
+
+        let api = SupabaseAPI(baseURL: AppConfig.supabaseURL, anonKey: AppConfig.supabaseAnonKey)
+        auth = AuthManager(api: api, storage: KeychainSessionStorage())
+        bookkeeping = Self.loadBookkeeping()
+        restoreStudyDay()
     }
 
     var content: ContentLibrary? {
@@ -90,16 +136,22 @@ final class AppModel {
     /* Progress                                                         */
     /* -------------------------------------------------------------- */
 
-    /// Applies an edit to the progress document and schedules a save.
+    /// Applies an edit to the progress document, saves it, and — when signed
+    /// in — schedules a push to the cloud.
     func update(_ edit: (inout ProgressDocument) -> Void) {
         edit(&progress)
-        scheduleSave()
+        progressChanged()
     }
 
     /// Replaces the whole document — a restore from a backup file.
     func replaceProgress(with document: ProgressDocument) {
         progress = document
+        progressChanged()
+    }
+
+    func progressChanged() {
         scheduleSave()
+        if !applyingSync { schedulePush() }
     }
 
     /// Writes immediately — called when the app leaves the foreground.
@@ -119,6 +171,28 @@ final class AppModel {
         }
     }
 
+    /* -------------------------------------------------------------- */
+    /* Scene lifecycle                                                   */
+    /* -------------------------------------------------------------- */
+
+    func sceneBecameActive() {
+        sceneActive = true
+        startStudyTicker()
+        Task { await syncOnForeground() }
+    }
+
+    func sceneResignedActive() {
+        sceneActive = false
+        stopStudyTicker()
+        saveNow()
+        flushStudyTime()
+        pushNowIfPending()
+    }
+
+    /* -------------------------------------------------------------- */
+    /* Persistence                                                       */
+    /* -------------------------------------------------------------- */
+
     nonisolated private static func readProgress(from url: URL) -> ProgressDocument? {
         guard let data = try? Data(contentsOf: url),
               let object = try? JSONValue.parse(data).objectValue
@@ -133,5 +207,16 @@ final class AppModel {
         } catch {
             print("[progress] save failed: \(error)")
         }
+    }
+
+    private static func loadBookkeeping() -> SyncBookkeeping {
+        guard let data = UserDefaults.standard.data(forKey: "syncBookkeeping"),
+              let value = try? JSONDecoder().decode(SyncBookkeeping.self, from: data)
+        else { return SyncBookkeeping() }
+        return value
+    }
+
+    private static func storeBookkeeping(_ value: SyncBookkeeping) {
+        if let data = try? JSONEncoder().encode(value) { UserDefaults.standard.set(data, forKey: "syncBookkeeping") }
     }
 }

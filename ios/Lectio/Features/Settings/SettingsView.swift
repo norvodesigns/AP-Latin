@@ -49,9 +49,34 @@ struct SettingsView: View {
                     Text("The same file the website's Settings page exports and imports, so a backup moves between the two either way.")
                 }
 
-                Section("Account") {
-                    Label("Sign-in and sync with the website are coming in the next build.", systemImage: "person.crop.circle.badge.clock")
-                        .foregroundStyle(Palette.inkMuted)
+                Section {
+                    NavigationLink {
+                        AccountView()
+                    } label: {
+                        if let account = model.account {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(account.displayName).foregroundStyle(Palette.ink)
+                                SyncStatusLabel(status: model.syncStatus).font(.footnote)
+                            }
+                        } else {
+                            Label("Sign in to sync with the website", systemImage: "person.crop.circle")
+                        }
+                    }
+                } header: {
+                    Text("Account")
+                }
+
+                Section {
+                    Stepper(value: Binding(
+                        get: { model.progress.studyPlan.minutesPerDay },
+                        set: { minutes in model.update { $0.setStudyPlan(minutesPerDay: minutes) } }
+                    ), in: 5...240, step: 5) {
+                        LabeledContent("Daily goal", value: "\(model.progress.studyPlan.minutesPerDay) min")
+                    }
+                } header: {
+                    Text("Study")
+                } footer: {
+                    Text("Time counts while a study section is open on screen, the same way the website counts it.")
                 }
 
                 Section("About") {

@@ -101,6 +101,33 @@ private struct Tabs: View {
         .tabViewStyle(.sidebarAdaptable)
         .tabBarMinimizeBehavior(.onScrollDown)
         .tabViewBottomAccessory { DueAccessory() }
+        .overlay(alignment: .top) {
+            if model.goalJustReached { GoalToast() }
+        }
+        .animation(.spring(duration: 0.5), value: model.goalJustReached)
+    }
+}
+
+/// The web's DailyGoalToast: a glass capsule the moment today's study-time
+/// goal is first reached, gone again on its own.
+private struct GoalToast: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        Label("Today's \(model.progress.studyPlan.minutesPerDay)-minute goal reached", systemImage: "laurel.leading")
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(Palette.rubric)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 12)
+            .glassEffect(.regular, in: .capsule)
+            .padding(.top, 8)
+            .transition(.move(edge: .top).combined(with: .opacity))
+            .sensoryFeedback(.success, trigger: model.goalJustReached)
+            .onTapGesture { model.goalJustReached = false }
+            .task {
+                try? await Task.sleep(for: .seconds(5))
+                model.goalJustReached = false
+            }
     }
 }
 

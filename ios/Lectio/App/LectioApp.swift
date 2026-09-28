@@ -14,7 +14,7 @@ struct LectioApp: App {
                 .task { await model.loadContent() }
         }
         .onChange(of: scenePhase) { _, phase in
-            if phase != .active { model.saveNow() }
+            if phase == .active { model.sceneBecameActive() } else { model.sceneResignedActive() }
         }
     }
 }

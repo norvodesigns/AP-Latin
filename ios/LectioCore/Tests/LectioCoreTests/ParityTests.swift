@@ -13,7 +13,7 @@ import Testing
             let name = c["name"]?.stringValue ?? "?"
             let local = try #require(c["local"]?.objectValue)
             let cloud = try #require(c["cloud"]?.objectValue)
-            let cloudIsNewer = try #require(c["cloudIsNewer"]?.boolValue)
+            let cloudIsNewer = c["cloudIsNewer"]?.boolValue == true
             let expected = try #require(c["expected"])
 
             let merged = ProgressMerge.merge(local: local, cloud: cloud, cloudIsNewer: cloudIsNewer)
