@@ -53,6 +53,13 @@ targets:
     dependencies:
       - package: LectioCore
       - target: LectioWidgets
+      # The watch app ships inside the iPhone app (Lectio.app/Watch), which
+      # is how the App Store delivers it to a paired watch.
+      - target: LectioWatch
+        embed: true
+        copy:
+          destination: productsDirectory
+          subpath: $(CONTENTS_FOLDER_PATH)/Watch
     entitlements:
       path: Lectio/Lectio.entitlements
       properties:

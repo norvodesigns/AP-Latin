@@ -129,7 +129,8 @@ the day's flashcards (the iPhone schedules; grades made on the wrist sync back t
 - `Lectio`: the iPhone and iPad app.
 - `LectioWidgets`: the widget extension. It reads a snapshot from the `group.com.norvodesigns.lectio`
   app group.
-- `LectioWatch`: the watchOS app. It talks to the phone over WatchConnectivity.
+- `LectioWatch`: the watchOS app, embedded in the iPhone app so it installs on a paired watch. It
+  talks to the phone over WatchConnectivity.
 - `LectioCore`: shared by all three.
 
 The app group and the watch app's bundle ID (`com.norvodesigns.lectio.watchkitapp`) are registered
