@@ -90,6 +90,10 @@ final class AppModel {
     @ObservationIgnored var watchBridge: WatchBridge? = nil
     @ObservationIgnored var lastWatchDeck: WatchDeck? = nil
 
+    /* Content updates from the website — see ContentStore.swift. */
+    @ObservationIgnored var contentDirectory: URL? = nil
+    @ObservationIgnored var contentUpdate: Task<Void, Never>? = nil
+
     /* AI — the website's routes. Nil until checked. */
     var aiAvailable: Bool? = nil
     @ObservationIgnored let ai = AIClient()
@@ -139,18 +143,52 @@ final class AppModel {
     func loadContent() async {
         guard case .loading = contentState else { return }
         do {
-            let library = try await Task.detached(priority: .userInitiated) {
-                guard let url = Bundle.main.url(forResource: "Content", withExtension: nil) else {
+            let (library, directory) = try await Task.detached(priority: .userInitiated) { () throws -> (ContentLibrary, URL) in
+                guard let url = ContentStore.activeDirectory(), let bundled = ContentStore.bundled else {
                     throw CocoaError(.fileNoSuchFile)
                 }
-                return try ContentLibrary(directory: url)
+                do {
+                    return (try ContentLibrary(directory: url), url)
+                } catch where url != bundled {
+                    // A download that no longer decodes: back to the bundle.
+                    ContentStore.discardDownload()
+                    return (try ContentLibrary(directory: bundled), bundled)
+                }
             }.value
             contentState = .ready(library)
+            contentDirectory = directory
             seedDemoIfRequested()
             refreshWidgets()
             startWatchBridge()
+            checkForContentUpdate()
         } catch {
             contentState = .failed(String(describing: error))
+        }
+    }
+
+    /// Picks up content the website has that this copy doesn't — a new
+    /// lesson, a corrected gloss — at most every few hours. See ContentStore.
+    func checkForContentUpdate() {
+        let key = "contentCheckedAt"
+        let last = UserDefaults.standard.double(forKey: key)
+        guard contentUpdate == nil, let library = content, let directory = contentDirectory,
+              Date.now.timeIntervalSince1970 - last > 6 * 3600 else { return }
+        let manifest = library.manifest
+        contentUpdate = Task {
+            defer { contentUpdate = nil }
+            do {
+                let updated = try await Task.detached(priority: .utility) { () async throws -> ContentLibrary? in
+                    try await ContentStore.update(current: manifest, currentDirectory: directory)
+                }.value
+                UserDefaults.standard.set(Date.now.timeIntervalSince1970, forKey: key)
+                guard let updated else { return }
+                contentState = .ready(updated)
+                contentDirectory = ContentStore.downloaded
+                refreshWidgets()
+                sendWatchDeck()
+            } catch {
+                // Offline or mid-deploy; the next foreground tries again.
+            }
         }
     }
 
@@ -202,6 +240,7 @@ final class AppModel {
         sceneActive = true
         startStudyTicker()
         Task { await syncOnForeground() }
+        checkForContentUpdate()
     }
 
     func sceneResignedActive() {

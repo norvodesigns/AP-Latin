@@ -300,3 +300,64 @@ import Testing
         #expect(m["1"] == Tally(correct: 0, total: 0))
     }
 }
+
+@Suite struct ContentUpdateTests {
+    private let a = String(repeating: "a", count: 64)
+    private let b = String(repeating: "b", count: 64)
+
+    /// A manifest; any hash but h1 supersedes h1, as a newer export would.
+    private func manifest(_ hash: String, schema: Int = 1, _ files: [String: String]) -> ContentManifest {
+        ContentManifest(schemaVersion: schema, contentHash: hash, supersedes: hash == "h1" ? [] : ["h1"], files: files)
+    }
+
+    @Test func downloadsOnlyWhatChanged() {
+        let current = manifest("h1", ["passages.json": a, "vocabulary.json": a])
+        let remote = manifest("h2", ["passages.json": a, "vocabulary.json": b, "lessons.json": b])
+        #expect(ContentUpdate.shouldUpdate(current: current, remote: remote))
+        #expect(ContentUpdate.changedFiles(current: current, remote: remote) == ["lessons.json", "vocabulary.json"])
+    }
+
+    @Test func neverGoesBackwards() {
+        // The app was built after the website last deployed: its content is
+        // newer, so the website's older content isn't an update.
+        let app = ContentManifest(schemaVersion: 1, contentHash: "h2", supersedes: ["h1"], files: ["passages.json": b])
+        let website = manifest("h1", ["passages.json": a])
+        #expect(!ContentUpdate.shouldUpdate(current: app, remote: website))
+        // Unrelated content (not in the history) isn't taken either.
+        let other = ContentManifest(schemaVersion: 1, contentHash: "h9", supersedes: ["h8"], files: ["passages.json": a])
+        #expect(!ContentUpdate.shouldUpdate(current: app, remote: other))
+    }
+
+    @Test func readsManifestsWrittenBeforeTheHistoryExisted() throws {
+        let json = #"{"schemaVersion":1,"contentHash":"h1","files":{"passages.json":"\#(a)"}}"#
+        let m = try JSONDecoder().decode(ContentManifest.self, from: Data(json.utf8))
+        #expect(m.supersedes.isEmpty)
+    }
+
+    @Test func leavesSameOrUnreadableContentAlone() {
+        let current = manifest("h1", ["passages.json": a])
+        #expect(!ContentUpdate.shouldUpdate(current: current, remote: manifest("h1", ["passages.json": a])))
+        #expect(!ContentUpdate.shouldUpdate(current: current, remote: manifest("h2", schema: 2, ["passages.json": b])))
+        #expect(!ContentUpdate.shouldUpdate(current: current, remote: manifest("h2", [:])))
+        #expect(!ContentUpdate.shouldUpdate(current: current, remote: manifest("h2", ["passages.json": "nothex"])))
+    }
+
+    @Test func refusesPaths() {
+        let current = manifest("h1", ["passages.json": a])
+        for name in ["../progress.json", "/etc/x.json", "sub/passages.json", ".json", ".hidden.json", "manifest.json", "Passages.json", "passages.txt"] {
+            #expect(!ContentUpdate.isSafeFileName(name), "\(name)")
+            #expect(!ContentUpdate.shouldUpdate(current: current, remote: manifest("h2", [name: b])))
+        }
+        #expect(ContentUpdate.isSafeFileName("lesson-plans_2.json"))
+    }
+
+    @Test func theBundledManifestPassesItsOwnChecks() throws {
+        let library = try ContentLibrary(directory: Paths.content)
+        let empty = ContentManifest(schemaVersion: 1, contentHash: "", files: [:])
+        let newer = ContentManifest(schemaVersion: library.manifest.schemaVersion, contentHash: library.manifest.contentHash,
+                                       supersedes: [""], files: library.manifest.files)
+        #expect(ContentUpdate.shouldUpdate(current: empty, remote: newer))
+        #expect(!ContentUpdate.shouldUpdate(current: library.manifest, remote: library.manifest))
+        #expect(ContentUpdate.changedFiles(current: empty, remote: library.manifest).count == library.manifest.files.count)
+    }
+}

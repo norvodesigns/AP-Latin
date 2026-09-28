@@ -383,5 +383,22 @@ public struct ContentMeta: Codable, Sendable, Hashable {
 public struct ContentManifest: Codable, Sendable, Hashable {
     public let schemaVersion: Int
     public let contentHash: String
+    /// Every earlier `contentHash`, newest first — what this content replaces.
+    public let supersedes: [String]
     public let files: [String: String]
+
+    public init(schemaVersion: Int, contentHash: String, supersedes: [String] = [], files: [String: String]) {
+        self.schemaVersion = schemaVersion
+        self.contentHash = contentHash
+        self.supersedes = supersedes
+        self.files = files
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        schemaVersion = try c.decode(Int.self, forKey: .schemaVersion)
+        contentHash = try c.decode(String.self, forKey: .contentHash)
+        supersedes = try c.decodeIfPresent([String].self, forKey: .supersedes) ?? []
+        files = try c.decode([String: String].self, forKey: .files)
+    }
 }

@@ -124,9 +124,25 @@ const rendered = Object.fromEntries(
 
 const sha = (s: string) => createHash('sha256').update(s).digest('hex');
 const fileHashes = Object.fromEntries(Object.entries(rendered).map(([n, s]) => [n, sha(s)]));
+const contentHash = sha(Object.entries(fileHashes).map(([n, h]) => `${n}:${h}`).join('\n'));
+
+// Every earlier contentHash, newest first. The app downloads content from the
+// website (/content/v1) only when it supersedes what the app already has, so
+// an app build that's ahead of the website never "updates" backwards.
+const manifestPath = join(outDir, 'manifest.json');
+const previous: { contentHash?: string; supersedes?: string[] } | null = existsSync(manifestPath)
+  ? JSON.parse(readFileSync(manifestPath, 'utf8'))
+  : null;
+const history = previous?.supersedes ?? [];
+const supersedes =
+  !previous?.contentHash || previous.contentHash === contentHash
+    ? history
+    : [previous.contentHash, ...history.filter((h) => h !== contentHash)].slice(0, 500);
+
 const manifest = {
   schemaVersion: SCHEMA_VERSION,
-  contentHash: sha(Object.entries(fileHashes).map(([n, h]) => `${n}:${h}`).join('\n')),
+  contentHash,
+  supersedes,
   files: fileHashes,
 };
 rendered['manifest.json'] = JSON.stringify(manifest, null, 2) + '\n';

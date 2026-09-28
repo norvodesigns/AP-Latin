@@ -47,6 +47,16 @@ thing on both. After editing anything in `src/data`:
 npm run export:content     # CI fails if ios/Content is stale
 ```
 
+New content doesn't have to wait for an App Store release. The website serves the same files at
+`/content/v1/` (`src/app/content/v1/[file]/route.ts`). When the app launches or comes to the
+foreground, at most every six hours, it compares that manifest with its own and downloads only
+the files whose SHA-256 changed. It checks every file against the manifest, decodes the whole set,
+and only then swaps it in (`Lectio/App/ContentStore.swift`). The manifest also lists every earlier
+content hash (`supersedes`), and the app only takes content whose history includes its own. So a
+build that's ahead of the website never goes backwards. A change to the JSON *shape* needs an app
+update: bump `SCHEMA_VERSION` in the exporter and `ContentLibrary.supportedSchemaVersion` together,
+and older builds keep the content they have.
+
 **Progress.** A student's progress is the same JSON document on both platforms: the web's
 `SyncableData`, stored in the `user_progress` table when signed in. The files are:
 

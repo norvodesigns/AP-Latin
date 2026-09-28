@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
   "contentHash": "64de914d3defcee01f150f80eec2a4854bc99835190f9a7a42fa4bda311457e4",
+  "supersedes": [],
   "files": {
     "passages.json": "eabfd92aee41c220d44e6e693419b7cf514e4520243cd594a7726850434416e8",
     "vocabulary.json": "82d850ac355d38e7dca50d5d876a089edd468d430c6af7303c540d06d5f602c2",
