@@ -15,7 +15,7 @@ struct FrqWorkshopView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        SectionStack {
             List {
                 Section {
                     Picker("Mode", selection: $mode) {

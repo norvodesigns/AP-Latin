@@ -145,12 +145,12 @@ jobs:
             xcrun simctl install "$udid" build/Build/Products/Debug-iphonesimulator/Lectio.app
             for mode in light dark; do
               xcrun simctl ui "$udid" appearance "$mode"
-              xcrun simctl terminate "$udid" com.norvodesigns.lectio || true
-              xcrun simctl launch "$udid" com.norvodesigns.lectio -seedDemo YES
-              sleep 10
-              for tab in today read vocab quiz scansion grammar exam plan read/aen-1-1-33 read/pliny-6-16-a; do
-                xcrun simctl openurl "$udid" "lectio://$tab"
-                sleep 3
+              # A fresh launch per screen, opened with -startTab: a lectio://
+              # URL from simctl stops at an "Open in Lectio?" prompt.
+              for tab in today read vocab quiz scansion grammar exam plan settings read/aen-1-1-33 read/pliny-6-16-a; do
+                xcrun simctl terminate "$udid" com.norvodesigns.lectio || true
+                xcrun simctl launch "$udid" com.norvodesigns.lectio -seedDemo YES -startTab "$tab"
+                sleep 8
                 xcrun simctl io "$udid" screenshot "shots/$label-$mode-${tab//\//-}.png"
               done
             done

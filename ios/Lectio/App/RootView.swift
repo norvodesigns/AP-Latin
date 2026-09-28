@@ -1,5 +1,6 @@
 import LectioCore
 import SwiftUI
+import UIKit
 
 /// Every section of the app — the web's NAV (src/lib/nav.ts), plus search.
 nonisolated enum AppTab: String, Hashable, Sendable {
@@ -14,15 +15,24 @@ nonisolated enum AppTab: String, Hashable, Sendable {
         guard let host else { return nil }
         self.init(rawValue: host)
     }
+
+    /// The tabs an iPhone's tab bar holds. The rest open from Today.
+    var isPhoneTab: Bool {
+        switch self {
+        case .today, .read, .vocab, .quiz, .search: true
+        default: false
+        }
+    }
 }
 
 /// The app's frame.
 ///
 /// On iPhone it's a Liquid Glass tab bar with the four places a student goes
-/// every day, plus search; the tab bar shrinks away while reading. On iPad
-/// `.sidebarAdaptable` turns the same tabs into a glass sidebar holding every
-/// section, grouped as the website's sidebar groups them. Sections not in the
-/// iPhone tab bar are reachable from Today.
+/// every day, plus search; the tab bar shrinks away while reading. The other
+/// sections open as pages pushed onto Today, from its "Everything" list or
+/// from anywhere that selects them. On iPad `.sidebarAdaptable` turns the
+/// tabs into a glass sidebar holding every section, grouped as the website's
+/// sidebar groups them.
 struct RootView: View {
     @Environment(AppModel.self) private var model
 
@@ -39,18 +49,105 @@ struct RootView: View {
                 .onOpenURL { url in
                     // lectio://vocab, lectio://read, … (the widget), and
                     // lectio://read/<passage-id> to open a passage.
-                    guard let tab = AppTab(host: url.host()) else { return }
-                    model.selectedTab = tab
-                    let id = url.lastPathComponent
-                    if tab == .read, id != "/", !id.isEmpty, let passage = library.passage(id) {
-                        model.readPath = [passage]
+                    open(host: url.host(), path: url.lastPathComponent, in: library)
+                }
+                .onAppear {
+                    // `-startTab read/aen-1-1-33` on launch — how CI takes
+                    // its screenshots without a URL prompt in the way.
+                    if let start = UserDefaults.standard.string(forKey: "startTab") {
+                        let parts = start.split(separator: "/", maxSplits: 1).map(String.init)
+                        open(host: parts.first, path: parts.count > 1 ? parts[1] : "", in: library)
                     }
                 }
         }
     }
+
+    private func open(host: String?, path: String, in library: ContentLibrary) {
+        guard let tab = AppTab(host: host) else { return }
+        model.selectedTab = tab
+        if tab == .read, path != "/", !path.isEmpty, let passage = library.passage(path) {
+            model.readPath = [passage]
+        }
+    }
 }
 
+/// iPhone (and an iPad window narrow enough to be compact) gets a tab bar of
+/// the four daily places plus search; everything else opens from Today.
+/// A full-width iPad gets the sidebar holding every section.
 private struct Tabs: View {
+    @Environment(\.horizontalSizeClass) private var sizeClass
+
+    var body: some View {
+        if sizeClass == .compact || UIDevice.current.userInterfaceIdiom == .phone {
+            PhoneTabs()
+        } else {
+            SidebarTabs()
+        }
+    }
+}
+
+private struct PhoneTabs: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        // A section outside the tab bar shows as a page pushed onto Today.
+        let selection = Binding<AppTab>(
+            get: { model.selectedTab.isPhoneTab ? model.selectedTab : .today },
+            set: { model.selectedTab = $0 }
+        )
+        TabView(selection: selection) {
+            Tab("Today", systemImage: "sun.horizon", value: AppTab.today) { TodayView() }
+            Tab("Read", systemImage: "book.closed", value: AppTab.read) { ReadIndexView() }
+            Tab("Vocab", systemImage: "rectangle.on.rectangle.angled", value: AppTab.vocab) { VocabView() }
+            Tab("Quiz", systemImage: "checklist", value: AppTab.quiz) { QuizView() }
+            Tab(value: AppTab.search, role: .search) { SearchView() }
+        }
+        .tabBarMinimizeBehavior(.onScrollDown)
+        .tabViewBottomAccessory { DueAccessory() }
+        .overlay(alignment: .top) {
+            if model.goalJustReached { GoalToast() }
+        }
+        .animation(.spring(duration: 0.5), value: model.goalJustReached)
+        .onChange(of: model.selectedTab, initial: true) { old, new in
+            if !new.isPhoneTab {
+                model.todayPath = NavigationPath([new])
+            } else if !old.isPhoneTab {
+                model.todayPath = NavigationPath()
+            }
+        }
+        .onChange(of: model.todayPath.count) { _, count in
+            // Back from a pushed section is back to Today.
+            if count == 0, !model.selectedTab.isPhoneTab { model.selectedTab = .today }
+        }
+    }
+}
+
+/// A section by its tab, for pushing onto Today's stack.
+struct PushedSection: View {
+    let tab: AppTab
+
+    var body: some View {
+        Group {
+            switch tab {
+            case .translate: TranslateView()
+            case .sight: SightReadingView()
+            case .scansion: ScansionLabView()
+            case .grammar: GrammarView()
+            case .devices: DevicesView()
+            case .context: ContextView()
+            case .frq: FrqWorkshopView()
+            case .exam: PracticeExamView()
+            case .plan: StudyPlanView()
+            case .classroom: ClassroomView()
+            case .settings: SettingsView()
+            case .today, .read, .vocab, .quiz, .search: EmptyView()
+            }
+        }
+        .environment(\.isPushedSection, true)
+    }
+}
+
+private struct SidebarTabs: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
@@ -97,6 +194,8 @@ private struct Tabs: View {
             if model.goalJustReached { GoalToast() }
         }
         .animation(.spring(duration: 0.5), value: model.goalJustReached)
+        // The sidebar shows every section itself; nothing is pushed on Today.
+        .onAppear { model.todayPath = NavigationPath() }
     }
 }
 

@@ -9,7 +9,7 @@ struct TranslateView: View {
     @Environment(\.library) private var library
 
     var body: some View {
-        NavigationStack {
+        SectionStack {
             List {
                 Section {
                     Text("The exam gives you about 35 words of Vergil or 40 of Pliny and scores your literal translation in 15 segments. Type your translation, then grade it against the actual scoring criteria.")

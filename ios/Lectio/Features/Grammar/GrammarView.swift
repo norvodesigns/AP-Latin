@@ -19,7 +19,7 @@ struct GrammarView: View {
     ]
 
     var body: some View {
-        NavigationStack {
+        SectionStack {
             List {
                 if let library {
                     ForEach(Self.levels) { level in

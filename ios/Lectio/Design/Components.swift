@@ -110,3 +110,28 @@ struct ComingSoonView: View {
         }
     }
 }
+
+/* ------------------------------------------------------------------ */
+/* Section stacks                                                      */
+/* ------------------------------------------------------------------ */
+
+extension EnvironmentValues {
+    /// True when a section has been pushed onto another stack — Today's, on
+    /// iPhone, for the sections that aren't in the tab bar — rather than
+    /// shown as a tab or in the sidebar with a stack of its own.
+    @Entry var isPushedSection = false
+}
+
+/// A section's navigation stack, unless it's already inside one.
+struct SectionStack<Content: View>: View {
+    @Environment(\.isPushedSection) private var isPushed
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        if isPushed {
+            content
+        } else {
+            NavigationStack { content }
+        }
+    }
+}

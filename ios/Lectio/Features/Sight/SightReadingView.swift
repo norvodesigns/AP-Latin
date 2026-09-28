@@ -32,7 +32,7 @@ struct SightReadingView: View {
     @State private var generated: SightItem?
 
     var body: some View {
-        NavigationStack {
+        SectionStack {
             List {
                 Section {
                     Text("Unseen passages from the authors the CED names for sight practice. Read it cold, answer the questions, then check the summary.")

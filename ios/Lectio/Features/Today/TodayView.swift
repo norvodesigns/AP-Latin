@@ -9,7 +9,8 @@ struct TodayView: View {
     @Environment(\.library) private var library
 
     var body: some View {
-        NavigationStack {
+        @Bindable var model = model
+        NavigationStack(path: $model.todayPath) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 28) {
                     header
@@ -32,6 +33,7 @@ struct TodayView: View {
                     Button("Settings", systemImage: "gearshape") { model.selectedTab = .settings }
                 }
             }
+            .navigationDestination(for: AppTab.self) { PushedSection(tab: $0) }
         }
     }
 

@@ -57,6 +57,9 @@ final class AppModel {
     var quizPresetType: String? = nil
     /// The Reading Room's navigation stack, so a link can open a passage.
     var readPath: [Passage] = []
+    /// Today's navigation stack. On iPhone, sections outside the tab bar are
+    /// pushed here (see PhoneTabs in RootView.swift).
+    var todayPath = NavigationPath()
     var selectedTab: AppTab = .today {
         didSet { if oldValue != selectedTab { studySectionChanged() } }
     }

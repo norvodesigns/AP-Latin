@@ -9,7 +9,7 @@ struct PracticeExamView: View {
     @State private var sitting: ExamPaper?
 
     var body: some View {
-        NavigationStack {
+        SectionStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
                     Text("52 multiple-choice questions in 65 minutes, then five free-response questions in 115. Section timers, typed responses, and a scored report broken down by skill and question type.")

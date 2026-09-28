@@ -12,7 +12,7 @@ struct SettingsView: View {
 
     var body: some View {
         @Bindable var model = model
-        NavigationStack {
+        SectionStack {
             Form {
                 Section("Appearance") {
                     Picker("Appearance", selection: $model.appearance) {

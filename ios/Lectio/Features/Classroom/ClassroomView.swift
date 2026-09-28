@@ -15,7 +15,7 @@ struct ClassroomView: View {
     @State private var joinMessage: String?
 
     var body: some View {
-        NavigationStack {
+        SectionStack {
             Group {
                 if let account = model.account {
                     list(isTeacher: account.isTeacher)

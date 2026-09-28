@@ -40,7 +40,7 @@ struct ScansionLabView: View {
     @State private var saveTask: Task<Void, Never>?
 
     var body: some View {
-        NavigationStack {
+        SectionStack {
             Group {
                 if let work, let corpus {
                     lab(work: work, corpus: corpus)

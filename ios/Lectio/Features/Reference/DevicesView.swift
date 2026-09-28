@@ -14,7 +14,7 @@ struct DevicesView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        SectionStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     Picker("Mode", selection: $mode) {

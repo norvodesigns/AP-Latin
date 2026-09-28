@@ -47,7 +47,7 @@ struct StudyPlanView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        SectionStack {
             if let library {
                 content(library)
             }
