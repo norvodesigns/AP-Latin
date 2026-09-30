@@ -22,6 +22,16 @@ extension AppModel {
         return !apWork
     }
 
+    /// Whether Today leads with the course instead of the exam countdown:
+    /// a student who chose the course, or who has only done lessons so far.
+    /// The website's dashboard uses the same rule.
+    var courseFirstOnToday: Bool {
+        guard content?.course.lessons.isEmpty == false else { return false }
+        if let track = progress.learner?.track { return track == .new || track == .some }
+        let apWork = !progress.quizAttempts.isEmpty || !(progress.raw["passages"]?.objectValue?.isEmpty ?? true)
+        return !progress.lessons.isEmpty && !apWork
+    }
+
     /// The iPhone tab bar, in order. Search is always last.
     var phoneTabs: [AppTab] { [.today, courseInTabBar ? .learn : .quiz, .read, .vocab, .search] }
 

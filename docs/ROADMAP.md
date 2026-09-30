@@ -62,7 +62,7 @@ finishing a lesson counts toward the streak and daily goal.
 - [x] First run on web and iOS: who you are (new to Latin, some Latin, AP student, teacher),
       daily goal, reminder, optional sign-in, then a starting point
 - [x] Placement check: a short adaptive quiz that suggests a starting lesson
-- [ ] Home adapts: a beginner's Today leads with the next lesson, an AP student's with the exam
+- [x] Home adapts: a beginner's Today leads with the next lesson, an AP student's with the exam
 
 ## 3. New modes and learning functions
 

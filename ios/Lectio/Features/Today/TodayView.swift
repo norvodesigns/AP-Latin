@@ -15,6 +15,9 @@ struct TodayView: View {
                 VStack(alignment: .leading, spacing: 28) {
                     header
                     figures
+                    if model.courseFirstOnToday, let next = model.nextCourseLesson {
+                        ContinueCard(place: next, first: model.courseDone.isEmpty)
+                    }
                     Hairline()
                     nextUp
                     Hairline()
@@ -43,7 +46,7 @@ struct TodayView: View {
                 .font(.wordmark(64))
                 .foregroundStyle(Palette.rubric)
                 .accessibilityAddTraits(.isHeader)
-            Text("AP Latin · Vergil and Pliny")
+            Text(model.courseFirstOnToday ? "Latin, from the first word" : "AP Latin · Vergil and Pliny")
                 .font(.prose(.subheadline))
                 .foregroundStyle(Palette.inkMuted)
         }
@@ -56,7 +59,11 @@ struct TodayView: View {
         let days = Streaks.daysUntilExam(examDate)
         let due = SpacedRepetition.due(model.vocab.values, on: StudyDates.today()).count
         return VStack(alignment: .leading, spacing: 18) {
-            Figure(value: "\(days)", caption: days == 1 ? "day until the exam" : "days until the exam", tint: Palette.rubric)
+            if model.courseFirstOnToday {
+                courseFigure
+            } else {
+                Figure(value: "\(days)", caption: days == 1 ? "day until the exam" : "days until the exam", tint: Palette.rubric)
+            }
             GoalMeter(seconds: model.studySecondsToday, goalMinutes: progress.studyPlan.minutesPerDay)
             HStack(alignment: .top, spacing: 32) {
                 Figure(value: "\(Streaks.current(progress.studyDays))", caption: "day streak")
@@ -66,11 +73,30 @@ struct TodayView: View {
         }
     }
 
+    /// For a student in the course: lessons finished, and the unit in hand.
+    private var courseFigure: some View {
+        let done = model.courseDone
+        let total = library?.course.lessons.count ?? 0
+        let next = model.nextCourseLesson
+        return VStack(alignment: .leading, spacing: 8) {
+            Figure(value: "\(done.count)", caption: "of \(total) lessons finished", tint: Palette.rubric)
+            if let next {
+                let pct = Course.unitProgress(next.unit, done: done)
+                ProgressView(value: pct)
+                    .tint(Palette.rubric)
+                    .accessibilityLabel("Unit \(next.unit.n)")
+                    .accessibilityValue("\(Int((pct * 100).rounded())) percent")
+                Text("\(next.level.title) · Unit \(next.unit.n) of \(next.level.units.count) · \(RichText.plain(next.unit.title))")
+                    .quietLabel()
+            }
+        }
+    }
+
     @ViewBuilder
     private var nextUp: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Next up").rubricLabel()
-            if let lesson = model.nextCourseLesson, model.courseInTabBar || !model.courseDone.isEmpty {
+            if let lesson = model.nextCourseLesson, !model.courseFirstOnToday, model.courseInTabBar || !model.courseDone.isEmpty {
                 Button {
                     model.openLesson(lesson.id)
                 } label: {

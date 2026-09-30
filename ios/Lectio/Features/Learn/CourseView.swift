@@ -54,7 +54,8 @@ private struct CourseMap: View {
     }
 }
 
-private struct ContinueCard: View {
+/// The next lesson, large, with its button. Also leads Today for a student in the course.
+struct ContinueCard: View {
     @Environment(AppModel.self) private var model
     let place: LessonPlace
     let first: Bool

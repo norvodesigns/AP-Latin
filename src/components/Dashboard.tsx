@@ -28,7 +28,8 @@ import {
   type WeakSpot,
 } from '@/lib/progress';
 import { formatDuration } from '@/lib/format';
-import { nextLesson } from '@/data/curriculum';
+import { ALL_LESSONS, nextLesson, unitProgress, type LessonPlace } from '@/data/curriculum';
+import { Rich } from '@/components/Rich';
 import type { SkillCategory } from '@/data/types';
 import type { UpcomingAssignment } from '@/lib/supabase/dashboard';
 
@@ -98,6 +99,14 @@ export default function Dashboard({
     () => requiredPassages.filter((p) => passages[p.id]?.lastOpened).length,
     [passages],
   );
+
+  // Someone working through the course sees it first, where an AP student
+  // sees the exam countdown. The app's Today uses the same rule.
+  const courseFirst =
+    mounted &&
+    (learner
+      ? learner.track === 'new' || learner.track === 'some'
+      : lessonsDone > 0 && quizAttempts.length === 0 && read === 0);
 
   const linesScanned = useMemo(() => {
     if (!mounted) return 0;
@@ -222,7 +231,10 @@ export default function Dashboard({
             revealing the columns themselves would animate the layout instead
             of its contents. */}
         <div ref={leftColumn} className="flex min-w-0 flex-col gap-11 py-10 lg:py-12 lg:pr-12">
-          {/* Countdown */}
+          {courseFirst ? (
+            <CourseHero done={lessonsDone} next={courseNext} lessons={lessons} days={days} />
+          ) : (
+          /* Countdown */
           <section className="marginal">
             <div className="slab mb-4">Diēs ad exāmen · Days to the exam</div>
             <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
@@ -274,6 +286,7 @@ export default function Dashboard({
               </p>
             )}
           </section>
+          )}
 
           {/* Consistency. Studying at all, on most days, matters more to a
               language than any single session does — so it gets its own
@@ -1081,4 +1094,61 @@ function nextAction(s: {
     cta: 'Reading Room',
     href: '/read',
   };
+}
+
+/** The top of the dashboard for a student in the course: how far along, the
+ *  unit in hand, and the next lesson. The exam is a line, not a headline. */
+function CourseHero({
+  done,
+  next,
+  lessons,
+  days,
+}: {
+  done: number;
+  next: LessonPlace | null;
+  lessons: Record<string, unknown>;
+  days: number;
+}) {
+  const unitPct = next ? Math.round(unitProgress(next.unit, lessons) * 100) : 100;
+  return (
+    <section className="marginal">
+      <div className="slab mb-4">Cursus · Your course</div>
+      <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
+        <div className="numeral" style={{ fontSize: 'clamp(4.5rem, 3rem + 7vw, 6.75rem)' }}>
+          {done}
+        </div>
+        <div style={{ fontFamily: 'var(--font-latin)', fontSize: '1.375rem', lineHeight: 1.35, color: 'var(--fg-muted)' }}>
+          of {ALL_LESSONS.length} lessons finished
+          <br />
+          <span style={{ fontSize: '1rem', letterSpacing: '0.06em' }}>
+            {next ? `${next.level.title} · Unit ${next.unit.n} of ${next.level.units.length} · ${unitPct}%` : 'every lesson written so far'}
+          </span>
+        </div>
+      </div>
+      {next && (
+        <>
+          <div
+            className="meter meter-thin mt-5"
+            role="meter"
+            aria-valuenow={unitPct}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={`Unit ${next.unit.n} progress`}
+          >
+            <span style={{ width: `${unitPct}%` }} />
+          </div>
+          <p
+            className="measure"
+            style={{ margin: '1.25rem 0 0', fontFamily: 'var(--font-latin)', fontSize: '1.0625rem', lineHeight: 1.5, color: 'var(--ink2)' }}
+          >
+            Next:{' '}
+            <Link href={`/learn/${next.lesson.id}`} className="link-rule" style={{ color: 'var(--accent)' }}>
+              <Rich text={next.lesson.title} />
+            </Link>
+            , about {next.lesson.minutes} minutes. The AP exam is {days} days away, and the course leads there.
+          </p>
+        </>
+      )}
+    </section>
+  );
 }
