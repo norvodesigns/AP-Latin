@@ -71,7 +71,7 @@ finishing a lesson counts toward the streak and daily goal.
 - [x] Course review: ten exercises drawn from finished lessons, weighted toward weak scores
       and lessons not done for a while
 - [ ] Sentence builder: put Latin tiles in order to match an English sentence
-- [ ] Derivatives: English words from Latin roots, as a quick game and on every vocab card
+- [x] Derivatives: English words from Latin roots, as a quick game and on every vocab card
 - [x] Daily challenge: one line of Latin a day with a few tasks; its own streak (Sententia of the day)
 - [x] Speed round: timed vocabulary matching
 - [ ] Achievements across the whole app, not just scansion
@@ -154,3 +154,9 @@ finishing a lesson counts toward the streak and daily goal.
   the mixed-up words listed at the end with a button to add them to the flashcards. Words
   from your deck, the whole AP list or a unit; best score kept per device. The short glosses
   are parity-tested against the web for every definition on the AP list.
+- 2026-09-30: Derivatives on both platforms: the English words the course lists with its
+  words now show on the flashcards and the vocabulary list, and a ten-question drill
+  (/vocab/derivatives; Vocabulary in the app) asks both ways, "Which English word comes from
+  pugnō?" and "Pugnacious comes from which Latin word?", from the words of finished lessons.
+  Wrong options are chosen so none could also be right (manuscript never sets manus against
+  scrībō); a Swift test checks it over many rounds.

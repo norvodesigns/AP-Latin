@@ -32,7 +32,7 @@ struct FlashcardSessionView: View {
                         }
                     }
                     Spacer(minLength: 0)
-                    CardFace(entry: entry, direction: session.direction, context: contextLine(for: entry), flipped: flipped)
+                    CardFace(entry: entry, direction: session.direction, context: contextLine(for: entry), derivatives: library?.derivatives[entry.id] ?? [], flipped: flipped)
                         .onTapGesture { withAnimation(.spring(duration: 0.45)) { flipped.toggle() } }
                         .id(id + "\(reviewed)")
                         .transition(.asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity),
@@ -144,6 +144,8 @@ private struct CardFace: View {
     let entry: VocabEntry
     let direction: VocabDirection
     let context: (latin: String, citation: String)?
+    /// English words from this one, from the course.
+    let derivatives: [String]
     let flipped: Bool
 
     var body: some View {
@@ -158,7 +160,7 @@ private struct CardFace: View {
         .shadow(color: .black.opacity(0.08), radius: 18, y: 8)
         .rotation3DEffect(.degrees(flipped ? 180 : 0), axis: (x: 0, y: 1, z: 0), perspective: 0.6)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(flipped ? "\(entry.lemma). \(entry.definition)" : frontLabel)
+        .accessibilityLabel(flipped ? "\(entry.lemma). \(entry.definition)" + (derivatives.isEmpty ? "" : ". English: \(derivatives.joined(separator: ", "))") : frontLabel)
         .accessibilityHint(flipped ? "" : "Double-tap to show the answer")
         .accessibilityAddTraits(.isButton)
     }
@@ -207,6 +209,12 @@ private struct CardFace: View {
                 .font(.prose(.title3))
                 .foregroundStyle(Palette.ink2)
                 .multilineTextAlignment(.center)
+            if !derivatives.isEmpty {
+                Text("English: \(derivatives.joined(separator: ", "))")
+                    .font(.footnote)
+                    .foregroundStyle(Palette.inkMuted)
+                    .multilineTextAlignment(.center)
+            }
         }
     }
 }

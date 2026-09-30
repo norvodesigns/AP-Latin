@@ -104,6 +104,12 @@ struct VocabView: View {
                 .buttonStyle(.glassProminent)
                 .disabled(due.isEmpty && fresh.isEmpty)
                 .listRowBackground(Color.clear)
+                Button { model.openDerivatives() } label: {
+                    Label("Derivatives · 10 questions", systemImage: "arrow.triangle.branch")
+                        .font(.subheadline.weight(.semibold)).frame(maxWidth: .infinity).padding(.vertical, 4)
+                }
+                .buttonStyle(.glass)
+                .listRowBackground(Color.clear)
                 Button { speed = true } label: {
                     Label("Speed round · \(SpeedRound.seconds) seconds", systemImage: "timer")
                         .font(.subheadline.weight(.semibold)).frame(maxWidth: .infinity).padding(.vertical, 4)
@@ -114,7 +120,7 @@ struct VocabView: View {
 
             Section {
                 ForEach(browse(scope), id: \.id) { entry in
-                    VocabRow(entry: entry, card: model.vocab[entry.id])
+                    VocabRow(entry: entry, card: model.vocab[entry.id], derivatives: library.derivatives[entry.id] ?? [])
                 }
             } header: {
                 Text("Browse \(unit.map { "unit \($0)" } ?? "the core list")").rubricLabel()
@@ -140,12 +146,16 @@ struct VocabView: View {
 private struct VocabRow: View {
     let entry: VocabEntry
     let card: VocabCard?
+    let derivatives: [String]
 
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(entry.lemma).font(.latinItalic(18, relativeTo: .body)).foregroundStyle(Palette.ink)
                 Text(entry.definition).font(.footnote).foregroundStyle(Palette.inkMuted).lineLimit(2)
+                if !derivatives.isEmpty {
+                    Text("English: \(derivatives.joined(separator: ", "))").font(.caption).foregroundStyle(Palette.inkFaint)
+                }
             }
             Spacer()
             if let card {

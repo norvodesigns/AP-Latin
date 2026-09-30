@@ -67,6 +67,13 @@ export default function Vocabulary() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
+  // English derivatives for the cards, from the course. Loaded after the
+  // page, since the course is large and the page doesn't need it to start.
+  const [derivatives, setDerivatives] = useState<ReadonlyMap<string, string[]>>(new Map());
+  useEffect(() => {
+    import('@/lib/derivatives').then((m) => setDerivatives(m.DERIVATIVES_BY_VOCAB));
+  }, []);
+
   const [mode, setMode] = useState<Mode>('idle');
   const [direction, setDirection] = useState<Direction>('la-en');
   const [unit, setUnit] = useState<'all' | UnitId>('all');
@@ -305,6 +312,11 @@ export default function Vocabulary() {
                   >
                     {entry.definition}
                   </p>
+                  {derivatives.get(entry.id) && (
+                    <p className="slab-sm" style={{ margin: '0.75rem 0 0', color: 'var(--fg-muted)' }}>
+                      English: {derivatives.get(entry.id)!.join(', ')}
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -457,6 +469,11 @@ export default function Vocabulary() {
                   }}
                 >
                   {e.definition}
+                  {derivatives.get(e.id) && (
+                    <span style={{ color: 'var(--fg-muted)', fontSize: '0.9375rem' }}>
+                      {' '}· English: {derivatives.get(e.id)!.join(', ')}
+                    </span>
+                  )}
                 </span>
                 {mounted && c && (
                   <span
@@ -498,6 +515,9 @@ export default function Vocabulary() {
           <div className="flex flex-wrap gap-3">
             <Link href="/vocab/speed" className="btn">
               Speed round
+            </Link>
+            <Link href="/vocab/derivatives" className="btn">
+              Derivatives
             </Link>
             <button type="button" className="btn" onClick={() => setMode('browse')}>
               Browse list

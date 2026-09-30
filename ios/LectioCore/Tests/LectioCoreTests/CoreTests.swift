@@ -555,6 +555,35 @@ import Testing
     }
 }
 
+@Suite struct DerivativesTests {
+    @Test func everyRoundHasOneRightAnswerPerQuestion() throws {
+        let library = try ContentLibrary(directory: Paths.content)
+        let course = library.course
+        let words = course.rootWords
+        #expect(words.count > 150)
+        #expect(library.derivatives["multus"]?.contains("multitude") == true)
+        var rng = ForgeTests.Seeded(state: 5)
+        for _ in 0..<40 {
+            let place = course.derivativesLesson(done: [:], using: &rng)
+            #expect(Course.isDerivatives(place.lesson.id))
+            #expect(place.lesson.steps.count == Course.derivativesLength)
+            for case .choice(let c) in place.lesson.steps {
+                #expect(c.options.count == 4, "\(c.prompt)")
+                #expect(Set(c.options).count == c.options.count, "\(c.prompt)")
+                #expect(c.options.indices.contains(c.answer))
+                // "X comes from which Latin word?": no wrong option lists X among its derivatives.
+                if c.prompt.hasSuffix("comes from which Latin word?") {
+                    let derivative = c.prompt.split(separator: "*")[0].lowercased()
+                    for (i, o) in c.options.enumerated() where i != c.answer {
+                        let root = try #require(words.first { $0.head == o })
+                        #expect(!root.derivatives.map { $0.lowercased() }.contains(derivative), "\(o) also gives \(derivative)")
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Suite struct LessonCheckParityTests {
     struct Fixture: Decodable {
         struct Fold: Decodable { let input: String; let output: String }

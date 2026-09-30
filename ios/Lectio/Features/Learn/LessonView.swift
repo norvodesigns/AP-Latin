@@ -27,11 +27,14 @@ struct LessonView: View {
     private var isReview: Bool { Course.isReview(lesson.id) }
     /// The Sententia of the day (Daily.lesson).
     private var isDaily: Bool { Daily.isDaily(lesson.id) }
+    /// A round of derivatives questions (Course.derivativesLesson).
+    private var isDerivatives: Bool { Course.isDerivatives(lesson.id) }
     /// Made on the spot rather than one of the course's lessons.
-    private var isSession: Bool { isReview || isDaily }
+    private var isSession: Bool { isReview || isDaily || isDerivatives }
 
     private var eyebrow: String {
         if isReview { return "Review · from lessons you have finished" }
+        if isDerivatives { return "Vocabulary · Latin inside English" }
         if isDaily {
             let day = Daily.day(ofLesson: lesson.id)
             let date = StudyDates.dayNumber(day).map { Date(timeIntervalSince1970: Double($0) * 86_400 + 43_200) }
@@ -103,7 +106,7 @@ struct LessonView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(isReview ? "What it's for" : isDaily ? "In three minutes" : "You will be able to").quietLabel()
+                    Text(isReview || isDerivatives ? "What it's for" : isDaily ? "In three minutes" : "You will be able to").quietLabel()
                     ForEach(lesson.objectives, id: \.self) { o in
                         HStack(alignment: .firstTextBaseline, spacing: 10) {
                             Text("·").foregroundStyle(Palette.rubric)
@@ -238,7 +241,7 @@ struct LessonView: View {
         let (verdict, gloss) = score >= 0.9 ? ("Optimē!", "Excellent.") : score >= 0.7 ? ("Bene!", "Well done.") : ("Satis.", "Enough for now. It's worth another go.")
         return ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                Text(isReview ? "Review complete" : isDaily ? "Today's line, done" : "Lesson complete").rubricLabel()
+                Text(isReview ? "Review complete" : isDaily ? "Today's line, done" : isDerivatives ? "Round complete" : "Lesson complete").rubricLabel()
                 VStack(alignment: .leading, spacing: 4) {
                     Text(verdict).font(.latinItalic(52, relativeTo: .largeTitle)).foregroundStyle(Palette.rubric)
                     Text(gloss).font(.prose(.title3)).foregroundStyle(Palette.inkMuted)
@@ -279,6 +282,9 @@ struct LessonView: View {
                     HStack(spacing: 10) {
                         if isReview {
                             Button { model.openReview() } label: { Text("Another review").frame(maxWidth: .infinity).padding(.vertical, 4) }
+                                .buttonStyle(.glass)
+                        } else if isDerivatives {
+                            Button { model.openDerivatives() } label: { Text("Another round").frame(maxWidth: .infinity).padding(.vertical, 4) }
                                 .buttonStyle(.glass)
                         } else {
                             Button { start() } label: { Text("Do it again").frame(maxWidth: .infinity).padding(.vertical, 4) }

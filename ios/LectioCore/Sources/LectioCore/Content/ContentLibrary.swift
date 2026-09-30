@@ -37,6 +37,8 @@ public struct ContentLibrary: Sendable {
     /// The Sententia of the day lines. Empty for a bundle exported before
     /// they existed.
     public let sententiae: [Sententia]
+    /// AP vocabulary id -> English derivatives, from the course's words.
+    public let derivatives: [String: [String]]
 
     private let passageIndex: [String: Int]
     private let vocabIndex: [String: VocabEntry]
@@ -108,6 +110,7 @@ public struct ContentLibrary: Sendable {
         } else {
             sententiae = []
         }
+        derivatives = course.derivativesByVocab
 
         passageIndex = Dictionary(passages.enumerated().map { ($1.id, $0) }, uniquingKeysWith: { a, _ in a })
         // Core entries win over a supplementary entry that happens to share an id.
