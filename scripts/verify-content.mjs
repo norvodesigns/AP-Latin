@@ -399,6 +399,10 @@ for (const f of frqPrompts) {
             case 'read':
               if ((s.lines?.length ?? 0) < 2) fail(`${at}: a reading needs at least two lines`);
               for (const l of s.lines ?? []) if (!l.la?.trim() || !l.en?.trim()) fail(`${at}: a line is missing its Latin or English`);
+              // Readings and their glosses are shown as plain text: no markup.
+              for (const t of [...(s.lines ?? []).flatMap((l) => [l.la, l.en]), ...(s.gloss ?? []).flatMap((g) => [g.word, g.meaning])]) {
+                if (/[*|]/.test(t ?? '')) fail(`${at}: markup in plain text "${t}"`);
+              }
               break;
             case 'choice': {
               checkMarkup(`${at} prompt`, s.prompt);
