@@ -75,13 +75,13 @@ finishing a lesson counts toward the streak and daily goal.
 - [x] Daily challenge: one line of Latin a day with a few tasks; its own streak (Sententia of the day)
 - [ ] Speed round: timed vocabulary matching
 - [ ] Achievements across the whole app, not just scansion
-- [ ] Word of the day (web card, iOS widget)
+- [x] Word of the day (web card, iOS widget): done as the Sententia of the day, a card on the web and a Home and Lock Screen widget
 
 ## 4. Apple platform extras
 
-- [ ] App Shortcuts / Siri: "Review my Latin", "Continue my lesson"
+- [x] App Shortcuts / Siri: "Review my Latin", "Continue my lesson", "Today's Latin line"
 - [ ] Watch complication: cards due
-- [ ] Lock Screen widget for the next lesson
+- [x] Lock Screen widget for the next lesson
 - [ ] Live Activity for a timed practice-exam section
 
 ## 5. Quality
@@ -144,3 +144,8 @@ finishing a lesson counts toward the streak and daily goal.
   Card on the web dashboard and on Today in the app; /daily, and `lectio://learn/daily`.
   `verify` checks every line and question. A missed question now comes back before a
   lesson's closing steps, not after them.
+- 2026-09-30: Apple extras: two new widgets (Sententia of the day, Home and Lock Screen,
+  turning over at midnight from a week of lines in the snapshot; Next lesson, Lock Screen and
+  small) and three App Shortcuts for Siri and Spotlight (the day's line, continue the course,
+  review cards), routed like lectio:// links. Forms Forge no longer opens with nothing in play
+  for someone who hasn't reached a lesson with a table.

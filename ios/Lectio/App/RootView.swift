@@ -54,6 +54,13 @@ struct RootView: View {
                     // lectio://read/<passage-id> to open a passage.
                     open(host: url.host(), path: url.lastPathComponent, in: library)
                 }
+                // Siri and the Shortcuts app (Shortcuts.swift) leave a route here.
+                .onChange(of: ShortcutRouter.shared.pending, initial: true) { _, route in
+                    guard let route else { return }
+                    ShortcutRouter.shared.pending = nil
+                    let parts = route.split(separator: "/", maxSplits: 1).map(String.init)
+                    open(host: parts.first, path: parts.count > 1 ? parts[1] : "", in: library)
+                }
                 .onAppear {
                     // `-startTab read/aen-1-1-33` on launch — how CI takes
                     // its screenshots without a URL prompt in the way.
@@ -72,11 +79,13 @@ struct RootView: View {
             model.readPath = [passage]
         }
         // lectio://learn/<lesson-id> opens that lesson; learn/daily the
-        // Sententia of the day, learn/review a review.
+        // Sententia of the day, learn/review a review, learn/next the next
+        // lesson of the course.
         if tab == .learn, path != "/", !path.isEmpty {
             switch path {
             case "daily": model.openDaily()
             case "review": model.openReview()
+            case "next": if let next = model.nextCourseLesson { model.openLesson(next.lesson.id) }
             default: model.openLesson(path)
             }
         }

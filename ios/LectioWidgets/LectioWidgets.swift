@@ -3,13 +3,16 @@ import SwiftUI
 import WidgetKit
 
 /// Home Screen and Lock Screen widgets: days to the exam, cards due, the
-/// streak, and today's study time. They read the snapshot the app writes to
-/// the shared app group (`WidgetSnapshot`), and count due cards and the
-/// streak for the moment they're shown, so they stay right overnight.
+/// streak and today's study time; the Sententia of the day; the next course
+/// lesson. They read the snapshot the app writes to the shared app group
+/// (`WidgetSnapshot`), and work out what's due, the streak and the day's
+/// line for the moment they're shown, so they stay right overnight.
 @main
 struct LectioWidgetBundle: WidgetBundle {
     var body: some Widget {
         TodayWidget()
+        SententiaWidget()
+        NextLessonWidget()
     }
 }
 
@@ -139,3 +142,132 @@ struct TodayWidgetView: View {
         }
     }
 }
+
+/* ------------------------------------------------------------------ */
+/* Sententia of the day                                                */
+/* ------------------------------------------------------------------ */
+
+struct SententiaWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "LectioSententia", provider: TodayProvider()) { entry in
+            SententiaWidgetView(entry: entry)
+                .containerBackground(for: .widget) { WidgetPalette.parchment }
+                .widgetURL(URL(string: "lectio://learn/daily"))
+        }
+        .configurationDisplayName("Sententia of the day")
+        .description("One famous line of Latin a day.")
+        .supportedFamilies([.systemSmall, .systemMedium, .accessoryRectangular])
+    }
+}
+
+struct SententiaWidgetView: View {
+    @Environment(\.widgetFamily) private var family
+    let entry: TodayEntry
+
+    var body: some View {
+        if let line = entry.snapshot.line(on: entry.date) {
+            let done = entry.snapshot.dailyDone(on: entry.date)
+            switch family {
+            case .accessoryRectangular:
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Sententia").font(.caption2.weight(.semibold)).widgetAccentable()
+                    Text(line.latin).font(.system(.body, design: .serif).italic()).lineLimit(2).minimumScaleFactor(0.8)
+                }
+            case .systemMedium:
+                VStack(alignment: .leading, spacing: 6) {
+                    label(done: done)
+                    Text(line.latin)
+                        .font(.system(size: 21, design: .serif).italic())
+                        .foregroundStyle(WidgetPalette.ink)
+                        .lineLimit(3)
+                        .minimumScaleFactor(0.7)
+                    Spacer(minLength: 0)
+                    Text(done ? "“\(line.english)”" : line.source)
+                        .font(.system(.caption, design: .serif))
+                        .foregroundStyle(WidgetPalette.muted)
+                        .lineLimit(2)
+                }
+            default:
+                VStack(alignment: .leading, spacing: 6) {
+                    label(done: done)
+                    Text(line.latin)
+                        .font(.system(size: 17, design: .serif).italic())
+                        .foregroundStyle(WidgetPalette.ink)
+                        .lineLimit(5)
+                        .minimumScaleFactor(0.6)
+                    Spacer(minLength: 0)
+                }
+            }
+        } else {
+            VStack(alignment: .leading, spacing: 6) {
+                label(done: false)
+                Text("Open Lectio for today's line.")
+                    .font(.system(.footnote, design: .serif))
+                    .foregroundStyle(WidgetPalette.muted)
+            }
+        }
+    }
+
+    private func label(done: Bool) -> some View {
+        HStack(spacing: 4) {
+            Text("SENTENTIA").font(.system(size: 9, weight: .semibold)).tracking(1.1)
+            if done { Image(systemName: "checkmark").font(.system(size: 8, weight: .bold)) }
+        }
+        .foregroundStyle(WidgetPalette.rubric)
+    }
+}
+
+/* ------------------------------------------------------------------ */
+/* The next lesson                                                     */
+/* ------------------------------------------------------------------ */
+
+struct NextLessonWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "LectioNextLesson", provider: TodayProvider()) { entry in
+            NextLessonWidgetView(entry: entry)
+                .containerBackground(for: .widget) { WidgetPalette.parchment }
+                .widgetURL(URL(string: entry.snapshot.nextLesson.map { "lectio://learn/\($0.id)" } ?? "lectio://learn"))
+        }
+        .configurationDisplayName("Next lesson")
+        .description("Where you are in the course, one tap from carrying on.")
+        .supportedFamilies([.systemSmall, .accessoryRectangular, .accessoryInline])
+    }
+}
+
+struct NextLessonWidgetView: View {
+    @Environment(\.widgetFamily) private var family
+    let entry: TodayEntry
+
+    var body: some View {
+        let next = entry.snapshot.nextLesson
+        switch family {
+        case .accessoryInline:
+            Text(next.map { "Next: \($0.title)" } ?? "Lectio course")
+        case .accessoryRectangular:
+            VStack(alignment: .leading, spacing: 1) {
+                Text(next?.place ?? "The course").font(.caption2.weight(.semibold)).widgetAccentable()
+                Text(next?.title ?? "Every lesson done").font(.headline).lineLimit(2).minimumScaleFactor(0.8)
+            }
+        default:
+            VStack(alignment: .leading, spacing: 6) {
+                Text(next == nil ? "THE COURSE" : "NEXT LESSON")
+                    .font(.system(size: 9, weight: .semibold)).tracking(1.1)
+                    .foregroundStyle(WidgetPalette.rubric)
+                if let next {
+                    Text(next.place).font(.caption).foregroundStyle(WidgetPalette.muted)
+                    Text(next.title)
+                        .font(.system(size: 18, weight: .medium, design: .serif))
+                        .foregroundStyle(WidgetPalette.ink)
+                        .lineLimit(4)
+                        .minimumScaleFactor(0.7)
+                } else {
+                    Text("Every lesson written so far is done.")
+                        .font(.system(.footnote, design: .serif))
+                        .foregroundStyle(WidgetPalette.ink)
+                }
+                Spacer(minLength: 0)
+            }
+        }
+    }
+}
+

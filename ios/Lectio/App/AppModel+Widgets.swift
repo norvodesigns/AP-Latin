@@ -14,13 +14,30 @@ extension AppModel {
             studyDays: Array(progress.studyDays.sorted().suffix(60)),
             goalMinutes: progress.studyPlan.minutesPerDay,
             studySeconds: studySecondsToday,
-            studyDay: studyGoalDate
+            studyDay: studyGoalDate,
+            lines: upcomingLines,
+            dailyDone: Array(progress.daily.keys.sorted().suffix(10)),
+            nextLesson: nextCourseLesson.map {
+                .init(id: $0.lesson.id, place: "\($0.level.title) \($0.unit.n).\($0.number)", title: RichText.plain($0.lesson.title))
+            }
         )
         sendWatchDeck()
         guard snapshot != lastWidgetSnapshot else { return }
         lastWidgetSnapshot = snapshot
         snapshot.save()
         WidgetCenter.shared.reloadAllTimelines()
+    }
+
+    /// The Sententia for today and the next six days, for the widget.
+    private var upcomingLines: [WidgetSnapshot.DayLine]? {
+        guard let list = content?.sententiae, !list.isEmpty else { return nil }
+        let today = dailyDay
+        return (0..<7).compactMap { n in
+            let day = Daily.shift(today, by: n)
+            return Daily.sententia(for: day, in: list).map {
+                .init(day: day, latin: $0.latin, english: $0.english, source: RichText.plain($0.source))
+            }
+        }
     }
 
     /* -------------------------------------------------------------- */

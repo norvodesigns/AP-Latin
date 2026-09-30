@@ -253,6 +253,23 @@ import Testing
         snap.save(to: defaults)
         #expect(WidgetSnapshot.load(from: defaults) == snap)
     }
+
+    @Test func linesTurnOverByLocalDay() throws {
+        let line = { (day: String) in WidgetSnapshot.DayLine(day: day, latin: "L\(day)", english: "", source: "") }
+        let snap = WidgetSnapshot(examDate: "2027-05-14", dueDates: [], studyDays: [], goalMinutes: 30, studySeconds: 0, studyDay: "",
+                                  lines: [line("2026-10-15"), line("2026-10-16")], dailyDone: ["2026-10-15"],
+                                  nextLesson: .init(id: "prima-2-3", place: "Prīma 2.3", title: "Of, to, with"))
+        let now = parseISO("2026-10-15T12:00:00.000Z")
+        #expect(snap.line(on: now, calendar: utc)?.latin == "L2026-10-15")
+        #expect(snap.line(on: now.addingTimeInterval(86_400), calendar: utc)?.latin == "L2026-10-16")
+        #expect(snap.line(on: now.addingTimeInterval(3 * 86_400), calendar: utc) == nil)
+        #expect(snap.dailyDone(on: now, calendar: utc))
+        #expect(!snap.dailyDone(on: now.addingTimeInterval(86_400), calendar: utc))
+        // A snapshot written before these fields decodes with them empty.
+        let old = #"{"examDate":"2027-05-14","dueDates":[],"studyDays":[],"goalMinutes":30,"studySeconds":0,"studyDay":""}"#
+        let decoded = try JSONDecoder().decode(WidgetSnapshot.self, from: Data(old.utf8))
+        #expect(decoded.lines == nil && decoded.nextLesson == nil)
+    }
 }
 
 @Suite struct WatchMessageTests {
