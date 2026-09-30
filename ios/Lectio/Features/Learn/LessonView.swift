@@ -25,6 +25,23 @@ struct LessonView: View {
     private var lesson: Lesson { place.lesson }
     /// A generated review (Course.review) rather than a course lesson.
     private var isReview: Bool { Course.isReview(lesson.id) }
+    /// The Sententia of the day (Daily.lesson).
+    private var isDaily: Bool { Daily.isDaily(lesson.id) }
+    /// Made on the spot rather than one of the course's lessons.
+    private var isSession: Bool { isReview || isDaily }
+
+    private var eyebrow: String {
+        if isReview { return "Review · from lessons you have finished" }
+        if isDaily {
+            let day = Daily.day(ofLesson: lesson.id)
+            let date = StudyDates.dayNumber(day).map { Date(timeIntervalSince1970: Double($0) * 86_400 + 43_200) }
+            let f = DateFormatter()
+            f.timeZone = TimeZone(identifier: "UTC")
+            f.setLocalizedDateFormatFromTemplate("EEEEMMMMd")
+            return "Sententia · \(date.map(f.string(from:)) ?? day)"
+        }
+        return "\(place.level.title) · Unit \(place.unit.n) · Lesson \(place.number)"
+    }
     /// Steps this build can show (content from a newer website may have kinds it doesn't know).
     private var playable: [Int] { lesson.steps.indices.filter { lesson.steps[$0] != .unknown } }
     private var exerciseCount: Int { playable.filter { lesson.steps[$0].isExercise }.count }
@@ -72,11 +89,11 @@ struct LessonView: View {
     /* -------------------------------------------------------------- */
 
     private var intro: some View {
-        let previous = isReview ? nil : model.progress.lessons[lesson.id]
+        let previous = isSession ? nil : model.progress.lessons[lesson.id]
         return ScrollView {
             VStack(alignment: .leading, spacing: 22) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(isReview ? "Review · from lessons you have finished" : "\(place.level.title) · Unit \(place.unit.n) · Lesson \(place.number)").rubricLabel()
+                    Text(eyebrow).rubricLabel()
                     Text(rich: lesson.title)
                         .font(.system(.largeTitle, design: .serif))
                         .foregroundStyle(Palette.ink)
@@ -86,7 +103,7 @@ struct LessonView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(isReview ? "What it's for" : "You will be able to").quietLabel()
+                    Text(isReview ? "What it's for" : isDaily ? "In three minutes" : "You will be able to").quietLabel()
                     ForEach(lesson.objectives, id: \.self) { o in
                         HStack(alignment: .firstTextBaseline, spacing: 10) {
                             Text("·").foregroundStyle(Palette.rubric)
@@ -156,7 +173,7 @@ struct LessonView: View {
         let step = lesson.steps[index]
         return ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                if pos >= playable.count { Text("Once more").rubricLabel() }
+                if (queue.firstIndex(of: index) ?? pos) < pos { Text("Once more").rubricLabel() }
                 StepContent(step: step, result: result, answer: { answered(index, right: $0) })
             }
             .padding(20)
@@ -182,7 +199,14 @@ struct LessonView: View {
         if firstTry[index] == nil { firstTry[index] = right }
         if !right && !requeued.contains(index) {
             requeued.insert(index)
-            queue.append(index)
+            // Again at the end, but before any closing steps after the last
+            // exercise (the Sententia's translation), which stay last.
+            let lastExercise = lesson.steps.lastIndex(where: \.isExercise) ?? -1
+            if let outro = queue.indices.first(where: { $0 > pos && queue[$0] > lastExercise }) {
+                queue.insert(index, at: outro)
+            } else {
+                queue.append(index)
+            }
         }
     }
 
@@ -210,11 +234,11 @@ struct LessonView: View {
     private var done: some View {
         let right = firstTry.values.filter { $0 }.count
         let deck = lesson.words.filter { $0.vocabId != nil }
-        let next = isReview ? nil : model.content?.course.after(lesson.id)
+        let next = isSession ? nil : model.content?.course.after(lesson.id)
         let (verdict, gloss) = score >= 0.9 ? ("Optimē!", "Excellent.") : score >= 0.7 ? ("Bene!", "Well done.") : ("Satis.", "Enough for now. It's worth another go.")
         return ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                Text(isReview ? "Review complete" : "Lesson complete").rubricLabel()
+                Text(isReview ? "Review complete" : isDaily ? "Today's line, done" : "Lesson complete").rubricLabel()
                 VStack(alignment: .leading, spacing: 4) {
                     Text(verdict).font(.latinItalic(52, relativeTo: .largeTitle)).foregroundStyle(Palette.rubric)
                     Text(gloss).font(.prose(.title3)).foregroundStyle(Palette.inkMuted)
@@ -223,6 +247,12 @@ struct LessonView: View {
                     Figure(value: "\(Int((score * 100).rounded()))%", caption: "score", tint: Palette.rubric)
                     Figure(value: "\(right) / \(exerciseCount)", caption: "right first time")
                     if !deck.isEmpty { Figure(value: "\(deck.count)", caption: deck.count == 1 ? "word to your deck" : "words to your deck") }
+                }
+                if isDaily {
+                    let streak = model.dailyStreak
+                    Text(streak > 1 ? "\(streak) days in a row. A new line tomorrow." : "A new line tomorrow.")
+                        .font(.prose(.body))
+                        .foregroundStyle(Palette.ink2)
                 }
                 if !deck.isEmpty {
                     Text("\(deck.map { $0.latin.components(separatedBy: ",")[0] }.joined(separator: ", ")) \(deck.count == 1 ? "is" : "are") now in your flashcards, due today. Reviewing them tomorrow is what makes them stick.")

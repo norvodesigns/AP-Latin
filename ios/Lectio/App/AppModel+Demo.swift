@@ -36,6 +36,14 @@ extension AppModel {
                     doc.completeLesson(id, score: score, vocabIds: lesson.vocabIds, now: now)
                 }
             }
+            // The Sententia done the last three days, not yet today.
+            for d in 1...3 {
+                let then = calendar.date(byAdding: .day, value: -d, to: now) ?? now
+                let day = Daily.localDay(then, calendar: calendar)
+                if let line = Daily.sententia(for: day, in: library.sententiae) {
+                    doc.completeDaily(day: day, id: line.id, score: 1, now: then)
+                }
+            }
             if let aeneid = library.passage("aen-1-1-33") {
                 doc.markOpened(aeneid.id, now: now)
                 doc.toggleBookmark(aeneid.id)

@@ -72,7 +72,7 @@ finishing a lesson counts toward the streak and daily goal.
       and lessons not done for a while
 - [ ] Sentence builder: put Latin tiles in order to match an English sentence
 - [ ] Derivatives: English words from Latin roots, as a quick game and on every vocab card
-- [ ] Daily challenge: one line of Latin a day with a few tasks; its own streak
+- [x] Daily challenge: one line of Latin a day with a few tasks; its own streak (Sententia of the day)
 - [ ] Speed round: timed vocabulary matching
 - [ ] Achievements across the whole app, not just scansion
 - [ ] Word of the day (web card, iOS widget)
@@ -136,3 +136,11 @@ finishing a lesson counts toward the streak and daily goal.
   and old dates, with "Another review" at the end. It counts the day studied but records no
   lesson. Same weighting in `src/lib/review.ts` and LectioCore `Course.review`, which has
   Swift tests (65 now).
+- 2026-09-30: Sententia of the day on both platforms: 47 famous lines (Vergil, Horace, Cicero,
+  Catullus, Juvenal, Ovid, Livy, Tacitus, Caesar, Seneca, Terence, Plautus...), each with
+  glosses and three questions (meaning, a point of grammar, an English derivative), then the
+  translation, source and a note. Same line for everyone on a calendar day; its own streak,
+  synced as a new `daily` progress field (merge ported to Swift, parity fixtures extended).
+  Card on the web dashboard and on Today in the app; /daily, and `lectio://learn/daily`.
+  `verify` checks every line and question. A missed question now comes back before a
+  lesson's closing steps, not after them.

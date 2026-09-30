@@ -147,7 +147,7 @@ jobs:
               xcrun simctl ui "$udid" appearance "$mode"
               # A fresh launch per screen, opened with -startTab: a lectio://
               # URL from simctl stops at an "Open in Lectio?" prompt.
-              for tab in today learn learn/prima-2-3 read vocab quiz scansion forge grammar exam plan settings read/aen-1-1-33 read/pliny-6-16-a; do
+              for tab in today learn learn/prima-2-3 learn/daily read vocab quiz scansion forge grammar exam plan settings read/aen-1-1-33 read/pliny-6-16-a; do
                 xcrun simctl terminate "$udid" com.norvodesigns.lectio || true
                 xcrun simctl launch "$udid" com.norvodesigns.lectio -seedDemo YES -startTab "$tab"
                 sleep 8

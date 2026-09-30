@@ -18,6 +18,9 @@ struct TodayView: View {
                     if model.courseFirstOnToday, let next = model.nextCourseLesson {
                         ContinueCard(place: next, first: model.courseDone.isEmpty)
                     }
+                    if let line = model.todaysSententia {
+                        SententiaCard(line: line)
+                    }
                     Hairline()
                     nextUp
                     Hairline()
@@ -333,5 +336,50 @@ private struct TodayInsights: View {
         case .scansion: model.selectedTab = .scansion
         case .vocab: model.selectedTab = .vocab
         }
+    }
+}
+
+/// The Sententia of the day: the line, and three minutes of questions on
+/// it; once done, what it says and where it comes from. The website's
+/// dashboard has the same card.
+private struct SententiaCard: View {
+    @Environment(AppModel.self) private var model
+    let line: Sententia
+
+    var body: some View {
+        let done = model.progress.daily[model.dailyDay] != nil
+        let streak = model.dailyStreak
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Sententia · the line for today").rubricLabel()
+                Spacer(minLength: 8)
+                if streak > 0 {
+                    Text("\(streak) day\(streak == 1 ? "" : "s") running").quietLabel()
+                }
+            }
+            Text(line.latin)
+                .font(.latinItalic(22, relativeTo: .title3))
+                .foregroundStyle(Palette.ink)
+                .fixedSize(horizontal: false, vertical: true)
+            if done {
+                Text("“\(line.english)” \(Text("— \(RichText.plain(line.source))").foregroundStyle(Palette.inkMuted))")
+                    .font(.prose(.callout))
+                    .foregroundStyle(Palette.ink2)
+            } else {
+                Text(rich: line.source)
+                    .font(.prose(.callout))
+                    .foregroundStyle(Palette.inkMuted)
+            }
+            Button {
+                model.openDaily()
+            } label: {
+                Label(done ? "Look again" : "Three questions · 3 min", systemImage: done ? "checkmark" : "text.quote")
+                    .font(.subheadline.weight(.semibold))
+                    .padding(.vertical, 2)
+            }
+            .buttonStyle(.glass)
+            .padding(.top, 4)
+        }
+        .accessibilityElement(children: .contain)
     }
 }

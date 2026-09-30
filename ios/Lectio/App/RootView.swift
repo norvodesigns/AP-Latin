@@ -71,9 +71,14 @@ struct RootView: View {
         if tab == .read, path != "/", !path.isEmpty, let passage = library.passage(path) {
             model.readPath = [passage]
         }
-        // lectio://learn/<lesson-id> opens that lesson.
+        // lectio://learn/<lesson-id> opens that lesson; learn/daily the
+        // Sententia of the day, learn/review a review.
         if tab == .learn, path != "/", !path.isEmpty {
-            model.openLesson(path)
+            switch path {
+            case "daily": model.openDaily()
+            case "review": model.openReview()
+            default: model.openLesson(path)
+            }
         }
     }
 }

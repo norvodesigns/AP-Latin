@@ -454,6 +454,57 @@ import Testing
     }
 }
 
+@Suite struct DailyTests {
+    @Test func everyLineDecodesAndTodayIsStable() throws {
+        let list = try ContentLibrary(directory: Paths.content).sententiae
+        #expect(list.count >= 40)
+        #expect(Set(list.map(\.id)).count == list.count)
+        for s in list {
+            #expect(s.steps.filter(\.isExercise).count == 3, "\(s.id)")
+            #expect(!s.steps.contains(.unknown), "\(s.id)")
+        }
+        // Consecutive days walk through the list; the same day is always the same line.
+        let a = try #require(Daily.sententia(for: "2026-10-01", in: list))
+        let b = try #require(Daily.sententia(for: "2026-10-02", in: list))
+        let i = try #require(list.firstIndex(of: a))
+        #expect(list[(i + 1) % list.count] == b)
+        #expect(Daily.sententia(for: "2026-10-01", in: list) == a)
+        #expect(Daily.sententia(for: Daily.shift("2026-10-01", by: list.count), in: list) == a)
+    }
+
+    @Test func theLessonWrapsTheQuestions() throws {
+        let s = try #require(ContentLibrary(directory: Paths.content).sententiae.first)
+        let place = Daily.lesson(s, day: "2026-10-01")
+        #expect(place.lesson.id == "daily-2026-10-01")
+        #expect(Daily.isDaily(place.lesson.id) && !Course.isReview(place.lesson.id))
+        #expect(Daily.day(ofLesson: place.lesson.id) == "2026-10-01")
+        #expect(place.lesson.exerciseCount == 3)
+        #expect(place.lesson.steps.count == 5)
+    }
+
+    @Test func streakCountsBackFromTodayOrYesterday() {
+        let r = DailyResult(id: "x", score: 1, at: "")
+        let days = ["2026-02-27", "2026-02-28", "2026-03-01"]
+        let done = Dictionary(uniqueKeysWithValues: days.map { ($0, r) })
+        #expect(Daily.shift("2026-03-01", by: -1) == "2026-02-28")
+        #expect(Daily.shift("2024-02-28", by: 1) == "2024-02-29")
+        #expect(Daily.streak(done, today: "2026-03-01") == 3)
+        #expect(Daily.streak(done, today: "2026-03-02") == 3)
+        #expect(Daily.streak(done, today: "2026-03-03") == 0)
+        #expect(Daily.streak([:], today: "2026-03-03") == 0)
+    }
+
+    @Test func aSecondGoKeepsTheBetterScore() {
+        var doc = ProgressDocument.blank()
+        doc.completeDaily(day: "2026-10-01", id: "carpe-diem", score: 0.33)
+        doc.completeDaily(day: "2026-10-01", id: "carpe-diem", score: 1)
+        doc.completeDaily(day: "2026-10-01", id: "carpe-diem", score: 0.67)
+        #expect(doc.daily["2026-10-01"]?.score == 1)
+        #expect(doc.daily.count == 1)
+        #expect(!doc.studyDays.isEmpty)
+    }
+}
+
 @Suite struct LessonCheckParityTests {
     struct Fixture: Decodable {
         struct Fold: Decodable { let input: String; let output: String }

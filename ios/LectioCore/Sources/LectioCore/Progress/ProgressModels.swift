@@ -254,6 +254,22 @@ public struct LessonProgress: Codable, Sendable, Hashable {
     }
 }
 
+/// One day's Sententia (web: `DailyResult`), keyed by local date.
+public struct DailyResult: Codable, Sendable, Hashable {
+    /// Which line it was.
+    public var id: String
+    /// Best score that day, 0–1.
+    public var score: Double
+    /// When it was first done.
+    public var at: String
+
+    public init(id: String, score: Double, at: String) {
+        self.id = id
+        self.score = score
+        self.at = at
+    }
+}
+
 /// The first-run answers (web: `LearnerProfile`).
 public struct LearnerProfile: Codable, Sendable, Hashable {
     public enum Track: String, Codable, Sendable, CaseIterable {

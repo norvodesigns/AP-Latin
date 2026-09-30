@@ -34,6 +34,9 @@ public struct ContentLibrary: Sendable {
     /// Forms Forge's declension and conjugation tables. Empty for a bundle
     /// exported before they existed.
     public let paradigms: [Paradigm]
+    /// The Sententia of the day lines. Empty for a bundle exported before
+    /// they existed.
+    public let sententiae: [Sententia]
 
     private let passageIndex: [String: Int]
     private let vocabIndex: [String: VocabEntry]
@@ -98,6 +101,12 @@ public struct ContentLibrary: Sendable {
             paradigms = file.paradigms
         } else {
             paradigms = []
+        }
+        if FileManager.default.fileExists(atPath: directory.appendingPathComponent("daily.json").path) {
+            let file: DailyFile = try load("daily.json")
+            sententiae = file.sententiae
+        } else {
+            sententiae = []
         }
 
         passageIndex = Dictionary(passages.enumerated().map { ($1.id, $0) }, uniquingKeysWith: { a, _ in a })

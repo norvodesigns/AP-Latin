@@ -41,9 +41,9 @@ extension AppModel {
     }
 
     /// The section time is counting toward now: a lesson open over any tab
-    /// counts as the course.
+    /// counts as the course, the Sententia of the day as "daily".
     var currentStudySection: String? {
-        activeLesson != nil ? "learn" : Self.studySection(for: selectedTab)
+        activeLesson.map { Daily.isDaily($0.id) ? "daily" : "learn" } ?? Self.studySection(for: selectedTab)
     }
 
     func startStudyTicker() {

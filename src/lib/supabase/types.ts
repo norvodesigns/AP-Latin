@@ -29,7 +29,7 @@ export type AssignableSection = (typeof ASSIGNABLE_SECTIONS)[number];
  * those is assignable until the database's assignment check allows it
  * (supabase/migrations/0004_course_section.sql covers the course).
  */
-export const TRACKED_SECTIONS = [...ASSIGNABLE_SECTIONS, 'learn', 'forge'] as const;
+export const TRACKED_SECTIONS = [...ASSIGNABLE_SECTIONS, 'learn', 'forge', 'daily'] as const;
 
 export type TrackedSection = (typeof TRACKED_SECTIONS)[number];
 

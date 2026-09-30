@@ -214,6 +214,19 @@ export interface LessonProgress {
 }
 
 /**
+ * One day's Sententia (src/lib/daily.ts), keyed by the student's local
+ * date. A second go the same day keeps the better score.
+ */
+export interface DailyResult {
+  /** Which line it was. */
+  id: string;
+  /** Best score that day, 0–1. */
+  score: number;
+  /** When it was first done. */
+  at: string;
+}
+
+/**
  * What the student told the first-run questions. A setting, not history: the
  * newer side wins a merge, as with `studyPlan`.
  */
@@ -259,6 +272,7 @@ export interface SyncableData {
   wordEncounters: Record<string, WordEncounter>;
   lessons: Record<string, LessonProgress>;
   learner: LearnerProfile | null;
+  daily: Record<string, DailyResult>;
 }
 
 /* ------------------------------------------------------------------ */
@@ -302,6 +316,8 @@ export interface StoreState {
   lessons: Record<string, LessonProgress>;
   /** The first-run answers, or null before the student has given them. */
   learner: LearnerProfile | null;
+  /** Local date -> the Sententia of the day, done. */
+  daily: Record<string, DailyResult>;
 
   /**
    * The signed-in user's id, or null in solo mode / signed out. Sourced from
@@ -393,6 +409,8 @@ export interface StoreState {
    *  taught, which join the flashcard deck. Counts as a study day. */
   completeLesson: (lessonId: string, score: number, vocabIds: string[]) => void;
   setLearner: (profile: LearnerProfile | null) => void;
+  /** Records the day's Sententia (0–1). Counts as a study day. */
+  completeDaily: (day: string, id: string, score: number) => void;
   /** Adds active study time toward today's goal, rolling the counter over
    *  on a new day and flagging `goalJustReached` the moment it first
    *  crosses `studyPlan.minutesPerDay` for the day. */
@@ -404,6 +422,17 @@ export interface StoreState {
 }
 
 const today = () => new Date().toISOString().slice(0, 10);
+
+/** Days of Sententia history kept: over a year, and bounded. */
+export const DAILY_CAP = 400;
+
+/** Keeps the newest `DAILY_CAP` days. Keys are dates, so sorting them sorts by time. */
+export function capDaily(daily: Record<string, DailyResult>): Record<string, DailyResult> {
+  const days = Object.keys(daily);
+  if (days.length <= DAILY_CAP) return daily;
+  const keep = new Set(days.sort().slice(-DAILY_CAP));
+  return Object.fromEntries(Object.entries(daily).filter(([d]) => keep.has(d)));
+}
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 
 const emptyPassage = (): PassageState => ({
@@ -465,6 +494,7 @@ const initialState = {
   wordEncounters: {} as Record<string, WordEncounter>,
   lessons: {} as Record<string, LessonProgress>,
   learner: null as LearnerProfile | null,
+  daily: {} as Record<string, DailyResult>,
   authUserId: null as string | null,
   lastSyncedUserId: null as string | null,
   lastSyncedAt: null as string | null,
@@ -831,6 +861,21 @@ export const useStore = create<StoreState>()(
 
       setLearner: (profile) => set({ learner: profile }),
 
+      completeDaily: (day, id, score) =>
+        set((s) => {
+          const prev = s.daily?.[day];
+          const best = Math.max(0, Math.min(1, score));
+          const daily = {
+            ...s.daily,
+            [day]: prev ? { ...prev, score: Math.max(prev.score, best) } : { id, score: best, at: new Date().toISOString() },
+          };
+          const d = today();
+          return {
+            daily: capDaily(daily),
+            studyDays: s.studyDays.includes(d) ? s.studyDays : [...s.studyDays, d].slice(-800),
+          };
+        }),
+
       addStudySeconds: (seconds) =>
         set((s) => {
           const d = today();
@@ -929,6 +974,7 @@ export function getSyncableData(s: SyncableData): SyncableData {
     wordEncounters: s.wordEncounters,
     lessons: s.lessons ?? {},
     learner: s.learner ?? null,
+    daily: s.daily ?? {},
   };
 }
 

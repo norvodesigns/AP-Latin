@@ -24,26 +24,38 @@ import { Rich, plain } from '@/components/Rich';
 type Phase = 'intro' | 'steps' | 'done';
 
 /**
+ * A lesson made on the spot rather than one of the course's: a review
+ * (src/lib/review.ts) or the Sententia of the day (src/lib/daily.ts). It
+ * plays like any lesson but records its own result, never a course lesson.
+ */
+export interface Session {
+  lesson: Lesson;
+  eyebrow: string;
+  /** The heading over the lesson's objectives on its first screen. */
+  aimsLabel: string;
+  /** The label over the result. */
+  doneLabel: string;
+  /** Where the back link and the result's main button lead. */
+  back: { href: string; label: string; button: string };
+  /** Records the result (a score, 0–1). */
+  onFinish: (score: number) => void;
+  /** The result's second button; by default, the same lesson again. */
+  again?: { label: string; onClick: () => void };
+  /** More on the result screen, under the score. */
+  after?: ReactNode;
+}
+
+/**
  * One lesson, start to finish: what it teaches, then its steps one at a
  * time, then a result. An exercise answered wrong is shown again once at the
  * end, but only the first try counts toward the score.
  */
-export default function LessonPlayer({
-  lessonId,
-  review,
-  onAgain,
-}: {
-  lessonId?: string;
-  /** A generated review (src/lib/review.ts) instead of a course lesson. */
-  review?: Lesson;
-  /** For a review: make a fresh one. */
-  onAgain?: () => void;
-}) {
-  const place = review ? null : lessonPlace(lessonId ?? '') ?? null;
-  const lesson = review ?? place!.lesson;
+export default function LessonPlayer({ lessonId, session }: { lessonId?: string; session?: Session }) {
+  const place = session ? null : lessonPlace(lessonId ?? '') ?? null;
+  const lesson = session?.lesson ?? place!.lesson;
+  const back = session?.back ?? { href: '/learn', label: 'Course', button: 'Back to the course' };
   const completeLesson = useStore((s) => s.completeLesson);
-  const markStudied = useStore((s) => s.markStudied);
-  const previous = useStore((s) => (review || !lessonId ? undefined : s.lessons[lessonId]));
+  const previous = useStore((s) => (session || !lessonId ? undefined : s.lessons[lessonId]));
 
   const [phase, setPhase] = useState<Phase>('intro');
   const [queue, setQueue] = useState<number[]>(() => lesson.steps.map((_, i) => i));
@@ -53,19 +65,20 @@ export default function LessonPlayer({
   const [score, setScore] = useState(0);
   const requeued = useRef(new Set<number>());
   const exerciseCount = lesson.steps.filter(isExercise).length;
+  const lastExercise = lesson.steps.reduce((last, st, i) => (isExercise(st) ? i : last), -1);
 
   const stepIndex = queue[pos];
   const step = lesson.steps[stepIndex];
   const eyebrow = place
     ? `${place.level.title} · Unit ${place.unit.n} · Lesson ${place.unit.lessons.indexOf(lesson) + 1}`
-    : 'Review · from lessons you have finished';
+    : session!.eyebrow;
 
   function answered(right: boolean) {
     setResult(right);
     setFirstTry((f) => (f[stepIndex] === undefined ? { ...f, [stepIndex]: right } : f));
     if (!right && !requeued.current.has(stepIndex)) {
       requeued.current.add(stepIndex);
-      setQueue((q) => [...q, stepIndex]);
+      setQueue((q) => withRetry(q, stepIndex, pos, lastExercise));
     }
   }
 
@@ -79,8 +92,7 @@ export default function LessonPlayer({
     const right = Object.values(firstTry).filter(Boolean).length;
     const s = lessonScore(right, exerciseCount);
     setScore(s);
-    // A review counts the day, but it is not a lesson and records none.
-    if (review) markStudied();
+    if (session) session.onFinish(s);
     else completeLesson(lesson.id, s, lesson.words.flatMap((w) => (w.vocabId ? [w.vocabId] : [])));
     setPhase('done');
     window.scrollTo({ top: 0 });
@@ -96,28 +108,38 @@ export default function LessonPlayer({
   }
 
   if (phase === 'intro') {
-    return <Intro lesson={lesson} eyebrow={eyebrow} review={Boolean(review)} previousBest={previous?.best} onBegin={() => setPhase('steps')} />;
+    return (
+      <Intro
+        lesson={lesson}
+        eyebrow={eyebrow}
+        aimsLabel={session?.aimsLabel ?? 'You will be able to'}
+        back={back}
+        previousBest={previous?.best}
+        onBegin={() => setPhase('steps')}
+      />
+    );
   }
   if (phase === 'done') {
     return (
       <Done
         lesson={lesson}
-        review={Boolean(review)}
+        session={session}
+        back={back}
         score={score}
         exerciseCount={exerciseCount}
         firstTry={firstTry}
-        onRetry={review && onAgain ? onAgain : restart}
+        onRetry={restart}
       />
     );
   }
 
-  const retry = pos >= lesson.steps.length;
+  const retry = queue.indexOf(stepIndex) < pos;
   const pct = Math.round((pos / queue.length) * 100);
 
   return (
     <Page>
       <div className="mb-8 flex items-center gap-4">
-        <BackLink href="/learn">Course</BackLink>
+        <BackLink href={back.href}>{back.label}</BackLink>
         <div className="meter meter-thin flex-1" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Lesson progress">
           <span style={{ width: `${pct}%`, transition: 'width 400ms var(--ease, ease)' }} />
         </div>
@@ -136,6 +158,16 @@ export default function LessonPlayer({
   );
 }
 
+/**
+ * The queue with a missed exercise added again: at the end, but before any
+ * closing steps that come after the last exercise (the Sententia's
+ * translation, say), which should stay last.
+ */
+function withRetry(queue: number[], step: number, pos: number, lastExercise: number): number[] {
+  const outro = queue.findIndex((s, i) => i > pos && s > lastExercise);
+  return outro < 0 ? [...queue, step] : [...queue.slice(0, outro), step, ...queue.slice(outro)];
+}
+
 /* ------------------------------------------------------------------ */
 /* Intro and result                                                    */
 /* ------------------------------------------------------------------ */
@@ -143,20 +175,22 @@ export default function LessonPlayer({
 function Intro({
   lesson,
   eyebrow,
-  review = false,
+  aimsLabel,
+  back,
   previousBest,
   onBegin,
 }: {
   lesson: Lesson;
   eyebrow: string;
-  review?: boolean;
+  aimsLabel: string;
+  back: Session['back'];
   previousBest?: number;
   onBegin: () => void;
 }) {
   return (
     <Page>
       <div className="mb-8">
-        <BackLink href="/learn">Course</BackLink>
+        <BackLink href={back.href}>{back.label}</BackLink>
       </div>
       <div className="rubric mb-3">{eyebrow}</div>
       <h1 style={{ fontSize: 'clamp(1.75rem, 1.3rem + 2vw, 2.5rem)', lineHeight: 1.1 }}>
@@ -168,7 +202,7 @@ function Intro({
 
       <div className="mt-9 grid gap-10 sm:grid-cols-2">
         <section>
-          <h2 className="slab mb-3">{review ? 'What it’s for' : 'You will be able to'}</h2>
+          <h2 className="slab mb-3">{aimsLabel}</h2>
           <ul className="flex flex-col gap-2 pl-0" style={{ listStyle: 'none' }}>
             {lesson.objectives.map((o) => (
               <li key={o} className="flex gap-3" style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem', lineHeight: 1.5 }}>
@@ -214,20 +248,22 @@ function Intro({
 
 function Done({
   lesson,
-  review = false,
+  session,
+  back,
   score,
   exerciseCount,
   firstTry,
   onRetry,
 }: {
   lesson: Lesson;
-  review?: boolean;
+  session?: Session;
+  back: Session['back'];
   score: number;
   exerciseCount: number;
   firstTry: Record<number, boolean>;
   onRetry: () => void;
 }) {
-  const next = review ? null : lessonAfter(lesson.id);
+  const next = session ? null : lessonAfter(lesson.id);
   const right = Object.values(firstTry).filter(Boolean).length;
   const deckWords = lesson.words.filter((w) => w.vocabId);
   const verdict = score >= 0.9 ? 'Optimē!' : score >= 0.7 ? 'Bene!' : 'Satis.';
@@ -235,9 +271,9 @@ function Done({
   return (
     <Page>
       <div className="mb-8">
-        <BackLink href="/learn">Course</BackLink>
+        <BackLink href={back.href}>{back.label}</BackLink>
       </div>
-      <div className="rubric mb-3">{review ? 'Review complete' : 'Lesson complete'}</div>
+      <div className="rubric mb-3">{session?.doneLabel ?? 'Lesson complete'}</div>
       <h1 style={{ fontSize: 'clamp(2rem, 1.5rem + 2.5vw, 3rem)', lineHeight: 1.05 }}>
         <span className="latin" style={{ fontSize: 'inherit', color: 'var(--accent)' }}>{verdict}</span>{' '}
         <span style={{ color: 'var(--fg-muted)', fontSize: '0.55em' }}>{gloss}</span>
@@ -247,6 +283,7 @@ function Done({
         <Figure value={`${right} / ${exerciseCount}`} caption="right first time" />
         {deckWords.length > 0 && <Figure value={String(deckWords.length)} caption={deckWords.length === 1 ? 'word to your deck' : 'words to your deck'} />}
       </div>
+      {session?.after}
 
       {deckWords.length > 0 && (
         <p className="measure mt-7" style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem', color: 'var(--ink2)' }}>
@@ -261,13 +298,13 @@ function Done({
             Next: {plain(next.lesson.title)} →
           </Link>
         ) : (
-          <Link href="/learn" className="btn btn-primary">Back to the course</Link>
+          <Link href={back.href} className="btn btn-primary">{back.button}</Link>
         )}
         {deckWords.length > 0 && (
           <Link href="/vocab" className="btn">Review the words</Link>
         )}
-        <button type="button" className="btn btn-ghost" onClick={onRetry}>
-          {review ? 'Another review' : 'Do it again'}
+        <button type="button" className="btn btn-ghost" onClick={session?.again?.onClick ?? onRetry}>
+          {session?.again?.label ?? 'Do it again'}
         </button>
       </div>
     </Page>

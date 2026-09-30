@@ -47,6 +47,7 @@ public struct ProgressDocument: Sendable, Equatable {
             ("wordEncounters", .object(JSONObject())),
             ("lessons", .object(JSONObject())),
             ("learner", .null),
+            ("daily", .object(JSONObject())),
         ])
     }
 
@@ -87,6 +88,15 @@ public struct ProgressDocument: Sendable, Equatable {
         var out: [String: LessonProgress] = [:]
         for (id, value) in raw.object("lessons") {
             if let p: LessonProgress = try? value.decode() { out[id] = p }
+        }
+        return out
+    }
+
+    /// The Sententia of the day, by the student's local date.
+    public var daily: [String: DailyResult] {
+        var out: [String: DailyResult] = [:]
+        for (day, value) in raw.object("daily") {
+            if let r: DailyResult = try? value.decode() { out[day] = r }
         }
         return out
     }
@@ -363,6 +373,24 @@ public struct ProgressDocument: Sendable, Equatable {
         all[lessonId] = try? JSONValue(encoding: progress)
         raw["lessons"] = .object(all)
         seedVocab(vocabIds, now: now)
+        markStudied(now: now)
+    }
+
+    /// The day's Sententia done: a second go the same day keeps the better
+    /// score. Counts as a study day. Same as the web's `completeDaily`.
+    public mutating func completeDaily(day: String, id: String, score: Double, now: Date = Date()) {
+        let best = Swift.min(1, Swift.max(0, score))
+        var all = raw.object("daily")
+        if let prev: DailyResult = all[day].flatMap({ try? $0.decode() }) {
+            all[day] = try? JSONValue(encoding: DailyResult(id: prev.id, score: Swift.max(prev.score, best), at: prev.at))
+        } else {
+            all[day] = try? JSONValue(encoding: DailyResult(id: id, score: best, at: StudyDates.isoTimestamp(now)))
+        }
+        if all.count > ProgressMerge.Caps.daily {
+            let keep = Set(all.keys.sorted().suffix(ProgressMerge.Caps.daily))
+            for key in all.keys where !keep.contains(key) { all[key] = nil }
+        }
+        raw["daily"] = .object(all)
         markStudied(now: now)
     }
 

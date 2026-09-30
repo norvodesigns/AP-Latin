@@ -355,6 +355,79 @@ for (const f of frqPrompts) {
     if (text.includes('|')) fail(`${where}: a | ending marker outside a table or example`);
   };
 
+  // One step of a lesson, checked by kind.
+  const checkStep = (at, s) => {
+    switch (s.kind) {
+      case 'teach':
+        checkMarkup(`${at} title`, s.title);
+        if (!s.body?.length) fail(`${at}: no body`);
+        s.body?.forEach((p) => { checkMarkup(at, p); noBar(at, p); });
+        if (s.tip) { checkMarkup(`${at} tip`, s.tip); noBar(at, s.tip); }
+        if (s.table) {
+          for (const r of s.table.rows) {
+            if (r.cells.length !== s.table.cols.length) fail(`${at}: table row "${r.label}" has ${r.cells.length} cells for ${s.table.cols.length} columns`);
+          }
+        }
+        for (const e of s.examples ?? []) {
+          if (!e.la?.trim() || !e.en?.trim()) fail(`${at}: an example is missing its Latin or English`);
+          if (e.note) checkMarkup(`${at} note`, e.note);
+        }
+        break;
+      case 'read':
+        if ((s.lines?.length ?? 0) < 2) fail(`${at}: a reading needs at least two lines`);
+        for (const l of s.lines ?? []) if (!l.la?.trim() || !l.en?.trim()) fail(`${at}: a line is missing its Latin or English`);
+        // Readings and their glosses are shown as plain text: no markup.
+        for (const t of [...(s.lines ?? []).flatMap((l) => [l.la, l.en]), ...(s.gloss ?? []).flatMap((g) => [g.word, g.meaning])]) {
+          if (/[*|]/.test(t ?? '')) fail(`${at}: markup in plain text "${t}"`);
+        }
+        break;
+      case 'choice': {
+        checkMarkup(`${at} prompt`, s.prompt);
+        checkMarkup(`${at} explain`, s.explain);
+        if (s.options.length < 2) fail(`${at}: fewer than two options`);
+        // Exact, not folded: macrons can be the whole point (ven- vs vēn-).
+        const trimmed = s.options.map((o) => o.trim().toLowerCase());
+        if (new Set(trimmed).size !== trimmed.length) fail(`${at}: duplicate options`);
+        s.options.forEach((o) => checkMarkup(`${at} option`, o));
+        if (!Number.isInteger(s.answer) || s.answer < 0 || s.answer >= s.options.length) fail(`${at}: answer ${s.answer} is not an option`);
+        break;
+      }
+      case 'type':
+        checkMarkup(`${at} prompt`, s.prompt);
+        checkMarkup(`${at} explain`, s.explain);
+        if (!s.answers?.length || s.answers.some((a) => !norm(a))) fail(`${at}: needs at least one non-empty answer`);
+        else if (!s.answers.every((a) => checkTyped(a, s.answers))) fail(`${at}: an answer is rejected by the checker`);
+        break;
+      case 'translate':
+        if (!s.latin?.trim()) fail(`${at}: no Latin`);
+        if (!s.answers?.length || s.answers.some((a) => !a.trim())) fail(`${at}: needs at least one translation`);
+        else if (!s.answers.every((a) => checkTranslation(a, s.answers))) fail(`${at}: a translation is rejected by the checker`);
+        if (s.explain) checkMarkup(`${at} explain`, s.explain);
+        break;
+      case 'build': {
+        checkMarkup(`${at} prompt`, s.prompt);
+        if (!s.answer?.length) fail(`${at}: no answer tiles`);
+        if (s.lang !== 'la' && s.lang !== 'en') fail(`${at}: lang must be la or en`);
+        const fold = (w) => (s.lang === 'la' ? norm(w) : w.toLowerCase().replace(/[^a-z0-9']/g, ''));
+        const needed = new Set(s.answer.map(fold));
+        for (const x of s.extra ?? []) if (needed.has(fold(x))) fail(`${at}: decoy "${x}" is also a word of the answer`);
+        if (!checkBuild(s.answer, s)) fail(`${at}: the answer, in order, is rejected by the checker`);
+        if (s.explain) checkMarkup(`${at} explain`, s.explain);
+        break;
+      }
+      case 'match': {
+        checkMarkup(`${at} prompt`, s.prompt);
+        if (s.pairs.length < 3 || s.pairs.length > 6) fail(`${at}: 3 to 6 pairs, not ${s.pairs.length}`);
+        const lefts = s.pairs.map((p) => p[0]);
+        const rights = s.pairs.map((p) => p[1]);
+        if (new Set(lefts).size !== lefts.length || new Set(rights).size !== rights.length) fail(`${at}: a left or right side repeats`);
+        break;
+      }
+      default:
+        fail(`${at}: unknown step kind`);
+    }
+  };
+
   for (const levelId of readdirSync(levelsDir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name)) {
     const files = readdirSync(join(levelsDir, levelId)).filter((f) => /^unit\d+\.ts$/.test(f));
     for (const file of files) {
@@ -378,78 +451,7 @@ for (const f of frqPrompts) {
         const exercises = lesson.steps.filter((s) => s.kind !== 'teach' && s.kind !== 'read');
         exerciseCount += exercises.length;
         if (exercises.length < 3) fail(`${id}: only ${exercises.length} exercises`);
-        lesson.steps.forEach((s, si) => {
-          const at = `${id} step ${si + 1} (${s.kind})`;
-          switch (s.kind) {
-            case 'teach':
-              checkMarkup(`${at} title`, s.title);
-              if (!s.body?.length) fail(`${at}: no body`);
-              s.body?.forEach((p) => { checkMarkup(at, p); noBar(at, p); });
-              if (s.tip) { checkMarkup(`${at} tip`, s.tip); noBar(at, s.tip); }
-              if (s.table) {
-                for (const r of s.table.rows) {
-                  if (r.cells.length !== s.table.cols.length) fail(`${at}: table row "${r.label}" has ${r.cells.length} cells for ${s.table.cols.length} columns`);
-                }
-              }
-              for (const e of s.examples ?? []) {
-                if (!e.la?.trim() || !e.en?.trim()) fail(`${at}: an example is missing its Latin or English`);
-                if (e.note) checkMarkup(`${at} note`, e.note);
-              }
-              break;
-            case 'read':
-              if ((s.lines?.length ?? 0) < 2) fail(`${at}: a reading needs at least two lines`);
-              for (const l of s.lines ?? []) if (!l.la?.trim() || !l.en?.trim()) fail(`${at}: a line is missing its Latin or English`);
-              // Readings and their glosses are shown as plain text: no markup.
-              for (const t of [...(s.lines ?? []).flatMap((l) => [l.la, l.en]), ...(s.gloss ?? []).flatMap((g) => [g.word, g.meaning])]) {
-                if (/[*|]/.test(t ?? '')) fail(`${at}: markup in plain text "${t}"`);
-              }
-              break;
-            case 'choice': {
-              checkMarkup(`${at} prompt`, s.prompt);
-              checkMarkup(`${at} explain`, s.explain);
-              if (s.options.length < 2) fail(`${at}: fewer than two options`);
-              // Exact, not folded: macrons can be the whole point (ven- vs vēn-).
-              const trimmed = s.options.map((o) => o.trim().toLowerCase());
-              if (new Set(trimmed).size !== trimmed.length) fail(`${at}: duplicate options`);
-              s.options.forEach((o) => checkMarkup(`${at} option`, o));
-              if (!Number.isInteger(s.answer) || s.answer < 0 || s.answer >= s.options.length) fail(`${at}: answer ${s.answer} is not an option`);
-              break;
-            }
-            case 'type':
-              checkMarkup(`${at} prompt`, s.prompt);
-              checkMarkup(`${at} explain`, s.explain);
-              if (!s.answers?.length || s.answers.some((a) => !norm(a))) fail(`${at}: needs at least one non-empty answer`);
-              else if (!s.answers.every((a) => checkTyped(a, s.answers))) fail(`${at}: an answer is rejected by the checker`);
-              break;
-            case 'translate':
-              if (!s.latin?.trim()) fail(`${at}: no Latin`);
-              if (!s.answers?.length || s.answers.some((a) => !a.trim())) fail(`${at}: needs at least one translation`);
-              else if (!s.answers.every((a) => checkTranslation(a, s.answers))) fail(`${at}: a translation is rejected by the checker`);
-              if (s.explain) checkMarkup(`${at} explain`, s.explain);
-              break;
-            case 'build': {
-              checkMarkup(`${at} prompt`, s.prompt);
-              if (!s.answer?.length) fail(`${at}: no answer tiles`);
-              if (s.lang !== 'la' && s.lang !== 'en') fail(`${at}: lang must be la or en`);
-              const fold = (w) => (s.lang === 'la' ? norm(w) : w.toLowerCase().replace(/[^a-z0-9']/g, ''));
-              const needed = new Set(s.answer.map(fold));
-              for (const x of s.extra ?? []) if (needed.has(fold(x))) fail(`${at}: decoy "${x}" is also a word of the answer`);
-              if (!checkBuild(s.answer, s)) fail(`${at}: the answer, in order, is rejected by the checker`);
-              if (s.explain) checkMarkup(`${at} explain`, s.explain);
-              break;
-            }
-            case 'match': {
-              checkMarkup(`${at} prompt`, s.prompt);
-              if (s.pairs.length < 3 || s.pairs.length > 6) fail(`${at}: 3 to 6 pairs, not ${s.pairs.length}`);
-              const lefts = s.pairs.map((p) => p[0]);
-              const rights = s.pairs.map((p) => p[1]);
-              if (new Set(lefts).size !== lefts.length || new Set(rights).size !== rights.length) fail(`${at}: a left or right side repeats`);
-              break;
-            }
-            default:
-              fail(`${at}: unknown step kind`);
-          }
-        });
+        lesson.steps.forEach((s, si) => checkStep(`${id} step ${si + 1} (${s.kind})`, s));
       });
     }
     if (!existsSync(join(levelsDir, levelId, 'index.ts'))) fail(`curriculum/${levelId}: no index.ts`);
@@ -516,6 +518,32 @@ for (const f of frqPrompts) {
     if (!got || !cellForms(got).includes(want)) fail(`forms: ${id} [${r},${c}] is "${got}", expected "${want}"`);
   }
   notes.push(`${PARADIGMS.length} Forms Forge tables, ${cellCount} forms`);
+
+  /* --- Sententia of the day (src/data/daily) --- */
+  const { SENTENTIAE } = await load('src/data/daily/index.ts');
+  const sentenceIds = new Set();
+  const answerSlots = [0, 0, 0, 0];
+  for (const d of SENTENTIAE) {
+    const at = `daily: ${d.id}`;
+    if (sentenceIds.has(d.id)) fail(`${at}: duplicate id`);
+    sentenceIds.add(d.id);
+    // The Latin, the English and the glosses are shown as plain text.
+    for (const t of [d.latin, d.english, ...(d.gloss ?? []).flatMap((g) => [g.word, g.meaning])]) {
+      if (!t?.trim()) fail(`${at}: empty text`);
+      else if (/[*|]/.test(t)) fail(`${at}: markup in plain text "${t}"`);
+    }
+    for (const [what, t] of [['source', d.source], ['note', d.note]]) {
+      checkMarkup(`${at} ${what}`, t);
+      noBar(`${at} ${what}`, t ?? '');
+    }
+    if (!d.gloss?.length) fail(`${at}: no glosses`);
+    if (d.steps?.length !== 3 || d.steps.some((s) => s.kind === 'teach' || s.kind === 'read')) fail(`${at}: needs exactly three questions`);
+    d.steps?.forEach((s, i) => {
+      checkStep(`${at} question ${i + 1} (${s.kind})`, s);
+      if (s.kind === 'choice') answerSlots[s.answer] = (answerSlots[s.answer] ?? 0) + 1;
+    });
+  }
+  notes.push(`${SENTENTIAE.length} daily sentences (right answers by position: ${answerSlots.join(', ')})`);
 }
 
 /* ------------------------------------------------------------------ */

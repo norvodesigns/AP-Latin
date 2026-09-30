@@ -29,5 +29,19 @@ export default function ReviewSession() {
       </Page>
     );
   }
-  return <LessonPlayer key={round} review={review} onAgain={() => setRound((r) => r + 1)} />;
+  return (
+    <LessonPlayer
+      key={round}
+      session={{
+        lesson: review,
+        eyebrow: 'Review · from lessons you have finished',
+        aimsLabel: 'What it’s for',
+        doneLabel: 'Review complete',
+        back: { href: '/learn', label: 'Course', button: 'Back to the course' },
+        // A review counts the day, but it is not a lesson and records none.
+        onFinish: () => useStore.getState().markStudied(),
+        again: { label: 'Another review', onClick: () => setRound((r) => r + 1) },
+      }}
+    />
+  );
 }

@@ -52,11 +52,34 @@ extension AppModel {
         activeLesson = course.review(done: progress.lessons, using: &rng)
     }
 
+    /// Today's date on this device's clock: the Sententia's day.
+    var dailyDay: String { Daily.localDay() }
+
+    /// The Sententia of the day, or nil for content that predates it.
+    var todaysSententia: Sententia? { content.flatMap { Daily.sententia(for: dailyDay, in: $0.sententiae) } }
+
+    /// Days in a row with the Sententia done.
+    var dailyStreak: Int { Daily.streak(progress.daily, today: dailyDay) }
+
+    /// Opens today's Sententia over whatever is on screen.
+    func openDaily() {
+        guard let line = todaysSententia else { return }
+        activeLesson = Daily.lesson(line, day: dailyDay)
+    }
+
     /// A lesson finished: its score, its words into the deck, the day counted.
-    /// A review counts the day but isn't a lesson, so it records nothing else.
+    /// A review counts the day but isn't a lesson, so it records nothing
+    /// else; the Sententia records its own day.
     func completeLesson(_ lesson: Lesson, score: Double) {
         guard !Course.isReview(lesson.id) else {
             update { $0.markStudied() }
+            refreshWidgets()
+            return
+        }
+        guard !Daily.isDaily(lesson.id) else {
+            let day = Daily.day(ofLesson: lesson.id)
+            let id = content.flatMap { Daily.sententia(for: day, in: $0.sententiae)?.id } ?? ""
+            update { $0.completeDaily(day: day, id: id, score: score) }
             refreshWidgets()
             return
         }

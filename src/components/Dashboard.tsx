@@ -30,6 +30,7 @@ import {
 import { formatDuration } from '@/lib/format';
 import { ALL_LESSONS, nextLesson, unitProgress, type LessonPlace } from '@/data/curriculum';
 import { Rich } from '@/components/Rich';
+import { dailyStreak, localDay, sententiaFor } from '@/lib/daily';
 import type { SkillCategory } from '@/data/types';
 import type { UpcomingAssignment } from '@/lib/supabase/dashboard';
 
@@ -552,6 +553,8 @@ export default function Dashboard({
               </p>
             )}
           </CalledOut>
+
+          {mounted && <SententiaCard />}
 
           {/* The queue: what is due now, and what is about to be. A count of
               cards due today says nothing about whether tomorrow is five
@@ -1155,6 +1158,49 @@ function CourseHero({
           </p>
         </>
       )}
+    </section>
+  );
+}
+
+/**
+ * The Sententia of the day: the line itself, and three minutes of questions
+ * on it. Once done, the translation and where it comes from. Rendered only
+ * after mount, since the day is the reader's own.
+ */
+function SententiaCard() {
+  const daily = useStore((s) => s.daily);
+  const day = localDay();
+  const line = sententiaFor(day);
+  const done = daily?.[day];
+  const streak = dailyStreak(daily ?? {}, day);
+  return (
+    <section>
+      <div className="mb-3 flex items-baseline justify-between gap-3">
+        <span className="rubric">Sententia · the line for today</span>
+        {streak > 0 && (
+          <span className="slab-sm tabular-nums" style={{ color: 'var(--fg-muted)' }}>
+            {streak} day{streak === 1 ? '' : 's'} running
+          </span>
+        )}
+      </div>
+      <p className="latin" style={{ margin: 0, fontSize: '1.375rem', lineHeight: 1.4, fontStyle: 'italic' }}>
+        {line.latin}
+      </p>
+      {done ? (
+        <p style={{ margin: '0.5rem 0 0', fontFamily: 'var(--font-latin)', fontSize: '1.0625rem', lineHeight: 1.5, color: 'var(--ink2)' }}>
+          “{line.english}”{' '}
+          <span style={{ color: 'var(--fg-muted)' }}>
+            — <Rich text={line.source} />
+          </span>
+        </p>
+      ) : (
+        <p style={{ margin: '0.5rem 0 0', fontFamily: 'var(--font-latin)', fontSize: '1rem', color: 'var(--fg-muted)' }}>
+          <Rich text={line.source} />
+        </p>
+      )}
+      <Link href="/daily" className="btn mt-4">
+        {done ? 'Look again' : 'Three questions · 3 min'}
+      </Link>
     </section>
   );
 }

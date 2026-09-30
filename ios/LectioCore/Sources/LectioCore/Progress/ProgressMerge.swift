@@ -24,13 +24,14 @@ public enum ProgressMerge {
         public static let studyDays = 800
         public static let scansionDrafts = 300
         public static let aiUsage = 90
+        public static let daily = 400
     }
 
     /// The fields of `SyncableData`, in the order the web's merge writes them.
     public static let knownKeys = [
         "theme", "glossaryEnabled", "showMacrons", "studyPlan", "passages", "vocab", "quizAttempts",
         "reviewQueue", "translationAttempts", "frqResponses", "examResults", "projectPassages", "studyDays",
-        "aiUsage", "scansionAttempts", "scansionDrafts", "wordEncounters", "lessons", "learner",
+        "aiUsage", "scansionAttempts", "scansionDrafts", "wordEncounters", "lessons", "learner", "daily",
     ]
 
     public static func merge(local: JSONObject, cloud: JSONObject, cloudIsNewer: Bool) -> JSONObject {
@@ -59,6 +60,8 @@ public enum ProgressMerge {
         let localLearner = local["learner"].flatMap { $0 == .null ? nil : $0 }
         let cloudLearner = cloud["learner"].flatMap { $0 == .null ? nil : $0 }
         out["learner"] = cloudIsNewer ? (cloudLearner ?? localLearner ?? .null) : (localLearner ?? cloudLearner ?? .null)
+        // Added with the Sententia of the day; either side may predate it.
+        out["daily"] = .object(mergeDaily(local.object("daily"), cloud.object("daily")))
 
         // Fields this build doesn't know about — added to the web app after it
         // shipped. The web's own merge lists its fields explicitly, so it would
@@ -153,6 +156,33 @@ public enum ProgressMerge {
             ]))
         }
         return out
+    }
+
+    /* -------------------------------------------------------------- */
+    /* Sententia of the day                                             */
+    /* -------------------------------------------------------------- */
+
+    /// Per day: best score, earlier first time, the first side's line id;
+    /// then the newest `Caps.daily` days.
+    static func mergeDaily(_ a: JSONObject, _ b: JSONObject) -> JSONObject {
+        var out = a
+        for (day, rb) in b {
+            guard let ra = out[day] else {
+                out[day] = rb
+                continue
+            }
+            let atA = ra["at"]?.stringValue ?? "", atB = rb["at"]?.stringValue ?? ""
+            out[day] = .object(JSONObject([
+                ("id", ra["id"] ?? .string("")),
+                ("score", .number(max(ra["score"]?.doubleValue ?? 0, rb["score"]?.doubleValue ?? 0))),
+                ("at", .string(atA < atB ? atA : atB)),
+            ]))
+        }
+        guard out.count > Caps.daily else { return out }
+        let keep = Set(out.keys.sorted().suffix(Caps.daily))
+        var capped = JSONObject()
+        for (day, value) in out where keep.contains(day) { capped[day] = value }
+        return capped
     }
 
     /* -------------------------------------------------------------- */

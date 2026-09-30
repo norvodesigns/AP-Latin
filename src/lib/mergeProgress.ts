@@ -42,6 +42,7 @@ import type {
   ScansionDraft,
   WordEncounter,
   LessonProgress,
+  DailyResult,
 } from '@/store/useStore';
 
 /** Caps mirroring the ones `useStore.ts` applies when it records each kind
@@ -55,6 +56,7 @@ const CAPS = {
   studyDays: 800,
   scansionDrafts: 300,
   aiUsage: 90,
+  daily: 400,
 } as const;
 
 export function mergeSyncable(
@@ -90,6 +92,8 @@ export function mergeSyncable(
     learner: cloudIsNewer
       ? (cloud.learner ?? local.learner ?? null)
       : (local.learner ?? cloud.learner ?? null),
+    // Added with the Sententia of the day; either side may predate it.
+    daily: mergeDaily(local.daily ?? {}, cloud.daily ?? {}),
   };
 }
 
@@ -327,6 +331,27 @@ function mergeAnnotations(a: Annotation[], b: Annotation[]): Annotation[] {
     bySpan.set(key, winner);
   }
   return [...bySpan.values()].sort((x, y) => x.lineN - y.lineN || x.startTok - y.startTok);
+}
+
+/* ------------------------------------------------------------------ */
+/* Sententia of the day                                                */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Per day: the best score, and the earlier time it was first done. The
+ * line's id is the first side's (both sides see the same line on the same
+ * day). Then the newest `CAPS.daily` days are kept.
+ */
+function mergeDaily(a: Record<string, DailyResult>, b: Record<string, DailyResult>): Record<string, DailyResult> {
+  const out: Record<string, DailyResult> = { ...a };
+  for (const [day, rb] of Object.entries(b)) {
+    const ra = out[day];
+    out[day] = ra ? { id: ra.id, score: Math.max(ra.score, rb.score), at: ra.at < rb.at ? ra.at : rb.at } : rb;
+  }
+  const days = Object.keys(out);
+  if (days.length <= CAPS.daily) return out;
+  const keep = new Set(days.sort().slice(-CAPS.daily));
+  return Object.fromEntries(Object.entries(out).filter(([d]) => keep.has(d)));
 }
 
 /* ------------------------------------------------------------------ */

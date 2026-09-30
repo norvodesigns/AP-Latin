@@ -58,7 +58,7 @@ const base = (): SyncableData => ({
   theme: 'light',
   passages: {}, vocab: {}, quizAttempts: [], reviewQueue: [], translationAttempts: [], frqResponses: [],
   examResults: [], projectPassages: [], studyDays: [], aiUsage: [], scansionAttempts: [], scansionDrafts: {},
-  wordEncounters: {}, lessons: {}, learner: null,
+  wordEncounters: {}, lessons: {}, learner: null, daily: {},
   studyPlan: { minutesPerDay: 30, activeDays: [0, 1, 2, 3, 4, 5, 6], startedAt: '2026-09-01' },
 });
 
@@ -193,6 +193,15 @@ function richPair(): { local: SyncableData; cloud: SyncableData } {
   local.learner = { track: 'new', startLessonId: 'prima-1-1', onboardedAt: '2026-09-30T08:00:00.000Z' };
   cloud.learner = { track: 'some', startLessonId: 'prima-3-1', onboardedAt: '2026-09-29T08:00:00.000Z' };
 
+  local.daily = {
+    '2026-10-01': { id: 'carpe-diem', score: 0.67, at: '2026-10-01T19:00:00.000Z' },
+    '2026-10-02': { id: 'veni-vidi-vici', score: 1, at: '2026-10-02T08:00:00.000Z' },
+  };
+  cloud.daily = {
+    '2026-10-01': { id: 'carpe-diem', score: 1, at: '2026-10-01T21:00:00.000Z' },
+    '2026-09-30': { id: 'dum-spiro', score: 0.33, at: '2026-09-30T12:00:00.000Z' },
+  };
+
   return { local, cloud };
 }
 
@@ -202,6 +211,7 @@ function predatesPair(): { local: SyncableData; cloud: SyncableData } {
   const old = cloud as Partial<SyncableData>;
   delete old.lessons;
   delete old.learner;
+  delete old.daily;
   return { local, cloud };
 }
 
@@ -222,6 +232,9 @@ function capsPair(): { local: SyncableData; cloud: SyncableData } {
   const tr = (id: string, i: number) => ({ id, drillId: 'd', at: new RealDate(Date.UTC(2026, 0, 1) + i * 60_000).toISOString(), segmentResults: {}, text: '', score: 0, maxScore: 15, missedTags: [], gradedBy: 'self' as const });
   local.translationAttempts = Array.from({ length: 255 }, (_, i) => tr(`l${i}`, i * 2));
   cloud.translationAttempts = Array.from({ length: 255 }, (_, i) => tr(`c${i}`, i * 2 + 1));
+  // 420 Sententia days, 20 on both sides: the cap keeps the newest 400.
+  for (let i = 0; i < 220; i++) local.daily[day(i)] = { id: `s${i % 47}`, score: 1, at: `${day(i)}T10:00:00.000Z` };
+  for (let i = 200; i < 420; i++) cloud.daily[day(i)] = { id: `s${i % 47}`, score: 0.5, at: `${day(i)}T09:00:00.000Z` };
   return { local, cloud };
 }
 
