@@ -243,10 +243,10 @@ export const unit: CurriculumUnit = {
         {
           kind: 'choice',
           prompt: 'In this sentence, which verb is the background?',
-          latin: 'Dum nautae dormiēbant, tempestās vēnit.',
+          latin: 'Nautae dormiēbant, cum tempestās vēnit.',
           options: ['*dormiēbant*', '*vēnit*'],
           answer: 0,
-          explain: 'The sailors were sleeping (imperfect, the scene) when the storm came (perfect, the event). *Dum*: while.',
+          explain: 'The sailors were sleeping (imperfect, the scene) when the storm came (perfect, the event). *Cum* here means “when”.',
         },
         {
           kind: 'translate',
@@ -271,9 +271,9 @@ export const unit: CurriculumUnit = {
         {
           kind: 'build',
           prompt: 'Translate into English.',
-          source: 'Dum ambulābam, subitō clāmāvit.',
+          source: 'Ambulābam, cum subitō clāmāvit.',
           lang: 'en',
-          answer: ['While', 'I', 'was', 'walking,', 'suddenly', 'he', 'shouted'],
+          answer: ['I', 'was', 'walking', 'when', 'suddenly', 'he', 'shouted'],
           extra: ['shouts', 'walked', 'they'],
         },
       ],
@@ -390,7 +390,7 @@ export const unit: CurriculumUnit = {
           intro: 'A Greek legend the Romans loved. Arion was a famous singer and poet.',
           lines: [
             { la: 'Ōlim Arīōn, poēta clārus, in Italiā cantābat.', en: 'Once upon a time Arion, a famous poet, was singing in Italy.' },
-            { la: 'Ibi multam pecūniam habuit.', en: 'There he gained a great deal of money.' },
+            { la: 'Ibi multam pecūniam comparāvit.', en: 'There he earned a great deal of money.' },
             { la: 'Tum nāvem cōnscendit et ad Graeciam nāvigāvit.', en: 'Then he boarded a ship and sailed for Greece.' },
             { la: 'Sed nautae malī pecūniam poētae cupīvērunt.', en: 'But the wicked sailors wanted the poet’s money.' },
             { la: '“Tē necābimus,” dīxērunt.', en: '“We will kill you,” they said.' },
@@ -402,6 +402,7 @@ export const unit: CurriculumUnit = {
             { word: 'clārus, -a, -um', meaning: 'famous' },
             { word: 'cantābat, cantāvit', meaning: 'was singing, sang' },
             { word: 'ibi', meaning: 'there' },
+            { word: 'comparāvit', meaning: 'got, acquired' },
             { word: 'pecūnia, -ae, f.', meaning: 'money' },
             { word: 'cōnscendit', meaning: 'boarded' },
             { word: 'cupīvērunt', meaning: 'desired, wanted' },
