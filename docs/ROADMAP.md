@@ -34,9 +34,9 @@ finishing a lesson counts toward the streak and daily goal.
       rule, fixtures, Swift port
 - [x] Web: `/learn` course map, lesson player (teach cards, multiple choice, type the ending,
       translate, build the sentence, match), results, next lesson
-- [ ] iOS: Learn tab with the same course map and lesson player, native and glass
-- [ ] Exporter: `curriculum.json` in the content bundle
-- [ ] Level 1, *Prīma* (foundations): 8 units
+- [x] iOS: Learn tab with the same course map and lesson player, native and glass
+- [x] Exporter: `curriculum.json` in the content bundle
+- [x] Level I, *Prīma* (foundations): 8 units, 39 lessons
   - [x] U1 Sounds and first words (pronunciation, *sum*, nouns and gender, why endings matter)
   - [x] U2 First declension and the present tense (nom/acc, 1st conj., gen/dat/abl, reading)
   - [x] U3 Second declension and adjectives (-us/-er, neuter, agreement, 2nd conj.)
@@ -45,10 +45,15 @@ finishing a lesson counts toward the streak and daily goal.
   - [x] U6 The perfect system (principal parts, perfect, pluperfect, future perfect)
   - [x] U7 Pronouns (personal, *is ea id*, *hic*, *ille*, relative)
   - [x] U8 3rd-decl. adjectives, 4th and 5th declensions, the passive
-- [ ] Level 2, *Secunda* (intermediate): passive and deponents, participles and the ablative
-      absolute, infinitives and indirect statement, the subjunctive (purpose, result, *cum*,
-      indirect questions, sequence of tenses), comparison, irregular verbs, gerund and gerundive,
-      conditions
+- [ ] Level II, *Secunda* (intermediate), in `src/data/curriculum/secunda/`:
+  - [ ] U1 Deponent verbs; irregular *possum, volō, nōlō, eō, ferō*
+  - [ ] U2 Participles and the ablative absolute
+  - [ ] U3 Infinitives and indirect statement
+  - [ ] U4 Comparison of adjectives and adverbs; numbers
+  - [ ] U5 The subjunctive: present and imperfect; purpose and result clauses
+  - [ ] U6 Perfect and pluperfect subjunctive; *cum* clauses; indirect questions; sequence of tenses
+  - [ ] U7 Indirect commands, fear clauses, jussive and hortatory; gerund, gerundive, passive periphrastic
+  - [ ] U8 Conditions; relative clauses of characteristic; a longer reading
 - [ ] Level 3, *Tertia* (toward AP): adapted Caesar and Pliny, poetic word order, meter and
       scansion basics, translation technique, reading at sight. Hands off to the AP section.
 
@@ -93,3 +98,6 @@ finishing a lesson counts toward the streak and daily goal.
   course on the dashboard, nav and splash. Level I units 1–2 written (8 lessons, 80 exercises).
   Owner action later: apply `supabase/migrations/0004_course_section.sql`, then add `learn` to
   `ASSIGNABLE_SECTIONS`, so teachers can assign course time.
+- 2026-09-30: The app's Learn section (course map, full-screen native lesson player, Course tab
+  for beginners, Continue on Today) builds green. Level I finished: 8 units, 39 lessons, 323
+  exercises, every one checked by `npm run verify`. Next: onboarding, then Level II.
