@@ -39,4 +39,6 @@ export const PLACEMENT: PlacementQuestion[] = [
   q('secunda-1', 'What does this mean?', 'Puer ambulāre nōn vult.', ['The boy does not want to walk.', 'The boy cannot walk.', 'The boy was not walking.'], 0, '*Vult* is from *volō*, “want”.'),
   q('secunda-2', 'What does *moritūrus* mean?', 'moritūrus', ['dying', 'dead', 'about to die'], 2, 'The future participle: “about to die”.'),
   q('secunda-2', 'What does this mean?', 'Urbe captā, hostēs discessērunt.', ['The enemy left the captured city.', 'When the city had been captured, the enemy left.', 'The city captured the enemy and left.'], 1, 'An ablative absolute: “the city having been captured”.'),
+  q('secunda-3', 'What does this mean?', 'Dīcit patrem venīre.', ['He says that his father is coming.', 'He tells his father to come.', 'Father says that he is coming.'], 0, 'An accusative and an infinitive after *dīcit*: indirect statement.'),
+  q('secunda-3', 'What does this mean?', 'Putāvit hostēs discessisse.', ['He thought that the enemy were leaving.', 'He thought that the enemy had left.', 'He thought that the enemy would leave.'], 1, 'A perfect infinitive: before the main verb, so “had left”.'),
 ];
