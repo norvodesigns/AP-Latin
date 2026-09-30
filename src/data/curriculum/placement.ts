@@ -49,4 +49,6 @@ export const PLACEMENT: PlacementQuestion[] = [
   q('secunda-6', 'What does this mean?', 'Rogāvit ubi essem.', ['He asked where I was.', 'He asked me to be there.', 'Where was I? he asked.'], 0, 'An indirect question: *ubi* with the subjunctive.'),
   q('secunda-7', 'What does this mean?', 'Mīlitibus imperāvit ut pugnārent.', ['He ordered the soldiers to fight.', 'He fought so that the soldiers would obey.', 'He said that the soldiers were fighting.'], 0, 'An indirect command: *imperō* with *ut* and the subjunctive.'),
   q('secunda-7', 'What does this mean?', 'Carthāgō dēlenda est.', ['Carthage has been destroyed.', 'Carthage must be destroyed.', 'Carthage is destroying.'], 1, 'The gerundive with *est*: obligation.'),
+  q('secunda-8', 'What does this mean?', 'Sī adesset, laetus essem.', ['If he is here, I am happy.', 'If he were here, I would be happy.', 'If he had been here, I would have been happy.'], 1, 'The imperfect subjunctive: present contrary to fact.'),
+  q('secunda-8', 'What does this mean?', 'Nēmō est quī hoc nesciat.', ['There is no one who does not know this.', 'No one knows this.', 'Who does not know this?'], 0, 'A relative clause of characteristic.'),
 ];

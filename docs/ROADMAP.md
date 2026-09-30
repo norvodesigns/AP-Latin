@@ -45,15 +45,15 @@ finishing a lesson counts toward the streak and daily goal.
   - [x] U6 The perfect system (principal parts, perfect, pluperfect, future perfect)
   - [x] U7 Pronouns (personal, *is ea id*, *hic*, *ille*, relative)
   - [x] U8 3rd-decl. adjectives, 4th and 5th declensions, the passive
-- [ ] Level II, *Secunda* (intermediate), in `src/data/curriculum/secunda/`:
+- [x] Level II, *Secunda* (intermediate): 8 units, 45 lessons, in `src/data/curriculum/secunda/`:
   - [x] U1 Deponent verbs; irregular *possum, volō, nōlō, eō, ferō*
   - [x] U2 Participles and the ablative absolute
   - [x] U3 Infinitives and indirect statement
   - [x] U4 Comparison of adjectives and adverbs; numbers
-  - [ ] U5 The subjunctive: present and imperfect; purpose and result clauses
-  - [ ] U6 Perfect and pluperfect subjunctive; *cum* clauses; indirect questions; sequence of tenses
-  - [ ] U7 Indirect commands, fear clauses, jussive and hortatory; gerund, gerundive, passive periphrastic
-  - [ ] U8 Conditions; relative clauses of characteristic; a longer reading
+  - [x] U5 The subjunctive: present and imperfect; purpose and result clauses
+  - [x] U6 Perfect and pluperfect subjunctive; *cum* clauses; indirect questions; sequence of tenses
+  - [x] U7 Indirect commands, fear clauses, jussive and hortatory; gerund, gerundive, passive periphrastic
+  - [x] U8 Conditions; relative clauses of characteristic; a longer reading
 - [ ] Level 3, *Tertia* (toward AP): adapted Caesar and Pliny, poetic word order, meter and
       scansion basics, translation technique, reading at sight. Hands off to the AP section.
 
@@ -108,3 +108,9 @@ finishing a lesson counts toward the streak and daily goal.
   (23 lessons: deponents and irregulars, participles and the ablative absolute, indirect
   statement, comparison/numbers/pronouns), each ending in an adapted Livy or Ovid story.
   `verify` now runs every exercise's model answer through the real checker.
+- 2026-09-30: Level II finished: units 5–8 (the subjunctive: purpose and result, *cum*,
+  sequence of tenses, indirect questions, indirect commands, fear clauses, independent
+  subjunctives, gerund and gerundive, passive periphrastic, conditions, characteristic,
+  *dum*, and a review of every use). Readings: Androcles, Pyramus and Thisbe, Regulus,
+  Orpheus and Eurydice. The course is now 84 lessons and 690 exercises; placement covers
+  both levels (32 questions). Next: Level III, *Tertia*.
