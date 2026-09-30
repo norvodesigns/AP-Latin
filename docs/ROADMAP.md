@@ -61,7 +61,7 @@ finishing a lesson counts toward the streak and daily goal.
       each tied to its Reading Room passage: read a section, then comprehension, grammar and
       style questions of the exam's kinds
   - [x] U1 Pliny: Vesuvius, Letters 6.16 and 6.20 (7 lessons)
-  - [ ] U2 Pliny: the other letters (6.4 and 6.7 to Calpurnia, 7.27 the ghost, 10.96–97 or the Trajan letters)
+  - [x] U2 Pliny: Sura, Calpurnia, Trajan: 7.27 whole, 6.4, 6.7, 10.5–7, 10.37 and 10.90 (8 lessons)
   - [ ] U3 Aeneid 1: the proem, the storm, Dido's temple
   - [ ] U4 Aeneid 2 and 4: Laocoön, the fall of Troy, Dido
   - [ ] U5 Aeneid 6, 7, 11, 12: the underworld, the war, the end
@@ -198,3 +198,8 @@ finishing a lesson counts toward the streak and daily goal.
   glosses, five questions of the exam's kinds (grammar, figures, what a detail is for), a
   translation and an essay tip. The placement check gains a question for each Tertia unit,
   and a student who answers everything right now starts on Quārta instead of at the top.
+- 2026-09-30: Quārta Unit 2 reads the rest of the syllabus Pliny as he wrote it, in eight
+  lessons: the ghost letter to Sura whole (Curtius Rufus, the house at Athens, Athenodorus,
+  the haircuts and the plea for a verdict), both letters to Calpurnia, the doctor's
+  citizenship (10.5–7, with Trajan's reply) and the aqueducts of Nicomedia and Sinope. Unit
+  1's right answers are spread across all four positions.

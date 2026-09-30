@@ -63,8 +63,8 @@ export const unit: CurriculumUnit = {
           kind: 'choice',
           prompt: 'Why is *scrībam* subjunctive?',
           latin: 'Petis ut tibi avunculī meī exitum scrībam',
-          options: ['It is a purpose clause', 'It is an indirect command after *petis ut*', 'It is a result clause', 'It is an indirect question'],
-          answer: 1,
+          options: ['It is a purpose clause', 'It is a result clause', 'It is an indirect question', 'It is an indirect command after *petis ut*'],
+          answer: 3,
           explain: '*Petō ut* + subjunctive reports what is asked for: an indirect command.',
         },
         {
@@ -187,8 +187,8 @@ export const unit: CurriculumUnit = {
           kind: 'choice',
           prompt: 'What case is *ērudītissimō virō*?',
           latin: 'Magnum propiusque nōscendum ut ērudītissimō virō vīsum.',
-          options: ['Ablative of agent', 'Dative, with *vīsum*: “it seemed to a most learned man”', 'Genitive', 'Nominative'],
-          answer: 1,
+          options: ['Dative, with *vīsum*: “it seemed to a most learned man”', 'Ablative of agent', 'Genitive', 'Nominative'],
+          answer: 0,
           explain: '*vidētur* “it seems” takes a dative of the person. *vīsum (est)*: it seemed so to him, as a scholar would.',
         },
         {
@@ -262,8 +262,8 @@ export const unit: CurriculumUnit = {
           kind: 'choice',
           prompt: 'What contrast does *studiōsō animō ... maximō* draw?',
           latin: 'quod studiōsō animō incohāverat obit maximō',
-          options: ['Between the uncle and Rectina', 'A scholar’s curiosity turning into a hero’s courage', 'Between sea and land', 'Between morning and evening'],
-          answer: 1,
+          options: ['Between the uncle and Rectina', 'Between sea and land', 'Between morning and evening', 'A scholar’s curiosity turning into a hero’s courage'],
+          answer: 3,
           explain: 'The same voyage, begun for study, is finished with the greatest spirit (*animō* understood with *maximō*).',
         },
         {
@@ -368,8 +368,8 @@ export const unit: CurriculumUnit = {
         {
           kind: 'choice',
           prompt: 'What kind of clause is *utque timōrem eius suā sēcūritāte lēnīret*?',
-          options: ['Result', 'Purpose', 'Indirect command', 'Cum clause'],
-          answer: 1,
+          options: ['Purpose', 'Result', 'Indirect command', 'Cum clause'],
+          answer: 0,
           explain: '*ut* + subjunctive giving the reason for the action: he bathed so as to soothe his friend’s fear.',
         },
         {
@@ -390,8 +390,8 @@ export const unit: CurriculumUnit = {
         {
           kind: 'choice',
           prompt: 'What was the choice they made?',
-          options: ['To stay indoors under the shaking roofs', 'To go into the open, pillows tied on against falling pumice', 'To sail at once', 'To climb the mountain'],
-          answer: 1,
+          options: ['To stay indoors under the shaking roofs', 'To sail at once', 'To climb the mountain', 'To go into the open, pillows tied on against falling pumice'],
+          answer: 3,
           explain: '§15–16: the houses were rocking; outside, pumice was falling. Weighing the dangers, they went outside, with pillows for helmets.',
         },
         {
@@ -474,8 +474,8 @@ export const unit: CurriculumUnit = {
         {
           kind: 'choice',
           prompt: 'What is *spīritū obstrūctō*?',
-          options: ['A dative of purpose', 'Ablative absolute: “his breathing (having been) blocked”', 'Ablative of means only', 'Genitive'],
-          answer: 1,
+          options: ['Ablative absolute: “his breathing (having been) blocked”', 'A dative of purpose', 'Ablative of means only', 'Genitive'],
+          answer: 0,
           explain: 'A noun and a perfect participle in the ablative, explaining the collapse: his breath blocked by the thick fumes.',
         },
         {
@@ -488,8 +488,8 @@ export const unit: CurriculumUnit = {
         {
           kind: 'choice',
           prompt: 'Why does Pliny end with *aliud ... aliud*?',
-          options: ['To apologize for his style', 'To leave history to Tacitus: a letter is for a friend, history for everyone', 'To say he will write a history himself', 'To attack other historians'],
-          answer: 1,
+          options: ['To apologize for his style', 'To say he will write a history himself', 'To attack other historians', 'To leave history to Tacitus: a letter is for a friend, history for everyone'],
+          answer: 3,
           explain: 'He hands the material over: Tacitus can choose what history needs. (He also, quietly, shows he can write well.)',
         },
         {
@@ -568,15 +568,15 @@ export const unit: CurriculumUnit = {
           kind: 'choice',
           prompt: 'How old was Pliny?',
           latin: 'agēbam enim duodēvīcēnsimum annum',
-          options: ['Twelve', 'Seventeen: in his eighteenth year', 'Twenty-two', 'Eighty-two'],
-          answer: 1,
+          options: ['Seventeen', 'Eighteen', 'Nineteen', 'Twenty-two'],
+          answer: 0,
           explain: '*duo-dē-vīgintī*, “two from twenty”: eighteen. “In his eighteenth year” means seventeen years old.',
         },
         {
           kind: 'choice',
           prompt: 'Why does Pliny say he does not know whether to call it *cōnstantia* or *imprūdentia*?',
-          options: ['He is sure it was bravery', 'He looks back on himself with irony: reading Livy through an earthquake was brave, or foolish', 'He was ordered to read', 'He had no other book'],
-          answer: 1,
+          options: ['He is sure it was bravery', 'He was ordered to read', 'He had no other book', 'He looks back on himself with irony: reading Livy through an earthquake was brave, or foolish'],
+          answer: 3,
           explain: 'The older Pliny smiles at his younger self, and also invites comparison with his uncle, the other calm scholar in a crisis.',
         },
         {
@@ -675,15 +675,15 @@ export const unit: CurriculumUnit = {
         {
           kind: 'choice',
           prompt: 'What is *torrentis modō*?',
-          options: ['“by means of a torrent”', '“like a torrent”: a comparison', '“in the manner of the sea”', '“for a short time”'],
-          answer: 1,
+          options: ['“like a torrent”: a comparison', '“by means of a torrent”', '“in the manner of the sea”', '“for a short time”'],
+          answer: 0,
           explain: '*modō* + genitive means “in the manner of”: the darkness pours after them like a flood.',
         },
         {
           kind: 'choice',
           prompt: 'Why compare the darkness to *locīs clausīs lūmine exstīnctō*?',
-          options: ['To say it was only a cloudy night', 'To give its total blackness: the dark of a shut room with the lamp out', 'To describe their house', 'To explain an eclipse'],
-          answer: 1,
+          options: ['To say it was only a cloudy night', 'To describe their house', 'To explain an eclipse', 'To give its total blackness: the dark of a shut room with the lamp out'],
+          answer: 3,
           explain: 'Not the ordinary dark of a moonless night, but no light at all, the kind anyone can imagine.',
         },
         {
