@@ -1,9 +1,9 @@
 import type { ChoiceStep } from './types';
 
 /**
- * The placement check: two quick questions per unit of Level I, in course
- * order. A student who already knows some Latin answers until the questions
- * get ahead of them; the course suggests starting at the first unit where
+ * The placement check: two quick questions per unit, in course order. A
+ * student who already knows some Latin answers until the questions get
+ * ahead of them; the course suggests starting at the first unit where
  * they slipped (see `placementStart` in src/lib/placement.ts, and its Swift
  * twin).
  */
@@ -35,4 +35,6 @@ export const PLACEMENT: PlacementQuestion[] = [
   q('prima-7', 'Which form fits?', 'Puella ___ vidēs soror mea est.', ['quae', 'quam', 'cuius'], 1, 'The object of *vidēs*: accusative *quam*.'),
   q('prima-8', 'What does *amātur* mean?', 'amātur', ['he loves', 'he is loved', 'he was loving'], 1, 'The passive.'),
   q('prima-8', 'What does this mean?', 'Urbs ā Rōmānīs capta est.', ['The city captured the Romans.', 'The city was captured by the Romans.', 'The Romans are capturing the city.'], 1, 'The perfect passive, with the agent *ā Rōmānīs*.'),
+  q('secunda-1', 'What does *loquitur* mean?', 'loquitur', ['he is spoken', 'he speaks', 'he will speak'], 1, '*Loquor* is deponent: passive in form, active in meaning.'),
+  q('secunda-1', 'What does this mean?', 'Puer ambulāre nōn vult.', ['The boy does not want to walk.', 'The boy cannot walk.', 'The boy was not walking.'], 0, '*Vult* is from *volō*, “want”.'),
 ];

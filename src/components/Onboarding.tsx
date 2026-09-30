@@ -214,12 +214,12 @@ export default function Onboarding({ accountsEnabled, onDone }: { accountsEnable
             const place = start ? ALL_LESSONS.find((p) => p.lesson.id === start) : null;
             return (
               <Frame>
-                <Heading rubric="Your starting point" title={place ? `${place.level.title}, Unit ${place.unit.n}` : 'You know Level I'} />
+                <Heading rubric="Your starting point" title={place ? `${place.level.title}, Unit ${place.unit.n}` : 'You know it all so far'} />
                 <p className="measure mt-4" style={latin}>
                   {place ? (
                     <>Start with <em>{place.unit.title}</em>. The units before it will be there whenever you want to review them.</>
                   ) : (
-                    <>You answered everything right. Level II is being written now; until then, try the readings at the end of each unit, or go on to the AP passages.</>
+                    <>You answered everything right: you know every unit the course has so far. New units are on the way; until then, go on to the AP passages, or review with the readings at the end of each unit.</>
                   )}
                 </p>
                 <div className="mt-8 flex flex-wrap justify-center gap-3">

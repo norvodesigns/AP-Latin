@@ -160,12 +160,12 @@ struct OnboardingView: View {
     private var result: some View {
         let place = start.flatMap { library?.course.place($0) }
         return VStack(spacing: 16) {
-            header("Your starting point", place.map { "\($0.level.title), Unit \($0.unit.n)" } ?? "You know Level I")
+            header("Your starting point", place.map { "\($0.level.title), Unit \($0.unit.n)" } ?? "You know it all so far")
             Group {
                 if let place {
                     Text("Start with \(Text(place.unit.title).italic()). The units before it will be there whenever you want to review them.")
                 } else {
-                    Text("You answered everything right. Level II is being written now; until then, try the readings at the end of each unit, or go on to the AP passages.")
+                    Text("You answered everything right: you know every unit the course has so far. New units are on the way; until then, go on to the AP passages, or review with the readings at the end of each unit.")
                 }
             }
             .font(.prose(.body)).foregroundStyle(Palette.ink2).multilineTextAlignment(.center)

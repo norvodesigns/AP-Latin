@@ -42,7 +42,7 @@ private struct CourseMap: View {
                     }
                 }
 
-                ComingLevels()
+                ComingLevels(written: Set((library?.course.levels ?? []).map(\.numeral)))
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 40)
@@ -190,14 +190,32 @@ private struct LessonRow: View {
 }
 
 /// The levels still being written, so the map shows where the course goes.
+/// One drops out by itself once its first unit arrives, bundled or downloaded.
 private struct ComingLevels: View {
+    /// Numerals of the levels the content already has.
+    let written: Set<String>
+
+    private struct Planned: Identifiable {
+        let numeral, title, subtitle, blurb: String
+        var id: String { numeral }
+    }
+
+    private static let levels = [
+        Planned(numeral: "II", title: "Secunda", subtitle: "Intermediate", blurb: "Deponent and irregular verbs, participles and the ablative absolute, indirect statement, and the subjunctive and its clauses."),
+        Planned(numeral: "III", title: "Tertia", subtitle: "Toward AP", blurb: "Adapted Caesar and Pliny, poetic word order, meter, and reading at sight: the bridge into Vergil."),
+    ]
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Hairline()
-            coming("II", "Secunda", "Intermediate", "The passive, participles and the ablative absolute, indirect statement, the subjunctive and its clauses.")
-            coming("III", "Tertia", "Toward AP", "Adapted Caesar and Pliny, poetic word order, meter, and reading at sight: the bridge into Vergil.")
+        let coming = Self.levels.filter { !written.contains($0.numeral) }
+        if !coming.isEmpty {
+            VStack(alignment: .leading, spacing: 16) {
+                Hairline()
+                ForEach(coming) { level in
+                    self.coming(level.numeral, level.title, level.subtitle, level.blurb)
+                }
+            }
+            .opacity(0.75)
         }
-        .opacity(0.75)
     }
 
     private func coming(_ numeral: String, _ title: String, _ subtitle: String, _ blurb: String) -> some View {

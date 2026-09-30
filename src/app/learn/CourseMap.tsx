@@ -6,11 +6,12 @@ import { COURSE, nextLesson, unitProgress, ALL_LESSONS } from '@/data/curriculum
 import { Page, PageHeader, Section, CalledOut, Hairline } from '@/components/ui';
 import { Rich } from '@/components/Rich';
 
-/** Levels still being written, so the map shows where the course is going. */
+/** Levels still being written, so the map shows where the course is going.
+ *  One drops out by itself once its first unit is in COURSE. */
 const COMING = [
-  { numeral: 'II', title: 'Secunda', subtitle: 'Intermediate', blurb: 'The passive, participles and the ablative absolute, indirect statement, the subjunctive and its clauses.' },
+  { numeral: 'II', title: 'Secunda', subtitle: 'Intermediate', blurb: 'Deponent and irregular verbs, participles and the ablative absolute, indirect statement, and the subjunctive and its clauses.' },
   { numeral: 'III', title: 'Tertia', subtitle: 'Toward AP', blurb: 'Adapted Caesar and Pliny, poetic word order, meter, and reading at sight: the bridge into Vergil.' },
-];
+].filter((l) => !COURSE.some((c) => c.numeral === l.numeral));
 
 export default function CourseMap() {
   const lessons = useStore((s) => s.lessons);
@@ -119,7 +120,7 @@ export default function CourseMap() {
         </Section>
       ))}
 
-      <Hairline className="mb-10" />
+      {COMING.length > 0 && <Hairline className="mb-10" />}
       {COMING.map((l) => (
         <div key={l.numeral} className="mb-8 flex items-baseline gap-4" style={{ opacity: 0.7 }}>
           <span className="numeral" style={{ fontSize: '2rem', lineHeight: 1, color: 'var(--fg-faint)' }}>

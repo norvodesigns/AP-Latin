@@ -338,6 +338,9 @@ for (const f of frqPrompts) {
   const { readdirSync, existsSync } = await import('fs');
   const levelsDir = join(root, 'src/data/curriculum');
   const coreIds = new Set(vocab.map((v) => v.id));
+  // The answer checker the lesson player uses: every exercise must accept
+  // its own model answer, or no student could ever get it right.
+  const { checkTyped, checkTranslation, checkBuild } = await load('src/lib/lessonCheck.ts');
   const seenLessons = new Set();
   let lessonCount = 0;
   let exerciseCount = 0;
@@ -412,10 +415,12 @@ for (const f of frqPrompts) {
               checkMarkup(`${at} prompt`, s.prompt);
               checkMarkup(`${at} explain`, s.explain);
               if (!s.answers?.length || s.answers.some((a) => !norm(a))) fail(`${at}: needs at least one non-empty answer`);
+              else if (!s.answers.every((a) => checkTyped(a, s.answers))) fail(`${at}: an answer is rejected by the checker`);
               break;
             case 'translate':
               if (!s.latin?.trim()) fail(`${at}: no Latin`);
               if (!s.answers?.length || s.answers.some((a) => !a.trim())) fail(`${at}: needs at least one translation`);
+              else if (!s.answers.every((a) => checkTranslation(a, s.answers))) fail(`${at}: a translation is rejected by the checker`);
               if (s.explain) checkMarkup(`${at} explain`, s.explain);
               break;
             case 'build': {
@@ -425,6 +430,7 @@ for (const f of frqPrompts) {
               const fold = (w) => (s.lang === 'la' ? norm(w) : w.toLowerCase().replace(/[^a-z0-9']/g, ''));
               const needed = new Set(s.answer.map(fold));
               for (const x of s.extra ?? []) if (needed.has(fold(x))) fail(`${at}: decoy "${x}" is also a word of the answer`);
+              if (!checkBuild(s.answer, s)) fail(`${at}: the answer, in order, is rejected by the checker`);
               if (s.explain) checkMarkup(`${at} explain`, s.explain);
               break;
             }
