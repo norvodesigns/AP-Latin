@@ -27,17 +27,21 @@ struct OnboardingView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 22) {
-                    content
+            GeometryReader { proxy in
+                ScrollView {
+                    VStack(spacing: 22) {
+                        content
+                    }
+                    .padding(24)
+                    .frame(maxWidth: 560)
+                    // Centered in the screen, except the two steps whose
+                    // height changes as you go (a list, and the questions).
+                    .frame(maxWidth: .infinity, minHeight: proxy.size.height, alignment: step == .placement || step == .pickUnit ? .top : .center)
+                    .id(step)
+                    .transition(.asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity), removal: .opacity))
                 }
-                .padding(24)
-                .frame(maxWidth: 560)
-                .frame(maxWidth: .infinity)
-                .id(step)
-                .transition(.asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity), removal: .opacity))
+                .scrollBounceBehavior(.basedOnSize)
             }
-            .scrollBounceBehavior(.basedOnSize)
             .background(Palette.parchment.ignoresSafeArea())
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -127,6 +131,7 @@ struct OnboardingView: View {
         if answers.count < placement.count {
             let q = placement[answers.count]
             VStack(alignment: .leading, spacing: 14) {
+                Text("Question \(answers.count + 1)").rubricLabel()
                 ProgressView(value: Double(answers.count), total: Double(placement.count)).tint(Palette.rubric)
                 Text(rich: q.step.prompt).font(.system(.title3, design: .serif).weight(.semibold)).foregroundStyle(Palette.ink)
                 if let latin = q.step.latin {

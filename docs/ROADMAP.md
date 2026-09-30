@@ -46,10 +46,10 @@ finishing a lesson counts toward the streak and daily goal.
   - [x] U7 Pronouns (personal, *is ea id*, *hic*, *ille*, relative)
   - [x] U8 3rd-decl. adjectives, 4th and 5th declensions, the passive
 - [ ] Level II, *Secunda* (intermediate), in `src/data/curriculum/secunda/`:
-  - [ ] U1 Deponent verbs; irregular *possum, volō, nōlō, eō, ferō*
-  - [ ] U2 Participles and the ablative absolute
-  - [ ] U3 Infinitives and indirect statement
-  - [ ] U4 Comparison of adjectives and adverbs; numbers
+  - [x] U1 Deponent verbs; irregular *possum, volō, nōlō, eō, ferō*
+  - [x] U2 Participles and the ablative absolute
+  - [x] U3 Infinitives and indirect statement
+  - [x] U4 Comparison of adjectives and adverbs; numbers
   - [ ] U5 The subjunctive: present and imperfect; purpose and result clauses
   - [ ] U6 Perfect and pluperfect subjunctive; *cum* clauses; indirect questions; sequence of tenses
   - [ ] U7 Indirect commands, fear clauses, jussive and hortatory; gerund, gerundive, passive periphrastic
@@ -59,9 +59,9 @@ finishing a lesson counts toward the streak and daily goal.
 
 ## 2. Onboarding and placement
 
-- [ ] First run on web and iOS: who you are (new to Latin, some Latin, AP student, teacher),
+- [x] First run on web and iOS: who you are (new to Latin, some Latin, AP student, teacher),
       daily goal, reminder, optional sign-in, then a starting point
-- [ ] Placement check: a short adaptive quiz that suggests a starting lesson
+- [x] Placement check: a short adaptive quiz that suggests a starting lesson
 - [ ] Home adapts: a beginner's Today leads with the next lesson, an AP student's with the exam
 
 ## 3. New modes and learning functions
@@ -84,7 +84,7 @@ finishing a lesson counts toward the streak and daily goal.
 
 ## 5. Quality
 
-- [ ] Screenshot job covers Learn, a lesson in progress, onboarding
+- [x] Screenshot job covers Learn, a lesson in progress, onboarding
 - [ ] Accessibility pass: VoiceOver labels on every new control, Dynamic Type at XXL
 - [ ] Performance: content decode time, big lists
 - [ ] Review pass over every new screen on iPhone and iPad, light and dark
@@ -101,3 +101,10 @@ finishing a lesson counts toward the streak and daily goal.
 - 2026-09-30: The app's Learn section (course map, full-screen native lesson player, Course tab
   for beginners, Continue on Today) builds green. Level I finished: 8 units, 39 lessons, 323
   exercises, every one checked by `npm run verify`. Next: onboarding, then Level II.
+- 2026-09-30: Onboarding on both platforms (track, placement check that stops after three
+  misses, daily goal, reminder, sign-in; a returning student can sign in from the first
+  screen). CI screenshots four onboarding steps. The motto was bad Latin ("mārca" isn't a
+  word, "meminī" is "I remember"); now *lege, notā, mementō*. Level II units 1–4 written
+  (23 lessons: deponents and irregulars, participles and the ablative absolute, indirect
+  statement, comparison/numbers/pronouns), each ending in an adapted Livy or Ovid story.
+  `verify` now runs every exercise's model answer through the real checker.
