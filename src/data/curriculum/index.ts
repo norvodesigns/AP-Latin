@@ -2,6 +2,7 @@ import type { CurriculumLevel, Lesson, CurriculumUnit } from './types';
 import { prima } from './prima';
 
 export * from './types';
+export { PLACEMENT, type PlacementQuestion } from './placement';
 
 /** The whole course, in order. Levels II and III are added as they're written. */
 export const COURSE: CurriculumLevel[] = [prima];

@@ -13,6 +13,7 @@ import AccountMenu from './AccountMenu';
 import WelcomeGate from './WelcomeGate';
 import FirstLoginWelcome from './FirstLoginWelcome';
 import SplashScreen from './SplashScreen';
+import Onboarding, { needsOnboarding } from './Onboarding';
 import DailyGoalToast from './DailyGoalToast';
 
 /**
@@ -67,6 +68,15 @@ export default function AppShell({
   const setTheme = useStore((s) => s.setTheme);
 
   useEffect(() => setMounted(true), []);
+
+  // Decided once, after the store has loaded from this browser. Not on a
+  // lesson or legal page, so a shared link opens straight to what was shared.
+  const [onboarding, setOnboarding] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (!mounted || onboarding !== null) return;
+    const quietRoute = /^\/(learn\/.+|privacy|support)/.test(pathname);
+    setOnboarding(!quietRoute && needsOnboarding(Boolean(profile)));
+  }, [mounted, onboarding, pathname, profile]);
 
   /** Close with no animation at all — used when the route changes, where the
    *  page underneath is being replaced and an exit animation would play over
@@ -404,9 +414,15 @@ export default function AppShell({
 
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
 
-      {mounted && !isAuthRoute && <SplashScreen />}
+      {/* A brand-new visitor gets the first-run questions instead of the
+          welcome splash and the sign-in invitation; everyone else gets those
+          as before. */}
+      {mounted && !isAuthRoute && onboarding && (
+        <Onboarding accountsEnabled={accountsEnabled} onDone={() => setOnboarding(false)} />
+      )}
+      {mounted && !isAuthRoute && onboarding === false && <SplashScreen />}
       {mounted && !isAuthRoute && <DailyGoalToast />}
-      {mounted && accountsEnabled && !profile && !isAuthRoute && <WelcomeGate />}
+      {mounted && accountsEnabled && !profile && !isAuthRoute && onboarding === false && <WelcomeGate />}
       {mounted && accountsEnabled && profile && (
         <FirstLoginWelcome userId={profile.id} displayName={profile.display_name} role={profile.role} />
       )}

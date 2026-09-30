@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-const SEEN_KEY = 'ap-latin-splash-seen';
+export const SEEN_KEY = 'ap-latin-splash-seen';
 
 /**
  * Bump this when there's a "what's new" worth telling a returning visitor
@@ -12,7 +12,7 @@ const SEEN_KEY = 'ap-latin-splash-seen';
  * already saw an earlier version. A visitor who has genuinely never seen the
  * splash at all is distinguished by having no stored value whatsoever.
  */
-const CURRENT_VERSION = '1.3';
+export const CURRENT_VERSION = '1.3';
 
 const WHATS_NEW: string[] = [
   'A new Course: Latin from the very first word, in short lessons that teach a little and ask a lot. Start at the beginning, or anywhere along the way.',

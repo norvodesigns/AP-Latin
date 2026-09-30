@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
-const SEEN_KEY = 'ap-latin-welcome-seen';
+export const WELCOME_SEEN_KEY = 'ap-latin-welcome-seen';
+const SEEN_KEY = WELCOME_SEEN_KEY;
 
 /**
  * A one-time invitation to sign in or create an account, shown to a signed-

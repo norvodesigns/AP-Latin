@@ -445,6 +445,26 @@ for (const f of frqPrompts) {
     if (!existsSync(join(levelsDir, levelId, 'index.ts'))) fail(`curriculum/${levelId}: no index.ts`);
   }
   notes.push(`${lessonCount} course lessons, ${exerciseCount} exercises`);
+
+  // The placement check: every question names a unit that exists, in course
+  // order, and its answer is one of its options.
+  const { PLACEMENT } = await load('src/data/curriculum/placement.ts');
+  const unitOrder = [];
+  for (const levelId of readdirSync(levelsDir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name)) {
+    for (const file of readdirSync(join(levelsDir, levelId)).filter((f) => /^unit\d+\.ts$/.test(f)).sort((a, b) => Number(a.match(/\d+/)[0]) - Number(b.match(/\d+/)[0]))) {
+      unitOrder.push(`${levelId}-${Number(file.match(/\d+/)[0])}`);
+    }
+  }
+  let lastIndex = -1;
+  PLACEMENT.forEach((p, i) => {
+    const at = `placement question ${i + 1}`;
+    const idx = unitOrder.indexOf(p.unit);
+    if (idx < 0) fail(`${at}: unknown unit ${p.unit}`);
+    if (idx < lastIndex) fail(`${at}: out of course order`);
+    lastIndex = Math.max(lastIndex, idx);
+    if (!Number.isInteger(p.step.answer) || p.step.answer < 0 || p.step.answer >= p.step.options.length) fail(`${at}: answer is not an option`);
+  });
+  notes.push(`${PLACEMENT.length} placement questions`);
 }
 
 /* ------------------------------------------------------------------ */
