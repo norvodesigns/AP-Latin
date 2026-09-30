@@ -47,4 +47,6 @@ export const PLACEMENT: PlacementQuestion[] = [
   q('secunda-5', 'What does this mean?', 'Tam fessus erat ut dormīret.', ['He was so tired that he slept.', 'He was tired in order to sleep.', 'He slept because he was tired.'], 0, '*Tam … ut*: a result clause.'),
   q('secunda-6', 'What does this mean?', 'Cum hostēs urbem cēpissent, cīvēs fūgērunt.', ['When the enemy had captured the city, the citizens fled.', 'The citizens fled with the enemy who had captured the city.', 'The citizens fled so that the enemy would capture the city.'], 0, 'A *cum* clause with the pluperfect subjunctive: “when … had”.'),
   q('secunda-6', 'What does this mean?', 'Rogāvit ubi essem.', ['He asked where I was.', 'He asked me to be there.', 'Where was I? he asked.'], 0, 'An indirect question: *ubi* with the subjunctive.'),
+  q('secunda-7', 'What does this mean?', 'Mīlitibus imperāvit ut pugnārent.', ['He ordered the soldiers to fight.', 'He fought so that the soldiers would obey.', 'He said that the soldiers were fighting.'], 0, 'An indirect command: *imperō* with *ut* and the subjunctive.'),
+  q('secunda-7', 'What does this mean?', 'Carthāgō dēlenda est.', ['Carthage has been destroyed.', 'Carthage must be destroyed.', 'Carthage is destroying.'], 1, 'The gerundive with *est*: obligation.'),
 ];
