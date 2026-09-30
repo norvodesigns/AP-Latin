@@ -25,6 +25,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/grammar`, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${SITE_URL}/forge`, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${SITE_URL}/daily`, changeFrequency: 'daily', priority: 0.6 },
+    { url: `${SITE_URL}/laurels`, changeFrequency: 'monthly', priority: 0.3 },
     { url: `${SITE_URL}/devices`, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${SITE_URL}/context`, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${SITE_URL}/sight`, changeFrequency: 'monthly', priority: 0.5 },

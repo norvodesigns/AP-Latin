@@ -29,6 +29,7 @@ export const NAV: NavItem[] = [
   { href: '/context', label: 'Context & Culture', key: 'c', group: 'reference', blurb: 'Vergil, Augustan Rome, Pliny’s world' },
   { href: '/frq', label: 'FRQ Workshop', key: 'f', group: 'exam', blurb: 'All five free-response types, timed' },
   { href: '/exam', label: 'Practice Exam', key: 'e', group: 'exam', blurb: 'Full 52 MCQ + 5 FRQ, section timers' },
+  { href: '/laurels', label: 'Laurels', key: 'u', group: 'study', blurb: 'Achievements across everything you do here' },
   { href: '/plan', label: 'Study Plan', key: 'p', group: 'study', blurb: 'A schedule built from your exam date' },
   { href: '/settings', label: 'Settings', key: ',', group: 'reference', blurb: 'Theme, data export, AI usage meter' },
 ];

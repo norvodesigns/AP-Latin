@@ -10,6 +10,7 @@ import {
   dueVocab,
   scansionStatsByLine,
   EXAM_DATE,
+  getSyncableData,
 } from '@/store/useStore';
 import { requiredPassages } from '@/data/passages';
 import { coreVocabulary } from '@/data/vocabulary';
@@ -31,6 +32,7 @@ import { formatDuration } from '@/lib/format';
 import { ALL_LESSONS, nextLesson, unitProgress, type LessonPlace } from '@/data/curriculum';
 import { Rich } from '@/components/Rich';
 import { dailyStreak, localDay, sententiaFor } from '@/lib/daily';
+import { COURSE_SHAPE, laurels, nextLaurel } from '@/lib/laurels';
 import type { SkillCategory } from '@/data/types';
 import type { UpcomingAssignment } from '@/lib/supabase/dashboard';
 
@@ -556,6 +558,7 @@ export default function Dashboard({
           </CalledOut>
 
           {mounted && <SententiaCard />}
+          {mounted && <LaurelsLine />}
 
           {/* The queue: what is due now, and what is about to be. A count of
               cards due today says nothing about whether tomorrow is five
@@ -1205,3 +1208,56 @@ function SententiaCard() {
     </section>
   );
 }
+
+const LAURELS_SEEN = 'lectio-laurels-seen';
+
+/**
+ * Laurels in one line: how many are earned, and the next one near. A laurel
+ * earned since the reader last looked is named once. The first time, what's
+ * already earned is simply remembered, so nobody opens to a pile of them.
+ */
+function LaurelsLine() {
+  const state = useStore();
+  const list = laurels(getSyncableData(state), COURSE_SHAPE);
+  const earned = list.filter((l) => l.earned);
+  const next = nextLaurel(list);
+  const [fresh, setFresh] = useState<string | null>(null);
+  const ids = earned.map((l) => l.id).join(',');
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(LAURELS_SEEN);
+      const now = ids ? ids.split(',') : [];
+      if (raw !== null) {
+        const seen = new Set(raw ? raw.split(',') : []);
+        const newest = now.filter((id) => !seen.has(id)).pop();
+        if (newest) setFresh(newest);
+      }
+      localStorage.setItem(LAURELS_SEEN, now.join(','));
+    } catch {
+      /* private mode: no announcements, nothing lost */
+    }
+  }, [ids]);
+  const freshLaurel = fresh ? list.find((l) => l.id === fresh) : null;
+  return (
+    <section>
+      <div className="mb-2 flex items-baseline justify-between gap-3">
+        <span className="rubric">Laurels</span>
+        <Link href="/laurels" className="slab-sm link-rule" style={{ color: 'var(--fg-muted)' }}>
+          {earned.length} of {list.length} earned →
+        </Link>
+      </div>
+      {freshLaurel && (
+        <p style={{ margin: '0 0 0.5rem', fontFamily: 'var(--font-latin)', fontSize: '1.0625rem', color: 'var(--accent)' }}>
+          <span aria-hidden="true">❦ </span>New: <em>{freshLaurel.latin}</em>, {freshLaurel.title.toLowerCase()}.
+        </p>
+      )}
+      {next && (
+        <p style={{ margin: 0, fontFamily: 'var(--font-latin)', fontSize: '1rem', color: 'var(--ink2)' }}>
+          Next: <em>{next.latin}</em>, {next.title.toLowerCase()}
+          {next.target > 1 ? ` (${next.have} of ${next.target})` : ''}.
+        </p>
+      )}
+    </section>
+  );
+}
+
