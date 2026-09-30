@@ -401,8 +401,9 @@ for (const f of frqPrompts) {
               checkMarkup(`${at} prompt`, s.prompt);
               checkMarkup(`${at} explain`, s.explain);
               if (s.options.length < 2) fail(`${at}: fewer than two options`);
-              const folded = s.options.map((o) => norm(o) || o);
-              if (new Set(folded).size !== folded.length) fail(`${at}: duplicate options`);
+              // Exact, not folded: macrons can be the whole point (ven- vs vēn-).
+              const trimmed = s.options.map((o) => o.trim().toLowerCase());
+              if (new Set(trimmed).size !== trimmed.length) fail(`${at}: duplicate options`);
               s.options.forEach((o) => checkMarkup(`${at} option`, o));
               if (!Number.isInteger(s.answer) || s.answer < 0 || s.answer >= s.options.length) fail(`${at}: answer ${s.answer} is not an option`);
               break;
