@@ -15,6 +15,7 @@ export interface NavItem {
 
 export const NAV: NavItem[] = [
   { href: '/', label: 'Dashboard', key: 'd', group: 'study', blurb: 'Countdown, mastery, what to study next' },
+  { href: '/learn', label: 'Course', key: 'o', group: 'study', blurb: 'Latin from the first word: short lessons, in order, up to AP', short: 'Course' },
   { href: '/read', label: 'Reading Room', key: 'r', group: 'study', blurb: 'Every syllabus passage with glossary and notes', short: 'Read' },
   { href: '/translate', label: 'Translate', key: 't', group: 'drill', blurb: 'Literal translation drills with AP scoring segments', short: 'Translate' },
   { href: '/sight', label: 'Sight Reading', key: 'i', group: 'drill', blurb: 'Timed unseen prose and poetry' },

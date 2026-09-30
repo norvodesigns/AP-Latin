@@ -26,7 +26,7 @@ import DailyGoalToast from './DailyGoalToast';
  * toggle, the search button, the exam countdown and the tagline out of this
  * row — each is either duplicated elsewhere or belongs in the index.
  */
-const PRIMARY = ['/read', '/translate', '/scansion', '/vocab', '/quiz'];
+const PRIMARY = ['/learn', '/read', '/vocab', '/quiz', '/scansion'];
 
 export default function AppShell({
   children,

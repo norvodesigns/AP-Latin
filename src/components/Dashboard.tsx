@@ -28,6 +28,7 @@ import {
   type WeakSpot,
 } from '@/lib/progress';
 import { formatDuration } from '@/lib/format';
+import { nextLesson } from '@/data/curriculum';
 import type { SkillCategory } from '@/data/types';
 import type { UpcomingAssignment } from '@/lib/supabase/dashboard';
 
@@ -83,6 +84,10 @@ export default function Dashboard({
   const studyPlan = useStore((s) => s.studyPlan);
   const studySecondsToday = useStore((s) => s.studySecondsToday);
   const studyGoalDate = useStore((s) => s.studyGoalDate);
+  const lessons = useStore((s) => s.lessons);
+  const learner = useStore((s) => s.learner);
+  const courseNext = mounted ? nextLesson(lessons, learner?.startLessonId) : null;
+  const lessonsDone = mounted ? Object.keys(lessons).length : 0;
 
   const days = daysUntilExam();
   const streak = mounted ? currentStreak(studyDays) : 0;
@@ -188,6 +193,11 @@ export default function Dashboard({
     weakest: weakestSkill,
     goalMet: goalSeconds > 0 && todaySeconds >= goalSeconds,
     topWeakness: weak[0] ?? null,
+    course: {
+      done: lessonsDone,
+      beginner: learner?.track === 'new' || learner?.track === 'some',
+      next: courseNext ? { id: courseNext.lesson.id, title: courseNext.lesson.title.replace(/\*/g, '') } : null,
+    },
   });
 
   const exam = new Date(EXAM_DATE + 'T00:00:00');
@@ -514,6 +524,14 @@ export default function Dashboard({
             <Link href={next.href} className="btn">
               {next.cta}
             </Link>
+            {mounted && read === 0 && lessonsDone === 0 && !next.href.startsWith('/learn') && (
+              <p className="mt-4" style={{ margin: '1rem 0 0', fontFamily: 'var(--font-latin)', fontSize: '1rem', color: 'var(--fg-muted)' }}>
+                New to Latin?{' '}
+                <Link href="/learn" className="link-rule" style={{ color: 'var(--accent)' }}>
+                  Start the course from the first word →
+                </Link>
+              </p>
+            )}
           </CalledOut>
 
           {/* The queue: what is due now, and what is about to be. A count of
@@ -949,6 +967,9 @@ function nextAction(s: {
   weakest: { c: SkillCategory; pct: number; total: number } | null;
   goalMet: boolean;
   topWeakness: WeakSpot | null;
+  /** The course: lessons finished, whether the student called themselves a
+   *  beginner, and the lesson to do next. */
+  course: { done: number; beginner: boolean; next: { id: string; title: string } | null };
 }): { title: string; body: string; cta: string; href: string } {
   if (!s.mounted) {
     return {
@@ -956,6 +977,19 @@ function nextAction(s: {
       body: 'One moment.',
       cta: 'Reading Room',
       href: '/read',
+    };
+  }
+  // Someone working through the course, and not yet reading the AP
+  // passages, is steered back to it first.
+  if (s.course.next && (s.course.beginner || (s.course.done > 0 && s.read === 0))) {
+    return {
+      title: s.course.done === 0 ? 'Start the course' : `Next lesson: ${s.course.next.title}`,
+      body:
+        s.course.done === 0
+          ? 'Latin from the first word, in short lessons. Each one teaches a little, asks a lot, and adds its words to your flashcards.'
+          : `${s.course.done} lesson${s.course.done === 1 ? '' : 's'} done. A lesson a day is the steadiest way up to the AP passages.`,
+      cta: s.course.done === 0 ? 'Begin lesson one' : 'Continue the course',
+      href: `/learn/${s.course.next.id}`,
     };
   }
   if (s.read === 0) {

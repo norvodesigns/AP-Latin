@@ -29,16 +29,16 @@ A leveled course (Course → Level → Unit → Lesson) in `src/data/curriculum/
 `/learn` and in the app's Learn section. Lesson words join the spaced-repetition deck, and
 finishing a lesson counts toward the streak and daily goal.
 
-- [ ] Data model and types (`src/data/curriculum/types.ts`), validator in `scripts/verify-content.mjs`
-- [ ] Progress: `lessons` in `SyncableData` (per lesson: completedAt, best score, attempts), merge
+- [x] Data model and types (`src/data/curriculum/types.ts`), validator in `scripts/verify-content.mjs`
+- [x] Progress: `lessons` in `SyncableData` (per lesson: completedAt, best score, attempts), merge
       rule, fixtures, Swift port
-- [ ] Web: `/learn` course map, lesson player (teach cards, multiple choice, type the ending,
+- [x] Web: `/learn` course map, lesson player (teach cards, multiple choice, type the ending,
       translate, build the sentence, match), results, next lesson
 - [ ] iOS: Learn tab with the same course map and lesson player, native and glass
 - [ ] Exporter: `curriculum.json` in the content bundle
 - [ ] Level 1, *Prīma* (foundations): 8 units
-  - [ ] U1 Sounds and first words (pronunciation, *sum*, nouns and gender, why endings matter)
-  - [ ] U2 First declension and the present tense (nom/acc, 1st conj., gen/dat/abl, reading)
+  - [x] U1 Sounds and first words (pronunciation, *sum*, nouns and gender, why endings matter)
+  - [x] U2 First declension and the present tense (nom/acc, 1st conj., gen/dat/abl, reading)
   - [ ] U3 Second declension and adjectives (-us/-er, neuter, agreement, 2nd conj.)
   - [ ] U4 Prepositions, the ablative, imperfect and future
   - [ ] U5 Third declension; 3rd and 4th conjugations; imperatives
@@ -88,3 +88,8 @@ finishing a lesson counts toward the streak and daily goal.
 
 - 2026-09-30: Roadmap written. iOS app feature-complete against the website, over-the-air
   content, screenshot CI. Starting the curriculum.
+- 2026-09-30: Course groundwork: lesson progress synced on both platforms, the lesson model and
+  validator, answer checking, `/learn` (course map, lesson player with all seven step kinds),
+  course on the dashboard, nav and splash. Level I units 1–2 written (8 lessons, 80 exercises).
+  Owner action later: apply `supabase/migrations/0004_course_section.sql`, then add `learn` to
+  `ASSIGNABLE_SECTIONS`, so teachers can assign course time.

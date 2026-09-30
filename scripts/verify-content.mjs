@@ -333,6 +333,119 @@ for (const f of frqPrompts) {
   }
 }
 
+/* --- the course (src/data/curriculum) ------------------------------ */
+{
+  const { readdirSync, existsSync } = await import('fs');
+  const levelsDir = join(root, 'src/data/curriculum');
+  const coreIds = new Set(vocab.map((v) => v.id));
+  const seenLessons = new Set();
+  let lessonCount = 0;
+  let exerciseCount = 0;
+
+  // `*` pairs for italics and bold must balance; the `|` ending marker is
+  // only meaningful in tables and examples.
+  const checkMarkup = (where, text) => {
+    if (typeof text !== 'string' || !text.trim()) return fail(`${where}: empty text`);
+    if ((text.match(/\*/g) ?? []).length % 2) fail(`${where}: unbalanced * in "${text}"`);
+  };
+  const noBar = (where, text) => {
+    if (text.includes('|')) fail(`${where}: a | ending marker outside a table or example`);
+  };
+
+  for (const levelId of readdirSync(levelsDir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name)) {
+    const files = readdirSync(join(levelsDir, levelId)).filter((f) => /^unit\d+\.ts$/.test(f));
+    for (const file of files) {
+      const { unit } = await load(`src/data/curriculum/${levelId}/${file}`);
+      const n = Number(file.match(/\d+/)[0]);
+      if (unit.id !== `${levelId}-${n}` || unit.n !== n) fail(`${levelId}/${file}: unit id should be ${levelId}-${n}`);
+      if (!unit.title?.trim() || !unit.blurb?.trim()) fail(`${unit.id}: missing title or blurb`);
+      unit.lessons.forEach((lesson, li) => {
+        lessonCount += 1;
+        const id = lesson.id;
+        if (id !== `${unit.id}-${li + 1}`) fail(`${id}: lesson ids run in order; expected ${unit.id}-${li + 1}`);
+        if (seenLessons.has(id)) fail(`duplicate lesson id ${id}`);
+        seenLessons.add(id);
+        if (!lesson.title?.trim() || !lesson.summary?.trim()) fail(`${id}: missing title or summary`);
+        if (!(lesson.minutes >= 1 && lesson.minutes <= 30)) fail(`${id}: minutes out of range`);
+        if (!lesson.objectives?.length) fail(`${id}: no objectives`);
+        for (const w of lesson.words) {
+          if (!w.latin?.trim() || !w.english?.trim()) fail(`${id}: a word is missing its Latin or English`);
+          if (w.vocabId && !coreIds.has(w.vocabId)) fail(`${id}: word "${w.latin}" links to unknown vocabulary id "${w.vocabId}"`);
+        }
+        const exercises = lesson.steps.filter((s) => s.kind !== 'teach' && s.kind !== 'read');
+        exerciseCount += exercises.length;
+        if (exercises.length < 3) fail(`${id}: only ${exercises.length} exercises`);
+        lesson.steps.forEach((s, si) => {
+          const at = `${id} step ${si + 1} (${s.kind})`;
+          switch (s.kind) {
+            case 'teach':
+              checkMarkup(`${at} title`, s.title);
+              if (!s.body?.length) fail(`${at}: no body`);
+              s.body?.forEach((p) => { checkMarkup(at, p); noBar(at, p); });
+              if (s.tip) { checkMarkup(`${at} tip`, s.tip); noBar(at, s.tip); }
+              if (s.table) {
+                for (const r of s.table.rows) {
+                  if (r.cells.length !== s.table.cols.length) fail(`${at}: table row "${r.label}" has ${r.cells.length} cells for ${s.table.cols.length} columns`);
+                }
+              }
+              for (const e of s.examples ?? []) {
+                if (!e.la?.trim() || !e.en?.trim()) fail(`${at}: an example is missing its Latin or English`);
+                if (e.note) checkMarkup(`${at} note`, e.note);
+              }
+              break;
+            case 'read':
+              if ((s.lines?.length ?? 0) < 2) fail(`${at}: a reading needs at least two lines`);
+              for (const l of s.lines ?? []) if (!l.la?.trim() || !l.en?.trim()) fail(`${at}: a line is missing its Latin or English`);
+              break;
+            case 'choice': {
+              checkMarkup(`${at} prompt`, s.prompt);
+              checkMarkup(`${at} explain`, s.explain);
+              if (s.options.length < 2) fail(`${at}: fewer than two options`);
+              const folded = s.options.map((o) => norm(o) || o);
+              if (new Set(folded).size !== folded.length) fail(`${at}: duplicate options`);
+              s.options.forEach((o) => checkMarkup(`${at} option`, o));
+              if (!Number.isInteger(s.answer) || s.answer < 0 || s.answer >= s.options.length) fail(`${at}: answer ${s.answer} is not an option`);
+              break;
+            }
+            case 'type':
+              checkMarkup(`${at} prompt`, s.prompt);
+              checkMarkup(`${at} explain`, s.explain);
+              if (!s.answers?.length || s.answers.some((a) => !norm(a))) fail(`${at}: needs at least one non-empty answer`);
+              break;
+            case 'translate':
+              if (!s.latin?.trim()) fail(`${at}: no Latin`);
+              if (!s.answers?.length || s.answers.some((a) => !a.trim())) fail(`${at}: needs at least one translation`);
+              if (s.explain) checkMarkup(`${at} explain`, s.explain);
+              break;
+            case 'build': {
+              checkMarkup(`${at} prompt`, s.prompt);
+              if (!s.answer?.length) fail(`${at}: no answer tiles`);
+              if (s.lang !== 'la' && s.lang !== 'en') fail(`${at}: lang must be la or en`);
+              const fold = (w) => (s.lang === 'la' ? norm(w) : w.toLowerCase().replace(/[^a-z0-9']/g, ''));
+              const needed = new Set(s.answer.map(fold));
+              for (const x of s.extra ?? []) if (needed.has(fold(x))) fail(`${at}: decoy "${x}" is also a word of the answer`);
+              if (s.explain) checkMarkup(`${at} explain`, s.explain);
+              break;
+            }
+            case 'match': {
+              checkMarkup(`${at} prompt`, s.prompt);
+              if (s.pairs.length < 3 || s.pairs.length > 6) fail(`${at}: 3 to 6 pairs, not ${s.pairs.length}`);
+              const lefts = s.pairs.map((p) => p[0]);
+              const rights = s.pairs.map((p) => p[1]);
+              if (new Set(lefts).size !== lefts.length || new Set(rights).size !== rights.length) fail(`${at}: a left or right side repeats`);
+              break;
+            }
+            default:
+              fail(`${at}: unknown step kind`);
+          }
+        });
+      });
+    }
+    if (!existsSync(join(levelsDir, levelId, 'index.ts'))) fail(`curriculum/${levelId}: no index.ts`);
+  }
+  notes.push(`${lessonCount} course lessons, ${exerciseCount} exercises`);
+}
+
 /* ------------------------------------------------------------------ */
 
 for (const n of notes) console.log(`  ${n}`);

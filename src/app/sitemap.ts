@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { allPassages } from '@/data/passages';
+import { ALL_LESSONS } from '@/data/curriculum';
 
 const SITE_URL = 'https://lectio.norvodesigns.com';
 
@@ -13,6 +14,7 @@ const SITE_URL = 'https://lectio.norvodesigns.com';
 export default function sitemap(): MetadataRoute.Sitemap {
   const sections: MetadataRoute.Sitemap = [
     { url: SITE_URL, changeFrequency: 'weekly', priority: 1 },
+    { url: `${SITE_URL}/learn`, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${SITE_URL}/read`, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE_URL}/translate`, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${SITE_URL}/scansion`, changeFrequency: 'monthly', priority: 0.6 },
@@ -35,5 +37,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }));
 
-  return [...sections, ...passages];
+  const lessons: MetadataRoute.Sitemap = ALL_LESSONS.map((p) => ({
+    url: `${SITE_URL}/learn/${p.lesson.id}`,
+    changeFrequency: 'monthly',
+    priority: 0.6,
+  }));
+
+  return [...sections, ...lessons, ...passages];
 }

@@ -12,12 +12,12 @@ const SEEN_KEY = 'ap-latin-splash-seen';
  * already saw an earlier version. A visitor who has genuinely never seen the
  * splash at all is distinguished by having no stored value whatsoever.
  */
-const CURRENT_VERSION = '1.2';
+const CURRENT_VERSION = '1.3';
 
 const WHATS_NEW: string[] = [
-  'Select any word or phrase while reading to highlight it in color or attach a note.',
-  'A far more complete and accurate vocabulary — thousands of real dictionary words beyond the required list are now glossed correctly in context.',
-  'The Grammar reference is organized by topic instead of one long list, and the glossary popup no longer runs off the bottom of the screen.',
+  'A new Course: Latin from the very first word, in short lessons that teach a little and ask a lot. Start at the beginning, or anywhere along the way.',
+  'Every word a lesson teaches joins your flashcards, and every lesson counts toward your streak and daily goal.',
+  'Your course progress syncs with your account, like everything else.',
 ];
 
 /** How long the dissolve-out plays before the dialog actually unmounts —
@@ -156,9 +156,10 @@ export default function SplashScreen() {
                 color: 'var(--ink2)',
               }}
             >
-              Every required passage with a click-to-gloss vocabulary, highlighting and notes as
-              you read, spaced-repetition review, and an AP-style quiz and scansion lab — all
-              built around the College Board&rsquo;s own AP Latin exam.
+              A course that teaches Latin from the first word, and for AP students every required
+              passage with a click-to-gloss vocabulary, highlighting and notes as you read,
+              spaced-repetition review, and an AP-style quiz and scansion lab — all built around
+              the College Board&rsquo;s own AP Latin exam.
             </p>
           )}
 

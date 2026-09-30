@@ -23,6 +23,16 @@ export const ASSIGNABLE_SECTIONS = [
 
 export type AssignableSection = (typeof ASSIGNABLE_SECTIONS)[number];
 
+/**
+ * Sections whose time counts toward the daily goal and the classroom's study
+ * time: every assignable one, plus the course. The course isn't assignable
+ * until the database's assignment check allows it
+ * (supabase/migrations/0004_course_section.sql).
+ */
+export const TRACKED_SECTIONS = [...ASSIGNABLE_SECTIONS, 'learn'] as const;
+
+export type TrackedSection = (typeof TRACKED_SECTIONS)[number];
+
 export type Profile = {
   id: string;
   role: Role;

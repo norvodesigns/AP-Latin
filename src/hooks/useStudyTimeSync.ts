@@ -4,15 +4,15 @@ import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { useStore } from '@/store/useStore';
 import { bumpStudySeconds } from '@/lib/supabase/sync';
-import { ASSIGNABLE_SECTIONS, type AssignableSection } from '@/lib/supabase/types';
+import { TRACKED_SECTIONS, type TrackedSection } from '@/lib/supabase/types';
 
-const SECTION_SET: ReadonlySet<string> = new Set(ASSIGNABLE_SECTIONS);
+const SECTION_SET: ReadonlySet<string> = new Set(TRACKED_SECTIONS);
 
-/** The assignable section a pathname belongs to, or null for chrome routes
- *  (dashboard, settings, classroom/teach, auth) that carry no assignment. */
-function sectionFor(pathname: string): AssignableSection | null {
+/** The tracked section a pathname belongs to, or null for chrome routes
+ *  (dashboard, settings, classroom/teach, auth) that aren't study. */
+function sectionFor(pathname: string): TrackedSection | null {
   const first = pathname.split('/')[1] ?? '';
-  return SECTION_SET.has(first) ? (first as AssignableSection) : null;
+  return SECTION_SET.has(first) ? (first as TrackedSection) : null;
 }
 
 const FLUSH_MS = 30_000;
@@ -45,7 +45,7 @@ export function useStudyTimeSync() {
   const authedRef = useRef(Boolean(authUserId));
   authedRef.current = Boolean(authUserId);
 
-  const flush = (nextSection: AssignableSection | null) => {
+  const flush = (nextSection: TrackedSection | null) => {
     const toSend = sectionRef.current;
     const seconds = pendingRef.current;
     pendingRef.current = 0;
