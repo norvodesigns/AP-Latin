@@ -39,11 +39,10 @@ on:
         type: boolean
         default: false
 
-# Pushes to main queue rather than cancel each other, so every commit gets
-# its own build result; a pull request's newer push replaces its older one.
-concurrency:
-  group: ios-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+# Concurrency is per job, not per run: a build waits only for the build
+# before it, never for that run's long screenshot job. Pushes to main queue
+# (a newer one replaces one still waiting); a pull request's newer push
+# cancels its older one.
 
 jobs:
   core:
@@ -59,6 +58,9 @@ jobs:
   app:
     name: Build app (iPhone + iPad simulator)
     runs-on: macos-26
+    concurrency:
+      group: ios-app-${{ github.ref }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     steps:
       - uses: actions/checkout@v4
       - name: Toolchain
@@ -107,6 +109,9 @@ jobs:
     if: github.event_name != 'pull_request'
     needs: [app]
     runs-on: macos-26
+    concurrency:
+      group: ios-screenshots-${{ github.ref }}
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
       - name: Toolchain
