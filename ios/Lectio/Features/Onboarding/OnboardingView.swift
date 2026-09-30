@@ -167,7 +167,9 @@ struct OnboardingView: View {
         return VStack(spacing: 16) {
             header("Your starting point", place.map { "\($0.level.title), Unit \($0.unit.n)" } ?? "You know it all so far")
             Group {
-                if let place {
+                if let place, answers.allSatisfy(\.right) {
+                    Text("You answered everything right, so start with the AP texts themselves: \(Text(place.unit.title).italic()). The grammar units will be there whenever you want to review them.")
+                } else if let place {
                     Text("Start with \(Text(place.unit.title).italic()). The units before it will be there whenever you want to review them.")
                 } else {
                     Text("You answered everything right: you know every unit the course has so far. New units are on the way; until then, go on to the AP passages, or review with the readings at the end of each unit.")
@@ -339,7 +341,9 @@ struct OnboardingView: View {
 
     /// The check is over: work out the starting lesson.
     private func settle() {
-        start = Placement.start(answers).flatMap { library?.course.firstLesson(ofUnit: $0)?.lesson.id }
+        let course = library?.course
+        let unit = Placement.start(answers) ?? Placement.unitBeyond(course?.unitIds ?? [], probed: placement.map(\.unit))
+        start = unit.flatMap { course?.firstLesson(ofUnit: $0)?.lesson.id }
         step = .result
     }
 

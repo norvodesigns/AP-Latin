@@ -60,6 +60,11 @@ finishing a lesson counts toward the streak and daily goal.
 - [ ] Level IV, *Quārta*: guided lessons through the AP syllabus passages (Aeneid and Pliny),
       each tied to its Reading Room passage: read a section, then comprehension, grammar and
       style questions of the exam's kinds
+  - [x] U1 Pliny: Vesuvius, Letters 6.16 and 6.20 (7 lessons)
+  - [ ] U2 Pliny: the other letters (6.4 and 6.7 to Calpurnia, 7.27 the ghost, 10.96–97 or the Trajan letters)
+  - [ ] U3 Aeneid 1: the proem, the storm, Dido's temple
+  - [ ] U4 Aeneid 2 and 4: Laocoön, the fall of Troy, Dido
+  - [ ] U5 Aeneid 6, 7, 11, 12: the underworld, the war, the end
 
 ## 2. Onboarding and placement
 
@@ -187,3 +192,9 @@ finishing a lesson counts toward the streak and daily goal.
   emperors, Pliny on Vesuvius, Martial, Publilius Syrus, Phaedrus, Lucretius, and the
   mottoes on the dollar bill. Laurels in the app count from raw JSON instead of decoding
   every record, since Today works them out on each redraw.
+- 2026-09-30: Level IV, *Quārta*, begins: Unit 1 reads Pliny's Letters 6.16 and 6.20 whole
+  in seven lessons (why he writes, the cloud like a pine, the rescue, calm at Stabiae, the
+  death on the shore, the night at Misenum, the darkness), each a macronized reading with
+  glosses, five questions of the exam's kinds (grammar, figures, what a detail is for), a
+  translation and an essay tip. The placement check gains a question for each Tertia unit,
+  and a student who answers everything right now starts on Quārta instead of at the top.

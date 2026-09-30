@@ -1,11 +1,12 @@
 import type { ChoiceStep } from './types';
 
 /**
- * The placement check: two quick questions per unit, in course order. A
- * student who already knows some Latin answers until the questions get
- * ahead of them; the course suggests starting at the first unit where
- * they slipped (see `placementStart` in src/lib/placement.ts, and its Swift
- * twin).
+ * The placement check: quick questions in course order, two per unit (one
+ * per unit in Level III). A student who already knows some Latin answers
+ * until the questions get ahead of them; the course suggests starting at the
+ * first unit where they slipped, or at Level IV if they never did (see
+ * `placementStart` and `unitBeyond` in src/lib/placement.ts, and their
+ * Swift twins).
  */
 export interface PlacementQuestion {
   /** The unit it checks, e.g. "prima-3". */
@@ -52,4 +53,12 @@ export const PLACEMENT: PlacementQuestion[] = [
   q('secunda-8', 'What does this mean?', 'Sī adesset, laetus essem.', ['If he is here, I am happy.', 'If he were here, I would be happy.', 'If he had been here, I would have been happy.'], 1, 'The imperfect subjunctive: present contrary to fact.'),
   q('secunda-8', 'What does this mean?', 'Nēmō est quī hoc nesciat.', ['There is no one who does not know this.', 'No one knows this.', 'Who does not know this?'], 0, 'A relative clause of characteristic.'),
   q('tertia-1', 'Which is the main verb?', 'Mīlitēs, quī fessī erant, postquam castra posuērunt, dormīvērunt.', ['erant', 'posuērunt', 'dormīvērunt'], 2, 'The other two verbs are inside the *quī* and *postquam* clauses.'),
+  // Level III, a question a unit: past these, a student starts on the AP texts.
+  q('tertia-2', 'Pliny writes about the past, but uses the present tense: *poscit soleās, ascendit locum*. Why?', undefined, ['It shows the action is still going on today', 'It makes the moment vivid: the historical present', 'It is a mistake for the perfect'], 1, 'The historical present brings a past moment before the reader’s eyes.'),
+  q('tertia-3', 'What does *Athēnīs* mean here?', 'Erat Athēnīs spatiōsa et capāx domus.', ['to Athens', 'from Athens', 'at Athens'], 2, 'The locative of a plural place name looks like the ablative: *Athēnīs*, “at Athens”.'),
+  q('tertia-4', 'Which word does *saevae* go with?', 'saevae memorem Iūnōnis ob īram', ['Iūnōnis', 'memorem', 'īram'], 0, 'Both are genitive singular: “of cruel Juno”. Poets set an adjective far from its noun.'),
+  q('tertia-5', 'How do the last two feet of a dactylic hexameter usually go?', undefined, ['spondee, then dactyl', 'dactyl, then a spondee or trochee', 'two spondees'], 1, 'The fifth foot is almost always a dactyl, the sixth two syllables: *– ⏑ ⏑ | – ×*.'),
+  q('tertia-6', 'What figure is *haud ignārus*, “not unaware”, meaning “well aware”?', undefined, ['chiasmus', 'anaphora', 'litotes'], 2, 'Litotes: saying something by denying its opposite.'),
+  q('tertia-7', 'What does this mean?', 'Timeō Danaōs et dōna ferentēs.', ['I fear the Greeks, even when they bring gifts.', 'The Greeks fear the gifts they are bringing.', 'I fear the Greeks and the gifts are being carried.'], 0, '*et* here means “even”; *ferentēs* is a present participle with *Danaōs*.'),
+  q('tertia-8', 'Meeting a long sentence you have never seen, what do you look for first?', undefined, ['Words that look like English', 'The main verb and its subject', 'The last word'], 1, 'Find the frame of the sentence, then fit the clauses and phrases around it.'),
 ];

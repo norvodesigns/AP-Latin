@@ -5,13 +5,15 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { useStore, type LearnerProfile } from '@/store/useStore';
 import { COURSE, PLACEMENT, ALL_LESSONS } from '@/data/curriculum';
-import { placementContinues, placementStart, type PlacementAnswer } from '@/lib/placement';
+import { placementContinues, placementStart, unitBeyond, type PlacementAnswer } from '@/lib/placement';
 import { Rich } from '@/components/Rich';
 import { SEEN_KEY as SPLASH_KEY, CURRENT_VERSION } from '@/components/SplashScreen';
 import { WELCOME_SEEN_KEY } from '@/components/WelcomeGate';
 
 /** Set once the first-run questions are answered or skipped, in this browser. */
 export const ONBOARDED_KEY = 'ap-latin-onboarded';
+
+const UNIT_IDS = COURSE.flatMap((l) => l.units.map((u) => u.id));
 
 type Track = LearnerProfile['track'];
 type Step = 'welcome' | 'track' | 'placement-intro' | 'placement' | 'placement-result' | 'pick-unit' | 'goal' | 'account';
@@ -113,7 +115,7 @@ export default function Onboarding({ accountsEnabled, onDone }: { accountsEnable
       setAnswers(next);
       setChosen(null);
       if (!placementContinues(next, PLACEMENT.length)) {
-        const unit = placementStart(next);
+        const unit = placementStart(next) ?? unitBeyond(UNIT_IDS, PLACEMENT.map((x) => x.unit));
         const place = unit ? ALL_LESSONS.find((p) => p.unit.id === unit) : null;
         setStart(place?.lesson.id ?? null);
         setStep('placement-result');
@@ -216,7 +218,9 @@ export default function Onboarding({ accountsEnabled, onDone }: { accountsEnable
               <Frame>
                 <Heading rubric="Your starting point" title={place ? `${place.level.title}, Unit ${place.unit.n}` : 'You know it all so far'} />
                 <p className="measure mt-4" style={latin}>
-                  {place ? (
+                  {place && answers.every((a) => a.right) ? (
+                    <>You answered everything right, so start with the AP texts themselves: <em>{place.unit.title}</em>. The grammar units will be there whenever you want to review them.</>
+                  ) : place ? (
                     <>Start with <em>{place.unit.title}</em>. The units before it will be there whenever you want to review them.</>
                   ) : (
                     <>You answered everything right: you know every unit the course has so far. New units are on the way; until then, go on to the AP passages, or review with the readings at the end of each unit.</>

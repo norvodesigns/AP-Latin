@@ -2,12 +2,13 @@ import type { CurriculumLevel, Lesson, CurriculumUnit } from './types';
 import { prima } from './prima';
 import { secunda } from './secunda';
 import { tertia } from './tertia';
+import { quarta } from './quarta';
 
 export * from './types';
 export { PLACEMENT, type PlacementQuestion } from './placement';
 
 /** The whole course, in order. Units are added to a level as they're written. */
-export const COURSE: CurriculumLevel[] = [prima, secunda, tertia];
+export const COURSE: CurriculumLevel[] = [prima, secunda, tertia, quarta];
 
 export interface LessonPlace {
   lesson: Lesson;

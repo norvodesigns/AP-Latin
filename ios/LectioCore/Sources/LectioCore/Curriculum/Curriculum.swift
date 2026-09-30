@@ -217,6 +217,9 @@ public struct Course: Sendable {
 
     public func place(_ id: String) -> LessonPlace? { index[id].map { lessons[$0] } }
 
+    /// Every unit's id, in course order.
+    public var unitIds: [String] { levels.flatMap { $0.units.map(\.id) } }
+
     /// The first lesson of a unit, by unit id.
     public func firstLesson(ofUnit unitId: String) -> LessonPlace? { lessons.first { $0.unit.id == unitId } }
 

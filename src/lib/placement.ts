@@ -24,3 +24,13 @@ export function placementContinues(answers: PlacementAnswer[], total: number): b
 export function placementStart(answers: PlacementAnswer[]): string | null {
   return answers.find((a) => !a.right)?.unit ?? null;
 }
+
+/**
+ * Where a student who gets every question right begins: the first unit past
+ * all the ones the check asks about (Level IV, which reads the AP texts
+ * themselves), or null when the course has nothing beyond them yet.
+ */
+export function unitBeyond(units: string[], probed: string[]): string | null {
+  const last = Math.max(-1, ...probed.map((u) => units.indexOf(u)));
+  return units[last + 1] ?? null;
+}

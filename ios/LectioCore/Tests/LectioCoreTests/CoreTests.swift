@@ -686,6 +686,11 @@ import Testing
         #expect(course.firstLesson(ofUnit: "prima-2")?.lesson.id == "prima-2-1")
         #expect(Placement.start([A(unit: "prima-1", right: true)]) == nil)
         #expect(!Placement.continues(Array(repeating: A(unit: "prima-1", right: true), count: 16), total: 16))
+        #expect(Placement.unitBeyond(["a", "b", "c", "d"], probed: ["a", "b", "b"]) == "c")
+        #expect(Placement.unitBeyond(["a", "b"], probed: ["a", "b"]) == nil)
+        #expect(Placement.unitBeyond(["a", "b"], probed: []) == "a")
+        // A perfect score lands on the level that reads the AP texts.
+        #expect(Placement.unitBeyond(course.unitIds, probed: course.placement.map(\.unit)) == "quarta-1")
     }
 }
 

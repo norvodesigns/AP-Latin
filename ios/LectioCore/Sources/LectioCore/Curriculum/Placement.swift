@@ -30,4 +30,12 @@ public enum Placement {
     public static func start(_ answers: [Answer]) -> String? {
         answers.first { !$0.right }?.unit
     }
+
+    /// Where a student who gets every question right begins: the first unit
+    /// past all the ones the check asks about (Level IV, which reads the AP
+    /// texts themselves), or nil when the course has nothing beyond them yet.
+    public static func unitBeyond(_ units: [String], probed: [String]) -> String? {
+        let last = probed.compactMap { units.firstIndex(of: $0) }.max() ?? -1
+        return last + 1 < units.count ? units[last + 1] : nil
+    }
 }

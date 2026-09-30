@@ -17,7 +17,7 @@
  *     set in rubric red. The bar never shows.
  */
 
-export type LevelId = 'prima' | 'secunda' | 'tertia';
+export type LevelId = 'prima' | 'secunda' | 'tertia' | 'quarta';
 
 export interface CurriculumLevel {
   id: LevelId;
