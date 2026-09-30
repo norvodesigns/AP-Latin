@@ -44,7 +44,7 @@ finishing a lesson counts toward the streak and daily goal.
   - [x] U5 Third declension; 3rd and 4th conjugations; imperatives
   - [x] U6 The perfect system (principal parts, perfect, pluperfect, future perfect)
   - [x] U7 Pronouns (personal, *is ea id*, *hic*, *ille*, relative)
-  - [ ] U8 3rd-decl. adjectives, 4th and 5th declensions, the passive
+  - [x] U8 3rd-decl. adjectives, 4th and 5th declensions, the passive
 - [ ] Level 2, *Secunda* (intermediate): passive and deponents, participles and the ablative
       absolute, infinitives and indirect statement, the subjunctive (purpose, result, *cum*,
       indirect questions, sequence of tenses), comparison, irregular verbs, gerund and gerundive,
