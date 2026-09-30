@@ -43,4 +43,6 @@ export const PLACEMENT: PlacementQuestion[] = [
   q('secunda-3', 'What does this mean?', 'Putāvit hostēs discessisse.', ['He thought that the enemy were leaving.', 'He thought that the enemy had left.', 'He thought that the enemy would leave.'], 1, 'A perfect infinitive: before the main verb, so “had left”.'),
   q('secunda-4', 'What does this mean?', 'Mōns altior est quam urbs.', ['The mountain is as high as the city.', 'The mountain is higher than the city.', 'The mountain is very high.'], 1, '*-ior* is the comparative, and *quam* is “than”.'),
   q('secunda-4', 'Which is the superlative of *bonus*?', undefined, ['bonissimus', 'melior', 'optimus'], 2, '*Bonus, melior, optimus*: good, better, best.'),
+  q('secunda-5', 'Which is an imperfect subjunctive?', undefined, ['erat', 'esset', 'sit'], 1, '*Esse* + *t*: the infinitive plus an ending.'),
+  q('secunda-5', 'What does this mean?', 'Tam fessus erat ut dormīret.', ['He was so tired that he slept.', 'He was tired in order to sleep.', 'He slept because he was tired.'], 0, '*Tam … ut*: a result clause.'),
 ];

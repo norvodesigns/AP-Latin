@@ -1,7 +1,8 @@
 {
   "schemaVersion": 1,
-  "contentHash": "3d5d65db0a75baa6491ae6e3c48f2e4c0652c88af6893732a858b2bc1eb8e49c",
+  "contentHash": "49a2794821f8f8c81da9d64add2f514b001a34e383bd6d2bfbbc514824a1673f",
   "supersedes": [
+    "3d5d65db0a75baa6491ae6e3c48f2e4c0652c88af6893732a858b2bc1eb8e49c",
     "15aed7f483d83b8b49476795f981dbf904262019a3a78217c6689414caaaa0fb",
     "c47a24a6029e9b7db8c34499739c8a3dedc00ad23befeb1a1ef943e8a16f7841",
     "12cf8df750d55967fb82b2ce346c53554368504443d6e7c3c44f616c59bd29b0",
@@ -27,7 +28,7 @@
     "sight.json": "95f79762b62b8a48880b57fb593cca65514c5737d6a8a4be38e7c01d35335afa",
     "translation.json": "a1abd95c629102e1038f414fba2fccb4b6fd619da2b302e7a9f676b0885be131",
     "scansion.json": "ab7211ef183bcfe02b9c7d918fc0047abba016f85d629a147535c3640ac712a7",
-    "curriculum.json": "3ee26bff99801cec2d8bea698b3b9f1b90825dcd44e7fa825110e92de3d18619",
+    "curriculum.json": "1d7d9fcb4c71563719037e7acfc16cd359f2702ed012d4afe464d7e894a4833b",
     "meta.json": "efd00c603b7c2a1dd44933f4642867306c93df6d887b6c4aab5afb0b28eaff7d"
   }
 }
