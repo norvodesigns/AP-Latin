@@ -62,9 +62,10 @@ finishing a lesson counts toward the streak and daily goal.
       style questions of the exam's kinds
   - [x] U1 Pliny: Vesuvius, Letters 6.16 and 6.20 (7 lessons)
   - [x] U2 Pliny: Sura, Calpurnia, Trajan: 7.27 whole, 6.4, 6.7, 10.5–7, 10.37 and 10.90 (8 lessons)
-  - [ ] U3 Aeneid 1: the proem, the storm, Dido's temple
-  - [ ] U4 Aeneid 2 and 4: Laocoön, the fall of Troy, Dido
-  - [ ] U5 Aeneid 6, 7, 11, 12: the underworld, the war, the end
+  - [x] U3 Aeneid 1: the proem, Juno, the storm, Dido at the temple (1.1–33, 88–107, 496–508; 6 lessons)
+  - [ ] U4 Aeneid 2 and 4: Laocoön and the serpents (2.40–56, 201–249); Dido (4.74–89, 165–197, 305–361)
+  - [ ] U5 Aeneid 6 and 7: Dido's shade, Augustus, *tū regere imperiō* (6.450–476, 788–800, 847–853); Latinus, Turnus, Camilla (7.45–58, 783–792, 803–817)
+  - [ ] U6 Aeneid 11 and 12: Camilla's childhood (11.532–594); Jupiter and Juno (12.791–828); the death of Turnus (12.919–952)
 
 ## 2. Onboarding and placement
 
@@ -203,3 +204,7 @@ finishing a lesson counts toward the streak and daily goal.
   the haircuts and the plea for a verdict), both letters to Calpurnia, the doctor's
   citizenship (10.5–7, with Trajan's reply) and the aqueducts of Nicomedia and Sinope. Unit
   1's right answers are spread across all four positions.
+- 2026-09-30: Quārta Unit 3, Aeneid 1 in six lessons: the proem (with its scansion), the
+  Muse and Carthage, Juno's reasons and *tantae mōlis*, the storm and Aeneas's first speech,
+  the ship broken in sound and meter, and Dido at the temple likened to Diana. Level IV is
+  now planned as six units, so every required Vergil passage has a guided lesson.
