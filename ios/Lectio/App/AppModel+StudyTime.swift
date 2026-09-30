@@ -26,6 +26,7 @@ extension AppModel {
         case .exam: "exam"
         case .plan: "plan"
         case .learn: "learn"
+        case .forge: "forge"
         case .today, .classroom, .settings, .search: nil
         }
     }

@@ -31,6 +31,9 @@ public struct ContentLibrary: Sendable {
     /// The course, from the first day to AP. Empty for a bundle exported
     /// before it existed.
     public let course: Course
+    /// Forms Forge's declension and conjugation tables. Empty for a bundle
+    /// exported before they existed.
+    public let paradigms: [Paradigm]
 
     private let passageIndex: [String: Int]
     private let vocabIndex: [String: VocabEntry]
@@ -89,6 +92,12 @@ public struct ContentLibrary: Sendable {
             course = Course(levels: file.levels, placement: file.placement ?? [])
         } else {
             course = Course(levels: [])
+        }
+        if FileManager.default.fileExists(atPath: directory.appendingPathComponent("forms.json").path) {
+            let file: FormsFile = try load("forms.json")
+            paradigms = file.paradigms
+        } else {
+            paradigms = []
         }
 
         passageIndex = Dictionary(passages.enumerated().map { ($1.id, $0) }, uniquingKeysWith: { a, _ in a })

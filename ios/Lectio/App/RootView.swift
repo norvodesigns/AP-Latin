@@ -5,7 +5,7 @@ import UIKit
 /// Every section of the app — the web's NAV (src/lib/nav.ts), plus search.
 nonisolated enum AppTab: String, Hashable, Sendable {
     case today, learn, read, vocab, quiz
-    case translate, sight, scansion
+    case translate, sight, scansion, forge
     case grammar, devices, context
     case frq, exam, plan
     case classroom, settings, search
@@ -145,6 +145,7 @@ struct PushedSection: View {
             case .translate: TranslateView()
             case .sight: SightReadingView()
             case .scansion: ScansionLabView()
+            case .forge: ForgeView()
             case .grammar: GrammarView()
             case .devices: DevicesView()
             case .context: ContextView()
@@ -181,6 +182,7 @@ private struct SidebarTabs: View {
                 Tab("Translate", systemImage: "character.book.closed", value: AppTab.translate) { TranslateView() }
                 Tab("Sight Reading", systemImage: "eye", value: AppTab.sight) { SightReadingView() }
                 Tab("Scansion", systemImage: "waveform.path", value: AppTab.scansion) { ScansionLabView() }
+                Tab("Forms Forge", systemImage: "hammer", value: AppTab.forge) { ForgeView() }
             }
             .defaultVisibility(.hidden, for: .tabBar)
 

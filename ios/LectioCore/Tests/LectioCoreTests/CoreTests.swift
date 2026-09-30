@@ -462,3 +462,69 @@ import Testing
         #expect(!Placement.continues(Array(repeating: A(unit: "prima-1", right: true), count: 16), total: 16))
     }
 }
+
+@Suite struct ForgeTests {
+    /// A fixed generator, so a failure repeats.
+    struct Seeded: RandomNumberGenerator {
+        var state: UInt64
+        mutating func next() -> UInt64 {
+            state = state &* 6364136223846793005 &+ 1442695040888963407
+            return state
+        }
+    }
+
+    @Test func theTablesDecodeAndHangTogether() throws {
+        let library = try ContentLibrary(directory: Paths.content)
+        let lessons = Set(library.course.lessons.map(\.lesson.id))
+        #expect(library.paradigms.count >= 40)
+        for p in library.paradigms {
+            #expect(p.kind != nil, "\(p.id)")
+            #expect(p.names.count == p.rows.count, "\(p.id)")
+            #expect(p.rows.allSatisfy { $0.cells.count == p.cols.count }, "\(p.id)")
+            if let lesson = p.lesson { #expect(lessons.contains(lesson), "\(p.id)") }
+        }
+        let dies = try #require(library.paradigms.first { $0.id == "dies" })
+        #expect(Forge.cellForms(dies.rows[1].cells[0]) == ["diēī"])
+        let isEaId = try #require(library.paradigms.first { $0.id == "is" })
+        #expect(Forge.cellForms(isEaId.rows[5].cells[0]) == ["eī", "iī"])
+    }
+
+    @Test func namingNeverOffersAnotherRightAnswer() throws {
+        let library = try ContentLibrary(directory: Paths.content)
+        var rng = Seeded(state: 7)
+        for p in library.paradigms {
+            for _ in 0..<5 {
+                guard case .name(_, let cell, let form, let options, let answer) = Forge.name(p, using: &rng) else {
+                    Issue.record("not a naming question"); continue
+                }
+                #expect(options[answer] == p.names[cell.row][cell.col])
+                #expect(Set(options).count == options.count, "\(p.id)")
+                let plain = form.replacingOccurrences(of: "|", with: "")
+                // No wrong option may name a cell that holds the same form.
+                for (i, o) in options.enumerated() where i != answer {
+                    for r in p.rows.indices {
+                        for c in p.cols.indices where p.names[r][c] == o {
+                            #expect(!Forge.cellForms(p.rows[r].cells[c]).contains(plain), "\(p.id): \(o) also fits \(plain)")
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Test func roundsFollowTheScope() throws {
+        let library = try ContentLibrary(directory: Paths.content)
+        var rng = Seeded(state: 11)
+        let nouns = Forge.scope(library.paradigms, kinds: [.noun], learned: nil)
+        #expect(!nouns.isEmpty && nouns.allSatisfy { $0.kind == .noun })
+        let early = Forge.scope(library.paradigms, kinds: Set(Paradigm.Kind.allCases), learned: ["prima-2-3"])
+        #expect(early.map(\.id) == ["puella"])
+        let round = Forge.round(nouns, mode: .chart, length: 10, using: &rng)
+        #expect(round.count == 10)
+        for case .chart(let p, let blanks) in round {
+            #expect(blanks.count == min(5, p.cellCount))
+            #expect(Set(blanks).count == blanks.count)
+        }
+        #expect(Forge.round([], mode: .make, length: 10, using: &rng).isEmpty)
+    }
+}

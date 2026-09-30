@@ -66,7 +66,7 @@ finishing a lesson counts toward the streak and daily goal.
 
 ## 3. New modes and learning functions
 
-- [ ] Forms Forge: declension and conjugation drills generated from the paradigm tables (fill the
+- [x] Forms Forge: declension and conjugation drills generated from the paradigm tables (fill the
       chart, name the form, make the form)
 - [ ] Sentence builder: put Latin tiles in order to match an English sentence
 - [ ] Derivatives: English words from Latin roots, as a quick game and on every vocab card
@@ -114,3 +114,10 @@ finishing a lesson counts toward the streak and daily goal.
   *dum*, and a review of every use). Readings: Androcles, Pyramus and Thisbe, Regulus,
   Orpheus and Eurydice. The course is now 84 lessons and 690 exercises; placement covers
   both levels (32 questions). Next: Level III, *Tertia*.
+- 2026-09-30: Home adapts (course-first dashboard and Today for students in the course; no
+  empty AP meters for them). Forms Forge on web (/forge) and iOS (Drill section): a small
+  morphology engine in `src/data/forms` generates 66 tables (1,274 forms: every declension,
+  the regular conjugations in all tenses, voices and moods, the irregulars and pronouns),
+  spot-checked in `verify`, exported as `forms.json`. Three modes: make the form, name the
+  form (never offers a second right answer; Swift tests prove it), fill the chart. Study
+  time counts as section "forge".

@@ -50,10 +50,10 @@ private struct Stimulus: View {
     }
 }
 
-private enum OptionState { case idle, selected, right, wrong, faded }
+enum OptionState { case idle, selected, right, wrong, faded }
 
 /// A tappable card on the page — content, so parchment and a hairline, not glass.
-private struct OptionCard<Label: View>: View {
+struct OptionCard<Label: View>: View {
     let state: OptionState
     let action: () -> Void
     @ViewBuilder let label: Label
@@ -138,7 +138,7 @@ private struct TeachCard: View {
 }
 
 /// A declension or conjugation, ruled like a manuscript table, endings in red.
-private struct ParadigmChartView: View {
+struct ParadigmChartView: View {
     let table: ParadigmTable
 
     var body: some View {

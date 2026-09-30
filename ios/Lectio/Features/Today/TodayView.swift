@@ -175,6 +175,7 @@ struct TodayView: View {
         SectionLink(title: "Translate", systemImage: "character.book.closed", tab: .translate),
         SectionLink(title: "Sight Reading", systemImage: "eye", tab: .sight),
         SectionLink(title: "Scansion Lab", systemImage: "waveform.path", tab: .scansion),
+        SectionLink(title: "Forms Forge", systemImage: "hammer", tab: .forge),
         SectionLink(title: "Literary Devices", systemImage: "wand.and.stars", tab: .devices),
         SectionLink(title: "Context & Culture", systemImage: "building.columns", tab: .context),
         SectionLink(title: "FRQ Workshop", systemImage: "pencil.and.list.clipboard", tab: .frq),

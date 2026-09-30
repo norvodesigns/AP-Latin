@@ -475,6 +475,47 @@ for (const f of frqPrompts) {
     if (!Number.isInteger(p.step.answer) || p.step.answer < 0 || p.step.answer >= p.step.options.length) fail(`${at}: answer is not an option`);
   });
   notes.push(`${PLACEMENT.length} placement questions`);
+
+  /* --- Forms Forge (src/data/forms) --- */
+  const { PARADIGMS, cellForms } = await load('src/data/forms/index.ts');
+  const paradigmIds = new Set();
+  let cellCount = 0;
+  for (const p of PARADIGMS) {
+    const at = `forms: ${p.id}`;
+    if (paradigmIds.has(p.id)) fail(`${at}: duplicate id`);
+    paradigmIds.add(p.id);
+    if (!p.lemma?.trim() || !p.gloss?.trim() || !p.title?.trim()) fail(`${at}: missing lemma, gloss or title`);
+    if (p.lesson && !seenLessons.has(p.lesson)) fail(`${at}: unknown lesson ${p.lesson}`);
+    if (p.names.length !== p.rows.length) fail(`${at}: ${p.names.length} name rows for ${p.rows.length} rows`);
+    p.rows.forEach((r, ri) => {
+      if (r.cells.length !== p.cols.length) fail(`${at} ${r.label}: ${r.cells.length} cells for ${p.cols.length} columns`);
+      if ((p.names[ri]?.length ?? 0) !== p.cols.length) fail(`${at} ${r.label}: names don't match the columns`);
+      for (const c of r.cells) {
+        cellCount += 1;
+        if (!cellForms(c).length || /[*]/.test(c)) fail(`${at} ${r.label}: bad cell "${c}"`);
+      }
+    });
+  }
+  // Forms written out by hand, to catch a slip in the engine's rules.
+  const SPOT = [
+    ['puella', 1, 1, 'puellārum'], ['servus', 3, 1, 'servōs'], ['puer', 1, 0, 'puerī'], ['ager', 1, 0, 'agrī'],
+    ['bellum', 0, 1, 'bella'], ['rex', 4, 0, 'rēge'], ['nomen', 0, 1, 'nōmina'], ['urbs', 1, 1, 'urbium'],
+    ['mare', 4, 0, 'marī'], ['manus', 2, 0, 'manuī'], ['res', 1, 0, 'reī'], ['dies', 1, 0, 'diēī'],
+    ['bonus', 4, 1, 'bonā'], ['noster', 1, 0, 'nostrī'], ['fortis', 5, 1, 'fortia'], ['acer', 0, 1, 'ācris'],
+    ['ingens', 3, 0, 'ingentem'], ['altior', 5, 1, 'altiōra'],
+    ['amo-pres-act', 5, 0, 'amant'], ['amo-pres-act', 2, 1, 'amābat'], ['amo-pres-act', 4, 2, 'amābitis'],
+    ['moneo-pres-pass', 1, 0, 'monēris'], ['rego-pres-act', 2, 2, 'reget'], ['rego-pres-pass', 1, 2, 'regēris'],
+    ['capio-pres-act', 0, 1, 'capiēbam'], ['audio-pres-act', 5, 0, 'audiunt'], ['capio-pres-pass', 1, 0, 'caperis'],
+    ['amo-subj-act', 2, 0, 'amet'], ['amo-subj-act', 3, 1, 'amārēmus'], ['amo-subj-act', 5, 2, 'amāverint'],
+    ['amo-subj-act', 2, 3, 'amāvisset'], ['rego-subj-pass', 2, 0, 'regātur'], ['moneo-subj-act', 0, 0, 'moneam'],
+    ['amo-perf-act', 5, 0, 'amāvērunt'], ['amo-perf-pass', 2, 0, 'amātus est'], ['sequor-pres', 5, 0, 'sequuntur'],
+    ['hortor-pres', 1, 2, 'hortāberis'], ['audio-subj-act', 0, 1, 'audīrem'],
+  ];
+  for (const [id, r, c, want] of SPOT) {
+    const got = PARADIGMS.find((p) => p.id === id)?.rows[r]?.cells[c];
+    if (!got || !cellForms(got).includes(want)) fail(`forms: ${id} [${r},${c}] is "${got}", expected "${want}"`);
+  }
+  notes.push(`${PARADIGMS.length} Forms Forge tables, ${cellCount} forms`);
 }
 
 /* ------------------------------------------------------------------ */

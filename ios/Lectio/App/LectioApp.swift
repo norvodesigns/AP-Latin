@@ -26,6 +26,7 @@ struct LectioApp: App {
                 Button("Quiz Engine") { model.selectedTab = .quiz }.keyboardShortcut("4")
                 Button("Translate") { model.selectedTab = .translate }.keyboardShortcut("5")
                 Button("Scansion Lab") { model.selectedTab = .scansion }.keyboardShortcut("6")
+                Button("Forms Forge") { model.selectedTab = .forge }.keyboardShortcut("m", modifiers: [.command, .shift])
                 Button("Grammar & Syntax") { model.selectedTab = .grammar }.keyboardShortcut("7")
                 Button("FRQ Workshop") { model.selectedTab = .frq }.keyboardShortcut("8")
                 Button("Practice Exam") { model.selectedTab = .exam }.keyboardShortcut("9")

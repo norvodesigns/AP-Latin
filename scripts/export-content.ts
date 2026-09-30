@@ -45,6 +45,7 @@ import { sightPassages, sightQuestions, SIGHT_AUTHORS } from '../src/data/sight'
 import { translationDrills } from '../src/data/translation';
 import { scansionLines } from '../src/data/scansion';
 import { COURSE, PLACEMENT } from '../src/data/curriculum';
+import { PARADIGMS } from '../src/data/forms';
 import { tokenize, lookup, disambiguateInContext } from '../src/lib/latin';
 import { EXAM_DATE, STORE_VERSION } from '../src/store/useStore';
 
@@ -109,6 +110,7 @@ const files: Record<string, unknown> = {
   'translation.json': translationDrills,
   'scansion.json': scansionLines,
   'curriculum.json': { levels: COURSE, placement: PLACEMENT },
+  'forms.json': { paradigms: PARADIGMS },
   'meta.json': {
     examDate: EXAM_DATE,
     storeVersion: STORE_VERSION,
