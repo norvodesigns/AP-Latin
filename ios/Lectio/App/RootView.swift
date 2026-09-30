@@ -193,11 +193,13 @@ private struct SidebarTabs: View {
             }
             .defaultVisibility(.hidden, for: .tabBar)
 
-            Tab("Classroom", systemImage: "person.3", value: AppTab.classroom) { ClassroomView() }
-                .defaultVisibility(.hidden, for: .tabBar)
-
-            Tab("Settings", systemImage: "gearshape", value: AppTab.settings) { SettingsView() }
-                .defaultVisibility(.hidden, for: .tabBar)
+            // A tab view's builder takes at most ten children, so these two
+            // share a section.
+            TabSection("You") {
+                Tab("Classroom", systemImage: "person.3", value: AppTab.classroom) { ClassroomView() }
+                Tab("Settings", systemImage: "gearshape", value: AppTab.settings) { SettingsView() }
+            }
+            .defaultVisibility(.hidden, for: .tabBar)
 
             Tab(value: AppTab.search, role: .search) { SearchView() }
         }

@@ -41,7 +41,7 @@ finishing a lesson counts toward the streak and daily goal.
   - [x] U2 First declension and the present tense (nom/acc, 1st conj., gen/dat/abl, reading)
   - [x] U3 Second declension and adjectives (-us/-er, neuter, agreement, 2nd conj.)
   - [x] U4 Prepositions, the ablative, imperfect and future
-  - [ ] U5 Third declension; 3rd and 4th conjugations; imperatives
+  - [x] U5 Third declension; 3rd and 4th conjugations; imperatives
   - [ ] U6 The perfect system (principal parts, perfect, pluperfect, future perfect)
   - [ ] U7 Pronouns (personal, *is ea id*, *hic*, *ille*, relative)
   - [ ] U8 3rd-decl. adjectives, 4th and 5th declensions, the passive
