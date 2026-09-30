@@ -174,7 +174,9 @@ async function reconcile(authUserId: string, stale: () => boolean): Promise<void
     // data belongs to whoever was signed in before — it must never be
     // merged into (or overwrite) this account's cloud progress.
     if (cloud) {
-      useStore.getState().applySyncedData(cloud.data);
+      // Over a blank slate, so a field the cloud row predates can't keep
+      // the previous account's value.
+      useStore.getState().applySyncedData({ ...blankSyncableData(), ...cloud.data });
       useStore.getState().setLastSynced(authUserId, cloud.updatedAt);
     } else {
       const blank = blankSyncableData();

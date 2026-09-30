@@ -28,5 +28,10 @@ import LectioCore
         _ = GlossNote(word: "w", meaning: "m")
         _ = ScansionDraft(marks: [nil], divisions: [])
         _ = Tally(correct: 1, total: 2)
+        _ = LessonProgress(completedAt: "", lastAt: "", best: 1, attempts: 1)
+        doc.setLearner(LearnerProfile(track: .ap, startLessonId: "prima-1-1", onboardedAt: ""))
+        doc.completeLesson("prima-1-1", score: 1, vocabIds: [])
+        _ = doc.lessons
+        _ = doc.learner
     }
 }

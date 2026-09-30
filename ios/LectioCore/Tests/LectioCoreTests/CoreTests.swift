@@ -361,3 +361,30 @@ import Testing
         #expect(ContentUpdate.changedFiles(current: empty, remote: library.manifest).count == library.manifest.files.count)
     }
 }
+
+@Suite struct LessonProgressTests {
+    @Test func completingALessonRecordsItSeedsWordsAndCountsTheDay() throws {
+        var doc = ProgressDocument.blank()
+        let first = parseISO("2026-10-01T09:00:00.000Z")
+        let second = parseISO("2026-10-03T09:00:00.000Z")
+        doc.completeLesson("prima-1-1", score: 0.75, vocabIds: ["puella", "sum"], now: first)
+        doc.completeLesson("prima-1-1", score: 0.5, vocabIds: ["puella"], now: second)
+        let p = try #require(doc.lessons["prima-1-1"])
+        #expect(p.completedAt == "2026-10-01T09:00:00.000Z")
+        #expect(p.lastAt == "2026-10-03T09:00:00.000Z")
+        #expect(p.best == 0.75)
+        #expect(p.attempts == 2)
+        #expect(doc.vocab.keys.sorted() == ["puella", "sum"])
+        #expect(doc.studyDays == ["2026-10-01", "2026-10-03"])
+    }
+
+    @Test func learnerRoundTripsWithAnExplicitNull() throws {
+        var doc = ProgressDocument.blank()
+        #expect(doc.learner == nil)
+        doc.setLearner(LearnerProfile(track: .new, startLessonId: nil, onboardedAt: "2026-10-01T00:00:00.000Z"))
+        #expect(doc.learner?.track == .new)
+        #expect(doc.raw["learner"]?["startLessonId"] == .null)
+        doc.setLearner(nil)
+        #expect(doc.raw["learner"] == .null)
+    }
+}

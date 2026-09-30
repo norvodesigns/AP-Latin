@@ -233,3 +233,48 @@ public struct ScansionAttempt: Codable, Sendable, Hashable, Identifiable {
     public var correct: Int
     public var total: Int
 }
+
+/* ------------------------------------------------------------------ */
+/* The course                                                          */
+/* ------------------------------------------------------------------ */
+
+/// One finished lesson of the course (web: `LessonProgress`).
+public struct LessonProgress: Codable, Sendable, Hashable {
+    public var completedAt: String
+    public var lastAt: String
+    /// Best score, 0–1.
+    public var best: Double
+    public var attempts: Int
+
+    public init(completedAt: String, lastAt: String, best: Double, attempts: Int) {
+        self.completedAt = completedAt
+        self.lastAt = lastAt
+        self.best = best
+        self.attempts = attempts
+    }
+}
+
+/// The first-run answers (web: `LearnerProfile`).
+public struct LearnerProfile: Codable, Sendable, Hashable {
+    public enum Track: String, Codable, Sendable, CaseIterable {
+        case new, some, ap, teacher
+    }
+
+    public var track: Track
+    public var startLessonId: String?
+    public var onboardedAt: String
+
+    public init(track: Track, startLessonId: String?, onboardedAt: String) {
+        self.track = track
+        self.startLessonId = startLessonId
+        self.onboardedAt = onboardedAt
+    }
+
+    // `startLessonId` is written as null, not left out, as the web writes it.
+    public func encode(to encoder: any Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(track, forKey: .track)
+        try c.encode(startLessonId, forKey: .startLessonId)
+        try c.encode(onboardedAt, forKey: .onboardedAt)
+    }
+}

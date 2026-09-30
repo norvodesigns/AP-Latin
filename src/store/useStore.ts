@@ -199,6 +199,33 @@ export interface WordEncounter {
 }
 
 /**
+ * One lesson of the course (src/data/curriculum), keyed by lesson id. Every
+ * field only ever grows or keeps its earliest value, so two devices' records
+ * merge without losing anything (see `mergeLessons`).
+ */
+export interface LessonProgress {
+  /** First time the lesson was finished. */
+  completedAt: string;
+  /** Most recent time it was finished. */
+  lastAt: string;
+  /** Best score, 0–1: exercises answered right the first time. */
+  best: number;
+  attempts: number;
+}
+
+/**
+ * What the student told the first-run questions. A setting, not history: the
+ * newer side wins a merge, as with `studyPlan`.
+ */
+export interface LearnerProfile {
+  /** Where they're starting from. */
+  track: 'new' | 'some' | 'ap' | 'teacher';
+  /** The lesson they chose or the placement check suggested, if any. */
+  startLessonId: string | null;
+  onboardedAt: string;
+}
+
+/**
  * The subset of the store that is "a student's progress" — the same field
  * list the Settings page's JSON export already uses (see `getSyncableData`
  * below and `exportJSON`, which now just calls it), and what cloud sync
@@ -230,6 +257,8 @@ export interface SyncableData {
   scansionAttempts: ScansionAttempt[];
   scansionDrafts: Record<string, ScansionDraft>;
   wordEncounters: Record<string, WordEncounter>;
+  lessons: Record<string, LessonProgress>;
+  learner: LearnerProfile | null;
 }
 
 /* ------------------------------------------------------------------ */
@@ -269,6 +298,10 @@ export interface StoreState {
   scansionAttempts: ScansionAttempt[];
   /** vocab id -> how often and where it has been looked up while reading. */
   wordEncounters: Record<string, WordEncounter>;
+  /** lesson id -> the course lessons finished. */
+  lessons: Record<string, LessonProgress>;
+  /** The first-run answers, or null before the student has given them. */
+  learner: LearnerProfile | null;
 
   /**
    * The signed-in user's id, or null in solo mode / signed out. Sourced from
@@ -356,6 +389,10 @@ export interface StoreState {
   scansionDrafts: Record<string, ScansionDraft>;
   saveScansionDraft: (lineId: string, draft: ScansionDraft) => void;
   markStudied: () => void;
+  /** Records a finished lesson: its score (0–1), and the AP-list words it
+   *  taught, which join the flashcard deck. Counts as a study day. */
+  completeLesson: (lessonId: string, score: number, vocabIds: string[]) => void;
+  setLearner: (profile: LearnerProfile | null) => void;
   /** Adds active study time toward today's goal, rolling the counter over
    *  on a new day and flagging `goalJustReached` the moment it first
    *  crosses `studyPlan.minutesPerDay` for the day. */
@@ -426,6 +463,8 @@ const initialState = {
   scansionAttempts: [] as ScansionAttempt[],
   scansionDrafts: {} as Record<string, ScansionDraft>,
   wordEncounters: {} as Record<string, WordEncounter>,
+  lessons: {} as Record<string, LessonProgress>,
+  learner: null as LearnerProfile | null,
   authUserId: null as string | null,
   lastSyncedUserId: null as string | null,
   lastSyncedAt: null as string | null,
@@ -767,6 +806,31 @@ export const useStore = create<StoreState>()(
           return s.studyDays.includes(d) ? s : { studyDays: [...s.studyDays, d].slice(-800) };
         }),
 
+      completeLesson: (lessonId, score, vocabIds) =>
+        set((s) => {
+          const now = new Date().toISOString();
+          const d = today();
+          const prev = s.lessons[lessonId];
+          const best = Math.max(0, Math.min(1, score));
+          const vocab = { ...s.vocab };
+          for (const id of vocabIds) if (!vocab[id]) vocab[id] = newCard(id);
+          return {
+            lessons: {
+              ...s.lessons,
+              [lessonId]: {
+                completedAt: prev?.completedAt ?? now,
+                lastAt: now,
+                best: Math.max(prev?.best ?? 0, best),
+                attempts: (prev?.attempts ?? 0) + 1,
+              },
+            },
+            vocab,
+            studyDays: s.studyDays.includes(d) ? s.studyDays : [...s.studyDays, d].slice(-800),
+          };
+        }),
+
+      setLearner: (profile) => set({ learner: profile }),
+
       addStudySeconds: (seconds) =>
         set((s) => {
           const d = today();
@@ -863,6 +927,8 @@ export function getSyncableData(s: SyncableData): SyncableData {
     scansionAttempts: s.scansionAttempts,
     scansionDrafts: s.scansionDrafts,
     wordEncounters: s.wordEncounters,
+    lessons: s.lessons ?? {},
+    learner: s.learner ?? null,
   };
 }
 

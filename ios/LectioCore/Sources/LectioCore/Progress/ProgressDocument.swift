@@ -45,6 +45,8 @@ public struct ProgressDocument: Sendable, Equatable {
             ("scansionAttempts", []),
             ("scansionDrafts", .object(JSONObject())),
             ("wordEncounters", .object(JSONObject())),
+            ("lessons", .object(JSONObject())),
+            ("learner", .null),
         ])
     }
 
@@ -79,6 +81,21 @@ public struct ProgressDocument: Sendable, Equatable {
     }
 
     public var quizAttempts: [QuizAttempt] { raw.array("quizAttempts").compactMap { try? $0.decode() } }
+
+    /// Course lessons finished, by lesson id.
+    public var lessons: [String: LessonProgress] {
+        var out: [String: LessonProgress] = [:]
+        for (id, value) in raw.object("lessons") {
+            if let p: LessonProgress = try? value.decode() { out[id] = p }
+        }
+        return out
+    }
+
+    /// The first-run answers, or nil before they've been given.
+    public var learner: LearnerProfile? {
+        guard let value = raw["learner"], value != .null else { return nil }
+        return try? value.decode()
+    }
 
     public var wordEncounters: [String: WordEncounter] {
         var out: [String: WordEncounter] = [:]
@@ -330,6 +347,29 @@ public struct ProgressDocument: Sendable, Equatable {
     }
 
     /// Adds today to the streak calendar.
+    /// A lesson finished: its score (0–1) and the AP-list words it taught,
+    /// which join the deck. Counts as a study day. Same as the web's
+    /// `completeLesson`.
+    public mutating func completeLesson(_ lessonId: String, score: Double, vocabIds: [String], now: Date = Date()) {
+        let stamp = StudyDates.isoTimestamp(now)
+        let prev = lessons[lessonId]
+        let progress = LessonProgress(
+            completedAt: prev?.completedAt ?? stamp,
+            lastAt: stamp,
+            best: Swift.max(prev?.best ?? 0, Swift.min(1, Swift.max(0, score))),
+            attempts: (prev?.attempts ?? 0) + 1
+        )
+        var all = raw.object("lessons")
+        all[lessonId] = try? JSONValue(encoding: progress)
+        raw["lessons"] = .object(all)
+        seedVocab(vocabIds, now: now)
+        markStudied(now: now)
+    }
+
+    public mutating func setLearner(_ profile: LearnerProfile?) {
+        raw["learner"] = profile.flatMap { try? JSONValue(encoding: $0) } ?? .null
+    }
+
     public mutating func markStudied(now: Date = Date()) {
         let today = StudyDates.today(now)
         guard !studyDays.contains(today) else { return }

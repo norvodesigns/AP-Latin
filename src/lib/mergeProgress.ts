@@ -41,6 +41,7 @@ import type {
   AiUsageDay,
   ScansionDraft,
   WordEncounter,
+  LessonProgress,
 } from '@/store/useStore';
 
 /** Caps mirroring the ones `useStore.ts` applies when it records each kind
@@ -83,6 +84,12 @@ export function mergeSyncable(
     scansionAttempts: mergeById(local.scansionAttempts, cloud.scansionAttempts, CAPS.scansionAttempts),
     scansionDrafts: mergeScansionDrafts(local.scansionDrafts, cloud.scansionDrafts),
     wordEncounters: mergeWordEncounters(local.wordEncounters, cloud.wordEncounters),
+    // Added with the course. Either side may predate it (an older app build,
+    // an old cloud row), so a missing value is an empty one.
+    lessons: mergeLessons(local.lessons ?? {}, cloud.lessons ?? {}),
+    learner: cloudIsNewer
+      ? (cloud.learner ?? local.learner ?? null)
+      : (local.learner ?? cloud.learner ?? null),
   };
 }
 
@@ -320,4 +327,35 @@ function mergeAnnotations(a: Annotation[], b: Annotation[]): Annotation[] {
     bySpan.set(key, winner);
   }
   return [...bySpan.values()].sort((x, y) => x.lineN - y.lineN || x.startTok - y.startTok);
+}
+
+/* ------------------------------------------------------------------ */
+/* Course lessons                                                      */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Per lesson, every field keeps the value that means "more": the earliest
+ * first completion, the latest last one, the best score, the most attempts.
+ * Max rather than sum for attempts, for the same idempotence reason as word
+ * encounters.
+ */
+function mergeLessons(
+  a: Record<string, LessonProgress>,
+  b: Record<string, LessonProgress>,
+): Record<string, LessonProgress> {
+  const out: Record<string, LessonProgress> = { ...a };
+  for (const [id, lb] of Object.entries(b)) {
+    const la = out[id];
+    if (!la) {
+      out[id] = lb;
+      continue;
+    }
+    out[id] = {
+      completedAt: la.completedAt < lb.completedAt ? la.completedAt : lb.completedAt,
+      lastAt: la.lastAt > lb.lastAt ? la.lastAt : lb.lastAt,
+      best: Math.max(la.best, lb.best),
+      attempts: Math.max(la.attempts, lb.attempts),
+    };
+  }
+  return out;
 }

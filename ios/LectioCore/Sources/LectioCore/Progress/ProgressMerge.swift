@@ -30,7 +30,7 @@ public enum ProgressMerge {
     public static let knownKeys = [
         "theme", "glossaryEnabled", "showMacrons", "studyPlan", "passages", "vocab", "quizAttempts",
         "reviewQueue", "translationAttempts", "frqResponses", "examResults", "projectPassages", "studyDays",
-        "aiUsage", "scansionAttempts", "scansionDrafts", "wordEncounters",
+        "aiUsage", "scansionAttempts", "scansionDrafts", "wordEncounters", "lessons", "learner",
     ]
 
     public static func merge(local: JSONObject, cloud: JSONObject, cloudIsNewer: Bool) -> JSONObject {
@@ -54,6 +54,11 @@ public enum ProgressMerge {
         out["scansionAttempts"] = .array(mergeById(local.array("scansionAttempts"), cloud.array("scansionAttempts"), cap: Caps.scansionAttempts))
         out["scansionDrafts"] = .object(mergeScansionDrafts(local.object("scansionDrafts"), cloud.object("scansionDrafts")))
         out["wordEncounters"] = .object(mergeWordEncounters(local.object("wordEncounters"), cloud.object("wordEncounters")))
+        // Added with the course; either side may predate it.
+        out["lessons"] = .object(mergeLessons(local.object("lessons"), cloud.object("lessons")))
+        let localLearner = local["learner"].flatMap { $0 == .null ? nil : $0 }
+        let cloudLearner = cloud["learner"].flatMap { $0 == .null ? nil : $0 }
+        out["learner"] = cloudIsNewer ? (cloudLearner ?? localLearner ?? .null) : (localLearner ?? cloudLearner ?? .null)
 
         // Fields this build doesn't know about — added to the web app after it
         // shipped. The web's own merge lists its fields explicitly, so it would
@@ -145,6 +150,31 @@ public enum ProgressMerge {
                 ("count", .number(max(encA["count"]?.doubleValue ?? 0, encB["count"]?.doubleValue ?? 0))),
                 ("lastSeen", .string(seenA > seenB ? seenA : seenB)),
                 ("passageIds", .array(mergeSet(encA["passageIds"]?.arrayValue ?? [], encB["passageIds"]?.arrayValue ?? []))),
+            ]))
+        }
+        return out
+    }
+
+    /* -------------------------------------------------------------- */
+    /* Course lessons                                                   */
+    /* -------------------------------------------------------------- */
+
+    /// Per lesson: earliest first completion, latest last one, best score,
+    /// most attempts.
+    static func mergeLessons(_ a: JSONObject, _ b: JSONObject) -> JSONObject {
+        var out = a
+        for (id, lb) in b {
+            guard let la = out[id] else {
+                out[id] = lb
+                continue
+            }
+            let firstA = la["completedAt"]?.stringValue ?? "", firstB = lb["completedAt"]?.stringValue ?? ""
+            let lastA = la["lastAt"]?.stringValue ?? "", lastB = lb["lastAt"]?.stringValue ?? ""
+            out[id] = .object(JSONObject([
+                ("completedAt", .string(firstA < firstB ? firstA : firstB)),
+                ("lastAt", .string(lastA > lastB ? lastA : lastB)),
+                ("best", .number(max(la["best"]?.doubleValue ?? 0, lb["best"]?.doubleValue ?? 0))),
+                ("attempts", .number(max(la["attempts"]?.doubleValue ?? 0, lb["attempts"]?.doubleValue ?? 0))),
             ]))
         }
         return out

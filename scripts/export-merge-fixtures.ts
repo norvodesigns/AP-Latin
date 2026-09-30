@@ -57,7 +57,7 @@ const base = (): SyncableData => ({
   theme: 'light',
   passages: {}, vocab: {}, quizAttempts: [], reviewQueue: [], translationAttempts: [], frqResponses: [],
   examResults: [], projectPassages: [], studyDays: [], aiUsage: [], scansionAttempts: [], scansionDrafts: {},
-  wordEncounters: {},
+  wordEncounters: {}, lessons: {}, learner: null,
   studyPlan: { minutesPerDay: 30, activeDays: [0, 1, 2, 3, 4, 5, 6], startedAt: '2026-09-01' },
 });
 
@@ -181,6 +181,26 @@ function richPair(): { local: SyncableData; cloud: SyncableData } {
     peto: { count: 1, lastSeen: '2026-10-11', passageIds: ['pliny-6-16-a'] },
   };
 
+  local.lessons = {
+    'prima-1-1': { completedAt: '2026-10-01T09:00:00.000Z', lastAt: '2026-10-08T09:00:00.000Z', best: 0.8, attempts: 2 },
+    'prima-1-2': { completedAt: '2026-10-02T09:00:00.000Z', lastAt: '2026-10-02T09:00:00.000Z', best: 1, attempts: 1 },
+  };
+  cloud.lessons = {
+    'prima-1-1': { completedAt: '2026-09-30T09:00:00.000Z', lastAt: '2026-10-05T09:00:00.000Z', best: 0.9, attempts: 3 },
+    'prima-2-1': { completedAt: '2026-10-03T09:00:00.000Z', lastAt: '2026-10-03T09:00:00.000Z', best: 0.5, attempts: 1 },
+  };
+  local.learner = { track: 'new', startLessonId: 'prima-1-1', onboardedAt: '2026-09-30T08:00:00.000Z' };
+  cloud.learner = { track: 'some', startLessonId: 'prima-3-1', onboardedAt: '2026-09-29T08:00:00.000Z' };
+
+  return { local, cloud };
+}
+
+/** One side predates the course: its row has no `lessons` or `learner` at all. */
+function predatesPair(): { local: SyncableData; cloud: SyncableData } {
+  const { local, cloud } = richPair();
+  const old = cloud as Partial<SyncableData>;
+  delete old.lessons;
+  delete old.learner;
   return { local, cloud };
 }
 
@@ -205,7 +225,7 @@ function capsPair(): { local: SyncableData; cloud: SyncableData } {
 }
 
 const mergeCases = [];
-for (const [name, make] of [['rich', richPair], ['caps', capsPair]] as const) {
+for (const [name, make] of [['rich', richPair], ['caps', capsPair], ['predates', predatesPair]] as const) {
   for (const cloudIsNewer of [true, false]) {
     const { local, cloud } = make();
     mergeCases.push({ name: `${name}-${cloudIsNewer ? 'cloud-newer' : 'local-newer'}`, local, cloud, cloudIsNewer, expected: mergeSyncable(local, cloud, cloudIsNewer) });
