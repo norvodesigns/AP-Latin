@@ -22,6 +22,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { mergeSyncable } from '../src/lib/mergeProgress';
+import { foldLatin, foldEnglish, checkTyped, checkTranslation, checkBuild, lessonScore } from '../src/lib/lessonCheck';
 import { sm2, newCard, currentStreak, longestStreak, blankSyncableData, scansionStatsByLine, scansionBadges, type SyncableData } from '../src/store/useStore';
 import { unpackLine } from '../src/data/scansionCorpus';
 
@@ -283,6 +284,49 @@ const scansionStats = Object.fromEntries(scansionStatsByLine(scansionAttempts));
 const scansionBadgeCases = [[], scansionAttempts].map((attempts) => ({ attempts, poolSize: 7, badges: scansionBadges(attempts, 7) }));
 
 /* ------------------------------------------------------------------ */
+/* Course: checking answers                                            */
+/* ------------------------------------------------------------------ */
+
+const latinInputs = ['Puellārum', ' -ae ', 'Iūlia', 'VALĒTE!', 'iuuenis', 'Jam  vēnit.', 'puellā', 'e', 'Nāvigāmus?', 'ÆNEAS', ''];
+const englishInputs = [
+  "The girl's daughter carries water.", 'girl daughter carries water', "We aren't sailors!", "I'm a poet", 'A farmer sees the woman.',
+  'The sailors WON’T fight.', 'You can’t walk', 'the the the', '  Julia   is a girl. ', "They're here — an island!",
+];
+const typedCases = [
+  { answer: 'puellarum', accepted: ['puellārum'] },
+  { answer: '-ārum', accepted: ['ārum'] },
+  { answer: 'Valete', accepted: ['valēte'] },
+  { answer: 'puella', accepted: ['puellam'] },
+  { answer: '', accepted: [''] },
+  { answer: 'navigamus', accepted: ['nāvigāmus', 'nāvigāmus!'] },
+  { answer: 'Iulia', accepted: ['Jūlia'] },
+];
+const translationCases = [
+  { answer: 'The girl carries the water', accepted: ['The girl carries water.'] },
+  { answer: "the sailors don't fight", accepted: ['The sailors do not fight.'] },
+  { answer: 'girls carry water', accepted: ['The girl carries water.'] },
+  { answer: '   ', accepted: ['.'] },
+  { answer: "Julia's a girl", accepted: ['Julia is a girl.'] },
+];
+const buildCases = [
+  { placed: ['The', 'poet', 'loves', 'the', 'sailor'], step: { answer: ['The', 'poet', 'loves', 'the', 'sailor'], lang: 'en' } },
+  { placed: ['the', 'sailor', 'loves', 'the', 'poet'], step: { answer: ['The', 'poet', 'loves', 'the', 'sailor'], lang: 'en' } },
+  { placed: ['puellam', 'fēmina', 'videt'], step: { answer: ['fēmina', 'puellam', 'videt'], lang: 'la', anyOrder: true } },
+  { placed: ['puellam', 'femina', 'videt'], step: { answer: ['fēmina', 'puellam', 'videt'], lang: 'la', anyOrder: true } },
+  { placed: ['puellam', 'fēmina', 'videt'], step: { answer: ['fēmina', 'puellam', 'videt'], lang: 'la' } },
+  { placed: ['fēmina', 'videt'], step: { answer: ['fēmina', 'puellam', 'videt'], lang: 'la', anyOrder: true } },
+  { placed: ['in silvā', 'fēminae', 'ambulant'], step: { answer: ['fēminae', 'in silvā', 'ambulant'], lang: 'la', anyOrder: true } },
+] as const;
+const lessonCheckFixture = {
+  foldLatin: latinInputs.map((input) => ({ input, output: foldLatin(input) })),
+  foldEnglish: englishInputs.map((input) => ({ input, output: foldEnglish(input) })),
+  typed: typedCases.map((c) => ({ ...c, right: checkTyped(c.answer, c.accepted) })),
+  translation: translationCases.map((c) => ({ ...c, right: checkTranslation(c.answer, c.accepted) })),
+  build: buildCases.map((c) => ({ placed: c.placed, answer: c.step.answer, lang: c.step.lang, anyOrder: 'anyOrder' in c.step ? c.step.anyOrder : false, right: checkBuild([...c.placed], { ...c.step, answer: [...c.step.answer] }) })),
+  score: [[0, 0], [3, 4], [7, 11], [11, 11], [2, 3]].map(([right, total]) => ({ right, total, score: lessonScore(right, total) })),
+};
+
+/* ------------------------------------------------------------------ */
 /* Write, or verify                                                    */
 /* ------------------------------------------------------------------ */
 
@@ -291,6 +335,7 @@ const rendered: Record<string, string> = {
   'sm2.json': JSON.stringify({ now: new RealDate(FIXED_NOW).toISOString(), cases: sm2Cases }, null, 1) + '\n',
   'streaks.json': JSON.stringify({ now: new RealDate(FIXED_NOW).toISOString(), cases: streakCases }, null, 1) + '\n',
   'scansion.json': JSON.stringify({ lines: scansionLines, attempts: scansionAttempts, stats: scansionStats, badgeCases: scansionBadgeCases }) + '\n',
+  'lessonCheck.json': JSON.stringify(lessonCheckFixture, null, 1) + '\n',
 };
 
 if (check) {

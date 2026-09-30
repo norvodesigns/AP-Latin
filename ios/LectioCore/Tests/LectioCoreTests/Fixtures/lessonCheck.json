@@ -1,0 +1,320 @@
+{
+ "foldLatin": [
+  {
+   "input": "Puellārum",
+   "output": "puellarum"
+  },
+  {
+   "input": " -ae ",
+   "output": "ae"
+  },
+  {
+   "input": "Iūlia",
+   "output": "iulia"
+  },
+  {
+   "input": "VALĒTE!",
+   "output": "ualete"
+  },
+  {
+   "input": "iuuenis",
+   "output": "iuuenis"
+  },
+  {
+   "input": "Jam  vēnit.",
+   "output": "iam uenit"
+  },
+  {
+   "input": "puellā",
+   "output": "puella"
+  },
+  {
+   "input": "e",
+   "output": "e"
+  },
+  {
+   "input": "Nāvigāmus?",
+   "output": "nauigamus"
+  },
+  {
+   "input": "ÆNEAS",
+   "output": "aeneas"
+  },
+  {
+   "input": "",
+   "output": ""
+  }
+ ],
+ "foldEnglish": [
+  {
+   "input": "The girl's daughter carries water.",
+   "output": "girl s daughter carries water"
+  },
+  {
+   "input": "girl daughter carries water",
+   "output": "girl daughter carries water"
+  },
+  {
+   "input": "We aren't sailors!",
+   "output": "we are not sailors"
+  },
+  {
+   "input": "I'm a poet",
+   "output": "i am poet"
+  },
+  {
+   "input": "A farmer sees the woman.",
+   "output": "farmer sees woman"
+  },
+  {
+   "input": "The sailors WON’T fight.",
+   "output": "sailors will not fight"
+  },
+  {
+   "input": "You can’t walk",
+   "output": "you cannot walk"
+  },
+  {
+   "input": "the the the",
+   "output": ""
+  },
+  {
+   "input": "  Julia   is a girl. ",
+   "output": "julia is girl"
+  },
+  {
+   "input": "They're here — an island!",
+   "output": "they are here island"
+  }
+ ],
+ "typed": [
+  {
+   "answer": "puellarum",
+   "accepted": [
+    "puellārum"
+   ],
+   "right": true
+  },
+  {
+   "answer": "-ārum",
+   "accepted": [
+    "ārum"
+   ],
+   "right": true
+  },
+  {
+   "answer": "Valete",
+   "accepted": [
+    "valēte"
+   ],
+   "right": true
+  },
+  {
+   "answer": "puella",
+   "accepted": [
+    "puellam"
+   ],
+   "right": false
+  },
+  {
+   "answer": "",
+   "accepted": [
+    ""
+   ],
+   "right": false
+  },
+  {
+   "answer": "navigamus",
+   "accepted": [
+    "nāvigāmus",
+    "nāvigāmus!"
+   ],
+   "right": true
+  },
+  {
+   "answer": "Iulia",
+   "accepted": [
+    "Jūlia"
+   ],
+   "right": true
+  }
+ ],
+ "translation": [
+  {
+   "answer": "The girl carries the water",
+   "accepted": [
+    "The girl carries water."
+   ],
+   "right": true
+  },
+  {
+   "answer": "the sailors don't fight",
+   "accepted": [
+    "The sailors do not fight."
+   ],
+   "right": true
+  },
+  {
+   "answer": "girls carry water",
+   "accepted": [
+    "The girl carries water."
+   ],
+   "right": false
+  },
+  {
+   "answer": "   ",
+   "accepted": [
+    "."
+   ],
+   "right": false
+  },
+  {
+   "answer": "Julia's a girl",
+   "accepted": [
+    "Julia is a girl."
+   ],
+   "right": false
+  }
+ ],
+ "build": [
+  {
+   "placed": [
+    "The",
+    "poet",
+    "loves",
+    "the",
+    "sailor"
+   ],
+   "answer": [
+    "The",
+    "poet",
+    "loves",
+    "the",
+    "sailor"
+   ],
+   "lang": "en",
+   "anyOrder": false,
+   "right": true
+  },
+  {
+   "placed": [
+    "the",
+    "sailor",
+    "loves",
+    "the",
+    "poet"
+   ],
+   "answer": [
+    "The",
+    "poet",
+    "loves",
+    "the",
+    "sailor"
+   ],
+   "lang": "en",
+   "anyOrder": false,
+   "right": false
+  },
+  {
+   "placed": [
+    "puellam",
+    "fēmina",
+    "videt"
+   ],
+   "answer": [
+    "fēmina",
+    "puellam",
+    "videt"
+   ],
+   "lang": "la",
+   "anyOrder": true,
+   "right": true
+  },
+  {
+   "placed": [
+    "puellam",
+    "femina",
+    "videt"
+   ],
+   "answer": [
+    "fēmina",
+    "puellam",
+    "videt"
+   ],
+   "lang": "la",
+   "anyOrder": true,
+   "right": true
+  },
+  {
+   "placed": [
+    "puellam",
+    "fēmina",
+    "videt"
+   ],
+   "answer": [
+    "fēmina",
+    "puellam",
+    "videt"
+   ],
+   "lang": "la",
+   "anyOrder": false,
+   "right": false
+  },
+  {
+   "placed": [
+    "fēmina",
+    "videt"
+   ],
+   "answer": [
+    "fēmina",
+    "puellam",
+    "videt"
+   ],
+   "lang": "la",
+   "anyOrder": true,
+   "right": false
+  },
+  {
+   "placed": [
+    "in silvā",
+    "fēminae",
+    "ambulant"
+   ],
+   "answer": [
+    "fēminae",
+    "in silvā",
+    "ambulant"
+   ],
+   "lang": "la",
+   "anyOrder": true,
+   "right": true
+  }
+ ],
+ "score": [
+  {
+   "right": 0,
+   "total": 0,
+   "score": 1
+  },
+  {
+   "right": 3,
+   "total": 4,
+   "score": 0.75
+  },
+  {
+   "right": 7,
+   "total": 11,
+   "score": 0.64
+  },
+  {
+   "right": 11,
+   "total": 11,
+   "score": 1
+  },
+  {
+   "right": 2,
+   "total": 3,
+   "score": 0.67
+  }
+ ]
+}

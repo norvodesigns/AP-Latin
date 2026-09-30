@@ -388,3 +388,61 @@ import Testing
         #expect(doc.raw["learner"] == .null)
     }
 }
+
+@Suite struct CourseTests {
+    @Test func theBundledCourseDecodesAndHangsTogether() throws {
+        let course = try ContentLibrary(directory: Paths.content).course
+        #expect(!course.levels.isEmpty)
+        #expect(course.lessons.count >= 8)
+        #expect(course.lessons.first?.lesson.id == "prima-1-1")
+        let decodedSteps = course.lessons.flatMap(\.lesson.steps)
+        #expect(!decodedSteps.contains(.unknown))
+        for place in course.lessons {
+            #expect(place.lesson.exerciseCount >= 3, "\(place.lesson.id)")
+            for case .choice(let c) in place.lesson.steps { #expect(c.options.indices.contains(c.answer)) }
+            for case .match(let m) in place.lesson.steps { #expect(m.pairs.allSatisfy { $0.count == 2 }) }
+        }
+    }
+
+    @Test func nextLessonMatchesTheWeb() throws {
+        let course = try ContentLibrary(directory: Paths.content).course
+        let ids = course.lessons.map(\.lesson.id)
+        #expect(course.next(done: [])?.lesson.id == ids[0])
+        #expect(course.next(done: [ids[0], ids[1]])?.lesson.id == ids[2])
+        // From a chosen starting point, then wrapping back to what was skipped.
+        #expect(course.next(done: [], startingAt: ids[3])?.lesson.id == ids[3])
+        #expect(course.next(done: Set(ids[3...]), startingAt: ids[3])?.lesson.id == ids[0])
+        #expect(course.next(done: Set(ids)) == nil)
+        #expect(course.after(ids[0])?.lesson.id == ids[1])
+        #expect(course.after(ids.last!) == nil)
+    }
+}
+
+@Suite struct LessonCheckParityTests {
+    struct Fixture: Decodable {
+        struct Fold: Decodable { let input: String; let output: String }
+        struct Check: Decodable { let answer: String; let accepted: [String]; let right: Bool }
+        struct Build: Decodable { let placed: [String]; let answer: [String]; let lang: BuildStep.Language; let anyOrder: Bool; let right: Bool }
+        struct Score: Decodable { let right: Int; let total: Int; let score: Double }
+        let foldLatin: [Fold]
+        let foldEnglish: [Fold]
+        let typed: [Check]
+        let translation: [Check]
+        let build: [Build]
+        let score: [Score]
+    }
+
+    @Test func checkingMatchesTheWebApp() throws {
+        let data = try Data(contentsOf: Paths.fixtures.appendingPathComponent("lessonCheck.json"))
+        let f = try JSONDecoder().decode(Fixture.self, from: data)
+        for c in f.foldLatin { #expect(LessonCheck.foldLatin(c.input) == c.output, "foldLatin(\(c.input))") }
+        for c in f.foldEnglish { #expect(LessonCheck.foldEnglish(c.input) == c.output, "foldEnglish(\(c.input))") }
+        for c in f.typed { #expect(LessonCheck.checkTyped(c.answer, accepted: c.accepted) == c.right, "typed \(c.answer)") }
+        for c in f.translation { #expect(LessonCheck.checkTranslation(c.answer, accepted: c.accepted) == c.right, "translation \(c.answer)") }
+        for c in f.build {
+            let step = BuildStep(lang: c.lang, answer: c.answer, anyOrder: c.anyOrder)
+            #expect(LessonCheck.checkBuild(c.placed, step: step) == c.right, "build \(c.placed)")
+        }
+        for c in f.score { #expect(LessonCheck.score(right: c.right, of: c.total) == c.score) }
+    }
+}

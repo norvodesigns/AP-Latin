@@ -9,13 +9,15 @@
 import type { BuildStep } from '@/data/curriculum/types';
 
 /**
- * Latin as typed, folded for comparison: no macrons or other accents, lower
- * case, u for v and i for j (Roman spelling had one letter for each pair),
+ * Latin as typed, folded for comparison: ligatures spelled out, no macrons
+ * or other accents, lower case, u for v and i for j (Roman spelling had one letter for each pair),
  * no punctuation, a leading hyphen dropped (so "ae" matches "-ae"), single
  * spaces.
  */
 export function foldLatin(s: string): string {
   return s
+    .replace(/æ/gi, 'ae')
+    .replace(/œ/gi, 'oe')
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase()

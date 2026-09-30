@@ -44,6 +44,7 @@ import {
 import { sightPassages, sightQuestions, SIGHT_AUTHORS } from '../src/data/sight';
 import { translationDrills } from '../src/data/translation';
 import { scansionLines } from '../src/data/scansion';
+import { COURSE } from '../src/data/curriculum';
 import { tokenize, lookup, disambiguateInContext } from '../src/lib/latin';
 import { EXAM_DATE, STORE_VERSION } from '../src/store/useStore';
 
@@ -107,6 +108,7 @@ const files: Record<string, unknown> = {
   'sight.json': { passages: sightPassages, questions: sightQuestions, authors: SIGHT_AUTHORS },
   'translation.json': translationDrills,
   'scansion.json': scansionLines,
+  'curriculum.json': { levels: COURSE },
   'meta.json': {
     examDate: EXAM_DATE,
     storeVersion: STORE_VERSION,

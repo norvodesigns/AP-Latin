@@ -28,6 +28,9 @@ public struct ContentLibrary: Sendable {
     public let sightAuthors: [String]
     public let translationDrills: [TranslationDrill]
     public let scansionLines: [ScansionLine]
+    /// The course, from the first day to AP. Empty for a bundle exported
+    /// before it existed.
+    public let course: Course
 
     private let passageIndex: [String: Int]
     private let vocabIndex: [String: VocabEntry]
@@ -81,6 +84,12 @@ public struct ContentLibrary: Sendable {
         sightAuthors = sight.authors
         translationDrills = try load("translation.json")
         scansionLines = try load("scansion.json")
+        if FileManager.default.fileExists(atPath: directory.appendingPathComponent("curriculum.json").path) {
+            let file: CurriculumFile = try load("curriculum.json")
+            course = Course(levels: file.levels)
+        } else {
+            course = Course(levels: [])
+        }
 
         passageIndex = Dictionary(passages.enumerated().map { ($1.id, $0) }, uniquingKeysWith: { a, _ in a })
         // Core entries win over a supplementary entry that happens to share an id.
