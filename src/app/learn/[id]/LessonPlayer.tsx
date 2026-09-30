@@ -28,11 +28,22 @@ type Phase = 'intro' | 'steps' | 'done';
  * time, then a result. An exercise answered wrong is shown again once at the
  * end, but only the first try counts toward the score.
  */
-export default function LessonPlayer({ lessonId }: { lessonId: string }) {
-  const place = lessonPlace(lessonId)!;
-  const { lesson, unit, level } = place;
+export default function LessonPlayer({
+  lessonId,
+  review,
+  onAgain,
+}: {
+  lessonId?: string;
+  /** A generated review (src/lib/review.ts) instead of a course lesson. */
+  review?: Lesson;
+  /** For a review: make a fresh one. */
+  onAgain?: () => void;
+}) {
+  const place = review ? null : lessonPlace(lessonId ?? '') ?? null;
+  const lesson = review ?? place!.lesson;
   const completeLesson = useStore((s) => s.completeLesson);
-  const previous = useStore((s) => s.lessons[lessonId]);
+  const markStudied = useStore((s) => s.markStudied);
+  const previous = useStore((s) => (review || !lessonId ? undefined : s.lessons[lessonId]));
 
   const [phase, setPhase] = useState<Phase>('intro');
   const [queue, setQueue] = useState<number[]>(() => lesson.steps.map((_, i) => i));
@@ -45,7 +56,9 @@ export default function LessonPlayer({ lessonId }: { lessonId: string }) {
 
   const stepIndex = queue[pos];
   const step = lesson.steps[stepIndex];
-  const eyebrow = `${level.title} · Unit ${unit.n} · Lesson ${unit.lessons.indexOf(lesson) + 1}`;
+  const eyebrow = place
+    ? `${place.level.title} · Unit ${place.unit.n} · Lesson ${place.unit.lessons.indexOf(lesson) + 1}`
+    : 'Review · from lessons you have finished';
 
   function answered(right: boolean) {
     setResult(right);
@@ -66,7 +79,9 @@ export default function LessonPlayer({ lessonId }: { lessonId: string }) {
     const right = Object.values(firstTry).filter(Boolean).length;
     const s = lessonScore(right, exerciseCount);
     setScore(s);
-    completeLesson(lesson.id, s, lesson.words.flatMap((w) => (w.vocabId ? [w.vocabId] : [])));
+    // A review counts the day, but it is not a lesson and records none.
+    if (review) markStudied();
+    else completeLesson(lesson.id, s, lesson.words.flatMap((w) => (w.vocabId ? [w.vocabId] : [])));
     setPhase('done');
     window.scrollTo({ top: 0 });
   }
@@ -81,10 +96,19 @@ export default function LessonPlayer({ lessonId }: { lessonId: string }) {
   }
 
   if (phase === 'intro') {
-    return <Intro lesson={lesson} eyebrow={eyebrow} previousBest={previous?.best} onBegin={() => setPhase('steps')} />;
+    return <Intro lesson={lesson} eyebrow={eyebrow} review={Boolean(review)} previousBest={previous?.best} onBegin={() => setPhase('steps')} />;
   }
   if (phase === 'done') {
-    return <Done lesson={lesson} score={score} exerciseCount={exerciseCount} firstTry={firstTry} onRetry={restart} />;
+    return (
+      <Done
+        lesson={lesson}
+        review={Boolean(review)}
+        score={score}
+        exerciseCount={exerciseCount}
+        firstTry={firstTry}
+        onRetry={review && onAgain ? onAgain : restart}
+      />
+    );
   }
 
   const retry = pos >= lesson.steps.length;
@@ -116,7 +140,19 @@ export default function LessonPlayer({ lessonId }: { lessonId: string }) {
 /* Intro and result                                                    */
 /* ------------------------------------------------------------------ */
 
-function Intro({ lesson, eyebrow, previousBest, onBegin }: { lesson: Lesson; eyebrow: string; previousBest?: number; onBegin: () => void }) {
+function Intro({
+  lesson,
+  eyebrow,
+  review = false,
+  previousBest,
+  onBegin,
+}: {
+  lesson: Lesson;
+  eyebrow: string;
+  review?: boolean;
+  previousBest?: number;
+  onBegin: () => void;
+}) {
   return (
     <Page>
       <div className="mb-8">
@@ -132,7 +168,7 @@ function Intro({ lesson, eyebrow, previousBest, onBegin }: { lesson: Lesson; eye
 
       <div className="mt-9 grid gap-10 sm:grid-cols-2">
         <section>
-          <h2 className="slab mb-3">You will be able to</h2>
+          <h2 className="slab mb-3">{review ? 'What it’s for' : 'You will be able to'}</h2>
           <ul className="flex flex-col gap-2 pl-0" style={{ listStyle: 'none' }}>
             {lesson.objectives.map((o) => (
               <li key={o} className="flex gap-3" style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem', lineHeight: 1.5 }}>
@@ -178,18 +214,20 @@ function Intro({ lesson, eyebrow, previousBest, onBegin }: { lesson: Lesson; eye
 
 function Done({
   lesson,
+  review = false,
   score,
   exerciseCount,
   firstTry,
   onRetry,
 }: {
   lesson: Lesson;
+  review?: boolean;
   score: number;
   exerciseCount: number;
   firstTry: Record<number, boolean>;
   onRetry: () => void;
 }) {
-  const next = lessonAfter(lesson.id);
+  const next = review ? null : lessonAfter(lesson.id);
   const right = Object.values(firstTry).filter(Boolean).length;
   const deckWords = lesson.words.filter((w) => w.vocabId);
   const verdict = score >= 0.9 ? 'Optimē!' : score >= 0.7 ? 'Bene!' : 'Satis.';
@@ -199,7 +237,7 @@ function Done({
       <div className="mb-8">
         <BackLink href="/learn">Course</BackLink>
       </div>
-      <div className="rubric mb-3">Lesson complete</div>
+      <div className="rubric mb-3">{review ? 'Review complete' : 'Lesson complete'}</div>
       <h1 style={{ fontSize: 'clamp(2rem, 1.5rem + 2.5vw, 3rem)', lineHeight: 1.05 }}>
         <span className="latin" style={{ fontSize: 'inherit', color: 'var(--accent)' }}>{verdict}</span>{' '}
         <span style={{ color: 'var(--fg-muted)', fontSize: '0.55em' }}>{gloss}</span>
@@ -229,7 +267,7 @@ function Done({
           <Link href="/vocab" className="btn">Review the words</Link>
         )}
         <button type="button" className="btn btn-ghost" onClick={onRetry}>
-          Do it again
+          {review ? 'Another review' : 'Do it again'}
         </button>
       </div>
     </Page>

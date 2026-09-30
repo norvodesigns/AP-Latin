@@ -18,6 +18,8 @@ export default function CourseMap() {
   const learner = useStore((s) => s.learner);
   const next = nextLesson(lessons, learner?.startLessonId);
   const doneCount = ALL_LESSONS.filter((p) => lessons[p.lesson.id]).length;
+  // Review draws on finished lessons that aren't readings (src/lib/review.ts).
+  const reviewable = ALL_LESSONS.some((p) => lessons[p.lesson.id] && !p.lesson.steps.some((s) => s.kind === 'read'));
 
   return (
     <Page>
@@ -46,6 +48,19 @@ export default function CourseMap() {
             </Link>
           </div>
         </CalledOut>
+      )}
+      {reviewable && (
+        <div className="mb-12 flex flex-wrap items-baseline justify-between gap-4 border-y py-5" style={{ borderColor: 'var(--rule)' }}>
+          <div className="min-w-0">
+            <div className="slab mb-1">Review</div>
+            <p className="measure" style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem', color: 'var(--ink2)', margin: 0 }}>
+              Ten exercises from lessons you have finished, weighted toward the ones you found hardest.
+            </p>
+          </div>
+          <Link href="/learn/review" className="btn">
+            Review · about 6 min
+          </Link>
+        </div>
       )}
       {!next && ALL_LESSONS.length > 0 && (
         <CalledOut rubric="Every lesson done" className="mb-12">

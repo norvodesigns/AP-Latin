@@ -36,6 +36,8 @@ private struct CourseMap: View {
                         .foregroundStyle(Palette.inkMuted)
                 }
 
+                if model.canReview { ReviewRow() }
+
                 if let library {
                     ForEach(library.course.levels) { level in
                         LevelSection(level: level, done: done, next: model.nextCourseLesson?.id)
@@ -84,6 +86,43 @@ struct ContinueCard: View {
         .padding(20)
         .background(Palette.slip, in: .rect(cornerRadius: 20))
         .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(Palette.rule, lineWidth: 0.5))
+    }
+}
+
+/// Review: ten exercises from finished lessons (Course.review), between
+/// the next lesson and the map. The web's course page has the same row.
+private struct ReviewRow: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Hairline(color: Palette.rule)
+            VStack(alignment: .leading, spacing: 12) {
+                words
+                button
+            }
+            .padding(.vertical, 16)
+            Hairline(color: Palette.rule)
+        }
+    }
+
+    private var words: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Review").rubricLabel()
+            Text("Ten exercises from lessons you have finished, weighted toward the ones you found hardest.")
+                .font(.prose(.callout))
+                .foregroundStyle(Palette.ink2)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var button: some View {
+        Button { model.openReview() } label: {
+            Label("Review · about 6 min", systemImage: "arrow.triangle.2.circlepath")
+                .font(.subheadline.weight(.semibold))
+                .padding(.vertical, 2)
+        }
+        .buttonStyle(.glass)
     }
 }
 

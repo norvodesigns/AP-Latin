@@ -23,6 +23,8 @@ struct LessonView: View {
     @State private var score = 0.0
 
     private var lesson: Lesson { place.lesson }
+    /// A generated review (Course.review) rather than a course lesson.
+    private var isReview: Bool { Course.isReview(lesson.id) }
     /// Steps this build can show (content from a newer website may have kinds it doesn't know).
     private var playable: [Int] { lesson.steps.indices.filter { lesson.steps[$0] != .unknown } }
     private var exerciseCount: Int { playable.filter { lesson.steps[$0].isExercise }.count }
@@ -70,11 +72,11 @@ struct LessonView: View {
     /* -------------------------------------------------------------- */
 
     private var intro: some View {
-        let previous = model.progress.lessons[lesson.id]
+        let previous = isReview ? nil : model.progress.lessons[lesson.id]
         return ScrollView {
             VStack(alignment: .leading, spacing: 22) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("\(place.level.title) · Unit \(place.unit.n) · Lesson \(place.number)").rubricLabel()
+                    Text(isReview ? "Review · from lessons you have finished" : "\(place.level.title) · Unit \(place.unit.n) · Lesson \(place.number)").rubricLabel()
                     Text(rich: lesson.title)
                         .font(.system(.largeTitle, design: .serif))
                         .foregroundStyle(Palette.ink)
@@ -84,7 +86,7 @@ struct LessonView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("You will be able to").quietLabel()
+                    Text(isReview ? "What it's for" : "You will be able to").quietLabel()
                     ForEach(lesson.objectives, id: \.self) { o in
                         HStack(alignment: .firstTextBaseline, spacing: 10) {
                             Text("·").foregroundStyle(Palette.rubric)
@@ -208,11 +210,11 @@ struct LessonView: View {
     private var done: some View {
         let right = firstTry.values.filter { $0 }.count
         let deck = lesson.words.filter { $0.vocabId != nil }
-        let next = model.content?.course.after(lesson.id)
+        let next = isReview ? nil : model.content?.course.after(lesson.id)
         let (verdict, gloss) = score >= 0.9 ? ("Optimē!", "Excellent.") : score >= 0.7 ? ("Bene!", "Well done.") : ("Satis.", "Enough for now. It's worth another go.")
         return ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                Text("Lesson complete").rubricLabel()
+                Text(isReview ? "Review complete" : "Lesson complete").rubricLabel()
                 VStack(alignment: .leading, spacing: 4) {
                     Text(verdict).font(.latinItalic(52, relativeTo: .largeTitle)).foregroundStyle(Palette.rubric)
                     Text(gloss).font(.prose(.title3)).foregroundStyle(Palette.inkMuted)
@@ -245,8 +247,13 @@ struct LessonView: View {
                         .keyboardShortcut(.return, modifiers: [])
                     }
                     HStack(spacing: 10) {
-                        Button { start() } label: { Text("Do it again").frame(maxWidth: .infinity).padding(.vertical, 4) }
-                            .buttonStyle(.glass)
+                        if isReview {
+                            Button { model.openReview() } label: { Text("Another review").frame(maxWidth: .infinity).padding(.vertical, 4) }
+                                .buttonStyle(.glass)
+                        } else {
+                            Button { start() } label: { Text("Do it again").frame(maxWidth: .infinity).padding(.vertical, 4) }
+                                .buttonStyle(.glass)
+                        }
                         if next == nil {
                             Button { dismiss() } label: { Text("Done").frame(maxWidth: .infinity).padding(.vertical, 4) }
                                 .buttonStyle(.glassProminent)

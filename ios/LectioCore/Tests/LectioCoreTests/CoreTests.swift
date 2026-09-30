@@ -418,6 +418,42 @@ import Testing
     }
 }
 
+@Suite struct ReviewTests {
+    func done(_ ids: [String], best: Double = 0.8, at: String = "2026-09-01T12:00:00.000Z") -> [String: LessonProgress] {
+        Dictionary(uniqueKeysWithValues: ids.map { ($0, LessonProgress(completedAt: at, lastAt: at, best: best, attempts: 1)) })
+    }
+
+    @Test func drawsOnlyFromFinishedLessonsWithoutRepeats() throws {
+        let course = try ContentLibrary(directory: Paths.content).course
+        var rng = ForgeTests.Seeded(state: 7)
+        #expect(course.review(done: [:], using: &rng) == nil)
+
+        let ids = Array(course.lessons.prefix(4).map(\.lesson.id))
+        let finished = done(ids)
+        let allowed = Set(course.reviewable(done: finished).flatMap { $0.lesson.steps.filter(\.isExercise) })
+        for _ in 0..<20 {
+            let review = try #require(course.review(done: finished, using: &rng))
+            #expect(Course.isReview(review.lesson.id))
+            #expect(!Course.isReview(ids[0]))
+            #expect(review.lesson.steps.count == min(Course.reviewLength, allowed.count))
+            #expect(review.lesson.steps.allSatisfy { allowed.contains($0) })
+            #expect(course.place(review.lesson.id) == nil)
+        }
+    }
+
+    @Test func leavesOutReadingsAndLeansOnWeakLessons() throws {
+        let course = try ContentLibrary(directory: Paths.content).course
+        let readings = course.lessons.filter { $0.lesson.steps.contains { if case .read = $0 { true } else { false } } }
+        let reading = try #require(readings.first)
+        #expect(course.reviewable(done: done([reading.lesson.id])).isEmpty)
+
+        let now = ISO8601DateFormatter().date(from: "2026-09-30T12:00:00Z")!
+        let weakOld = LessonProgress(completedAt: "2026-08-01T12:00:00.000Z", lastAt: "2026-08-01T12:00:00.000Z", best: 0.4, attempts: 1)
+        let strongNew = LessonProgress(completedAt: "2026-09-30T11:00:00.000Z", lastAt: "2026-09-30T11:00:00.000Z", best: 1, attempts: 1)
+        #expect(Course.reviewWeight(weakOld, now: now) > Course.reviewWeight(strongNew, now: now) * 5)
+    }
+}
+
 @Suite struct LessonCheckParityTests {
     struct Fixture: Decodable {
         struct Fold: Decodable { let input: String; let output: String }

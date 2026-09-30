@@ -68,6 +68,8 @@ finishing a lesson counts toward the streak and daily goal.
 
 - [x] Forms Forge: declension and conjugation drills generated from the paradigm tables (fill the
       chart, name the form, make the form)
+- [x] Course review: ten exercises drawn from finished lessons, weighted toward weak scores
+      and lessons not done for a while
 - [ ] Sentence builder: put Latin tiles in order to match an English sentence
 - [ ] Derivatives: English words from Latin roots, as a quick game and on every vocab card
 - [ ] Daily challenge: one line of Latin a day with a few tasks; its own streak
@@ -129,3 +131,8 @@ finishing a lesson counts toward the streak and daily goal.
   is 121 lessons, 887 exercises, from *salvē* to Vergil. Fixed three missing macrons in the
   Reading Room's Aeneid 1. Forms Forge's first iOS build failed (a `Verdict` name clash with
   Translate) and was fixed within the hour.
+- 2026-09-30: Course review on both platforms: a Review row on the course page opens a
+  ten-exercise lesson drawn from finished lessons (not readings), weighted toward low scores
+  and old dates, with "Another review" at the end. It counts the day studied but records no
+  lesson. Same weighting in `src/lib/review.ts` and LectioCore `Course.review`, which has
+  Swift tests (65 now).

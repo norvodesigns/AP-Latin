@@ -41,8 +41,25 @@ extension AppModel {
         activeLesson = place
     }
 
+    /// Whether there are finished lessons for a review to draw on.
+    var canReview: Bool { !(content?.course.reviewable(done: progress.lessons).isEmpty ?? true) }
+
+    /// A review: ten exercises from finished lessons, weighted toward the
+    /// weak and the long-ago, opened like any lesson. Each call makes a new one.
+    func openReview() {
+        guard let course = content?.course else { return }
+        var rng = SystemRandomNumberGenerator()
+        activeLesson = course.review(done: progress.lessons, using: &rng)
+    }
+
     /// A lesson finished: its score, its words into the deck, the day counted.
+    /// A review counts the day but isn't a lesson, so it records nothing else.
     func completeLesson(_ lesson: Lesson, score: Double) {
+        guard !Course.isReview(lesson.id) else {
+            update { $0.markStudied() }
+            refreshWidgets()
+            return
+        }
         update { $0.completeLesson(lesson.id, score: score, vocabIds: lesson.vocabIds) }
         refreshWidgets()
         sendWatchDeck()
