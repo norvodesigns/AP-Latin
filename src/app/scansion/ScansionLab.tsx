@@ -571,6 +571,7 @@ export default function ScansionLab() {
 
   return (
     <div className="mx-auto w-full max-w-[1160px]">
+      <h1 className="sr-only">Scansion Lab</h1>
       {/* ── Running head ── */}
       <div
         className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-b px-5 py-4 sm:px-10"

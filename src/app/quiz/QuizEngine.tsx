@@ -591,10 +591,8 @@ export default function QuizEngine() {
                     }
                     className={on ? 'chip chip-on squish' : 'chip squish'}
                   >
-                    {QUESTION_TYPE_LABELS[t]}{' '}
-                    <span className="tabular-nums" style={{ opacity: 0.6 }}>
-                      {n}
-                    </span>
+                    {QUESTION_TYPE_LABELS[t]} <span aria-hidden="true">·</span>{' '}
+                    <span className="tabular-nums">{n}</span>
                   </button>
                 );
               })}

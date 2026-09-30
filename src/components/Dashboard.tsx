@@ -223,6 +223,7 @@ export default function Dashboard({
 
   return (
     <div className="mx-auto w-full max-w-[1160px] px-5 sm:px-10">
+      <h1 className="sr-only">Lectio · your dashboard</h1>
       {/* The 1px middle column is the ruling itself — a real divider that runs
           the full height of the page rather than a border on either panel. */}
       <div className="grid lg:grid-cols-[1fr_1px_minmax(360px,430px)]">

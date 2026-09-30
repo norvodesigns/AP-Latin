@@ -57,7 +57,7 @@ function ParadigmChart({ chart }: { chart: GrammarChart }) {
         <caption>{chart.title}</caption>
         <thead>
           <tr>
-            <th scope="col" />
+            <td aria-hidden="true" />
             {chart.cols.map((c) => (
               <th key={c} scope="col">
                 {c}

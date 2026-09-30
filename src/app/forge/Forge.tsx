@@ -344,7 +344,7 @@ function ChartView({ q, onDone }: { q: ChartQuestion; onDone: (right: boolean) =
           <table className="chart">
             <thead>
               <tr>
-                <th />
+                <td aria-hidden="true" />
                 {p.cols.map((c) => (
                   <th key={c} scope="col">{c}</th>
                 ))}
@@ -413,7 +413,7 @@ export function ParadigmTableView({ p }: { p: Paradigm }) {
     <table className="chart">
       <thead>
         <tr>
-          <th />
+          <td aria-hidden="true" />
           {p.cols.map((c) => (
             <th key={c} scope="col">{c}</th>
           ))}

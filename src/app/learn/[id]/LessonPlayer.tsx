@@ -380,7 +380,7 @@ function TeachView({ step, onContinue }: StepProps<TeachStep>) {
             {step.table.caption && <caption>{step.table.caption}</caption>}
             <thead>
               <tr>
-                <th aria-hidden="true" />
+                <td aria-hidden="true" />
                 {step.table.cols.map((c) => <th key={c} scope="col">{c}</th>)}
               </tr>
             </thead>
