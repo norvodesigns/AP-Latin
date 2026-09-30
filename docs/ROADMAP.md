@@ -54,7 +54,7 @@ finishing a lesson counts toward the streak and daily goal.
   - [x] U6 Perfect and pluperfect subjunctive; *cum* clauses; indirect questions; sequence of tenses
   - [x] U7 Indirect commands, fear clauses, jussive and hortatory; gerund, gerundive, passive periphrastic
   - [x] U8 Conditions; relative clauses of characteristic; a longer reading
-- [ ] Level 3, *Tertia* (toward AP): adapted Caesar and Pliny, poetic word order, meter and
+- [x] Level 3, *Tertia* (toward AP), 8 units, 37 lessons: adapted Caesar and Pliny, poetic word order, meter and
       scansion basics, translation technique, reading at sight. Hands off to the AP section.
 
 ## 2. Onboarding and placement
@@ -121,3 +121,11 @@ finishing a lesson counts toward the streak and daily goal.
   spot-checked in `verify`, exported as `forms.json`. Three modes: make the form, name the
   form (never offers a second right answer; Swift tests prove it), fill the chart. Study
   time counts as section "forge".
+- 2026-09-30: Level III written: reading real sentences (Caesar BG 1.1), Pliny on Vesuvius
+  (6.16, adapted then original), the ghost / Trajan / Calpurnia letters, poetic Latin and
+  Aeneid 1.1–11, the hexameter (every scansion worked out by hand), figures of speech and
+  the storm (1.81–91), Aeneid readings (1.92–101, 2.40–49, 2.268–276) and exam translation,
+  and a last unit at sight (Martial, Ovid's Daphne) with the exam's structure. The course
+  is 121 lessons, 887 exercises, from *salvē* to Vergil. Fixed three missing macrons in the
+  Reading Room's Aeneid 1. Forms Forge's first iOS build failed (a `Verdict` name clash with
+  Translate) and was fixed within the hour.
