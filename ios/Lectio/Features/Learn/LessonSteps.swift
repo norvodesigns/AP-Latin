@@ -405,7 +405,7 @@ private struct BuildExercise: View {
                 }
                 .frame(minHeight: 44, alignment: .topLeading)
                 if placed.isEmpty {
-                    Text("Tap the words in order").font(.caption).foregroundStyle(Palette.inkFaint)
+                    Text(step.anyOrder == true ? "Tap the words, in any order" : "Tap the words in order").font(.caption).foregroundStyle(Palette.inkFaint)
                 }
                 Hairline(color: Palette.ruleStrong)
             }

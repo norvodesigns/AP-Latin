@@ -23,19 +23,31 @@ struct LessonView: View {
     @State private var score = 0.0
 
     private var lesson: Lesson { place.lesson }
-    /// A generated review (Course.review) rather than a course lesson.
-    private var isReview: Bool { Course.isReview(lesson.id) }
-    /// The Sententia of the day (Daily.lesson).
-    private var isDaily: Bool { Daily.isDaily(lesson.id) }
-    /// A round of derivatives questions (Course.derivativesLesson).
-    private var isDerivatives: Bool { Course.isDerivatives(lesson.id) }
+    /// What kind of lesson this is: one of the course's, or one made on the
+    /// spot (a review, the Sententia of the day, a derivatives round, a
+    /// sentence-builder round), known by its id.
+    private enum Kind { case course, review, daily, derivatives, sentences }
+
+    private var kind: Kind {
+        let id = lesson.id
+        if Course.isReview(id) { return .review }
+        if Daily.isDaily(id) { return .daily }
+        if Course.isDerivatives(id) { return .derivatives }
+        if SentenceBuilder.isSentences(id) { return .sentences }
+        return .course
+    }
+
+    private var isDaily: Bool { kind == .daily }
     /// Made on the spot rather than one of the course's lessons.
-    private var isSession: Bool { isReview || isDaily || isDerivatives }
+    private var isSession: Bool { kind != .course }
 
     private var eyebrow: String {
-        if isReview { return "Review · from lessons you have finished" }
-        if isDerivatives { return "Vocabulary · Latin inside English" }
-        if isDaily {
+        switch kind {
+        case .course: return "\(place.level.title) · Unit \(place.unit.n) · Lesson \(place.number)"
+        case .review: return "Review · from lessons you have finished"
+        case .derivatives: return "Vocabulary · Latin inside English"
+        case .sentences: return "Sentence builder · from the course"
+        case .daily:
             let day = Daily.day(ofLesson: lesson.id)
             let date = StudyDates.dayNumber(day).map { Date(timeIntervalSince1970: Double($0) * 86_400 + 43_200) }
             let f = DateFormatter()
@@ -43,7 +55,34 @@ struct LessonView: View {
             f.setLocalizedDateFormatFromTemplate("EEEEMMMMd")
             return "Sententia · \(date.map(f.string(from:)) ?? day)"
         }
-        return "\(place.level.title) · Unit \(place.unit.n) · Lesson \(place.number)"
+    }
+
+    private var aimsLabel: String {
+        switch kind {
+        case .course: "You will be able to"
+        case .daily: "In three minutes"
+        case .review, .derivatives, .sentences: "What it's for"
+        }
+    }
+
+    private var doneLabel: String {
+        switch kind {
+        case .course: "Lesson complete"
+        case .review: "Review complete"
+        case .daily: "Today's line, done"
+        case .derivatives, .sentences: "Round complete"
+        }
+    }
+
+    /// The result's second button: a fresh round for a generated lesson,
+    /// otherwise the same lesson again.
+    private var again: (label: String, action: () -> Void) {
+        switch kind {
+        case .review: ("Another review", { model.openReview() })
+        case .derivatives: ("Another round", { model.openDerivatives() })
+        case .sentences: ("Another round", { model.openSentences() })
+        case .course, .daily: ("Do it again", { start() })
+        }
     }
     /// Steps this build can show (content from a newer website may have kinds it doesn't know).
     private var playable: [Int] { lesson.steps.indices.filter { lesson.steps[$0] != .unknown } }
@@ -106,7 +145,7 @@ struct LessonView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(isReview || isDerivatives ? "What it's for" : isDaily ? "In three minutes" : "You will be able to").quietLabel()
+                    Text(aimsLabel).quietLabel()
                     ForEach(lesson.objectives, id: \.self) { o in
                         HStack(alignment: .firstTextBaseline, spacing: 10) {
                             Text("·").foregroundStyle(Palette.rubric)
@@ -241,7 +280,7 @@ struct LessonView: View {
         let (verdict, gloss) = score >= 0.9 ? ("Optimē!", "Excellent.") : score >= 0.7 ? ("Bene!", "Well done.") : ("Satis.", "Enough for now. It's worth another go.")
         return ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                Text(isReview ? "Review complete" : isDaily ? "Today's line, done" : isDerivatives ? "Round complete" : "Lesson complete").rubricLabel()
+                Text(doneLabel).rubricLabel()
                 VStack(alignment: .leading, spacing: 4) {
                     Text(verdict).font(.latinItalic(52, relativeTo: .largeTitle)).foregroundStyle(Palette.rubric)
                     Text(gloss).font(.prose(.title3)).foregroundStyle(Palette.inkMuted)
@@ -280,16 +319,9 @@ struct LessonView: View {
                         .keyboardShortcut(.return, modifiers: [])
                     }
                     HStack(spacing: 10) {
-                        if isReview {
-                            Button { model.openReview() } label: { Text("Another review").frame(maxWidth: .infinity).padding(.vertical, 4) }
-                                .buttonStyle(.glass)
-                        } else if isDerivatives {
-                            Button { model.openDerivatives() } label: { Text("Another round").frame(maxWidth: .infinity).padding(.vertical, 4) }
-                                .buttonStyle(.glass)
-                        } else {
-                            Button { start() } label: { Text("Do it again").frame(maxWidth: .infinity).padding(.vertical, 4) }
-                                .buttonStyle(.glass)
-                        }
+                        let choice = self.again
+                        Button { choice.action() } label: { Text(choice.label).frame(maxWidth: .infinity).padding(.vertical, 4) }
+                            .buttonStyle(.glass)
                         if next == nil {
                             Button { dismiss() } label: { Text("Done").frame(maxWidth: .infinity).padding(.vertical, 4) }
                                 .buttonStyle(.glassProminent)

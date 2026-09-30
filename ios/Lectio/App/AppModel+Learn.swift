@@ -59,6 +59,13 @@ extension AppModel {
         activeLesson = course.derivativesLesson(done: progress.lessons, using: &rng)
     }
 
+    /// A round of the sentence builder (SentenceBuilder), opened like any lesson.
+    func openSentences() {
+        guard let library = content else { return }
+        var rng = SystemRandomNumberGenerator()
+        activeLesson = library.sentences.lesson(done: progress.lessons, using: &rng)
+    }
+
     /// Today's date on this device's clock: the Sententia's day.
     var dailyDay: String { Daily.localDay() }
 
@@ -78,7 +85,7 @@ extension AppModel {
     /// A review counts the day but isn't a lesson, so it records nothing
     /// else; the Sententia records its own day.
     func completeLesson(_ lesson: Lesson, score: Double) {
-        guard !Course.isReview(lesson.id), !Course.isDerivatives(lesson.id) else {
+        guard !Course.isReview(lesson.id), !Course.isDerivatives(lesson.id), !SentenceBuilder.isSentences(lesson.id) else {
             update { $0.markStudied() }
             refreshWidgets()
             return

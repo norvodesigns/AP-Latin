@@ -49,19 +49,23 @@ export default function CourseMap() {
           </div>
         </CalledOut>
       )}
-      {reviewable && (
-        <div className="mb-12 flex flex-wrap items-baseline justify-between gap-4 border-y py-5" style={{ borderColor: 'var(--rule)' }}>
-          <div className="min-w-0">
-            <div className="slab mb-1">Review</div>
-            <p className="measure" style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem', color: 'var(--ink2)', margin: 0 }}>
-              Ten exercises from lessons you have finished, weighted toward the ones you found hardest.
-            </p>
-          </div>
-          <Link href="/learn/review" className="btn">
-            Review · about 6 min
-          </Link>
-        </div>
-      )}
+      <div className="mb-12 border-y" style={{ borderColor: 'var(--rule)' }}>
+        {reviewable && (
+          <PracticeRow
+            title="Review"
+            body="Ten exercises from lessons you have finished, weighted toward the ones you found hardest."
+            href="/learn/review"
+            cta="Review · about 6 min"
+          />
+        )}
+        <PracticeRow
+          title="Sentence builder"
+          body="Eight sentences from the course, built from tiles: the Latin from its English, or the English from its Latin."
+          href="/learn/sentences"
+          cta="Build · about 5 min"
+          ruled={reviewable}
+        />
+      </div>
       {!next && ALL_LESSONS.length > 0 && (
         <CalledOut rubric="Every lesson done" className="mb-12">
           <p style={{ fontFamily: 'var(--font-latin)', fontSize: '1.125rem', margin: 0 }}>
@@ -157,5 +161,22 @@ export default function CourseMap() {
         <Link href="/read" className="link-rule">Reading Room</Link>.
       </p>
     </Page>
+  );
+}
+
+/** A way to practise what the course has taught, beside the map. */
+function PracticeRow({ title, body, href, cta, ruled = false }: { title: string; body: string; href: string; cta: string; ruled?: boolean }) {
+  return (
+    <div className={`flex flex-wrap items-baseline justify-between gap-4 py-5 ${ruled ? 'border-t' : ''}`} style={{ borderColor: 'var(--rule)' }}>
+      <div className="min-w-0">
+        <div className="slab mb-1">{title}</div>
+        <p className="measure" style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem', color: 'var(--ink2)', margin: 0 }}>
+          {body}
+        </p>
+      </div>
+      <Link href={href} className="btn">
+        {cta}
+      </Link>
+    </div>
   );
 }

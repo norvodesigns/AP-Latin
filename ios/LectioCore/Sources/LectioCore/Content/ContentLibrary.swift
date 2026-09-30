@@ -39,6 +39,8 @@ public struct ContentLibrary: Sendable {
     public let sententiae: [Sententia]
     /// AP vocabulary id -> English derivatives, from the course's words.
     public let derivatives: [String: [String]]
+    /// Sentence builder's sentences and the forms for its decoys.
+    public let sentences: SentenceBuilder
 
     private let passageIndex: [String: Int]
     private let vocabIndex: [String: VocabEntry]
@@ -111,6 +113,7 @@ public struct ContentLibrary: Sendable {
             sententiae = []
         }
         derivatives = course.derivativesByVocab
+        sentences = SentenceBuilder(course: course, paradigms: paradigms)
 
         passageIndex = Dictionary(passages.enumerated().map { ($1.id, $0) }, uniquingKeysWith: { a, _ in a })
         // Core entries win over a supplementary entry that happens to share an id.

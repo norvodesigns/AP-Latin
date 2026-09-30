@@ -98,7 +98,7 @@ public enum LessonCheck {
     }
 
     /// An English tile: lower case, letters, digits and apostrophes only.
-    private static func foldTile(_ s: String) -> String {
+    static func foldTile(_ s: String) -> String {
         var out = ""
         for ch in s.lowercased() where isAsciiAlnum(ch) || ch == "'" { out.append(ch) }
         return out

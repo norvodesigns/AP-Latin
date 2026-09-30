@@ -566,6 +566,9 @@ h1, h2, h3, h4 {
     color: var(--oninv);
   }
   .btn-primary::before { background: var(--accent); }
+  /* Disabled, it keeps its own colours under the pointer (the plain
+     button's disabled hover would put ink on ink). */
+  .btn-primary:disabled:hover { color: var(--oninv); border-color: var(--fg); }
   .btn-primary:hover,
   .btn-primary:focus-visible {
     color: #fff;

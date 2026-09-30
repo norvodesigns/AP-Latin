@@ -70,7 +70,7 @@ finishing a lesson counts toward the streak and daily goal.
       chart, name the form, make the form)
 - [x] Course review: ten exercises drawn from finished lessons, weighted toward weak scores
       and lessons not done for a while
-- [ ] Sentence builder: put Latin tiles in order to match an English sentence
+- [x] Sentence builder: put Latin tiles in order to match an English sentence
 - [x] Derivatives: English words from Latin roots, as a quick game and on every vocab card
 - [x] Daily challenge: one line of Latin a day with a few tasks; its own streak (Sententia of the day)
 - [x] Speed round: timed vocabulary matching
@@ -160,3 +160,12 @@ finishing a lesson counts toward the streak and daily goal.
   pugnō?" and "Pugnacious comes from which Latin word?", from the words of finished lessons.
   Wrong options are chosen so none could also be right (manuscript never sets manus against
   scrībō); a Swift test checks it over many rounds.
+- 2026-09-30: Sentence builder on both platforms (course page, and /learn/sentences): eight of
+  the course's 186 sentences a round. Where Forms Forge knows other forms of two of a
+  sentence's words, the student builds the Latin from the English in any order, with those
+  forms as decoys (servum beside servōs); otherwise the English from the Latin, with near
+  misses (sailor beside sailors) that are always words the course itself uses. Parity
+  fixtures hold the app's forms and near misses to the web's. Accessibility: an axe audit of
+  30 web pages is clean in both themes (contrast, headings, table headers, a real 404 page);
+  the app's faint ink matches; CI now screenshots four screens at a large accessibility text
+  size. A disabled primary button no longer loses its label under the pointer.

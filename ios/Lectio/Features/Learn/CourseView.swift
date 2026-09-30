@@ -36,7 +36,7 @@ private struct CourseMap: View {
                         .foregroundStyle(Palette.inkMuted)
                 }
 
-                if model.canReview { ReviewRow() }
+                if library?.course.lessons.isEmpty == false { PracticeRows() }
 
                 if let library {
                     ForEach(library.course.levels) { level in
@@ -89,40 +89,46 @@ struct ContinueCard: View {
     }
 }
 
-/// Review: ten exercises from finished lessons (Course.review), between
-/// the next lesson and the map. The web's course page has the same row.
-private struct ReviewRow: View {
+/// Ways to practise what the course has taught, between the next lesson and
+/// the map: Review (ten exercises from finished lessons, Course.review) when
+/// there is something to review, and the sentence builder (SentenceBuilder).
+/// The web's course page has the same rows.
+private struct PracticeRows: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Hairline(color: Palette.rule)
-            VStack(alignment: .leading, spacing: 12) {
-                words
-                button
+            if model.canReview {
+                row(title: "Review",
+                    body: "Ten exercises from lessons you have finished, weighted toward the ones you found hardest.",
+                    button: "Review · about 6 min", systemImage: "arrow.triangle.2.circlepath") { model.openReview() }
+                Hairline(color: Palette.hair)
             }
-            .padding(.vertical, 16)
+            row(title: "Sentence builder",
+                body: "Eight sentences from the course, built from tiles: the Latin from its English, or the English from its Latin.",
+                button: "Build · about 5 min", systemImage: "square.stack.3d.up") { model.openSentences() }
             Hairline(color: Palette.rule)
         }
     }
 
-    private var words: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Review").rubricLabel()
-            Text("Ten exercises from lessons you have finished, weighted toward the ones you found hardest.")
-                .font(.prose(.callout))
-                .foregroundStyle(Palette.ink2)
-                .fixedSize(horizontal: false, vertical: true)
+    private func row(title: String, body: String, button: String, systemImage: String, action: @escaping () -> Void) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title).rubricLabel()
+                Text(body)
+                    .font(.prose(.callout))
+                    .foregroundStyle(Palette.ink2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Button(action: action) {
+                Label(button, systemImage: systemImage)
+                    .font(.subheadline.weight(.semibold))
+                    .padding(.vertical, 2)
+            }
+            .buttonStyle(.glass)
         }
-    }
-
-    private var button: some View {
-        Button { model.openReview() } label: {
-            Label("Review · about 6 min", systemImage: "arrow.triangle.2.circlepath")
-                .font(.subheadline.weight(.semibold))
-                .padding(.vertical, 2)
-        }
-        .buttonStyle(.glass)
+        .padding(.vertical, 16)
     }
 }
 

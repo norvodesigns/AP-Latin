@@ -85,6 +85,8 @@ struct RootView: View {
             switch path {
             case "daily": model.openDaily()
             case "review": model.openReview()
+            case "sentences": model.openSentences()
+            case "derivatives": model.openDerivatives()
             case "next": if let next = model.nextCourseLesson { model.openLesson(next.lesson.id) }
             default: model.openLesson(path)
             }

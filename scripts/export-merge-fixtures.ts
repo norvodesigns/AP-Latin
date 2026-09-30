@@ -27,6 +27,8 @@ import { sm2, newCard, currentStreak, longestStreak, blankSyncableData, scansion
 import { unpackLine } from '../src/data/scansionCorpus';
 import { coreVocabulary } from '../src/data/vocabulary';
 import { shortGloss, speedWords } from '../src/lib/speed';
+import { nearMiss, otherForms, sentenceWords } from '../src/lib/sentences';
+import { ALL_LESSONS } from '../src/data/curriculum';
 import type { VocabEntry } from '../src/data/types';
 
 /** Every "now" the real code sees while this script runs. (The imports above
@@ -365,6 +367,21 @@ const speedFixture = {
 };
 
 /* ------------------------------------------------------------------ */
+/* Sentence builder                                                    */
+/* ------------------------------------------------------------------ */
+
+// Every word of every course sentence: its other forms (as a sorted set)
+// and, for the English, its near miss.
+const courseSentences = ALL_LESSONS.flatMap((p) => p.lesson.steps.flatMap((st) => (st.kind === 'translate' ? [st] : [])));
+const latinWords = [...new Set(courseSentences.flatMap((st) => sentenceWords(st.latin)))].sort();
+const englishWords = [...new Set(courseSentences.flatMap((st) => sentenceWords(st.answers[0])))].sort();
+const sentencesFixture = {
+  sentences: courseSentences.length,
+  otherForms: latinWords.map((word) => ({ word, forms: [...otherForms(word)].sort() })),
+  nearMiss: englishWords.map((word) => ({ word, out: nearMiss(word) })),
+};
+
+/* ------------------------------------------------------------------ */
 /* Write, or verify                                                    */
 /* ------------------------------------------------------------------ */
 
@@ -375,6 +392,7 @@ const rendered: Record<string, string> = {
   'scansion.json': JSON.stringify({ lines: scansionLines, attempts: scansionAttempts, stats: scansionStats, badgeCases: scansionBadgeCases }) + '\n',
   'lessonCheck.json': JSON.stringify(lessonCheckFixture, null, 1) + '\n',
   'speed.json': JSON.stringify(speedFixture) + '\n',
+  'sentences.json': JSON.stringify(sentencesFixture) + '\n',
 };
 
 if (check) {

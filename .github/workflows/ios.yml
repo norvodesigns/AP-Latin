@@ -147,12 +147,23 @@ jobs:
               xcrun simctl ui "$udid" appearance "$mode"
               # A fresh launch per screen, opened with -startTab: a lectio://
               # URL from simctl stops at an "Open in Lectio?" prompt.
-              for tab in today learn learn/prima-2-3 learn/daily read vocab quiz scansion forge grammar exam plan settings read/aen-1-1-33 read/pliny-6-16-a; do
+              for tab in today learn learn/prima-2-3 learn/daily learn/sentences read vocab quiz scansion forge grammar exam plan settings read/aen-1-1-33 read/pliny-6-16-a; do
                 xcrun simctl terminate "$udid" com.norvodesigns.lectio || true
                 xcrun simctl launch "$udid" com.norvodesigns.lectio -seedDemo YES -startTab "$tab"
                 sleep 8
                 xcrun simctl io "$udid" screenshot "shots/$label-$mode-${tab//\//-}.png"
               done
+              # Large text (Dynamic Type, accessibility sizes), a few screens.
+              if [ "$mode" = light ]; then
+                xcrun simctl ui "$udid" content_size accessibility-extra-large || true
+                for tab in today learn/prima-2-3 learn/daily vocab; do
+                  xcrun simctl terminate "$udid" com.norvodesigns.lectio || true
+                  xcrun simctl launch "$udid" com.norvodesigns.lectio -seedDemo YES -startTab "$tab"
+                  sleep 8
+                  xcrun simctl io "$udid" screenshot "shots/$label-$mode-bigtext-${tab//\//-}.png"
+                done
+                xcrun simctl ui "$udid" content_size large || true
+              fi
               # The first run, a step at a time.
               for step in welcome track placement goal; do
                 xcrun simctl terminate "$udid" com.norvodesigns.lectio || true

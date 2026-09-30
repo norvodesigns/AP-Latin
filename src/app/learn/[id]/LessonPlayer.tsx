@@ -703,7 +703,7 @@ function BuildView({ step, result, onAnswer, onContinue }: StepProps<BuildStep>)
         style={{ borderColor: 'var(--rule-strong)' }}
         aria-label="Your sentence"
       >
-        {placed.length === 0 && <span className="slab-sm" style={{ color: 'var(--fg-faint)' }}>Tap the words in order</span>}
+        {placed.length === 0 && <span className="slab-sm" style={{ color: 'var(--fg-faint)' }}>{step.anyOrder ? 'Tap the words, in any order' : 'Tap the words in order'}</span>}
         {placed.map((id) => (
           <button key={id} type="button" className={tileClass} style={{ ...tileStyle, background: 'var(--bg-elev, transparent)' }} disabled={revealed}
             onClick={() => setPlaced((p) => p.filter((x) => x !== id))}>

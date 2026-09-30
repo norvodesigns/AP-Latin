@@ -584,6 +584,46 @@ import Testing
     }
 }
 
+@Suite struct SentenceBuilderTests {
+    struct Fixture: Decodable {
+        struct Forms: Decodable { let word: String; let forms: [String] }
+        struct Near: Decodable { let word: String; let out: String? }
+        let sentences: Int
+        let otherForms: [Forms]
+        let nearMiss: [Near]
+    }
+
+    @Test func formsAndNearMissesMatchTheWeb() throws {
+        let library = try ContentLibrary(directory: Paths.content)
+        let data = try Data(contentsOf: Paths.fixtures.appendingPathComponent("sentences.json"))
+        let f = try JSONDecoder().decode(Fixture.self, from: data)
+        let builder = library.sentences
+        #expect(builder.sources.count == f.sentences)
+        for c in f.otherForms { #expect(builder.otherForms(c.word).sorted() == c.forms, "\(c.word)") }
+        for c in f.nearMiss { #expect(builder.nearMiss(c.word) == c.out, "\(c.word)") }
+    }
+
+    @Test func everyRoundIsAnswerable() throws {
+        let builder = try ContentLibrary(directory: Paths.content).sentences
+        var rng = ForgeTests.Seeded(state: 9)
+        var latin = 0
+        for i in 0..<60 {
+            let done: [String: LessonProgress] = i % 2 == 0 ? [:] : ["prima-5-2": LessonProgress(completedAt: "", lastAt: "", best: 1, attempts: 1)]
+            let place = builder.lesson(done: done, using: &rng)
+            #expect(SentenceBuilder.isSentences(place.lesson.id))
+            #expect(place.lesson.steps.count == SentenceBuilder.length)
+            for case .build(let b) in place.lesson.steps {
+                #expect(LessonCheck.checkBuild(b.answer, step: b), "\(b.source)")
+                let fold = { (w: String) in b.lang == .la ? LessonCheck.foldLatin(w) : LessonCheck.foldTile(w) }
+                let need = Set(b.answer.map(fold))
+                #expect(!b.extra.contains { need.contains(fold($0)) }, "\(b.source)")
+                if b.lang == .la { latin += 1 }
+            }
+        }
+        #expect(latin > 60)
+    }
+}
+
 @Suite struct LessonCheckParityTests {
     struct Fixture: Decodable {
         struct Fold: Decodable { let input: String; let output: String }
