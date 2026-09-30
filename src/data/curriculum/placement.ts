@@ -37,4 +37,6 @@ export const PLACEMENT: PlacementQuestion[] = [
   q('prima-8', 'What does this mean?', 'Urbs ā Rōmānīs capta est.', ['The city captured the Romans.', 'The city was captured by the Romans.', 'The Romans are capturing the city.'], 1, 'The perfect passive, with the agent *ā Rōmānīs*.'),
   q('secunda-1', 'What does *loquitur* mean?', 'loquitur', ['he is spoken', 'he speaks', 'he will speak'], 1, '*Loquor* is deponent: passive in form, active in meaning.'),
   q('secunda-1', 'What does this mean?', 'Puer ambulāre nōn vult.', ['The boy does not want to walk.', 'The boy cannot walk.', 'The boy was not walking.'], 0, '*Vult* is from *volō*, “want”.'),
+  q('secunda-2', 'What does *moritūrus* mean?', 'moritūrus', ['dying', 'dead', 'about to die'], 2, 'The future participle: “about to die”.'),
+  q('secunda-2', 'What does this mean?', 'Urbe captā, hostēs discessērunt.', ['The enemy left the captured city.', 'When the city had been captured, the enemy left.', 'The city captured the enemy and left.'], 1, 'An ablative absolute: “the city having been captured”.'),
 ];
