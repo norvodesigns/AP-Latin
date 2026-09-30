@@ -41,4 +41,6 @@ export const PLACEMENT: PlacementQuestion[] = [
   q('secunda-2', 'What does this mean?', 'Urbe captā, hostēs discessērunt.', ['The enemy left the captured city.', 'When the city had been captured, the enemy left.', 'The city captured the enemy and left.'], 1, 'An ablative absolute: “the city having been captured”.'),
   q('secunda-3', 'What does this mean?', 'Dīcit patrem venīre.', ['He says that his father is coming.', 'He tells his father to come.', 'Father says that he is coming.'], 0, 'An accusative and an infinitive after *dīcit*: indirect statement.'),
   q('secunda-3', 'What does this mean?', 'Putāvit hostēs discessisse.', ['He thought that the enemy were leaving.', 'He thought that the enemy had left.', 'He thought that the enemy would leave.'], 1, 'A perfect infinitive: before the main verb, so “had left”.'),
+  q('secunda-4', 'What does this mean?', 'Mōns altior est quam urbs.', ['The mountain is as high as the city.', 'The mountain is higher than the city.', 'The mountain is very high.'], 1, '*-ior* is the comparative, and *quam* is “than”.'),
+  q('secunda-4', 'Which is the superlative of *bonus*?', undefined, ['bonissimus', 'melior', 'optimus'], 2, '*Bonus, melior, optimus*: good, better, best.'),
 ];
