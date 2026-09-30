@@ -70,30 +70,46 @@ extension AppModel {
         return false
     }
 
-    /// Replaces the pending reminder with one that knows today's numbers.
-    /// Called on leaving the app, so the next reminder says how many cards are
-    /// actually waiting.
+    /// How many days of reminders are scheduled ahead. Each is its own
+    /// notification so it can quote that day's Sententia; they're replaced
+    /// every time the app goes to the background.
+    static let reminderDays = 28
+
+    /// Replaces the pending reminders with ones that know the numbers: cards
+    /// due (as of now, so the count is exact for the first and a floor after)
+    /// and that day's Sententia.
     func rescheduleReminder() async {
         let center = UNUserNotificationCenter.current()
-        center.removePendingNotificationRequests(withIdentifiers: [Self.reminderId])
+        let ids = [Self.reminderId] + (0..<Self.reminderDays).map { "\(Self.reminderId).\($0)" }
+        center.removePendingNotificationRequests(withIdentifiers: ids)
         guard reminderEnabled else { return }
 
-        let tomorrow = StudyDates.today(Date().addingTimeInterval(86_400))
-        let due = vocab.values.filter { $0.due <= tomorrow }.count
+        let calendar = Calendar.current
+        let now = Date()
         let streak = Streaks.current(progress.studyDays)
-        let content = UNMutableNotificationContent()
-        content.title = "Time for Latin"
-        content.body = [
-            due > 0 ? "\(due) vocabulary card\(due == 1 ? "" : "s") due." : nil,
-            streak > 0 ? "Keep your \(streak)-day streak going." : "\(progress.studyPlan.minutesPerDay) minutes today keeps the plan on track.",
-        ].compactMap { $0 }.joined(separator: " ")
-        content.sound = .default
+        let lines = content?.sententiae ?? []
+        for n in 0..<Self.reminderDays {
+            guard let day = calendar.date(byAdding: .day, value: n, to: now) else { continue }
+            var when = calendar.dateComponents([.year, .month, .day], from: day)
+            when.hour = reminderMinutes / 60
+            when.minute = reminderMinutes % 60
+            guard let fire = calendar.date(from: when), fire > now else { continue }
 
-        var when = DateComponents()
-        when.hour = reminderMinutes / 60
-        when.minute = reminderMinutes % 60
-        let request = UNNotificationRequest(identifier: Self.reminderId, content: content,
-                                            trigger: UNCalendarNotificationTrigger(dateMatching: when, repeats: true))
-        try? await center.add(request)
+            let dueBy = StudyDates.today(fire)
+            let due = vocab.values.filter { $0.due <= dueBy }.count
+            let line = Daily.sententia(for: Daily.localDay(fire, calendar: calendar), in: lines)
+            let content = UNMutableNotificationContent()
+            content.title = "Time for Latin"
+            content.body = [
+                line.map { "Today's line: \($0.latin)" },
+                due > 0 ? "\(due) vocabulary card\(due == 1 ? "" : "s") due." : nil,
+                n == 0 && streak > 0 ? "Keep your \(streak)-day streak going." : nil,
+                line == nil && due == 0 ? "\(progress.studyPlan.minutesPerDay) minutes today keeps the plan on track." : nil,
+            ].compactMap { $0 }.joined(separator: " ")
+            content.sound = .default
+            let request = UNNotificationRequest(identifier: "\(Self.reminderId).\(n)", content: content,
+                                                trigger: UNCalendarNotificationTrigger(dateMatching: when, repeats: false))
+            try? await center.add(request)
+        }
     }
 }

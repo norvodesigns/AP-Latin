@@ -21,6 +21,7 @@ struct TodayView: View {
                     if let line = model.todaysSententia {
                         SententiaCard(line: line)
                     }
+                    LaurelsTodayRow()
                     Hairline()
                     nextUp
                     Hairline()

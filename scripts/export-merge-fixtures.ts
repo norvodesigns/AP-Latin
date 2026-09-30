@@ -29,6 +29,7 @@ import { coreVocabulary } from '../src/data/vocabulary';
 import { shortGloss, speedWords } from '../src/lib/speed';
 import { nearMiss, otherForms, sentenceWords } from '../src/lib/sentences';
 import { ALL_LESSONS } from '../src/data/curriculum';
+import { COURSE_SHAPE, LAUREL_SPECS, laurels, nextLaurel } from '../src/lib/laurels';
 import type { VocabEntry } from '../src/data/types';
 
 /** Every "now" the real code sees while this script runs. (The imports above
@@ -382,6 +383,32 @@ const sentencesFixture = {
 };
 
 /* ------------------------------------------------------------------ */
+/* Laurels                                                             */
+/* ------------------------------------------------------------------ */
+
+// The laurels of a few progress documents, as the web works them out.
+function laurelCases() {
+  const { local, cloud } = richPair();
+  const busy = mergeSyncable(local, cloud, true);
+  // A long streak, a whole unit and a week of sententiae.
+  const day = (i: number) => new RealDate(Date.UTC(2026, 0, 1) + i * 86_400_000).toISOString().slice(0, 10);
+  busy.studyDays = Array.from({ length: 40 }, (_, i) => day(i));
+  for (const id of ALL_LESSONS.filter((p) => p.unit.id === 'prima-1').map((p) => p.lesson.id)) {
+    busy.lessons[id] = { completedAt: '2026-01-02T00:00:00.000Z', lastAt: '2026-01-02T00:00:00.000Z', best: 1, attempts: 1 };
+  }
+  busy.daily = Object.fromEntries(Array.from({ length: 9 }, (_, i) => [day(i * (i < 7 ? 1 : 3)), { id: 'x', score: 1, at: '' }]));
+  return [
+    { name: 'blank', data: base() },
+    { name: 'rich-local', data: local },
+    { name: 'busy', data: busy },
+  ].map((c) => {
+    const list = laurels(c.data, COURSE_SHAPE);
+    return { name: c.name, data: c.data, expected: list.map((l) => ({ id: l.id, have: l.have, earned: l.earned })), next: nextLaurel(list)?.id ?? null };
+  });
+}
+const laurelsFixture = { specs: LAUREL_SPECS, cases: laurelCases() };
+
+/* ------------------------------------------------------------------ */
 /* Write, or verify                                                    */
 /* ------------------------------------------------------------------ */
 
@@ -393,6 +420,7 @@ const rendered: Record<string, string> = {
   'lessonCheck.json': JSON.stringify(lessonCheckFixture, null, 1) + '\n',
   'speed.json': JSON.stringify(speedFixture) + '\n',
   'sentences.json': JSON.stringify(sentencesFixture) + '\n',
+  'laurels.json': JSON.stringify(laurelsFixture) + '\n',
 };
 
 if (check) {

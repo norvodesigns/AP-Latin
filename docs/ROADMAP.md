@@ -57,6 +57,10 @@ finishing a lesson counts toward the streak and daily goal.
 - [x] Level 3, *Tertia* (toward AP), 8 units, 37 lessons: adapted Caesar and Pliny, poetic word order, meter and
       scansion basics, translation technique, reading at sight. Hands off to the AP section.
 
+- [ ] Level IV, *Quārta*: guided lessons through the AP syllabus passages (Aeneid and Pliny),
+      each tied to its Reading Room passage: read a section, then comprehension, grammar and
+      style questions of the exam's kinds
+
 ## 2. Onboarding and placement
 
 - [x] First run on web and iOS: who you are (new to Latin, some Latin, AP student, teacher),
@@ -74,7 +78,10 @@ finishing a lesson counts toward the streak and daily goal.
 - [x] Derivatives: English words from Latin roots, as a quick game and on every vocab card
 - [x] Daily challenge: one line of Latin a day with a few tasks; its own streak (Sententia of the day)
 - [x] Speed round: timed vocabulary matching
-- [ ] Achievements across the whole app, not just scansion
+- [x] Achievements across the whole app, not just scansion (Laurels)
+- [ ] Sententia: 120 lines, so a year repeats three times rather than eight
+- [x] The daily reminder quotes the day's Sententia
+- [ ] A weekly recap on Today and the dashboard: lessons, minutes, words, the streak
 - [x] Word of the day (web card, iOS widget): done as the Sententia of the day, a card on the web and a Home and Lock Screen widget
 
 ## 4. Apple platform extras
@@ -169,3 +176,9 @@ finishing a lesson counts toward the streak and daily goal.
   30 web pages is clean in both themes (contrast, headings, table headers, a real 404 page);
   the app's faint ink matches; CI now screenshots four screens at a large accessibility text
   size. A disabled primary button no longer loses its label under the pointer.
+- 2026-09-30: Laurels, on both platforms: 26 achievements (the course, study habit, vocabulary,
+  reading, quiz and exam, writing, scansion, the Sententia), each with a Latin name and a
+  progress count, worked out from progress that already syncs, so no new storage and every
+  device agrees; a parity fixture holds the app to the web. /laurels and a line on the
+  dashboard; a Laurels row on Today in the app that names a new one once. The app's daily
+  reminder is now four weeks of single notifications, each quoting that day's Sententia.

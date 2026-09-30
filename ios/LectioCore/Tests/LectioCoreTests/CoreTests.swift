@@ -624,6 +624,26 @@ import Testing
     }
 }
 
+@Suite struct LaurelsTests {
+    @Test func laurelsMatchTheWeb() throws {
+        let course = try ContentLibrary(directory: Paths.content).course
+        let fixture = try Paths.fixture("laurels.json")
+        let specs = try #require(fixture["specs"]).decode() as [Laurels.Spec]
+        #expect(specs == Laurels.specs)
+        for c in try #require(fixture["cases"]?.arrayValue) {
+            let name = c["name"]?.stringValue ?? ""
+            let doc = ProgressDocument(raw: try #require(c["data"]?.objectValue))
+            let got = Laurels.all(doc, course: course)
+            for (g, e) in zip(got, try #require(c["expected"]?.arrayValue)) {
+                #expect(g.id == e["id"]?.stringValue, "\(name)")
+                #expect(g.have == Int(e["have"]?.doubleValue ?? -1), "\(name) \(g.id)")
+                #expect(g.earned == e["earned"]?.boolValue, "\(name) \(g.id)")
+            }
+            #expect(Laurels.next(got)?.id == c["next"]?.stringValue, "\(name) next")
+        }
+    }
+}
+
 @Suite struct LessonCheckParityTests {
     struct Fixture: Decodable {
         struct Fold: Decodable { let input: String; let output: String }
