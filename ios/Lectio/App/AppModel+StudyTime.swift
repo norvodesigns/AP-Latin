@@ -25,6 +25,7 @@ extension AppModel {
         case .frq: "frq"
         case .exam: "exam"
         case .plan: "plan"
+        case .learn: "learn"
         case .today, .classroom, .settings, .search: nil
         }
     }
@@ -38,15 +39,21 @@ extension AppModel {
         studySecondsToday = studyGoalDate == StudyDates.today() ? d.double(forKey: "studySecondsToday") : 0
     }
 
+    /// The section time is counting toward now: a lesson open over any tab
+    /// counts as the course.
+    var currentStudySection: String? {
+        activeLesson != nil ? "learn" : Self.studySection(for: selectedTab)
+    }
+
     func startStudyTicker() {
         studyTicker?.cancel()
-        pendingStudySection = Self.studySection(for: selectedTab)
+        pendingStudySection = currentStudySection
         studyTicker = Task { [weak self] in
             var sinceFlush: Double = 0
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(1))
                 guard let self, !Task.isCancelled else { return }
-                guard self.sceneActive, let section = Self.studySection(for: self.selectedTab) else { continue }
+                guard self.sceneActive, let section = self.currentStudySection else { continue }
                 self.pendingStudySection = section
                 self.pendingStudySeconds += 1
                 self.addStudySeconds(1)
@@ -66,7 +73,7 @@ extension AppModel {
 
     func studySectionChanged() {
         flushStudyTime()
-        pendingStudySection = Self.studySection(for: selectedTab)
+        pendingStudySection = currentStudySection
     }
 
     /// Sends accrued seconds under the section they were spent on.

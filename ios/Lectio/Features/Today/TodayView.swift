@@ -70,6 +70,15 @@ struct TodayView: View {
     private var nextUp: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Next up").rubricLabel()
+            if let lesson = model.nextCourseLesson, model.courseInTabBar || !model.courseDone.isEmpty {
+                Button {
+                    model.openLesson(lesson.id)
+                } label: {
+                    NextUpRow(title: model.courseDone.isEmpty ? "Start the course" : "Continue the course",
+                              detail: "\(lesson.level.title) \(lesson.unit.n).\(lesson.number) · \(RichText.plain(lesson.lesson.title))",
+                              systemImage: "graduationcap")
+                }
+            }
             if let passage = lastOpenedPassage {
                 NavigationLink(value: passage) {
                     NextUpRow(title: "Continue reading", detail: passage.citation, systemImage: "book.closed")
@@ -134,6 +143,8 @@ struct TodayView: View {
     }
 
     private static let sections = [
+        SectionLink(title: "Course", systemImage: "graduationcap", tab: .learn),
+        SectionLink(title: "Quiz Engine", systemImage: "checklist", tab: .quiz),
         SectionLink(title: "Grammar & Syntax", systemImage: "text.book.closed", tab: .grammar),
         SectionLink(title: "Translate", systemImage: "character.book.closed", tab: .translate),
         SectionLink(title: "Sight Reading", systemImage: "eye", tab: .sight),

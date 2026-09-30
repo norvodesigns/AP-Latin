@@ -30,6 +30,12 @@ extension AppModel {
                 doc.recordQuiz(questionId: q.id, correct: chosen == q.answerId, chosenId: chosen, type: q.type,
                                skillCategory: q.skillCategory, unit: q.unit, passageId: q.passageId, now: now)
             }
+            // Two lessons into the course.
+            for (id, score) in [("prima-1-1", 0.92), ("prima-1-2", 0.85)] {
+                if let lesson = library.course.place(id)?.lesson {
+                    doc.completeLesson(id, score: score, vocabIds: lesson.vocabIds, now: now)
+                }
+            }
             if let aeneid = library.passage("aen-1-1-33") {
                 doc.markOpened(aeneid.id, now: now)
                 doc.toggleBookmark(aeneid.id)

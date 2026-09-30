@@ -60,6 +60,10 @@ final class AppModel {
     /// Today's navigation stack. On iPhone, sections outside the tab bar are
     /// pushed here (see PhoneTabs in RootView.swift).
     var todayPath = NavigationPath()
+    /// The course lesson open over everything else, if any.
+    var activeLesson: LessonPlace? = nil {
+        didSet { if (oldValue == nil) != (activeLesson == nil) { studySectionChanged() } }
+    }
     var selectedTab: AppTab = .today {
         didSet { if oldValue != selectedTab { studySectionChanged() } }
     }

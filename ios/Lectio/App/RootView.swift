@@ -4,7 +4,7 @@ import UIKit
 
 /// Every section of the app — the web's NAV (src/lib/nav.ts), plus search.
 nonisolated enum AppTab: String, Hashable, Sendable {
-    case today, read, vocab, quiz
+    case today, learn, read, vocab, quiz
     case translate, sight, scansion
     case grammar, devices, context
     case frq, exam, plan
@@ -14,14 +14,6 @@ nonisolated enum AppTab: String, Hashable, Sendable {
     init?(host: String?) {
         guard let host else { return nil }
         self.init(rawValue: host)
-    }
-
-    /// The tabs an iPhone's tab bar holds. The rest open from Today.
-    var isPhoneTab: Bool {
-        switch self {
-        case .today, .read, .vocab, .quiz, .search: true
-        default: false
-        }
     }
 }
 
@@ -46,6 +38,12 @@ struct RootView: View {
         case .ready(let library):
             Tabs()
                 .environment(\.library, library)
+                // A course lesson opens over everything, from wherever it was started.
+                .fullScreenCover(item: Binding(get: { model.activeLesson }, set: { model.activeLesson = $0 })) { place in
+                    LessonView(place: place)
+                        .environment(\.library, library)
+                        .id(place.id)
+                }
                 .onOpenURL { url in
                     // lectio://vocab, lectio://read, … (the widget), and
                     // lectio://read/<passage-id> to open a passage.
@@ -67,6 +65,10 @@ struct RootView: View {
         model.selectedTab = tab
         if tab == .read, path != "/", !path.isEmpty, let passage = library.passage(path) {
             model.readPath = [passage]
+        }
+        // lectio://learn/<lesson-id> opens that lesson.
+        if tab == .learn, path != "/", !path.isEmpty {
+            model.openLesson(path)
         }
     }
 }
@@ -91,15 +93,21 @@ private struct PhoneTabs: View {
 
     var body: some View {
         // A section outside the tab bar shows as a page pushed onto Today.
+        let tabs = model.phoneTabs
         let selection = Binding<AppTab>(
-            get: { model.selectedTab.isPhoneTab ? model.selectedTab : .today },
+            get: { tabs.contains(model.selectedTab) ? model.selectedTab : .today },
             set: { model.selectedTab = $0 }
         )
         TabView(selection: selection) {
             Tab("Today", systemImage: "sun.horizon", value: AppTab.today) { TodayView() }
+            // A beginner's second tab is the course; an AP student's, the quiz.
+            if model.courseInTabBar {
+                Tab("Course", systemImage: "graduationcap", value: AppTab.learn) { CourseView() }
+            } else {
+                Tab("Quiz", systemImage: "checklist", value: AppTab.quiz) { QuizView() }
+            }
             Tab("Read", systemImage: "book.closed", value: AppTab.read) { ReadIndexView() }
             Tab("Vocab", systemImage: "rectangle.on.rectangle.angled", value: AppTab.vocab) { VocabView() }
-            Tab("Quiz", systemImage: "checklist", value: AppTab.quiz) { QuizView() }
             Tab(value: AppTab.search, role: .search) { SearchView() }
         }
         .tabBarMinimizeBehavior(.onScrollDown)
@@ -109,15 +117,15 @@ private struct PhoneTabs: View {
         }
         .animation(.spring(duration: 0.5), value: model.goalJustReached)
         .onChange(of: model.selectedTab, initial: true) { old, new in
-            if !new.isPhoneTab {
+            if !tabs.contains(new) {
                 model.todayPath = NavigationPath([new])
-            } else if !old.isPhoneTab {
+            } else if !tabs.contains(old) {
                 model.todayPath = NavigationPath()
             }
         }
         .onChange(of: model.todayPath.count) { _, count in
             // Back from a pushed section is back to Today.
-            if count == 0, !model.selectedTab.isPhoneTab { model.selectedTab = .today }
+            if count == 0, !model.phoneTabs.contains(model.selectedTab) { model.selectedTab = .today }
         }
     }
 }
@@ -140,7 +148,9 @@ struct PushedSection: View {
             case .plan: StudyPlanView()
             case .classroom: ClassroomView()
             case .settings: SettingsView()
-            case .today, .read, .vocab, .quiz, .search: EmptyView()
+            case .learn: CourseView()
+            case .quiz: QuizView()
+            case .today, .read, .vocab, .search: EmptyView()
             }
         }
         .environment(\.isPushedSection, true)
@@ -157,6 +167,7 @@ private struct SidebarTabs: View {
         @Bindable var model = model
         TabView(selection: $model.selectedTab) {
             Tab("Today", systemImage: "sun.horizon", value: AppTab.today) { TodayView() }
+            Tab("Course", systemImage: "graduationcap", value: AppTab.learn) { CourseView() }
             Tab("Read", systemImage: "book.closed", value: AppTab.read) { ReadIndexView() }
             Tab("Vocab", systemImage: "rectangle.on.rectangle.angled", value: AppTab.vocab) { VocabView() }
             Tab("Quiz", systemImage: "checklist", value: AppTab.quiz) { QuizView() }

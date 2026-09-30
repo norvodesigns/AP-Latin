@@ -20,6 +20,7 @@ struct LectioApp: App {
             // The website's `g`-then-letter jumps, as ⌘-number on an iPad keyboard.
             CommandMenu("Go") {
                 Button("Today") { model.selectedTab = .today }.keyboardShortcut("1")
+                Button("Course") { model.selectedTab = .learn }.keyboardShortcut("0")
                 Button("Reading Room") { model.selectedTab = .read }.keyboardShortcut("2")
                 Button("Vocabulary") { model.selectedTab = .vocab }.keyboardShortcut("3")
                 Button("Quiz Engine") { model.selectedTab = .quiz }.keyboardShortcut("4")

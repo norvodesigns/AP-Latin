@@ -49,7 +49,7 @@ struct QuizView: View {
     @State private var session: QuizSession?
 
     var body: some View {
-        NavigationStack {
+        SectionStack {
             if let library {
                 setup(library)
                     .fullScreenCover(item: $session) { QuizSessionView(session: $0) }
