@@ -34,9 +34,12 @@ export default function Forge() {
   const [index, setIndex] = useState(0);
   const [results, setResults] = useState<boolean[]>([]);
 
+  // "Only what I've learned" means something only once a finished lesson
+  // has a table; until then every table is in play.
+  const learnedAny = useMemo(() => hasCourse && PARADIGMS.some((p) => p.lesson && learnedIds.has(p.lesson)), [hasCourse, learnedIds]);
   const scope = useMemo(
-    () => forgeScope(PARADIGMS, kinds, hasCourse && learnedOnly ? learnedIds : null),
-    [kinds, hasCourse, learnedOnly, learnedIds],
+    () => forgeScope(PARADIGMS, kinds, learnedAny && learnedOnly ? learnedIds : null),
+    [kinds, learnedAny, learnedOnly, learnedIds],
   );
   const formCount = scope.reduce((n, p) => n + p.rows.length * p.cols.length, 0);
 
@@ -146,7 +149,7 @@ export default function Forge() {
             </button>
           ))}
         </div>
-        {hasCourse && (
+        {learnedAny && (
           <label className="mt-4 flex items-center gap-2.5" style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem' }}>
             <input type="checkbox" checked={learnedOnly} onChange={(e) => setLearnedOnly(e.target.checked)} />
             Only tables from course lessons I have finished
@@ -154,7 +157,9 @@ export default function Forge() {
         )}
         <p className="mt-4" style={{ ...prose, fontSize: '1rem', color: 'var(--fg-muted)', margin: '1rem 0 0' }}>
           {scope.length === 0
-            ? 'Nothing in play yet: finish a course lesson with a table, or include every table.'
+            ? kinds.size === 0
+              ? 'Choose at least one kind of table.'
+              : 'None of your finished lessons has one of these tables yet. Untick the box to use every table.'
             : `${scope.length} table${scope.length === 1 ? '' : 's'}, ${formCount} forms.`}
         </p>
         <button type="button" className="btn btn-primary mt-6" disabled={scope.length === 0} onClick={start}>

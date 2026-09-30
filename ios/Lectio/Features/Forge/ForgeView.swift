@@ -57,7 +57,10 @@ private struct ForgeHome: View {
     var body: some View {
         let all = library?.paradigms ?? []
         let done = model.courseDone
-        let scope = Forge.scope(all, kinds: kinds, learned: !done.isEmpty && learnedOnly ? done : nil)
+        // "Only what I've learned" means something only once a finished
+        // lesson has a table; until then every table is in play.
+        let learnedAny = all.contains { p in p.lesson.map { done.contains($0) } ?? false }
+        let scope = Forge.scope(all, kinds: kinds, learned: learnedAny && learnedOnly ? done : nil)
         let forms = scope.reduce(0) { $0 + $1.cellCount }
 
         ScrollView {
@@ -105,13 +108,13 @@ private struct ForgeHome: View {
                             }
                         }
                     }
-                    if !done.isEmpty {
+                    if learnedAny {
                         Toggle("Only tables from lessons I've finished", isOn: $learnedOnly)
                             .font(.prose(.callout))
                             .tint(Palette.rubric)
                     }
                     Text(scope.isEmpty
-                         ? "Nothing in play yet: finish a course lesson with a table, or include every table."
+                         ? (kinds.isEmpty ? "Choose at least one kind of table." : "None of your finished lessons has one of these tables yet. Turn off the switch to use every table.")
                          : "\(scope.count) table\(scope.count == 1 ? "" : "s"), \(forms) forms.")
                         .font(.prose(.footnote))
                         .foregroundStyle(Palette.inkMuted)
