@@ -73,7 +73,7 @@ finishing a lesson counts toward the streak and daily goal.
 - [ ] Sentence builder: put Latin tiles in order to match an English sentence
 - [ ] Derivatives: English words from Latin roots, as a quick game and on every vocab card
 - [x] Daily challenge: one line of Latin a day with a few tasks; its own streak (Sententia of the day)
-- [ ] Speed round: timed vocabulary matching
+- [x] Speed round: timed vocabulary matching
 - [ ] Achievements across the whole app, not just scansion
 - [x] Word of the day (web card, iOS widget): done as the Sententia of the day, a card on the web and a Home and Lock Screen widget
 
@@ -149,3 +149,8 @@ finishing a lesson counts toward the streak and daily goal.
   small) and three App Shortcuts for Siri and Spotlight (the day's line, continue the course,
   review cards), routed like lectio:// links. Forms Forge no longer opens with nothing in play
   for someone who hasn't reached a lesson with a table.
+- 2026-09-30: Speed round on both platforms (/vocab/speed; Vocabulary in the app): a minute
+  to match Latin words to meanings, five pairs a board, two seconds off for a wrong pair,
+  the mixed-up words listed at the end with a button to add them to the flashcards. Words
+  from your deck, the whole AP list or a unit; best score kept per device. The short glosses
+  are parity-tested against the web for every definition on the AP list.

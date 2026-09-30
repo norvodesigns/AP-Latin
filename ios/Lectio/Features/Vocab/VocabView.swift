@@ -25,6 +25,7 @@ struct VocabView: View {
     @State private var passageId: String?
     @State private var newBatch = 20
     @State private var session: VocabSession?
+    @State private var speed = false
     @State private var search = ""
 
     var body: some View {
@@ -32,6 +33,7 @@ struct VocabView: View {
             if let library {
                 content(library)
                     .fullScreenCover(item: $session) { FlashcardSessionView(session: $0) }
+                    .fullScreenCover(isPresented: $speed) { SpeedRoundView().environment(\.library, library) }
             }
         }
     }
@@ -101,6 +103,12 @@ struct VocabView: View {
                 }
                 .buttonStyle(.glassProminent)
                 .disabled(due.isEmpty && fresh.isEmpty)
+                .listRowBackground(Color.clear)
+                Button { speed = true } label: {
+                    Label("Speed round · \(SpeedRound.seconds) seconds", systemImage: "timer")
+                        .font(.subheadline.weight(.semibold)).frame(maxWidth: .infinity).padding(.vertical, 4)
+                }
+                .buttonStyle(.glass)
                 .listRowBackground(Color.clear)
             }
 

@@ -25,6 +25,9 @@ import { mergeSyncable } from '../src/lib/mergeProgress';
 import { foldLatin, foldEnglish, checkTyped, checkTranslation, checkBuild, lessonScore } from '../src/lib/lessonCheck';
 import { sm2, newCard, currentStreak, longestStreak, blankSyncableData, scansionStatsByLine, scansionBadges, type SyncableData } from '../src/store/useStore';
 import { unpackLine } from '../src/data/scansionCorpus';
+import { coreVocabulary } from '../src/data/vocabulary';
+import { shortGloss, speedWords } from '../src/lib/speed';
+import type { VocabEntry } from '../src/data/types';
 
 /** Every "now" the real code sees while this script runs. (The imports above
  *  only read the clock inside the functions called below, never at load
@@ -340,6 +343,28 @@ const lessonCheckFixture = {
 };
 
 /* ------------------------------------------------------------------ */
+/* Speed round                                                         */
+/* ------------------------------------------------------------------ */
+
+// Every definition on the AP list, cut down as the web cuts it, plus edge
+// cases; and which of a few made-up entries a round may use.
+const glossInputs = [
+  ...new Set([...coreVocabulary.map((e) => e.definition), '', '  water  ', '(poetic) the deep, sea', 'why? wherefore?; for what reason']),
+];
+const speedEntries = [
+  { id: 'aqua', headword: 'aqua', definition: 'water' },
+  { id: 'unda', headword: 'unda', definition: 'water; wave' },
+  { id: 'gladiator', headword: 'gladiator', definition: 'gladiator' },
+  { id: 'Livia', headword: 'Livia', definition: 'a Roman female name' },
+  { id: 'fluctus', headword: 'fluctus', definition: 'wave, billow' },
+  { id: 'orator', headword: 'orator', definition: 'speaker, orator' },
+] as unknown as VocabEntry[];
+const speedFixture = {
+  gloss: glossInputs.map((input) => ({ input, output: shortGloss(input) })),
+  words: { entries: speedEntries, ids: speedWords(speedEntries).map((w) => w.id) },
+};
+
+/* ------------------------------------------------------------------ */
 /* Write, or verify                                                    */
 /* ------------------------------------------------------------------ */
 
@@ -349,6 +374,7 @@ const rendered: Record<string, string> = {
   'streaks.json': JSON.stringify({ now: new RealDate(FIXED_NOW).toISOString(), cases: streakCases }, null, 1) + '\n',
   'scansion.json': JSON.stringify({ lines: scansionLines, attempts: scansionAttempts, stats: scansionStats, badgeCases: scansionBadgeCases }) + '\n',
   'lessonCheck.json': JSON.stringify(lessonCheckFixture, null, 1) + '\n',
+  'speed.json': JSON.stringify(speedFixture) + '\n',
 };
 
 if (check) {

@@ -522,6 +522,39 @@ import Testing
     }
 }
 
+@Suite struct SpeedRoundTests {
+    struct Fixture: Decodable {
+        struct Gloss: Decodable { let input: String; let output: String }
+        struct Entry: Decodable { let id: String; let headword: String; let definition: String }
+        struct Words: Decodable { let entries: [Entry]; let ids: [String] }
+        let gloss: [Gloss]
+        let words: Words
+    }
+
+    @Test func glossesAndWordsMatchTheWeb() throws {
+        let data = try Data(contentsOf: Paths.fixtures.appendingPathComponent("speed.json"))
+        let f = try JSONDecoder().decode(Fixture.self, from: data)
+        for g in f.gloss { #expect(SpeedRound.shortGloss(g.input) == g.output, "\(g.input)") }
+        let entries = f.words.entries.map {
+            VocabEntry(id: $0.id, lemma: $0.headword, headword: $0.headword, pos: "", definition: $0.definition, readings: [], units: [], supplementary: nil)
+        }
+        #expect(SpeedRound.words(entries).map(\.id) == f.words.ids)
+    }
+
+    @Test func boardsHoldDistinctPairsInAnotherOrder() throws {
+        let pool = SpeedRound.words(try ContentLibrary(directory: Paths.content).coreVocabulary)
+        #expect(pool.count > 500)
+        var rng = ForgeTests.Seeded(state: 11)
+        for _ in 0..<50 {
+            let board = SpeedRound.deal(pool, using: &rng)
+            #expect(board.left.count == SpeedRound.boardSize)
+            #expect(Set(board.left) == Set(board.right))
+            #expect(board.left != board.right)
+            #expect(Set(board.left.map(\.english)).count == board.left.count)
+        }
+    }
+}
+
 @Suite struct LessonCheckParityTests {
     struct Fixture: Decodable {
         struct Fold: Decodable { let input: String; let output: String }

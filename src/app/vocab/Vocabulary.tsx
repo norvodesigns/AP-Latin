@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { coreVocabulary } from '@/data/vocabulary';
 import { supplementaryVocabulary } from '@/data/supplementaryVocabulary';
@@ -494,9 +495,14 @@ export default function Vocabulary() {
           </>
         }
         actions={
-          <button type="button" className="btn" onClick={() => setMode('browse')}>
-            Browse list
-          </button>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/vocab/speed" className="btn">
+              Speed round
+            </Link>
+            <button type="button" className="btn" onClick={() => setMode('browse')}>
+              Browse list
+            </button>
+          </div>
         }
       />
 
