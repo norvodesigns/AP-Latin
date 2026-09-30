@@ -79,7 +79,7 @@ finishing a lesson counts toward the streak and daily goal.
 - [x] Daily challenge: one line of Latin a day with a few tasks; its own streak (Sententia of the day)
 - [x] Speed round: timed vocabulary matching
 - [x] Achievements across the whole app, not just scansion (Laurels)
-- [ ] Sententia: 120 lines, so a year repeats three times rather than eight
+- [x] Sententia: 120 lines, so a year repeats three times rather than eight
 - [x] The daily reminder quotes the day's Sententia
 - [ ] A weekly recap on Today and the dashboard: lessons, minutes, words, the streak
 - [x] Word of the day (web card, iOS widget): done as the Sententia of the day, a card on the web and a Home and Lock Screen widget
@@ -182,3 +182,8 @@ finishing a lesson counts toward the streak and daily goal.
   device agrees; a parity fixture holds the app to the web. /laurels and a line on the
   dashboard; a Laurels row on Today in the app that names a new one once. The app's daily
   reminder is now four weeks of single notifications, each quoting that day's Sententia.
+- 2026-09-30: Sententia grows from 47 to 120 lines: more Vergil (the opening, the Sibyl,
+  Dido, the underworld), Horace, Catullus, Ovid, Cicero, Seneca, Livy, Tacitus, Suetonius's
+  emperors, Pliny on Vesuvius, Martial, Publilius Syrus, Phaedrus, Lucretius, and the
+  mottoes on the dollar bill. Laurels in the app count from raw JSON instead of decoding
+  every record, since Today works them out on each redraw.

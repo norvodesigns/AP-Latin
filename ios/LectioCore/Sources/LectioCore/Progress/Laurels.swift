@@ -72,7 +72,10 @@ public enum Laurels {
         return best
     }
 
-    /// Every laurel, and how far along the student is.
+    /// Every laurel, and how far along the student is. Reads the document's
+    /// raw JSON for counts rather than decoding every record, since Today
+    /// works this out on each redraw and a keen student has thousands of
+    /// quiz answers.
     public static func all(_ doc: ProgressDocument, course: Course) -> [Laurel] {
         let done = doc.lessons
         let isDone = { (id: String) in done[id] != nil }
@@ -82,14 +85,20 @@ public enum Laurels {
             let us = course.levels.first { $0.id == id }?.units ?? []
             return !us.isEmpty && us.allSatisfy { $0.lessons.allSatisfy { isDone($0.id) } } ? 1 : 0
         }
-        let cards = Array(doc.vocab.values)
-        let passages = doc.raw.object("passages").compactMap { (_, v) -> PassageState? in try? v.decode() }
+        let intervals = doc.raw.object("vocab").map { $0.value["interval"]?.doubleValue ?? 0 }
+        let passages = doc.raw.object("passages").map(\.value)
         let exams = doc.examResults
         let bestExam = exams.map { $0.mcqTotal > 0 ? Int((Double($0.mcqCorrect) / Double($0.mcqTotal) * 100).rounded(.down)) : 0 }.max() ?? 0
-        let scans = doc.scansionAttempts
+        let scans = doc.raw.array("scansionAttempts")
+        // A line is mastered once any attempt at it scored every syllable.
+        let mastered = Set(scans.compactMap { a -> String? in
+            let total = a["total"]?.doubleValue ?? 0
+            return total > 0 && a["correct"]?.doubleValue == total ? a["lineId"]?.stringValue : nil
+        }).count
         let daily = Array(doc.daily.keys)
-        let longest = Streaks.longest(doc.studyDays)
-        let quizzes = doc.quizAttempts.count
+        let studyDays = doc.studyDays
+        let longest = Streaks.longest(studyDays)
+        let quizzes = doc.raw.array("quizAttempts").count
 
         let have: [String: Int] = [
             "first-lesson": done.count,
@@ -101,21 +110,21 @@ public enum Laurels {
             "streak-7": longest,
             "streak-30": longest,
             "streak-100": longest,
-            "days-50": Set(doc.studyDays).count,
-            "deck-100": cards.count,
-            "deck-500": cards.count,
-            "mature-100": cards.filter { $0.interval >= 21 }.count,
-            "reader": passages.filter { $0.lastOpened != nil }.count,
-            "annotations": passages.reduce(0) { $0 + $1.annotations.count },
-            "cold-read": passages.reduce(0) { $0 + $1.coldReads },
+            "days-50": Set(studyDays).count,
+            "deck-100": intervals.count,
+            "deck-500": intervals.count,
+            "mature-100": intervals.filter { $0 >= 21 }.count,
+            "reader": passages.filter { ($0["lastOpened"]?.stringValue ?? "").isEmpty == false }.count,
+            "annotations": passages.reduce(0) { $0 + ($1["annotations"]?.arrayValue?.count ?? 0) },
+            "cold-read": passages.reduce(0) { $0 + Int($1["coldReads"]?.doubleValue ?? 0) },
             "quiz-100": quizzes,
             "quiz-1000": quizzes,
             "exam": exams.count,
             "exam-80": bestExam,
-            "translations-10": doc.translationAttempts.count,
-            "frq-5": doc.frqResponses.filter(\.submitted).count,
+            "translations-10": doc.raw.array("translationAttempts").count,
+            "frq-5": doc.raw.array("frqResponses").filter { $0["submitted"]?.boolValue == true }.count,
             "scansion-first": scans.count,
-            "scansion-50": ScansionStats.mastered(scans).count,
+            "scansion-50": mastered,
             "sententia-7": longestRun(daily),
             "sententia-30": daily.count,
         ]
