@@ -239,7 +239,7 @@ private struct ForgeRoundView: View {
         .scrollDismissesKeyboard(.interactively)
         .safeAreaInset(edge: .bottom) {
             if let verdict {
-                Verdict(right: verdict, answer: correctAnswer(q)) { next() }
+                ForgeVerdict(right: verdict, answer: correctAnswer(q)) { next() }
             }
         }
         .animation(.spring(duration: 0.35), value: verdict)
@@ -302,7 +302,7 @@ private struct ForgeRoundView: View {
     }
 }
 
-private struct Verdict: View {
+private struct ForgeVerdict: View {
     let right: Bool
     let answer: String?
     let onContinue: () -> Void
@@ -384,16 +384,18 @@ private struct NameQuestion: View {
                 .foregroundStyle(Palette.ink)
                 .padding(.vertical, 4)
             ForEach(Array(options.enumerated()), id: \.offset) { i, option in
-                OptionCard(state: state(i)) {
-                    guard verdict == nil else { return }
-                    chosen = i
-                    answer(i == right)
-                } label: {
+                OptionCard(state: state(i), action: { choose(i) }) {
                     Text(option).font(.prose(.body)).foregroundStyle(Palette.ink)
                 }
                 .disabled(verdict != nil)
             }
         }
+    }
+
+    private func choose(_ i: Int) {
+        guard verdict == nil else { return }
+        chosen = i
+        answer(i == right)
     }
 
     private func state(_ i: Int) -> OptionState {

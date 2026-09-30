@@ -1,5 +1,6 @@
 import type { CurriculumLevel } from '../types';
 import { unit as unit1 } from './unit1';
+import { unit as unit2 } from './unit2';
 
 /** Level III: toward AP — real prose and poetry, meter, style, and reading at sight. */
 export const tertia: CurriculumLevel = {
@@ -9,5 +10,5 @@ export const tertia: CurriculumLevel = {
   subtitle: 'Toward AP',
   blurb:
     'The bridge into the AP syllabus. Real Caesar and Pliny, poetic word order, the dactylic hexameter, figures of speech, the Aeneid itself, and reading at sight.',
-  units: [unit1],
+  units: [unit1, unit2],
 };
