@@ -446,3 +446,19 @@ import Testing
         for c in f.score { #expect(LessonCheck.score(right: c.right, of: c.total) == c.score) }
     }
 }
+
+@Suite struct PlacementTests {
+    @Test func placesAtTheFirstMissAndStopsAfterThree() throws {
+        let course = try ContentLibrary(directory: Paths.content).course
+        #expect(course.placement.count >= 10)
+        typealias A = Placement.Answer
+        var answers = [A(unit: "prima-1", right: true), A(unit: "prima-1", right: true), A(unit: "prima-2", right: false)]
+        #expect(Placement.continues(answers, total: 16))
+        answers += [A(unit: "prima-2", right: false), A(unit: "prima-3", right: false)]
+        #expect(!Placement.continues(answers, total: 16))
+        #expect(Placement.start(answers) == "prima-2")
+        #expect(course.firstLesson(ofUnit: "prima-2")?.lesson.id == "prima-2-1")
+        #expect(Placement.start([A(unit: "prima-1", right: true)]) == nil)
+        #expect(!Placement.continues(Array(repeating: A(unit: "prima-1", right: true), count: 16), total: 16))
+    }
+}

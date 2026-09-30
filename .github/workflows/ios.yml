@@ -153,6 +153,13 @@ jobs:
                 sleep 8
                 xcrun simctl io "$udid" screenshot "shots/$label-$mode-${tab//\//-}.png"
               done
+              # The first run, a step at a time.
+              for step in welcome track placement goal; do
+                xcrun simctl terminate "$udid" com.norvodesigns.lectio || true
+                xcrun simctl launch "$udid" com.norvodesigns.lectio -showOnboarding YES -onboardingStep "$step"
+                sleep 8
+                xcrun simctl io "$udid" screenshot "shots/$label-$mode-onboarding-$step.png"
+              done
             done
             xcrun simctl shutdown "$udid" || true
           }

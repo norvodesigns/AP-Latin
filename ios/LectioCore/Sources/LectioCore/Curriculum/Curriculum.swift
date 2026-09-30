@@ -196,10 +196,13 @@ public struct LessonPlace: Sendable, Hashable, Identifiable {
 public struct Course: Sendable {
     public let levels: [CurriculumLevel]
     public let lessons: [LessonPlace]
+    /// The placement check, in course order.
+    public let placement: [PlacementQuestion]
     private let index: [String: Int]
 
-    public init(levels: [CurriculumLevel]) {
+    public init(levels: [CurriculumLevel], placement: [PlacementQuestion] = []) {
         self.levels = levels
+        self.placement = placement
         var places: [LessonPlace] = []
         for level in levels {
             for unit in level.units {
@@ -213,6 +216,9 @@ public struct Course: Sendable {
     }
 
     public func place(_ id: String) -> LessonPlace? { index[id].map { lessons[$0] } }
+
+    /// The first lesson of a unit, by unit id.
+    public func firstLesson(ofUnit unitId: String) -> LessonPlace? { lessons.first { $0.unit.id == unitId } }
 
     /// The first lesson not yet finished, from the student's starting point
     /// if they chose one; nil when every lesson written so far is done. Same
@@ -235,4 +241,5 @@ public struct Course: Sendable {
 
 struct CurriculumFile: Decodable {
     let levels: [CurriculumLevel]
+    let placement: [PlacementQuestion]?
 }

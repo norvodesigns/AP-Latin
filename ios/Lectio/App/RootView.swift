@@ -37,6 +37,11 @@ struct RootView: View {
                 .pageBackground()
         case .ready(let library):
             Tabs()
+                // The first run: where the student is starting, and a goal.
+                .fullScreenCover(isPresented: Binding(get: { model.showOnboarding }, set: { model.showOnboarding = $0 })) {
+                    OnboardingView()
+                        .environment(\.library, library)
+                }
                 .environment(\.library, library)
                 // A course lesson opens over everything, from wherever it was started.
                 .fullScreenCover(item: Binding(get: { model.activeLesson }, set: { model.activeLesson = $0 })) { place in

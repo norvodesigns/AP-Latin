@@ -64,6 +64,8 @@ final class AppModel {
     var activeLesson: LessonPlace? = nil {
         didSet { if (oldValue == nil) != (activeLesson == nil) { studySectionChanged() } }
     }
+    /// The first-run screens (Features/Onboarding), over everything.
+    var showOnboarding = false
     var selectedTab: AppTab = .today {
         didSet { if oldValue != selectedTab { studySectionChanged() } }
     }
@@ -165,6 +167,12 @@ final class AppModel {
             contentState = .ready(library)
             contentDirectory = directory
             seedDemoIfRequested()
+            // A saved session (the keychain outlives a reinstall) means a
+            // returning student whose work is about to sync down.
+            let hasSession = await auth.session != nil
+            if needsOnboarding, !hasSession || UserDefaults.standard.bool(forKey: "showOnboarding") {
+                showOnboarding = true
+            }
             refreshWidgets()
             startWatchBridge()
             checkForContentUpdate()

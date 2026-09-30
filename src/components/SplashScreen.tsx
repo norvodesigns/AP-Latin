@@ -143,7 +143,7 @@ export default function SplashScreen() {
               color: 'var(--fg-muted)',
             }}
           >
-            lege, mārca, meminī — read, mark, remember
+            lege, notā, mementō — read, mark, remember
           </p>
 
           {!returning && (

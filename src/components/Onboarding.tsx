@@ -141,7 +141,7 @@ export default function Onboarding({ accountsEnabled, onDone }: { accountsEnable
           {step === 'welcome' && (
             <Frame>
               <span className="wordmark" style={{ fontSize: '3rem' }}>Lectio</span>
-              <p className="mt-1" style={{ ...latin, fontStyle: 'italic', color: 'var(--fg-muted)' }}>lege, mārca, meminī — read, mark, remember</p>
+              <p className="mt-1" style={{ ...latin, fontStyle: 'italic', color: 'var(--fg-muted)' }}>lege, notā, mementō — read, mark, remember</p>
               <p className="measure mt-6" style={latin}>
                 Latin from the very first word to the AP exam: short lessons in order, the real texts with every word glossed, and flashcards that come back just before you forget.
               </p>
