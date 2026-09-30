@@ -353,7 +353,9 @@ export default function Dashboard({
             </section>
           )}
 
-          {/* Mastery */}
+          {/* Mastery. Three empty AP meters say nothing to someone in their
+              first weeks of the course, so they wait for graded work. */}
+          {!(courseFirst && quizAttempts.length === 0) && (
           <section className="border-t pt-9" style={{ borderColor: 'var(--rule)' }}>
             <div className="rubric mb-6">Mastery by skill</div>
             <div className="flex flex-col gap-5">
@@ -397,6 +399,7 @@ export default function Dashboard({
               <CedLink to="skills" />
             </p>
           </section>
+          )}
 
           {/* Progress ledger */}
           <section className="border-t pt-9" style={{ borderColor: 'var(--rule)' }}>
@@ -415,6 +418,9 @@ export default function Dashboard({
             </div>
             <Ledger
               rows={[
+                ...(lessonsDone > 0 || courseFirst
+                  ? [{ label: 'Course lessons finished', value: lessonsDone, max: ALL_LESSONS.length, href: '/learn' }]
+                  : []),
                 {
                   label: 'Syllabus passages read',
                   value: mounted ? read : 0,

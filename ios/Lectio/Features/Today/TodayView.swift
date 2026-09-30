@@ -250,6 +250,8 @@ private struct TodayInsights: View {
         let forecast = Insights.forecast(model.vocab)
 
         VStack(alignment: .leading, spacing: 26) {
+            // Empty AP meters say nothing to someone early in the course.
+            if !(model.courseFirstOnToday && quiz.isEmpty) {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Mastery by skill").rubricLabel()
                 ForEach(["1", "2", "3"], id: \.self) { k in
@@ -269,6 +271,7 @@ private struct TodayInsights: View {
                      ? "Nothing graded yet. These fill in as you work the Quiz Engine."
                      : "Your accuracy on \(quiz.count) graded question\(quiz.count == 1 ? "" : "s"). A thin bar on the first skill costs the most.")
                     .font(.footnote).foregroundStyle(Palette.inkMuted)
+            }
             }
 
             if !spots.isEmpty {
