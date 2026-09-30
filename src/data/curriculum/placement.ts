@@ -51,4 +51,5 @@ export const PLACEMENT: PlacementQuestion[] = [
   q('secunda-7', 'What does this mean?', 'Carthāgō dēlenda est.', ['Carthage has been destroyed.', 'Carthage must be destroyed.', 'Carthage is destroying.'], 1, 'The gerundive with *est*: obligation.'),
   q('secunda-8', 'What does this mean?', 'Sī adesset, laetus essem.', ['If he is here, I am happy.', 'If he were here, I would be happy.', 'If he had been here, I would have been happy.'], 1, 'The imperfect subjunctive: present contrary to fact.'),
   q('secunda-8', 'What does this mean?', 'Nēmō est quī hoc nesciat.', ['There is no one who does not know this.', 'No one knows this.', 'Who does not know this?'], 0, 'A relative clause of characteristic.'),
+  q('tertia-1', 'Which is the main verb?', 'Mīlitēs, quī fessī erant, postquam castra posuērunt, dormīvērunt.', ['erant', 'posuērunt', 'dormīvērunt'], 2, 'The other two verbs are inside the *quī* and *postquam* clauses.'),
 ];
