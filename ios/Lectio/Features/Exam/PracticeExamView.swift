@@ -351,7 +351,7 @@ struct ExamSessionView: View {
         return ScrollView {
             VStack(alignment: .leading, spacing: 26) {
                 Text("Scored report").rubricLabel()
-                HStack(alignment: .top, spacing: 30) {
+                FigureRow(spacing: 30) {
                     Figure(value: "\(t.correct)/\(paper.mcq.count)", caption: "Section I · \(pct)%", tint: Palette.rubric)
                     Figure(value: "\(frqPoints.formatted())/\(frqMax.formatted())", caption: "Section II · self-scored")
                 }

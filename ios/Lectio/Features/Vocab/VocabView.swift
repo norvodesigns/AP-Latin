@@ -58,7 +58,7 @@ struct VocabView: View {
 
         return List {
             Section {
-                HStack(alignment: .top, spacing: 28) {
+                FigureRow(spacing: 28) {
                     Figure(value: "\(due.count)", caption: "due in scope", tint: Palette.rubric)
                     Figure(value: "\(model.vocab.count)", caption: "in rotation")
                     Figure(value: "\(forecast.mature)", caption: "mature")

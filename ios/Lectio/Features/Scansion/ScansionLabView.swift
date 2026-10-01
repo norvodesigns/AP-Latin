@@ -99,7 +99,7 @@ struct ScansionLabView: View {
                     .disabled(!work.isReady)
                 }
 
-                HStack(spacing: 24) {
+                FigureRow(spacing: 24) {
                     Figure(value: "\(masteredCount)", caption: "lines mastered")
                     Figure(value: "\(attempts.count)", caption: "scans")
                     if let lineStats {

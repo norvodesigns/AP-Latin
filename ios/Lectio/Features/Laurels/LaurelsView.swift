@@ -36,11 +36,11 @@ private struct LaurelRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            HStack(alignment: .firstTextBaseline) {
+            LabelRow {
                 Text(laurel.earned ? "❦ \(laurel.latin)" : laurel.latin)
                     .font(.latinItalic(20, relativeTo: .title3))
                     .foregroundStyle(laurel.earned ? Palette.rubric : Palette.ink)
-                Spacer(minLength: 8)
+            } trailing: {
                 if laurel.earned {
                     Text("earned").quietLabel().foregroundStyle(Palette.rubric)
                 } else if laurel.target > 1 {
@@ -78,11 +78,13 @@ struct LaurelsTodayRow: View {
             LaurelsView()
         } label: {
             VStack(alignment: .leading, spacing: 6) {
-                HStack(alignment: .firstTextBaseline) {
+                LabelRow {
                     Text("Laurels").rubricLabel()
-                    Spacer(minLength: 8)
-                    Text("\(earned.count) of \(list.count) earned").quietLabel()
-                    Image(systemName: "chevron.right").font(.caption).foregroundStyle(Palette.inkFaint)
+                } trailing: {
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        Text("\(earned.count) of \(list.count) earned").quietLabel()
+                        Image(systemName: "chevron.right").font(.caption).foregroundStyle(Palette.inkFaint)
+                    }
                 }
                 if let fresh {
                     Text("❦ New: \(Text(fresh.latin).italic()), \(fresh.title.lowercased()).")

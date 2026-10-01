@@ -28,6 +28,44 @@ struct Figure: View {
     }
 }
 
+/// Figures side by side, stacked instead when the text is set to an
+/// accessibility size, where three across would break words mid-letter.
+struct FigureRow<Content: View>: View {
+    var spacing: CGFloat = 32
+    @ViewBuilder var content: Content
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    var body: some View {
+        let layout = typeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 14))
+            : AnyLayout(HStackLayout(alignment: .top, spacing: spacing))
+        layout { content }
+    }
+}
+
+/// A label with a note at the far end, the note moved underneath at
+/// accessibility text sizes so neither is squeezed into a narrow column.
+struct LabelRow<Leading: View, Trailing: View>: View {
+    @ViewBuilder var leading: Leading
+    @ViewBuilder var trailing: Trailing
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    var body: some View {
+        if typeSize.isAccessibilitySize {
+            VStack(alignment: .leading, spacing: 4) {
+                leading
+                trailing
+            }
+        } else {
+            HStack(alignment: .firstTextBaseline) {
+                leading
+                Spacer(minLength: 8)
+                trailing
+            }
+        }
+    }
+}
+
 /// Parchment behind a screen, running under the floating glass bars.
 struct PageBackground: ViewModifier {
     func body(content: Content) -> some View {

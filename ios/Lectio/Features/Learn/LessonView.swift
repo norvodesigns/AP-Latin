@@ -285,7 +285,7 @@ struct LessonView: View {
                     Text(verdict).font(.latinItalic(52, relativeTo: .largeTitle)).foregroundStyle(Palette.rubric)
                     Text(gloss).font(.prose(.title3)).foregroundStyle(Palette.inkMuted)
                 }
-                HStack(alignment: .top, spacing: 32) {
+                FigureRow {
                     Figure(value: "\(Int((score * 100).rounded()))%", caption: "score", tint: Palette.rubric)
                     Figure(value: "\(right) / \(exerciseCount)", caption: "right first time")
                     if !deck.isEmpty { Figure(value: "\(deck.count)", caption: deck.count == 1 ? "word to your deck" : "words to your deck") }

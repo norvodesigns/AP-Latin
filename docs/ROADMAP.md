@@ -211,3 +211,7 @@ finishing a lesson counts toward the streak and daily goal.
 - 2026-09-30: Quārta Unit 4, six lessons: Laocoön's spear, the serpents, the horse hauled
   into Troy (with the half-line explained), Dido's love and the stopped city, the cave, and
   Rumor. The Book 4 speeches move to Unit 5, beside Dido's shade in Book 6.
+- 2026-10-01: Large text in the app: at accessibility sizes, rows of figures (Today, Vocabulary,
+  a lesson's result, the practice exam report, Scansion) stack instead of breaking words
+  mid-letter, and label rows with a note at the end (the Sententia card, Laurels) put the note
+  underneath. Found in CI's large-text screenshots.

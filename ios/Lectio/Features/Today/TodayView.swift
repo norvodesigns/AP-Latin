@@ -69,7 +69,7 @@ struct TodayView: View {
                 Figure(value: "\(days)", caption: days == 1 ? "day until the exam" : "days until the exam", tint: Palette.rubric)
             }
             GoalMeter(seconds: model.studySecondsToday, goalMinutes: progress.studyPlan.minutesPerDay)
-            HStack(alignment: .top, spacing: 32) {
+            FigureRow {
                 Figure(value: "\(Streaks.current(progress.studyDays))", caption: "day streak")
                 Figure(value: "\(Streaks.longest(progress.studyDays))", caption: "longest")
                 Figure(value: "\(due)", caption: due == 1 ? "card due" : "cards due")
@@ -351,9 +351,9 @@ private struct SententiaCard: View {
         let done = model.progress.daily[model.dailyDay] != nil
         let streak = model.dailyStreak
         VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
+            LabelRow {
                 Text("Sententia · the line for today").rubricLabel()
-                Spacer(minLength: 8)
+            } trailing: {
                 if streak > 0 {
                     Text("\(streak) day\(streak == 1 ? "" : "s") running").quietLabel()
                 }
