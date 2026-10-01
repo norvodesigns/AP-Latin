@@ -107,7 +107,7 @@ finishing a lesson counts toward the streak and daily goal.
   - [x] Aeneid 6, 7, 11 and 12 (65 Vergil questions in all)
   - [x] Top up the passages still under four (10.5, 10.6, 10.7, 10.34, 10.90, Aen. 12.791–812)
 - [x] More sight passages with question sets (15: 7 poetry, 8 prose, each with three questions)
-- [ ] More translation drills (8 now; one for each required passage group)
+- [x] More translation drills (19: one for each required passage group)
 
 ## 5. Quality
 
@@ -312,3 +312,9 @@ finishing a lesson counts toward the streak and daily goal.
   Seneca Epistulae 47.1, Livy on Horatius at the bridge (2.10.9–11) and Nepos on Hannibal's oath.
   Each has glosses, a summary and three questions; new questions take their stimulus from the
   passage itself, so the Latin is written once.
+- 2026-10-01: Translation drills grow from 8 to 19, one for every required passage group on the
+  syllabus: Pliny 6.16.16 (*ratiō ratiōnem … timōrem timor*), 6.20.14 (the cries in the dark),
+  7.27.12 (the haircut dream), 10.37.2 (the aqueduct's source), 10.5.1–2 (Harpocras) and 6.4.4–5;
+  Aeneid 2.40–44 (Laocoön), 7.808–811 (Camilla over the grain), 11.539–543 (Metabus names her),
+  12.823–828 (Juno's terms) and 12.947–952, the poem's last lines. Each is cut from the passage data
+  and scored in 15 segments, with what earns the point, a common slip and grammar tags.
