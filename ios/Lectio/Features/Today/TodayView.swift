@@ -25,6 +25,7 @@ struct TodayView: View {
                     Hairline()
                     nextUp
                     Hairline()
+                    WeekRecapSection()
                     TodayInsights()
                     Hairline()
                     everything
@@ -238,6 +239,80 @@ private struct NextUpRow: View {
 /// Where the student stands: accuracy by skill (weighted as the exam weights
 /// it), the weakest spots, and the week of vocabulary ahead — the web
 /// dashboard's mastery, weak-spot and forecast panels.
+/// The last seven days beside the seven before (LectioCore `Recap`, the
+/// web's src/lib/recap.ts). Hidden until there's a fortnight with anything
+/// in it.
+private struct WeekRecapSection: View {
+    @Environment(AppModel.self) private var model
+
+    private struct Row: Identifiable {
+        let n: Int
+        let prev: Int
+        let one: String
+        let many: String
+        var note: String? = nil
+        var id: String { many }
+    }
+
+    var body: some View {
+        let recap = Recap.of(model.progress)
+        let w = recap.week, b = recap.before
+        if !(w.isQuiet && b.isQuiet) {
+            let rows = [
+                Row(n: w.days, prev: b.days, one: "day of study", many: "days of study"),
+                Row(n: w.lessons, prev: b.lessons, one: "lesson finished", many: "lessons finished"),
+                Row(n: w.quiz, prev: b.quiz, one: "quiz question", many: "quiz questions",
+                    note: w.quiz > 0 ? "\(Int((Double(w.quizRight) / Double(w.quiz) * 100).rounded()))% right" : nil),
+                Row(n: w.cards, prev: b.cards, one: "flashcard reviewed", many: "flashcards reviewed"),
+                Row(n: w.sententiae, prev: b.sententiae, one: "sententia", many: "sententiae"),
+                Row(n: w.scansion, prev: b.scansion, one: "line scanned", many: "lines scanned"),
+                Row(n: w.translations, prev: b.translations, one: "translation", many: "translations"),
+            ].filter { $0.n > 0 || $0.prev > 0 }
+            // Its own closing rule, so a hidden recap leaves no doubled line.
+            VStack(alignment: .leading, spacing: 28) {
+            VStack(alignment: .leading, spacing: 12) {
+                LabelRow {
+                    Text("Hebdomas · the last seven days").rubricLabel()
+                } trailing: {
+                    Text(w.isQuiet ? "nothing yet this week" : "against the week before").quietLabel()
+                }
+                ForEach(rows) { r in
+                    HStack(alignment: .firstTextBaseline, spacing: 10) {
+                        Text("\(r.n)")
+                            .font(.system(.title2, design: .serif).weight(.medium))
+                            .monospacedDigit()
+                            .foregroundStyle(Palette.ink)
+                        Text(r.n == 1 ? r.one : r.many)
+                            .font(.prose(.body))
+                            .foregroundStyle(Palette.ink2)
+                        if let note = r.note {
+                            Text(note).font(.prose(.subheadline)).foregroundStyle(Palette.inkMuted)
+                        }
+                        Spacer(minLength: 8)
+                        Text(delta(r.n - r.prev))
+                            .font(.caption.monospacedDigit())
+                            .foregroundStyle(Palette.inkMuted)
+                    }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(spoken(r))
+                }
+            }
+            Hairline()
+            }
+        }
+    }
+
+    private func delta(_ d: Int) -> String {
+        d == 0 ? "same" : d > 0 ? "+\(d)" : "−\(-d)"
+    }
+
+    private func spoken(_ r: Row) -> String {
+        let d = r.n - r.prev
+        let change = d == 0 ? "the same as the week before" : "\(abs(d)) \(d > 0 ? "more" : "fewer") than the week before"
+        return "\(r.n) \(r.n == 1 ? r.one : r.many)\(r.note.map { ", \($0)" } ?? ""), \(change)"
+    }
+}
+
 private struct TodayInsights: View {
     @Environment(AppModel.self) private var model
     @Environment(\.library) private var library

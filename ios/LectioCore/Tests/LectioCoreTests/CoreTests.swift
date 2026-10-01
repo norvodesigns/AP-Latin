@@ -644,6 +644,26 @@ import Testing
     }
 }
 
+@Suite struct RecapTests {
+    @Test func recapMatchesTheWeb() throws {
+        let fixture = try Paths.fixture("recap.json")
+        for c in try #require(fixture["cases"]?.arrayValue) {
+            let name = c["name"]?.stringValue ?? ""
+            let doc = ProgressDocument(raw: try #require(c["data"]?.objectValue))
+            let r = Recap.of(doc, today: try #require(c["today"]?.stringValue))
+            let e = try #require(c["expected"])
+            #expect(r.from == e["from"]?.stringValue, "\(name)")
+            #expect(r.to == e["to"]?.stringValue, "\(name)")
+            for (label, got) in [("week", r.week), ("before", r.before)] {
+                let x = try #require(e[label])
+                func n(_ k: String) -> Int { Int(x[k]?.doubleValue ?? -1) }
+                let want = RecapCounts(days: n("days"), lessons: n("lessons"), quiz: n("quiz"), quizRight: n("quizRight"), cards: n("cards"), sententiae: n("sententiae"), scansion: n("scansion"), translations: n("translations"))
+                #expect(got == want, "\(name) \(label)")
+            }
+        }
+    }
+}
+
 @Suite struct LessonCheckParityTests {
     struct Fixture: Decodable {
         struct Fold: Decodable { let input: String; let output: String }

@@ -88,7 +88,7 @@ finishing a lesson counts toward the streak and daily goal.
 - [x] Achievements across the whole app, not just scansion (Laurels)
 - [x] Sententia: 120 lines, so a year repeats three times rather than eight
 - [x] The daily reminder quotes the day's Sententia
-- [ ] A weekly recap on Today and the dashboard: lessons, minutes, words, the streak
+- [x] A weekly recap on Today and the dashboard: lessons, minutes, words, the streak (minutes left out: they are kept per device, not synced)
 - [x] Word of the day (web card, iOS widget): done as the Sententia of the day, a card on the web and a Home and Lock Screen widget
 
 ## 4. Apple platform extras
@@ -252,3 +252,8 @@ finishing a lesson counts toward the streak and daily goal.
   had made every page that touches a passage (Quiz, Reading Room, Grammar, Exam, Translate, FRQ,
   Devices, Study Plan) download the whole glossary. Each drops by about 140 kB (Quiz 419 → 277 kB,
   Reading Room 402 → 260 kB).
+- 2026-10-01: The week in review, on the dashboard and on Today in the app (*Hebdomas · the last
+  seven days*): days of study, lessons finished, quiz questions and how many right, flashcards
+  reviewed, sententiae, lines scanned and translations, each beside the week before. Worked out
+  from synced progress with the store's UTC days, so it agrees with the streak; a parity fixture
+  holds the app to the web. Hidden until a fortnight has anything in it.

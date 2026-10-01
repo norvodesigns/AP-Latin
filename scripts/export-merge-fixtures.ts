@@ -30,6 +30,7 @@ import { shortGloss, speedWords } from '../src/lib/speed';
 import { nearMiss, otherForms, sentenceWords } from '../src/lib/sentences';
 import { ALL_LESSONS } from '../src/data/curriculum';
 import { COURSE_SHAPE, LAUREL_SPECS, laurels, nextLaurel } from '../src/lib/laurels';
+import { weeklyRecap } from '../src/lib/recap';
 import type { VocabEntry } from '../src/data/types';
 
 /** Every "now" the real code sees while this script runs. (The imports above
@@ -415,6 +416,36 @@ function laurelCases() {
 const laurelsFixture = { specs: LAUREL_SPECS, cases: laurelCases() };
 
 /* ------------------------------------------------------------------ */
+/* The week in review                                                  */
+/* ------------------------------------------------------------------ */
+
+// Activity spread over three weeks around a fixed day, with timestamps at
+// noon UTC so no time zone moves one across a day boundary.
+function recapCases() {
+  const today = '2026-03-15';
+  const day = (n: number) => new RealDate(Date.UTC(2026, 2, 15) - n * 86_400_000).toISOString().slice(0, 10);
+  const at = (n: number) => `${day(n)}T12:00:00.000Z`;
+  const busy = base();
+  busy.studyDays = [0, 1, 2, 4, 6, 7, 9, 13, 14, 20].map(day);
+  for (const [i, n] of [0, 3, 6, 7, 12, 15].entries()) {
+    busy.lessons[`prima-1-${i + 1}`] = { completedAt: at(n), lastAt: at(0), best: 1, attempts: 2 };
+  }
+  busy.quizAttempts = [0, 0, 1, 5, 6, 7, 8, 13, 14].map((n, i) => ({ id: `q${i}`, questionId: `x${i}`, correct: i % 3 !== 0, chosenId: 'a', at: at(n) })) as unknown as SyncableData['quizAttempts'];
+  busy.vocab = Object.fromEntries([0, 2, 6, 7, 10, 30].map((n, i) => [`w${i}`, { ...newCard(`w${i}`), lastReviewed: day(n), reviews: 1 }]));
+  busy.vocab.unseen = newCard('unseen');
+  busy.daily = Object.fromEntries([0, 1, 8].map((n) => [day(n), { id: 'x', score: 1, at: at(n) }]));
+  busy.scansionAttempts = [1, 9].map((n, i) => ({ id: `s${i}`, lineId: 'scan-aen-1-1', at: at(n), correct: 10, total: 12, marks: [] })) as unknown as SyncableData['scansionAttempts'];
+  busy.translationAttempts = [2].map((n, i) => ({ id: `t${i}`, drillId: 'd', at: at(n), text: '', score: 1, maxScore: 2, missedTags: [] })) as unknown as SyncableData['translationAttempts'];
+  return [
+    { name: 'blank', today, data: base() },
+    { name: 'busy', today, data: busy },
+    { name: 'busy-next-week', today: day(-7), data: busy },
+  ].map((c) => ({ ...c, expected: weeklyRecap(c.data, c.today) }));
+}
+
+const recapFixture = { cases: recapCases() };
+
+/* ------------------------------------------------------------------ */
 /* Write, or verify                                                    */
 /* ------------------------------------------------------------------ */
 
@@ -427,6 +458,7 @@ const rendered: Record<string, string> = {
   'speed.json': JSON.stringify(speedFixture) + '\n',
   'sentences.json': JSON.stringify(sentencesFixture) + '\n',
   'laurels.json': JSON.stringify(laurelsFixture) + '\n',
+  'recap.json': JSON.stringify(recapFixture) + '\n',
 };
 
 if (check) {

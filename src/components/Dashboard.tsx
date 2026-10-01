@@ -37,6 +37,7 @@ import { Rich } from '@/components/Rich';
 import { dailyStreak, localDay, sententiaFor } from '@/lib/daily';
 import type { Sententia } from '@/data/daily';
 import { COURSE_SHAPE, laurels, nextLaurel } from '@/lib/laurels';
+import { quietWeek, weeklyRecap } from '@/lib/recap';
 import type { SkillCategory } from '@/data/types';
 import type { UpcomingAssignment } from '@/lib/supabase/dashboard';
 
@@ -334,6 +335,8 @@ export default function Dashboard({
               </span>
             </div>
           </section>
+
+          {mounted && <WeekRecap />}
 
           {/* Weak spots. The meters below say how it is going; this says what
               to do about it, which is the question that changes what a
@@ -1220,6 +1223,59 @@ function SententiaCard() {
       <Link href="/daily" className="btn mt-4">
         {done ? 'Look again' : 'Three questions · 3 min'}
       </Link>
+    </section>
+  );
+}
+
+/**
+ * The last seven days beside the seven before: what was done, counted from
+ * synced progress (src/lib/recap.ts). Hidden until there is a fortnight with
+ * anything in it.
+ */
+function WeekRecap() {
+  const state = useStore();
+  const { week, before } = weeklyRecap(getSyncableData(state));
+  if (quietWeek(week) && quietWeek(before)) return null;
+  const rows = [
+    { n: week.days, prev: before.days, one: 'day of study', many: 'days of study' },
+    { n: week.lessons, prev: before.lessons, one: 'lesson finished', many: 'lessons finished' },
+    { n: week.quiz, prev: before.quiz, one: 'quiz question', many: 'quiz questions', note: week.quiz > 0 ? `${Math.round((week.quizRight / week.quiz) * 100)}% right` : undefined },
+    { n: week.cards, prev: before.cards, one: 'flashcard reviewed', many: 'flashcards reviewed' },
+    { n: week.sententiae, prev: before.sententiae, one: 'sententia', many: 'sententiae' },
+    { n: week.scansion, prev: before.scansion, one: 'line scanned', many: 'lines scanned' },
+    { n: week.translations, prev: before.translations, one: 'translation', many: 'translations' },
+  ].filter((r) => r.n > 0 || r.prev > 0);
+  return (
+    <section className="border-t pt-9" style={{ borderColor: 'var(--rule)' }}>
+      <div className="mb-5 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+        <span className="rubric">Hebdomas · the last seven days</span>
+        <span style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem', color: 'var(--fg-muted)' }}>
+          {quietWeek(week) ? 'nothing yet this week' : 'against the seven days before'}
+        </span>
+      </div>
+      <ul className="grid gap-x-10 gap-y-4 sm:grid-cols-2" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+        {rows.map((r) => {
+          const diff = r.n - r.prev;
+          return (
+            <li key={r.many} className="flex items-baseline gap-3">
+              <span className="numeral tabular-nums" style={{ fontSize: '1.75rem', lineHeight: 1, minWidth: '2.5ch' }}>
+                {r.n}
+              </span>
+              <span style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem', color: 'var(--ink2)' }}>
+                {r.n === 1 ? r.one : r.many}
+                {r.note && <span style={{ color: 'var(--fg-muted)' }}> · {r.note}</span>}
+              </span>
+              <span
+                className="slab-sm ml-auto tabular-nums"
+                style={{ color: 'var(--fg-muted)' }}
+                aria-label={diff === 0 ? 'the same as the week before' : `${Math.abs(diff)} ${diff > 0 ? 'more' : 'fewer'} than the week before`}
+              >
+                {diff === 0 ? 'same' : diff > 0 ? `+${diff}` : `−${-diff}`}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
     </section>
   );
 }
