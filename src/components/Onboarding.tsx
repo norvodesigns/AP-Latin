@@ -8,37 +8,13 @@ import { COURSE, PLACEMENT, ALL_LESSONS } from '@/data/curriculum';
 import { placementContinues, placementStart, unitBeyond, type PlacementAnswer } from '@/lib/placement';
 import { Rich } from '@/components/Rich';
 import { SEEN_KEY as SPLASH_KEY, CURRENT_VERSION } from '@/components/SplashScreen';
+import { ONBOARDED_KEY } from '@/lib/onboarding';
 import { WELCOME_SEEN_KEY } from '@/components/WelcomeGate';
-
-/** Set once the first-run questions are answered or skipped, in this browser. */
-export const ONBOARDED_KEY = 'ap-latin-onboarded';
 
 const UNIT_IDS = COURSE.flatMap((l) => l.units.map((u) => u.id));
 
 type Track = LearnerProfile['track'];
 type Step = 'welcome' | 'track' | 'placement-intro' | 'placement' | 'placement-result' | 'pick-unit' | 'goal' | 'account';
-
-/**
- * Whether this visitor is new enough to be asked where they're starting:
- * nothing studied, no profile, never onboarded, not signed in (a signed-in
- * visitor on a new browser has cloud progress on its way).
- */
-export function needsOnboarding(signedIn: boolean): boolean {
-  if (signedIn) return false;
-  try {
-    if (localStorage.getItem(ONBOARDED_KEY)) return false;
-    if (localStorage.getItem(SPLASH_KEY)) return false;
-  } catch {
-    return false;
-  }
-  const s = useStore.getState();
-  const studied =
-    Object.keys(s.lessons).length > 0 ||
-    Object.keys(s.vocab).length > 0 ||
-    s.quizAttempts.length > 0 ||
-    Object.keys(s.passages).length > 0;
-  return !s.learner && !studied;
-}
 
 /**
  * The first run: who you are, where to start (with a short placement check

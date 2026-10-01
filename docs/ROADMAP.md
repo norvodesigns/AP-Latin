@@ -57,7 +57,7 @@ finishing a lesson counts toward the streak and daily goal.
 - [x] Level 3, *Tertia* (toward AP), 8 units, 37 lessons: adapted Caesar and Pliny, poetic word order, meter and
       scansion basics, translation technique, reading at sight. Hands off to the AP section.
 
-- [ ] Level IV, *Quārta*: guided lessons through the AP syllabus passages (Aeneid and Pliny),
+- [x] Level IV, *Quārta*, 7 units, 44 lessons: guided lessons through the AP syllabus passages (Aeneid and Pliny),
       each tied to its Reading Room passage: read a section, then comprehension, grammar and
       style questions of the exam's kinds
   - [x] U1 Pliny: Vesuvius, Letters 6.16 and 6.20 (7 lessons)
@@ -66,7 +66,7 @@ finishing a lesson counts toward the streak and daily goal.
   - [x] U4 Aeneid 2 and 4: Laocoön and the serpents (2.40–56, 201–249); Dido in love, the cave, Fama (4.74–89, 165–197); 6 lessons
   - [x] U5 Aeneid 4 and 6: Dido and Aeneas face to face (4.305–361); Dido's shade, Augustus, *tū regere imperiō* (6.450–476, 788–800, 847–853); 7 lessons
   - [x] U6 Aeneid 7 and 11: Latinus, Turnus, Camilla (7.45–58, 783–792, 803–817); Camilla's childhood (11.532–594); 6 lessons
-  - [ ] U7 Aeneid 12: Jupiter and Juno (12.791–828); the death of Turnus (12.919–952)
+  - [x] U7 Aeneid 12: Jupiter and Juno (12.791–828); the death of Turnus (12.919–952); 4 lessons
 
 ## 2. Onboarding and placement
 
@@ -103,6 +103,11 @@ finishing a lesson counts toward the streak and daily goal.
 - [x] Screenshot job covers Learn, a lesson in progress, onboarding
 - [ ] Accessibility pass: VoiceOver labels on every new control, Dynamic Type at XXL
 - [ ] Performance: content decode time, big lists
+  - [x] Web: pages no longer download the whole course, glossary and passages (the 404 page's client
+        components resolved to the dashboard's chunks; first-run and search data now load on demand)
+  - [ ] Web: the home page and the glossary-heavy pages (Quiz, Read, Vocabulary) still ship the
+        full vocabulary; split it per section or load it lazily
+  - [ ] App: content decode time at launch, measured on a device
 - [ ] Review pass over every new screen on iPhone and iPad, light and dark
 
 ## Log
@@ -223,3 +228,16 @@ finishing a lesson counts toward the streak and daily goal.
 - 2026-10-01: Quārta Unit 6, six lessons on the Italians: Latinus and the portents (*maius
   opus*), Turnus's Chimaera helmet and Io shield, Camilla running over the grain, and all of
   Diana's story of her (the flight, the baby on the spear, the huntress, the avenging arrow).
+- 2026-10-01: Level IV, *Quārta*, is complete: Unit 7 reads the end of the Aeneid in four
+  lessons (Jupiter forbids Juno, *occidit, occideritque sinās cum nōmine Trōia*, Turnus's plea,
+  *Pallās tē immolat*), closing on the echo of 1.92 and a note that the course is done. Every
+  passage on the AP syllabus now has a guided lesson: 165 lessons in four levels. A new laurel,
+  *Quārta perfecta*, with a parity case for a whole level earned; Tertia's last lesson now points
+  to Level IV instead of calling itself the end.
+- 2026-10-01: Web performance: every page was downloading about 700 kB of compressed JS, the whole
+  course, the glossary and all passages. Cause: the 404 page (added for the dark-mode fix) used
+  client components, and Next resolves the root not-found's client modules against the home page's
+  chunk list, which is included in every route. It is now plain markup. The first-run screens
+  (with the course for the placement check) load only for a new visitor, and the search palette
+  fetches the passage list when first opened. Settings now loads 203 kB; Quiz, Read and the course
+  about 410 kB.

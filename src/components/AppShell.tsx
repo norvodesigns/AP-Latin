@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { NAV, NAV_GROUPS, navFor, type NavItem } from '@/lib/nav';
 import { useStore, daysUntilExam, prefersDarkDefault } from '@/store/useStore';
 import { useStudyTimeSync } from '@/hooks/useStudyTimeSync';
@@ -13,8 +14,12 @@ import AccountMenu from './AccountMenu';
 import WelcomeGate from './WelcomeGate';
 import FirstLoginWelcome from './FirstLoginWelcome';
 import SplashScreen from './SplashScreen';
-import Onboarding, { needsOnboarding } from './Onboarding';
+import { needsOnboarding } from '@/lib/onboarding';
 import DailyGoalToast from './DailyGoalToast';
+
+// The first run carries the whole course (for the placement check), so it is
+// fetched only for the visitor who will see it.
+const Onboarding = dynamic(() => import('./Onboarding'), { ssr: false });
 
 /**
  * The five sections a student moves between constantly. These are always on

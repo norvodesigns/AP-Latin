@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { NAV } from '@/lib/nav';
-import { allPassages } from '@/data/passages';
+import type { Passage } from '@/data/types';
 
 interface Item {
   id: string;
@@ -20,6 +20,20 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
 
+  // The passages (and the glossary they bring) are fetched the first time the
+  // palette opens, not with every page.
+  const [passages, setPassages] = useState<Passage[] | null>(null);
+  useEffect(() => {
+    if (!open || passages) return;
+    let live = true;
+    import('@/data/passages').then((m) => {
+      if (live) setPassages(m.allPassages);
+    });
+    return () => {
+      live = false;
+    };
+  }, [open, passages]);
+
   const items: Item[] = useMemo(() => {
     const sections: Item[] = NAV.map((n) => ({
       id: `s:${n.href}`,
@@ -28,15 +42,15 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
       href: n.href,
       kind: 'section',
     }));
-    const passages: Item[] = allPassages.map((p) => ({
+    const passageItems: Item[] = (passages ?? []).map((p) => ({
       id: `p:${p.id}`,
       label: p.citation,
       hint: `${p.title}${p.required ? '' : ' · supplementary'}`,
       href: `/read/${p.id}`,
       kind: 'passage',
     }));
-    return [...sections, ...passages];
-  }, []);
+    return [...sections, ...passageItems];
+  }, [passages]);
 
   const results = useMemo(() => {
     const needle = q.trim().toLowerCase();
