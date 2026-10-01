@@ -385,3 +385,6 @@ finishing a lesson counts toward the streak and daily goal.
   `project.yml`. Build numbers are now a timestamp on both the EAS and the GitHub-Mac routes. Not yet
   run: it needs the owner's Expo and Apple logins (steps in `ios/TESTFLIGHT.md`); the macOS GitHub
   route stays as the fallback.
+- 2026-10-01: First EAS build of the app finished and produced an .ipa (the owner ran it: project linked as
+  @norvodesigns/lectio, signing created, XcodeGen recipe and watch targets built). The submission step was
+  cut off by a dropped connection on the owner's Mac; resubmit with `eas submit -p ios --latest`.

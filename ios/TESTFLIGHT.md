@@ -58,6 +58,11 @@ archive) and `package-lock.json`. `npm run verify` checks that `app.json` still 
 Build numbers are a timestamp (`yymmddHHMM`), set on every build, so they always rise and all four
 targets agree. You never edit them.
 
+If your connection drops while the terminal is waiting on a build or its submission (an
+"api.expo.dev ... TLS" or "GraphQL request failed" error), nothing is lost: EAS keeps going in the
+cloud. Check expo.dev > the lectio project > Builds and Submissions. If the build finished but was not
+submitted, run `npx eas-cli@latest submit --platform ios --latest` from `ios/`.
+
 ### What may need a round or two
 
 This route hasn't run yet: EAS needs your Expo and Apple logins, which I don't have. It follows Expo's
