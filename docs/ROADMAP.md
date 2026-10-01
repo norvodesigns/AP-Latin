@@ -359,3 +359,10 @@ finishing a lesson counts toward the streak and daily goal.
   numbers and room to write between lines, and the passage's vocabulary in two columns (the CED words
   the glossary finds in this text, worked out when the page is idle). Navigation, buttons, tips and
   the side rail are left off, and paper is always black on white, even from dark mode.
+- 2026-10-01: Free-response fixes. The practice exam's Section II showed the first twelve lines of a
+  passage rather than the lines its prompt is set on (Pliny 6.16.18–20 showed the opening of the
+  letter); prompts now carry a `lineRange`, and the exam, the workshop and the app show just those
+  lines. The Pliny model answer quoted Latin that is not in the letter; rewritten from the text,
+  and `verify` now fails a model answer that quotes Latin outside its passage, or a prompt whose
+  lines are not in the passage. The exam's FRQ 2 is now drawn from all 19 translation drills (a
+  retake sets a different passage) on both platforms, with the choice in LectioCore and a test.

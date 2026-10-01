@@ -35,6 +35,7 @@ import { deviceCards } from '../src/data/devices';
 import { contextCards, CONTEXT_TOPIC_LABELS } from '../src/data/context';
 import {
   frqPrompts,
+  examTranslationPrompts,
   FRQ_TYPE_LABELS,
   SHORT_ESSAY_RUBRIC,
   PROJECT_ESSAY_RUBRIC,
@@ -100,6 +101,7 @@ const files: Record<string, unknown> = {
   'context.json': contextCards,
   'frq.json': {
     prompts: frqPrompts,
+    translation: examTranslationPrompts,
     rubrics: {
       shortEssay: SHORT_ESSAY_RUBRIC,
       projectEssay: PROJECT_ESSAY_RUBRIC,

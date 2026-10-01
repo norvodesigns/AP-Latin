@@ -194,7 +194,7 @@ struct FrqWorkspaceView: View {
         } else if let id = prompt.passageId, let passage = library?.passage(id) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(prompt.citation ?? passage.citation).quietLabel()
-                ForEach(passage.lines) { line in
+                ForEach(prompt.lines(of: passage)) { line in
                     HStack(alignment: .firstTextBaseline, spacing: 10) {
                         Text("\(line.n)").font(.caption2.monospacedDigit()).foregroundStyle(Palette.inkFaint).frame(width: 28, alignment: .trailing)
                         Text(line.latin).font(.latin(19)).foregroundStyle(Palette.ink)

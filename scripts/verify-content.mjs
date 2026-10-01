@@ -335,6 +335,32 @@ for (const f of frqPrompts) {
   if (expected && total !== expected) {
     fail(`frq ${f.id}: rubric totals ${total} points, but ${f.type} is worth ${expected} on the exam`);
   }
+  // A prompt on a passage names its lines, and they must be in the passage,
+  // or the page shows the student the wrong Latin.
+  if (f.passageId && byId.has(f.passageId)) {
+    const ns = byId.get(f.passageId).lines.map((l) => l.n);
+    if (!f.lineRange) fail(`frq ${f.id}: no lineRange for the lines of ${f.passageId} it is set on`);
+    else if (!ns.includes(f.lineRange[0]) || !ns.includes(f.lineRange[1])) {
+      fail(`frq ${f.id}: lineRange ${f.lineRange.join('–')} is not in ${f.passageId}`);
+    }
+  }
+  // A model answer teaches citing the text, so every Latin phrase it quotes
+  // must be in the passage as written. English quotations (translations) are
+  // told apart by their common words.
+  const source = byId.get(f.passageId);
+  if (source) {
+    const text = norm(source.lines.map((l) => l.latin).join(' ') + ' ' + (f.latin ?? ''));
+    const english = /\b(the|and|of|to|he|his|her|she|was|is|in|a|I|you|that|with|for|it)\b/i;
+    for (const m of f.sampleResponse.matchAll(/["“]([^"”]{3,200})["”]/g)) {
+      const quote = m[1];
+      if (english.test(quote)) continue;
+      for (const part of quote.split(/…|\.\.\./)) {
+        if (norm(part).length >= 4 && !text.includes(norm(part))) {
+          fail(`frq ${f.id}: the model answer quotes "${part.trim()}", which is not in ${source.citation}`);
+        }
+      }
+    }
+  }
 }
 
 // The graded Practice Exam administers exactly one prompt per FRQ type — a

@@ -82,11 +82,9 @@ nonisolated struct ExamPaper: Identifiable, Sendable {
         let pool = (library.questions + library.sightQuestions).shuffled()
         var paper: [Question] = []
         while paper.count < mcqCount, !pool.isEmpty { paper += pool.prefix(mcqCount - paper.count) }
-        // One short-essay slot: the bank holds alternates for it (Pliny, Vergil).
-        let essays = library.frqPrompts.filter { $0.type == "short-essay" }
-        let chosen = essays.randomElement()?.id
-        let frqs = library.frqPrompts.filter { $0.type != "short-essay" || $0.id == chosen }
-        return ExamPaper(mcq: Array(paper.prefix(mcqCount)), frqs: frqs)
+        // One prompt of each type; the translation comes from all the drills.
+        var rng = SystemRandomNumberGenerator()
+        return ExamPaper(mcq: Array(paper.prefix(mcqCount)), frqs: library.examPrompts(using: &rng))
     }
 }
 
@@ -304,9 +302,14 @@ struct ExamSessionView: View {
                             Spacer()
                             Text("~\(p.minutes) min").font(.caption).foregroundStyle(Palette.inkMuted)
                         }
-                        if let id = p.passageId, let passage = library?.passage(id) {
+                        if let latin = p.latin {
+                            Text(latin).font(.latin(17)).foregroundStyle(Palette.ink)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(12).background(Palette.sunk, in: .rect(cornerRadius: 10))
+                        } else if let id = p.passageId, let passage = library?.passage(id) {
+                            // The lines the prompt is set on, not the head of the passage.
                             VStack(alignment: .leading, spacing: 3) {
-                                ForEach(passage.lines.prefix(12)) { line in
+                                ForEach(p.lines(of: passage)) { line in
                                     Text(line.latin).font(.latin(17)).foregroundStyle(Palette.ink)
                                 }
                             }

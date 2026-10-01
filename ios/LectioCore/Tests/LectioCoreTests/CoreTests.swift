@@ -802,3 +802,24 @@ import Testing
         #expect(Forge.round([], mode: .make, length: 10, using: &rng).isEmpty)
     }
 }
+
+@Suite struct ExamPromptTests {
+    @Test func oneOfEachTypeAndTheRightLines() throws {
+        let library = try ContentLibrary(directory: Paths.content)
+        #expect(library.examTranslationPrompts.count == library.translationDrills.count)
+        var rng = SystemRandomNumberGenerator()
+        for _ in 0..<20 {
+            let paper = library.examPrompts(using: &rng)
+            #expect(paper.map(\.type) == ["short-answer", "translation", "short-essay", "project-prose", "project-poetry"])
+            #expect(paper[1].latin?.isEmpty == false)
+        }
+        // A prompt on a passage shows only its own lines, and some of them.
+        for prompt in library.frqPrompts {
+            guard let id = prompt.passageId, let passage = library.passage(id) else { continue }
+            let lines = prompt.lines(of: passage)
+            #expect(!lines.isEmpty)
+            #expect(lines.count <= passage.lines.count)
+            if let range = prompt.lineRange { #expect(lines.allSatisfy { $0.n >= range[0] && $0.n <= range[1] }) }
+        }
+    }
+}

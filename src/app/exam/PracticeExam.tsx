@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { questions as syllabusQuestions, QUESTION_TYPE_LABELS } from '@/data/questions';
 import { sightQuestions } from '@/data/sight';
-import { frqPrompts, FRQ_TYPE_LABELS } from '@/data/frq';
+import { examPrompts, promptLines, FRQ_TYPE_LABELS } from '@/data/frq';
 import { getPassage } from '@/data/passages';
 import { useStore } from '@/store/useStore';
 import { Page, PageHeader, Panel, CalledOut, SourceNote } from '@/components/ui';
@@ -50,17 +50,15 @@ export default function PracticeExam() {
   /* The real Section II is five FRQs: short-answer, translation, one
      short-essay, and the two course-project essays (project-prose and
      project-poetry are official CED-scored components, not extras — see
-     the point/minute totals documented at the top of data/frq.ts). The
-     bank stores two short-essay prompts — a Pliny option and a Vergil
-     option — as alternate practice material for that one slot, so a
-     retake can land on either. Filtering by type, not array index, means
-     a third short-essay prompt added later still yields exactly one. */
-  const examFrqs = useMemo(() => {
-    const essays = frqPrompts.filter((p) => p.type === 'short-essay');
-    const chosenId = essays[Math.floor(Math.random() * essays.length)]?.id;
-    return frqPrompts.filter((p) => p.type !== 'short-essay' || p.id === chosenId);
+     the point/minute totals documented at the top of data/frq.ts). One
+     prompt of each type, drawn at random from what the bank holds for it;
+     the translation comes from all nineteen drills, so a retake sets a
+     different passage. */
+  const examFrqs = useMemo(
+    () => examPrompts(),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seed]);
+    [seed],
+  );
 
   /* timers */
   useEffect(() => {
@@ -355,9 +353,19 @@ export default function PracticeExam() {
                   <span className="chip">~{p.minutes} min</span>
                 </div>
 
-                {passage && (
+                {p.latin ? (
                   <div className="mb-3 px-3.5 py-3" style={{ background: 'var(--bg-sunk)' }}>
-                    {passage.lines.slice(0, 12).map((l) => (
+                    <p
+                      className={passage?.genre === 'poetry' ? 'latin-verse' : 'latin'}
+                      style={{ margin: 0, fontSize: '1.125rem', whiteSpace: 'pre-line' }}
+                    >
+                      {p.latin}
+                    </p>
+                  </div>
+                ) : passage && (
+                  <div className="mb-3 px-3.5 py-3" style={{ background: 'var(--bg-sunk)' }}>
+                    {/* The lines the prompt is set on, not the head of the passage. */}
+                    {promptLines(p, passage.lines).map((l) => (
                       <div key={l.n} className="flex items-baseline gap-3">
                         <span className="w-7 shrink-0 text-right tabular-nums" style={{ fontSize: '0.6875rem', color: 'var(--fg-faint)' }}>
                           {l.n}

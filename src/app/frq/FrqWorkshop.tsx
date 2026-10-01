@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { frqPrompts, getPrompt, FRQ_TYPE_LABELS, CHECKPOINT_1_RUBRIC, CHECKPOINT_2_RUBRIC } from '@/data/frq';
+import { frqPrompts, getPrompt, promptLines, FRQ_TYPE_LABELS, CHECKPOINT_1_RUBRIC, CHECKPOINT_2_RUBRIC } from '@/data/frq';
 import { getPassage } from '@/data/passages';
 import { useStore, type ProjectPassage } from '@/store/useStore';
 import { useAiStatus, useAiCall } from '@/lib/useAi';
@@ -213,7 +213,7 @@ function Workspace({ prompt, onBack }: { prompt: FrqPrompt; onBack: () => void }
       ) : passage ? (
         <CalledOut className="mb-9">
           <div className="slab-sm mb-2">{prompt.citation ?? passage.citation}</div>
-          {passage.lines.map((l) => (
+          {promptLines(prompt, passage.lines).map((l) => (
             <div key={l.n} className="flex items-baseline gap-3">
               <span className="w-8 shrink-0 text-right tabular-nums" style={{ fontSize: '0.6875rem', color: 'var(--fg-faint)' }}>
                 {l.n}

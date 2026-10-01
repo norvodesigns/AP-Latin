@@ -1,4 +1,5 @@
-import type { FrqPrompt, RubricRow } from './types';
+import type { FrqPrompt, RubricRow, TranslationDrill } from './types';
+import { translationDrills } from './translation.ts';
 
 /**
  * Free-response prompts and the official CED rubric shapes.
@@ -222,6 +223,7 @@ export const frqPrompts: FrqPrompt[] = [
     title: 'Short Answer — Aeneas answers Dido',
     passageId: 'aen-4-305-361',
     citation: 'Aeneid 4.333–339',
+    lineRange: [333, 339],
     minutes: 15,
     subquestions: [
       { id: 'a', label: 'a', prompt: 'Translate lines 333–335 (ego te … promeritam) as literally as possible.', points: 2 },
@@ -249,7 +251,8 @@ g. pro re pauca loquar (line 337) — and tandem pauca refert (line 333).`,
     type: 'short-essay',
     title: 'Short Essay — the death of Pliny the Elder',
     passageId: 'pliny-6-16-b',
-    citation: 'Pliny, Letters 6.16.19–20',
+    citation: 'Pliny, Letters 6.16.18–20',
+    lineRange: [18, 20],
     minutes: 25,
     subquestions: [
       {
@@ -279,11 +282,11 @@ g. pro re pauca loquar (line 337) — and tandem pauca refert (line 333).`,
       },
     ],
     rubric: SHORT_ESSAY_RUBRIC,
-    sampleResponse: `A (i) He behaves with deliberate calm, treating the eruption as if it were an ordinary evening — bathing, dining and sleeping.
-A (ii) "recubans postquam aquam frigidam poposcit hausitque" and "quiescebat certe altissimo somno"
-A (iii) "reclining, after he asked for cold water and drank it"; "he was certainly resting in the deepest sleep."
+    sampleResponse: `A (i) He behaves with deliberate calm, treating the crisis as an ordinary evening: he lies down and calls for water, and his body is found looking as though he were asleep.
+A (ii) "super abiectum linteum recubans semel atque iterum frigidam aquam poposcit hausitque" (18)
+A (iii) "lying on a linen cloth spread out for him, he asked once and again for cold water and drank it."
 
-B. Pliny constructs his uncle's death as an exemplary Roman death by making composure, not survival, the measure of the man. The detail that he lay down and "aquam frigidam poposcit hausitque" places an ordinary act of the dinner table in the middle of a catastrophe, and the deliberateness of poposcit — he demands it, he is not given it — keeps him an agent rather than a victim to the last. Pliny reinforces this by insisting on the reality of the sleep, "quiescebat certe altissimo somno", where certe answers an objection the reader might raise, that the calm was only a performance. This belongs to the Roman tradition in which a good death is judged by bearing rather than outcome, and it lets Pliny present a man who died of the fumes as one who mastered the moment; the closing description of the body "similior quiescenti quam mortuo" completes the argument by making even the corpse testify to his self-command.`,
+B. Pliny presents his uncle's death as an exemplary Roman death by making composure, not survival, the measure of the man. Lying on a cloth spread out for him, he "frigidam aquam poposcit hausitque" (18): an ordinary act of the dinner table in the middle of a catastrophe, and poposcit, repeated "semel atque iterum", keeps him the one giving orders rather than a victim. Even the collapse is reported like a careful finding, "ut ego colligo" (19), as though his death were a fact to be established rather than a horror to be felt. The account ends on the body itself, found "integrum illaesum opertumque ut fuerat indutus", its look "quiescenti quam defuncto similior" (20), more like a man resting than a dead one. That last image makes even the corpse testify to the self-command Pliny has claimed for his uncle throughout, which is how the Romans judged a good death: by bearing, not by outcome.`,
     scoringNotes:
       'Part B is where most points are lost. The two things graders look for: is there an interpretation that answers the prompt, and is every claim tied to specific Latin that is quoted and correctly located. A claim with no Latin behind it earns nothing.',
   },
@@ -294,6 +297,7 @@ B. Pliny constructs his uncle's death as an exemplary Roman death by making comp
     title: 'Short Essay — the death of Turnus',
     passageId: 'aen-12-919-952',
     citation: 'Aeneid 12.938–952',
+    lineRange: [938, 952],
     minutes: 25,
     subquestions: [
       { id: 'a-i', label: 'A (i)', prompt: 'Identify what causes Aeneas to change his mind.', points: 1 },
@@ -323,6 +327,7 @@ B. The ending sets Anchises' imperial programme against the reality of the man w
     title: 'Translation — the proem',
     passageId: 'aen-1-1-33',
     citation: 'Aeneid 1.1–7',
+    lineRange: [1, 7],
     minutes: 15,
     subquestions: [
       {
@@ -420,3 +425,72 @@ export const FRQ_TYPE_LABELS: Record<FrqPrompt['type'], string> = {
   'project-prose': 'FRQ 4 · Project Prose Essay',
   'project-poetry': 'FRQ 5 · Project Poetry Essay',
 };
+
+/** FRQ 2 is scored in 15 segments, every one a point. */
+const TRANSLATION_RUBRIC: RubricRow[] = [
+  {
+    id: 't1',
+    label: 'Segments',
+    maxPoints: 15,
+    criteria:
+      'The passage is divided into 15 segments. Each segment earns one point when every Latin word in it is accounted for with correct grammar.',
+    decisionRules: [
+      'Correct tense, voice, mood, number, and case function are all required.',
+      'A paraphrase that drops a construction does not earn the segment.',
+      'Idiomatic English is acceptable where it preserves the grammar.',
+    ],
+  },
+];
+
+/** A translation drill set as the exam's FRQ 2: its Latin, the instruction, its model. */
+export function translationPrompt(d: TranslationDrill): FrqPrompt {
+  return {
+    id: `frq2-${d.id}`,
+    type: 'translation',
+    title: `Translation · ${d.citation}`,
+    passageId: d.passageId,
+    latin: d.latin,
+    citation: d.citation,
+    lineRange: d.lineRange,
+    minutes: 15,
+    subquestions: [
+      {
+        id: 'translate',
+        label: '',
+        prompt: 'Translate the passage as literally as possible. Your translation should account for every Latin word.',
+        points: 15,
+      },
+    ],
+    rubric: TRANSLATION_RUBRIC,
+    sampleResponse: d.modelTranslation,
+    scoringNotes: 'Scored in 15 segments. The Translate section breaks this passage into them, with what earns each point.',
+  };
+}
+
+/**
+ * The practice exam's FRQ 2 is drawn from every translation drill, one for
+ * each group of required reading, so a retake sets a different passage.
+ */
+export const examTranslationPrompts: FrqPrompt[] = translationDrills.map(translationPrompt);
+
+/**
+ * Section II of a practice exam: one prompt of each type, in exam order, the
+ * translation from the drills and the rest from the bank. `rand` is injected
+ * so the choice can be reproduced.
+ */
+export function examPrompts(rand: () => number = Math.random): FrqPrompt[] {
+  const types: FrqPrompt['type'][] = ['short-answer', 'translation', 'short-essay', 'project-prose', 'project-poetry'];
+  return types.flatMap((type) => {
+    const pool = type === 'translation' && examTranslationPrompts.length
+      ? examTranslationPrompts
+      : frqPrompts.filter((p) => p.type === type);
+    return pool.length ? [pool[Math.floor(rand() * pool.length)]] : [];
+  });
+}
+
+/** The Latin a prompt is set on: its own text, else its lines of the passage. */
+export function promptLines<L extends { n: number }>(p: FrqPrompt, lines: L[]): L[] {
+  if (!p.lineRange) return lines;
+  const [from, to] = p.lineRange;
+  return lines.filter((l) => l.n >= from && l.n <= to);
+}

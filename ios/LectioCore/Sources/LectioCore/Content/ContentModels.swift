@@ -271,6 +271,9 @@ public struct FrqPrompt: Codable, Sendable, Hashable, Identifiable {
     public let passageId: String?
     public let latin: String?
     public let citation: String?
+    /// The lines (sections, for prose) of the passage the prompt is set on.
+    /// Absent in a bundle exported before it existed.
+    public let lineRange: [Int]?
     public let minutes: Int
     public let subquestions: [FrqSubquestion]
     public let rubric: [RubricRow]
@@ -289,6 +292,16 @@ public struct FrqRubrics: Codable, Sendable, Hashable {
 struct FrqFile: Codable, Sendable {
     let prompts: [FrqPrompt]
     let rubrics: FrqRubrics
+    /// FRQ 2 prompts made from the translation drills, for the practice exam.
+    let translation: [FrqPrompt]?
+}
+
+extension FrqPrompt {
+    /// The lines of `passage` the prompt is set on: all of them if it names none.
+    public func lines(of passage: Passage) -> [PassageLine] {
+        guard let range = lineRange, range.count == 2 else { return passage.lines }
+        return passage.lines.filter { $0.n >= range[0] && $0.n <= range[1] }
+    }
 }
 
 public struct SightPassage: Codable, Sendable, Hashable, Identifiable {

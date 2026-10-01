@@ -356,6 +356,9 @@ export interface FrqPrompt {
   /** Latin shown with the prompt, when not drawn from a stored passage. */
   latin?: string;
   citation?: string;
+  /** The lines (sections, for prose) of `passageId` the prompt is set on, so
+   *  the page shows those and not the whole passage. */
+  lineRange?: [number, number];
   /** Minutes suggested by the CED for this question. */
   minutes: number;
   subquestions: Array<{ id: string; label: string; prompt: string; points: number }>;

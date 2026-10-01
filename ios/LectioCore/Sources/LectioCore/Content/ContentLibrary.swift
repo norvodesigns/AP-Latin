@@ -24,6 +24,9 @@ public struct ContentLibrary: Sendable {
     public let contextCards: [ContextCard]
     public let frqPrompts: [FrqPrompt]
     public let frqRubrics: FrqRubrics
+    /// FRQ 2 prompts made from every translation drill; the practice exam
+    /// draws its translation from these. Empty for an older bundle.
+    public let examTranslationPrompts: [FrqPrompt]
     public let sightPassages: [SightPassage]
     public let sightAuthors: [String]
     public let translationDrills: [TranslationDrill]
@@ -93,6 +96,7 @@ public struct ContentLibrary: Sendable {
         let frq: FrqFile = try load("frq.json")
         frqPrompts = frq.prompts
         frqRubrics = frq.rubrics
+        examTranslationPrompts = frq.translation ?? []
         let sight: SightFile = try load("sight.json")
         sightPassages = sight.passages
         sightQuestions = sight.questions
@@ -126,6 +130,18 @@ public struct ContentLibrary: Sendable {
     }
 
     public func passage(_ id: String) -> Passage? { passageIndex[id].map { passages[$0] } }
+
+    /// Section II of a practice exam, as on the web (`examPrompts` in
+    /// src/data/frq.ts): one prompt of each type in exam order, the
+    /// translation from the drills and the rest from the bank.
+    public func examPrompts<R: RandomNumberGenerator>(using rng: inout R) -> [FrqPrompt] {
+        ["short-answer", "translation", "short-essay", "project-prose", "project-poetry"].compactMap { type in
+            let pool = type == "translation" && !examTranslationPrompts.isEmpty
+                ? examTranslationPrompts
+                : frqPrompts.filter { $0.type == type }
+            return pool.randomElement(using: &rng)
+        }
+    }
     public func vocab(_ id: String) -> VocabEntry? { vocabIndex[id] }
     public func question(_ id: String) -> Question? { questionIndex[id] }
 
