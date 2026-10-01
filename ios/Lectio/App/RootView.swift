@@ -254,6 +254,8 @@ private struct GoalToast: View {
             .transition(.move(edge: .top).combined(with: .opacity))
             .sensoryFeedback(.success, trigger: model.goalJustReached)
             .onTapGesture { model.goalJustReached = false }
+            .accessibilityAddTraits(.isButton)
+            .accessibilityHint("Dismisses this message")
             .task {
                 try? await Task.sleep(for: .seconds(5))
                 model.goalJustReached = false

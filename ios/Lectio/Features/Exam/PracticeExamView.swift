@@ -234,6 +234,8 @@ struct ExamSessionView: View {
                         }
                         .buttonStyle(PressStyle())
                         .keyboardShortcut(KeyEquivalent(Character("\(i + 1)")), modifiers: [])
+                        .accessibilityLabel(o.text)
+                        .accessibilityAddTraits(chosen ? .isSelected : [])
                     }
                 }
                 .padding(20)

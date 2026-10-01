@@ -121,6 +121,12 @@ finishing a lesson counts toward the streak and daily goal.
 
 - [x] Screenshot job covers Learn, a lesson in progress, onboarding
 - [ ] Accessibility pass: VoiceOver labels on every new control, Dynamic Type at XXL
+  - [x] Answer choices say in words what the colours show: "Correct answer", "Your answer,
+        incorrect", and "selected" while choosing (lessons, Forms Forge, sight reading, the
+        practice exam, placement, devices); the goal banner reads as a button
+  - [x] axe audit of the pages changed on 1 October (lab passage mode, Reader, Sight, Translate,
+        filtered quiz), light and dark: clean
+  - [ ] VoiceOver walk-through on a device (owner, with TestFlight)
 - [ ] Performance: content decode time, big lists
   - [x] Web: pages no longer download the whole course, glossary and passages (the 404 page's client
         components resolved to the dashboard's chunks; first-run and search data now load on demand)

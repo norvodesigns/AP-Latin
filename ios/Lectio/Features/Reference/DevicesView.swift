@@ -168,6 +168,7 @@ private struct SpotTheDevice: View {
                         .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Palette.ruleStrong, lineWidth: 0.5))
                     }
                     .buttonStyle(PressStyle())
+                    .accessibilityValue(chosen == nil ? "" : isAnswer ? "Correct answer" : isChosen ? "Your answer, incorrect" : "")
                 }
                 if chosen != nil {
                     Text(item.example.analysis).font(.prose(.callout)).foregroundStyle(Palette.ink2)

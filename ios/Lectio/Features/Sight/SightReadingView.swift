@@ -297,6 +297,9 @@ private struct SightQuestionView: View {
                 }
                 .buttonStyle(PressStyle())
                 .disabled(submitted)
+                .accessibilityLabel(option.text)
+                .accessibilityValue(submitted ? (isAnswer ? "Correct answer" : isChosen ? "Your answer, incorrect" : "") : "")
+                .accessibilityAddTraits(isChosen ? .isSelected : [])
             }
             if submitted {
                 Text(question.explanation).font(.prose(.callout)).foregroundStyle(Palette.ink2)

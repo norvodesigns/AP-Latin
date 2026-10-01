@@ -149,6 +149,7 @@ struct OnboardingView: View {
                     }
                     .buttonStyle(PressStyle())
                     .disabled(chosen != nil)
+                    .accessibilityValue(chosen == nil ? "" : i == q.step.answer ? "Correct answer" : i == chosen ? "Your answer, incorrect" : "")
                 }
                 Button("I don’t know this yet") {
                     answers.append(Placement.Answer(unit: q.unit, right: false))

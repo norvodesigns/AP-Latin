@@ -70,6 +70,9 @@ struct OptionCard<Label: View>: View {
                 .contentShape(.rect(cornerRadius: 14))
         }
         .buttonStyle(PressStyle())
+        // The colours say right and wrong; VoiceOver needs it in words.
+        .accessibilityValue(state == .right ? "Correct answer" : state == .wrong ? "Your answer, incorrect" : "")
+        .accessibilityAddTraits(state == .selected ? .isSelected : [])
     }
 
     private var background: Color {
