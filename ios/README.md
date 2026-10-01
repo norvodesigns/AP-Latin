@@ -141,7 +141,10 @@ the day's flashcards (the iPhone schedules; grades made on the wrist sync back t
   app group.
 - `LectioWatch`: the watchOS app, embedded in the iPhone app so it installs on a paired watch. It
   talks to the phone over WatchConnectivity.
-- `LectioCore`: shared by all three.
+- `LectioWatchWidgets`: the watch face complications (cards left to review), embedded in the watch
+  app. They read a `WatchGlance` the watch app writes to the same app group on the watch.
+- `LectioCore`: shared by all of them.
 
-The app group and the watch app's bundle ID (`com.norvodesigns.lectio.watchkitapp`) are registered
-automatically the first time Xcode signs each target.
+The app group and the bundle IDs (`com.norvodesigns.lectio.watchkitapp` and
+`com.norvodesigns.lectio.watchkitapp.widgets` for the watch) are registered automatically the first
+time Xcode signs each target.

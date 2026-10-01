@@ -644,6 +644,21 @@ import Testing
     }
 }
 
+@Suite struct WatchGlanceTests {
+    @Test func countsDownAndGoesStale() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC")!
+        let sent = Date(timeIntervalSince1970: 1_790_000_000)
+        let glance = WatchGlance(cardsLeft: 7, streak: 3, daysUntilExam: 100, deckSentAt: sent)
+        #expect(!glance.isStale(now: sent.addingTimeInterval(60), calendar: calendar))
+        #expect(glance.isStale(now: sent.addingTimeInterval(3 * 86_400), calendar: calendar))
+        #expect(glance.daysUntilExam(now: sent.addingTimeInterval(3 * 86_400), calendar: calendar) == 97)
+        let defaults = try #require(UserDefaults(suiteName: "glance-test"))
+        glance.save(to: defaults)
+        #expect(WatchGlance.load(from: defaults) == glance)
+    }
+}
+
 @Suite struct RecapTests {
     @Test func recapMatchesTheWeb() throws {
         let fixture = try Paths.fixture("recap.json")

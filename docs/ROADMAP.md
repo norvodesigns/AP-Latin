@@ -94,7 +94,7 @@ finishing a lesson counts toward the streak and daily goal.
 ## 4. Apple platform extras
 
 - [x] App Shortcuts / Siri: "Review my Latin", "Continue my lesson", "Today's Latin line"
-- [ ] Watch complication: cards due
+- [x] Watch complication: cards due
 - [x] Lock Screen widget for the next lesson
 - [ ] Live Activity for a timed practice-exam section
 
@@ -257,3 +257,8 @@ finishing a lesson counts toward the streak and daily goal.
   reviewed, sententiae, lines scanned and translations, each beside the week before. Worked out
   from synced progress with the store's UTC days, so it agrees with the streak; a parity fixture
   holds the app to the web. Hidden until a fortnight has anything in it.
+- 2026-10-01: Watch complications: a watchOS widget extension (`LectioWatchWidgets`) with circular,
+  corner, inline and rectangular complications showing the cards left to review, and the exam
+  countdown where there is room. The watch app writes a small `WatchGlance` to its app group each
+  time its deck arrives or a card is graded, and reloads the complications; at midnight they say so
+  until the phone sends the new day's cards.

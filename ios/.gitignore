@@ -15,3 +15,6 @@ Lectio/Lectio.entitlements
 LectioWidgets/Info.plist
 LectioWidgets/LectioWidgets.entitlements
 LectioWatch/Info.plist
+LectioWatch/LectioWatch.entitlements
+LectioWatchWidgets/Info.plist
+LectioWatchWidgets/LectioWatchWidgets.entitlements

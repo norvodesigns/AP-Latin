@@ -3,6 +3,7 @@ import Observation
 import SwiftUI
 import WatchConnectivity
 import WatchKit
+import WidgetKit
 
 /// Lectio on the wrist: the vocabulary cards due today, flipped and graded
 /// with the same two answers as the phone. The iPhone owns the schedule —
@@ -51,6 +52,14 @@ final class WatchStore {
         // Keep the current session's order; add anything new at the end.
         let ids = deck.cards.map(\.id)
         queue = queue.filter { ids.contains($0) || retry[$0] != nil } + ids.filter { !queue.contains($0) }
+        publish()
+    }
+
+    /// Tells the complications what's left.
+    private func publish() {
+        guard let deck else { return }
+        WatchGlance(cardsLeft: queue.count, streak: deck.streak, daysUntilExam: deck.daysUntilExam, deckSentAt: deck.sentAt).save()
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     func grade(_ id: String, quality: Int) {
@@ -64,6 +73,7 @@ final class WatchStore {
             retry[id] = graded
             queue.append(id)
         }
+        publish()
     }
 }
 

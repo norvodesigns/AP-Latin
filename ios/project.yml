@@ -144,6 +144,13 @@ targets:
       - path: LectioWatch
     dependencies:
       - package: LectioCore
+      # The complications, embedded in the watch app.
+      - target: LectioWatchWidgets
+    entitlements:
+      path: LectioWatch/LectioWatch.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.norvodesigns.lectio
     info:
       path: LectioWatch/Info.plist
       properties:
@@ -157,6 +164,36 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.norvodesigns.lectio.watchkitapp
         PRODUCT_NAME: Lectio
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        CODE_SIGN_STYLE: Automatic
+        SKIP_INSTALL: "YES"
+
+  LectioWatchWidgets:
+    type: app-extension
+    platform: watchOS
+    deploymentTarget: "26.0"
+    sources:
+      - path: LectioWatchWidgets
+    dependencies:
+      - package: LectioCore
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework
+    entitlements:
+      path: LectioWatchWidgets/LectioWatchWidgets.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.norvodesigns.lectio
+    info:
+      path: LectioWatchWidgets/Info.plist
+      properties:
+        CFBundleDisplayName: Lectio
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.norvodesigns.lectio.watchkitapp.widgets
+        PRODUCT_NAME: LectioWatchWidgets
         CODE_SIGN_STYLE: Automatic
         SKIP_INSTALL: "YES"
 

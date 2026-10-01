@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<!-- No tracking. UserDefaults keeps the last deck the iPhone sent (CA92.1), and the app group holds the glance its complications read (1C8F.1). -->
+<!-- No tracking. Reads the glance the watch app writes to its app group (1C8F.1). -->
 <plist version="1.0">
 <dict>
 	<key>NSPrivacyTracking</key>
@@ -16,7 +16,6 @@
 			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
 			<key>NSPrivacyAccessedAPITypeReasons</key>
 			<array>
-				<string>CA92.1</string>
 				<string>1C8F.1</string>
 			</array>
 		</dict>
