@@ -109,9 +109,10 @@ function items(sf, file) {
         out.push({ els: options.elements.map((e) => prop(e, 'text')), ids: options.elements.map((e) => prop(e, 'id')), answer: answerId, form: 'id' });
       }
     }
-    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === 'q') {
+    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && ['q', 'sq'].includes(node.expression.text)) {
       const a = node.arguments;
       // q(id, type, skill, unit, prompt, options, answerIndex, explanation, extra?) — the quiz banks
+      // sq(passageId, id, type, skill, prompt, options, answerIndex, explanation, difficulty) — sight
       // q(unit, prompt, latin, options, answer, explain) — the placement check
       const [oi, ai] = a.length >= 8 ? [5, 6] : a.length === 6 ? [3, 4] : [-1, -1];
       if (oi >= 0 && ts.isArrayLiteralExpression(a[oi]) && a[oi].elements.every(isStr) && ts.isNumericLiteral(a[ai])) {

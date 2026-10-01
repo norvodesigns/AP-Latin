@@ -106,7 +106,7 @@ finishing a lesson counts toward the streak and daily goal.
   - [x] Aeneid 1, 2 and 4
   - [x] Aeneid 6, 7, 11 and 12 (65 Vergil questions in all)
   - [x] Top up the passages still under four (10.5, 10.6, 10.7, 10.34, 10.90, Aen. 12.791–812)
-- [ ] More sight passages with question sets (6 now; aim for 15, prose and poetry)
+- [x] More sight passages with question sets (15: 7 poetry, 8 prose, each with three questions)
 - [ ] More translation drills (8 now; one for each required passage group)
 
 ## 5. Quality
@@ -306,3 +306,9 @@ finishing a lesson counts toward the streak and daily goal.
   answers.mjs` moves each right option to an evenly spread slot (wrong options keep their order;
   lists with a natural order, like cases or numbers, stay as written): 351 items moved. `verify`
   now fails any bank or unit with more than half its answers in one slot.
+- 2026-10-01: Sight reading grows from 6 passages to 15, every text copied from The Latin Library
+  rather than recalled, and all from the authors the page names: Martial 1.32, Ovid's Daedalus
+  (Met. 8.183–187), Catullus 101, Tibullus 1.1.1–6, Cicero In Catilinam 1.1 and Pro Archia 16,
+  Seneca Epistulae 47.1, Livy on Horatius at the bridge (2.10.9–11) and Nepos on Hannibal's oath.
+  Each has glosses, a summary and three questions; new questions take their stimulus from the
+  passage itself, so the Latin is written once.

@@ -1,7 +1,8 @@
 {
   "schemaVersion": 1,
-  "contentHash": "b6193df9b3b92d531aa333836706e0357bdb7cd3e38d9463fffb9c376cbec1f8",
+  "contentHash": "e6c958dcef94efa44626dd2c378fdc58262cd4a76564efa3c7e4bf63067ec5f2",
   "supersedes": [
+    "b6193df9b3b92d531aa333836706e0357bdb7cd3e38d9463fffb9c376cbec1f8",
     "02347f4b2cb92dfe9d42db47d7f6009657172f30676e7787ecc037b0325dcb24",
     "8c6b5af52a4c16305d5e64346f3fa516422e473d626ff8b26ab15af8ee9cc216",
     "74d66287dcb7f908b4d9e81cca6a8f62deeefe578753a88bbacf42fe8274c5e6",
@@ -52,7 +53,7 @@
     "devices.json": "fc4e104877506b03b3a6de93b9a096436820185ecaefb5654b90cc73497915d6",
     "context.json": "cbd515fb1b3422a7282ddf0ff95881eafb7f8c24c2fdabd433eac4d69203aa43",
     "frq.json": "e52aa14c0a4aabaf15653accbcb38e5230de184f06e1d9e42891f5caf891d184",
-    "sight.json": "46d791fbb26320470b5814aa584dec26aca90a9dbc787c47ecdceffd7a01ce2b",
+    "sight.json": "6b6ea0bed2f5e63d09a5ab2547df009ee6a7786bf7f7e2ee04ee0832bb798882",
     "translation.json": "a1abd95c629102e1038f414fba2fccb4b6fd619da2b302e7a9f676b0885be131",
     "scansion.json": "2cad78104c4b8028316c1335b4d51ee393094483eaa3516301c645e53153887b",
     "curriculum.json": "3eefd8f85562d517e8d77840a6da4e7bb9589e763618b2385fbb43976f3ff979",
