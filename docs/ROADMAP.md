@@ -97,7 +97,7 @@ finishing a lesson counts toward the streak and daily goal.
       settle quantity by nature; scan those with the same solver and add them, checked
 - [ ] Printable passage sheets: the Reader prints as a clean handout (Latin with line numbers, the
       glossary as footnotes, room to write), for teachers and for annotating on paper
-- [ ] Quiz from the Reader: "Questions on this passage" opens the quiz filtered to it
+- [x] Quiz from the Reader: "Questions on this passage" opens the quiz filtered to it
 
 ## 4. Apple platform extras
 
@@ -330,3 +330,7 @@ finishing a lesson counts toward the streak and daily goal.
   19 required Aeneid passages in order (304 of their 448 lines are in the corpus), starting at the
   first line not yet mastered and showing how many are done. The web opens one from
   `/scansion?passage=…`, and both Readers have "Scan this passage" on required Vergil.
+- 2026-10-01: Practice from the Reader: on the web a passage with quiz questions shows "N questions",
+  opening the Quiz Engine set to it (`/quiz?passage=…`; the count is taken on the server so the
+  question bank is not sent with the page). In the app a Practice menu in the Reader's toolbar
+  starts a set on the passage's questions and, for required Vergil, opens the Scansion Lab on it.

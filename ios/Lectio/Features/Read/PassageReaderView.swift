@@ -46,6 +46,10 @@ struct PassageReaderView: View {
     @State private var askLine: PassageLine?
     @State private var showNotes = false
     @State private var scrollTarget: Int?
+    /// A practice set on this passage's quiz questions, opened from the toolbar.
+    @State private var quiz: QuizSession?
+    /// Pushes the Scansion Lab, set to this passage.
+    @State private var scanning = false
 
     var body: some View {
         let state = model.progress.passage(passage.id)
@@ -92,6 +96,11 @@ struct PassageReaderView: View {
         .navigationTitle(passage.citation)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { toolbar(state: state) }
+        .fullScreenCover(item: $quiz) { QuizSessionView(session: $0) }
+        .navigationDestination(isPresented: $scanning) {
+            ScansionLabView(startPassageId: passage.id)
+                .environment(\.isPushedSection, true)
+        }
         .safeAreaInset(edge: .bottom) {
             if let span {
                 SpanToolbar(
@@ -184,12 +193,18 @@ struct PassageReaderView: View {
             Button("Notes and context", systemImage: "text.alignleft") { showNotes = true }
                 .keyboardShortcut("n", modifiers: [])
 
-            if passage.isPoetry && passage.author == "vergil" && passage.required {
-                NavigationLink {
-                    ScansionLabView(startPassageId: passage.id)
-                        .environment(\.isPushedSection, true)
-                } label: {
-                    Label("Scan this passage", systemImage: "waveform.path")
+            let questions = library?.questions.filter { $0.passageId == passage.id } ?? []
+            let scannable = passage.isPoetry && passage.author == "vergil" && passage.required
+            if !questions.isEmpty || scannable {
+                Menu("Practice", systemImage: "graduationcap") {
+                    if !questions.isEmpty {
+                        Button("\(questions.count) questions on this passage", systemImage: "checklist") {
+                            quiz = QuizSession(questions: questions.shuffled(), isReview: false)
+                        }
+                    }
+                    if scannable {
+                        Button("Scan this passage", systemImage: "waveform.path") { scanning = true }
+                    }
                 }
             }
 

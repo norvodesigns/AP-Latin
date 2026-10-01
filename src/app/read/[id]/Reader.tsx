@@ -74,10 +74,13 @@ export default function Reader({
   passage,
   prev,
   next,
+  quizCount = 0,
 }: {
   passage: Passage;
   prev: Nav | null;
   next: Nav | null;
+  /** Quiz questions on this passage; a link to them shows when there are any. */
+  quizCount?: number;
 }) {
   const columns = useRevealChildren<HTMLDivElement>();
   const glossaryEnabled = useStore((s) => s.glossaryEnabled);
@@ -432,6 +435,11 @@ export default function Reader({
                 </svg>
                 <span className="sr-only">Bookmark</span>
               </button>
+              {quizCount > 0 && (
+                <Link className="btn" href={`/quiz?passage=${passage.id}`}>
+                  {quizCount} questions
+                </Link>
+              )}
               {passage.genre === 'poetry' && passage.author === 'vergil' && passage.required && (
                 <Link className="btn" href={`/scansion?passage=${passage.id}`}>
                   Scan this passage

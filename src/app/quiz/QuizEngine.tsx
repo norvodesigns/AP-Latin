@@ -69,9 +69,10 @@ export default function QuizEngine() {
     const wanted = params.get('type');
     const one = ALL_TYPES.find((t) => t === wanted);
     const skill = params.get('skill');
+    const passage = params.get('passage');
     return {
       author: 'all',
-      passageId: 'all',
+      passageId: passage && questions.some((qq) => qq.passageId === passage) ? passage : 'all',
       unit: 'all',
       skill: skill === '1' || skill === '2' || skill === '3' ? skill : 'all',
       types: one ? new Set<QuestionType>([one]) : new Set(ALL_TYPES),

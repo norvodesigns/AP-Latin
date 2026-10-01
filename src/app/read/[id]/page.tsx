@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { allPassages, getPassage } from '@/data/passages';
+import { questions } from '@/data/questions';
 import Reader from './Reader';
 
 export function generateStaticParams() {
@@ -25,12 +26,15 @@ export default async function PassagePage({ params }: { params: Promise<{ id: st
   const idx = allPassages.findIndex((p) => p.id === id);
   const prev = idx > 0 ? allPassages[idx - 1] : null;
   const next = idx < allPassages.length - 1 ? allPassages[idx + 1] : null;
+  // Counted here, on the server, so the question bank never ships with the page.
+  const quizCount = questions.filter((q) => q.passageId === id).length;
 
   return (
     <Reader
       passage={passage}
       prev={prev ? { id: prev.id, citation: prev.citation } : null}
       next={next ? { id: next.id, citation: next.citation } : null}
+      quizCount={quizCount}
     />
   );
 }
