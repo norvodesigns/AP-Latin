@@ -90,6 +90,14 @@ finishing a lesson counts toward the streak and daily goal.
 - [x] The daily reminder quotes the day's Sententia
 - [x] A weekly recap on Today and the dashboard: lessons, minutes, words, the streak (minutes left out: they are kept per device, not synced)
 - [x] Word of the day (web card, iOS widget): done as the Sententia of the day, a card on the web and a Home and Lock Screen widget
+- [x] Scansion Lab: work through a set passage line by line (picker, `?passage=` links, "Scan this
+      passage" in the Reading Room), now that corpus line numbers match the syllabus
+- [ ] Fill the syllabus gaps in the scansion corpus: 144 of the 448 required Aeneid lines are
+      ambiguous from bare text, but the course's Level IV lessons carry them with macrons, which
+      settle quantity by nature; scan those with the same solver and add them, checked
+- [ ] Printable passage sheets: the Reader prints as a clean handout (Latin with line numbers, the
+      glossary as footnotes, room to write), for teachers and for annotating on paper
+- [ ] Quiz from the Reader: "Questions on this passage" opens the quiz filtered to it
 
 ## 4. Apple platform extras
 
@@ -318,3 +326,7 @@ finishing a lesson counts toward the streak and daily goal.
   Aeneid 2.40–44 (Laocoön), 7.808–811 (Camilla over the grain), 11.539–543 (Metabus names her),
   12.823–828 (Juno's terms) and 12.947–952, the poem's last lines. Each is cut from the passage data
   and scored in 15 segments, with what earns the point, a common slip and grammar tags.
+- 2026-10-01: Scansion Lab, set passages: on both platforms the lab can now work through any of the
+  19 required Aeneid passages in order (304 of their 448 lines are in the corpus), starting at the
+  first line not yet mastered and showing how many are done. The web opens one from
+  `/scansion?passage=…`, and both Readers have "Scan this passage" on required Vergil.

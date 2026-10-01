@@ -184,6 +184,15 @@ struct PassageReaderView: View {
             Button("Notes and context", systemImage: "text.alignleft") { showNotes = true }
                 .keyboardShortcut("n", modifiers: [])
 
+            if passage.isPoetry && passage.author == "vergil" && passage.required {
+                NavigationLink {
+                    ScansionLabView(startPassageId: passage.id)
+                        .environment(\.isPushedSection, true)
+                } label: {
+                    Label("Scan this passage", systemImage: "waveform.path")
+                }
+            }
+
             Menu("Reading options", systemImage: "textformat.size") {
                 Toggle(isOn: Binding(
                     get: { model.progress.glossaryEnabled },

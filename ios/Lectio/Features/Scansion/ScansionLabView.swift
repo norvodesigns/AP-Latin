@@ -10,6 +10,10 @@ import SwiftUI
 /// boundary after it, or to claim an elision.
 struct ScansionLabView: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.library) private var library
+
+    /// A set passage to open on, as when the Reader sends a student here.
+    var startPassageId: String? = nil
 
     nonisolated enum Tool: String, CaseIterable, Identifiable, Sendable {
         case quantity = "Quantity", feet = "Feet", elision = "Elision"
@@ -38,6 +42,9 @@ struct ScansionLabView: View {
     @State private var showRules = false
     @State private var revisitMastered = false
     @State private var saveTask: Task<Void, Never>?
+    /// The set passage being worked through in order, and its scannable lines.
+    @State private var setPassage: Passage?
+    @State private var passageLines: [ScansionLine] = []
 
     var body: some View {
         SectionStack {
@@ -56,6 +63,14 @@ struct ScansionLabView: View {
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     Button("Rules", systemImage: "book") { showRules = true }
                     Menu("More", systemImage: "ellipsis") {
+                        Menu("Set passages", systemImage: "text.book.closed") {
+                            ForEach(setPassages) { p in
+                                Button("\(p.citation) · \(p.title)") { _ = openPassage(p) }
+                            }
+                        }
+                        if setPassage != nil {
+                            Button("Random lines", systemImage: "shuffle") { leavePassage() }
+                        }
                         Button("Weakest line", systemImage: "bolt") { weakest() }
                         Toggle("Include mastered lines", isOn: $revisitMastered)
                     }
@@ -77,8 +92,15 @@ struct ScansionLabView: View {
             VStack(alignment: .leading, spacing: 24) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Dactylic hexameter · \(work.line.citation)").rubricLabel()
-                    Text("Drawn at random from \(corpus.index.total.formatted()) of the \(corpus.index.sourceTotal.formatted()) lines of the Aeneid with an unambiguous scansion. Lines you've mastered don't come back.")
-                        .font(.footnote).foregroundStyle(Palette.inkMuted)
+                    if let setPassage {
+                        let at = (passageLines.firstIndex { $0.id == work.line.id } ?? 0) + 1
+                        let done = passageLines.filter { stats[$0.id]?.mastered == true }.count
+                        Text("Set passage: \(setPassage.citation), \(setPassage.title). Line \(at) of the \(passageLines.count) the corpus can scan here; \(done) mastered.")
+                            .font(.footnote).foregroundStyle(Palette.inkMuted)
+                    } else {
+                        Text("Drawn at random from \(corpus.index.total.formatted()) of the \(corpus.index.sourceTotal.formatted()) lines of the Aeneid with an unambiguous scansion. Lines you've mastered don't come back.")
+                            .font(.footnote).foregroundStyle(Palette.inkMuted)
+                    }
                 }
 
                 LineScansion(work: work, tool: tool) { i in edit(i) }
@@ -210,6 +232,7 @@ struct ScansionLabView: View {
         do {
             let c = try await Task.detached { try ScansionCorpus(directory: dir) }.value
             corpus = c
+            if let id = startPassageId, let p = library?.passage(id), openPassage(p) { return }
             next()
         } catch {
             loadError = String(describing: error)
@@ -223,8 +246,50 @@ struct ScansionLabView: View {
         return loaded
     }
 
-    /// A random line from the whole corpus that isn't mastered (unless asked).
+    /// The required Aeneid passages, for working through one in order.
+    private var setPassages: [Passage] {
+        (library?.passages ?? []).filter { $0.required && $0.isPoetry && $0.author == "vergil" }
+    }
+
+    /// Open a set passage on its first line not yet mastered. Corpus line
+    /// numbers follow the OCT, as the passages do. False if none can be scanned.
+    @discardableResult
+    private func openPassage(_ p: Passage) -> Bool {
+        guard let from = p.lines.first?.n, let to = p.lines.last?.n else { return false }
+        let ls = lines(for: p.book).filter {
+            guard let n = ScansionCorpus.parseLineId($0.id)?.line else { return false }
+            return n >= from && n <= to
+        }
+        guard !ls.isEmpty else { return false }
+        let mastered = ScansionStats.mastered(model.progress.scansionAttempts)
+        setPassage = p
+        passageLines = ls
+        open(ls.first { !mastered.contains($0.id) } ?? ls[0])
+        return true
+    }
+
+    private func leavePassage() {
+        setPassage = nil
+        passageLines = []
+        next()
+    }
+
+    /// The next line: in order through a set passage, else at random.
     private func next() {
+        if setPassage != nil, !passageLines.isEmpty {
+            let mastered = revisitMastered ? [] : ScansionStats.mastered(model.progress.scansionAttempts)
+            let at = passageLines.firstIndex { $0.id == work?.line.id } ?? -1
+            for step in 1...passageLines.count {
+                let line = passageLines[(at + step + passageLines.count) % passageLines.count]
+                if !mastered.contains(line.id) || step == passageLines.count { return open(line) }
+            }
+            return
+        }
+        randomLine()
+    }
+
+    /// A random line from the whole corpus that isn't mastered (unless asked).
+    private func randomLine() {
         guard let corpus else { return }
         let mastered = revisitMastered ? [] : ScansionStats.mastered(model.progress.scansionAttempts)
         let exclude = work?.line.id
@@ -238,10 +303,12 @@ struct ScansionLabView: View {
     }
 
     private func weakest() {
+        setPassage = nil
+        passageLines = []
         guard let id = ScansionStats.weakest(model.progress.scansionAttempts),
               let parsed = ScansionCorpus.parseLineId(id),
               let line = lines(for: parsed.book).first(where: { $0.id == id })
-        else { return next() }
+        else { return randomLine() }
         open(line)
     }
 

@@ -432,6 +432,11 @@ export default function Reader({
                 </svg>
                 <span className="sr-only">Bookmark</span>
               </button>
+              {passage.genre === 'poetry' && passage.author === 'vergil' && passage.required && (
+                <Link className="btn" href={`/scansion?passage=${passage.id}`}>
+                  Scan this passage
+                </Link>
+              )}
             </div>
           </header>
 

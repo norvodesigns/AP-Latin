@@ -21,6 +21,35 @@ import type { ScansionLine, ScannedSyllable } from '@/data/types';
 
 type Mark = 'long' | 'short' | null;
 
+/** A required Aeneid passage, worked through line by line instead of at random. */
+interface SetPassage {
+  id: string;
+  citation: string;
+  title: string;
+  book: number;
+  from: number;
+  to: number;
+}
+
+/**
+ * The syllabus passages, loaded only when asked for: the passage text is too
+ * big to ship with every visit to the lab just to list nineteen titles.
+ */
+async function loadSetPassages(): Promise<SetPassage[]> {
+  const { vergilPassages } = await import('@/data/passages/vergil');
+  return vergilPassages
+    .filter((p) => p.required && p.lines.length > 0)
+    .map((p) => ({
+      id: p.id,
+      citation: p.citation,
+      title: p.title,
+      book: p.book ?? 0,
+      from: p.lines[0].n,
+      to: p.lines[p.lines.length - 1].n,
+    }))
+    .filter((p) => p.book > 0);
+}
+
 /**
  * A run of syllables between two of the student's foot boundaries. `endsAt` is
  * the metrical index of its last syllable, which is what a boundary is keyed
@@ -148,6 +177,10 @@ export default function ScansionLab() {
   const [showTutorial, setShowTutorial] = useState(false);
   const [revisitMastered, setRevisitMastered] = useState(false);
   const [mounted, setMounted] = useState(false);
+  /** The set passage being worked through, or null for random lines. */
+  const [setPassage, setSetPassage] = useState<SetPassage | null>(null);
+  const [setChoices, setSetChoices] = useState<SetPassage[] | null>(null);
+  const [showPassages, setShowPassages] = useState(false);
 
   const line: ScansionLine | undefined = lines[index];
 
@@ -163,25 +196,81 @@ export default function ScansionLab() {
       });
   }, []);
 
-  /* Open on a random line once the index says what the corpus holds. */
+  /**
+   * Work through one set passage: its lines that the corpus can scan, in
+   * order, starting at the first one not yet mastered. Corpus line numbers
+   * follow the OCT, the same numbering as the passages.
+   */
+  const openPassage = useCallback(
+    async (p: SetPassage): Promise<boolean> => {
+      setLoading(true);
+      let opened = false;
+      try {
+        const ls = (await loadBook(p.book)).filter((l) => {
+          const n = parseLineId(l.id)?.line ?? 0;
+          return n >= p.from && n <= p.to;
+        });
+        if (ls.length > 0) {
+          const mastered = masteredLineIds(scansionAttempts);
+          const first = ls.findIndex((l) => !mastered.has(l.id));
+          setBook(p.book);
+          setLines(ls);
+          setIndex(first >= 0 ? first : 0);
+          setSetPassage(p);
+          setShowPassages(false);
+          opened = true;
+        }
+      } catch {
+        /* keep the line on screen */
+      }
+      setLoading(false);
+      return opened;
+    },
+    [scansionAttempts],
+  );
+
+  /** Open the list of set passages, fetching it the first time. */
+  const choosePassage = useCallback(() => {
+    setShowPassages((v) => !v);
+    if (!setChoices) void loadSetPassages().then(setSetChoices).catch(() => setSetChoices([]));
+  }, [setChoices]);
+
+  /* Open on a random line once the index says what the corpus holds, or on a
+     set passage when the link asked for one (/scansion?passage=aen-1-1-33). */
   const started = useRef(false);
   useEffect(() => {
     if (!corpus || started.current) return;
     started.current = true;
-    const b = randomBook(corpus.books);
-    setLoading(true);
-    setLoadError(null);
-    loadBook(b)
-      .then((ls) => {
-        setBook(b);
-        setLines(ls);
-        setIndex(Math.floor(Math.random() * ls.length));
-        setLoading(false);
+    const startRandom = () => {
+      const b = randomBook(corpus.books);
+      setLoading(true);
+      setLoadError(null);
+      loadBook(b)
+        .then((ls) => {
+          setBook(b);
+          setLines(ls);
+          setIndex(Math.floor(Math.random() * ls.length));
+          setLoading(false);
+        })
+        .catch((e: Error) => {
+          setLoadError(e.message);
+          setLoading(false);
+        });
+    };
+    const wanted = new URLSearchParams(window.location.search).get('passage');
+    if (!wanted) return startRandom();
+    loadSetPassages()
+      .then((list) => {
+        setSetChoices(list);
+        const p = list.find((x) => x.id === wanted);
+        if (!p) return startRandom();
+        return openPassage(p).then((ok) => {
+          if (!ok) startRandom();
+        });
       })
-      .catch((e: Error) => {
-        setLoadError(e.message);
-        setLoading(false);
-      });
+      .catch(startRandom);
+    // openPassage is only wanted once, for the link that opened the page.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [corpus]);
 
   /*
@@ -375,6 +464,7 @@ export default function ScansionLab() {
     async (exclude?: string) => {
       const books = corpus?.books ?? [];
       if (books.length === 0) return;
+      setSetPassage(null);
 
       const mastered = revisitMastered ? new Set<string>() : masteredLineIds(scansionAttempts);
       const pickFrom = (ls: ScansionLine[]) =>
@@ -437,6 +527,7 @@ export default function ScansionLab() {
       const ls = await loadBook(parsed.book);
       const i = ls.findIndex((l) => l.id === target);
       if (i >= 0) {
+        setSetPassage(null);
         setBook(parsed.book);
         setLines(ls);
         setIndex(i);
@@ -540,8 +631,31 @@ export default function ScansionLab() {
   }
 
   function next() {
+    if (!setPassage) {
+      void advance(active.id);
+      return;
+    }
+    // Through the passage in order, skipping mastered lines unless asked not
+    // to, and round again from the top.
+    const mastered = revisitMastered ? new Set<string>() : masteredLineIds(scansionAttempts);
+    for (let step = 1; step <= lines.length; step += 1) {
+      const j = (index + step) % lines.length;
+      if (!mastered.has(lines[j].id) || step === lines.length) {
+        setIndex(j);
+        return;
+      }
+    }
+  }
+
+  /** Back to lines drawn at random from the whole poem. */
+  function leavePassage() {
+    setSetPassage(null);
     void advance(active.id);
   }
+
+  const passageMastered = setPassage
+    ? lines.filter((l) => stats.get(l.id)?.mastered).length
+    : 0;
 
   // The student's own current view (see `elidesAt`): every syllable they
   // have not themselves claimed elides still needs a quantity mark, exactly
@@ -609,17 +723,70 @@ export default function ScansionLab() {
               color: 'var(--fg-muted)',
             }}
           >
-            Drawn at random from{' '}
-            {corpusTotal
-              ? `${corpusTotal.toLocaleString()} of the ${corpusSourceTotal ? corpusSourceTotal.toLocaleString() : '~9,900'} lines`
-              : '6,500+ lines'}{' '}
-            of the <em>Aeneid</em> with an unambiguous scansion. Lines you have mastered never come
-            back.
+            {setPassage ? (
+              <>
+                Set passage: <em>{setPassage.citation}</em>, {setPassage.title}. Line {index + 1} of
+                the {lines.length} the corpus can scan here; {passageMastered} mastered.
+              </>
+            ) : (
+              <>
+                Drawn at random from{' '}
+                {corpusTotal
+                  ? `${corpusTotal.toLocaleString()} of the ${corpusSourceTotal ? corpusSourceTotal.toLocaleString() : '~9,900'} lines`
+                  : '6,500+ lines'}{' '}
+                of the <em>Aeneid</em> with an unambiguous scansion. Lines you have mastered never come
+                back.
+              </>
+            )}
           </span>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={() => void practiseWeakest()}>
-            ↯ Weakest line
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={choosePassage}
+              aria-expanded={showPassages}
+              aria-controls="set-passages"
+            >
+              Set passages
+            </button>
+            {setPassage ? (
+              <button type="button" className="btn btn-ghost btn-sm" onClick={leavePassage}>
+                Random lines
+              </button>
+            ) : (
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => void practiseWeakest()}>
+                ↯ Weakest line
+              </button>
+            )}
+          </div>
         </div>
+
+        {showPassages && (
+          <div id="set-passages" className="mb-10 border-y py-5" style={{ borderColor: 'var(--rule)' }}>
+            <p className="slab-sm mb-3">Scan a passage from the syllabus, line by line</p>
+            {!setChoices ? (
+              <p style={{ color: 'var(--fg-muted)' }}>Loading the passages…</p>
+            ) : setChoices.length === 0 ? (
+              <p style={{ color: 'var(--fg-muted)' }}>The passages could not be loaded.</p>
+            ) : (
+              <ul className="grid gap-x-8 gap-y-1 sm:grid-cols-2">
+                {setChoices.map((p) => (
+                  <li key={p.id}>
+                    <button
+                      type="button"
+                      className="w-full py-1.5 text-left hover:underline"
+                      onClick={() => void openPassage(p)}
+                      aria-current={setPassage?.id === p.id ? 'true' : undefined}
+                    >
+                      <span style={{ fontFamily: 'var(--font-latin)', color: 'var(--fg)' }}>{p.citation}</span>
+                      <span style={{ color: 'var(--fg-muted)' }}> · {p.title}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
 
         {/* ── The line ──
             Syllables run in one wrapping row. Between each pair sits a hit
