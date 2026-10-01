@@ -9,7 +9,9 @@
       "supportsTablet": true,
       "appleTeamId": "M46ZNP323Y",
       "entitlements": {
-        "com.apple.security.application-groups": ["group.com.norvodesigns.lectio"]
+        "com.apple.security.application-groups": [
+          "group.com.norvodesigns.lectio"
+        ]
       },
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
@@ -25,14 +27,18 @@
                   "targetName": "LectioWidgets",
                   "bundleIdentifier": "com.norvodesigns.lectio.widgets",
                   "entitlements": {
-                    "com.apple.security.application-groups": ["group.com.norvodesigns.lectio"]
+                    "com.apple.security.application-groups": [
+                      "group.com.norvodesigns.lectio"
+                    ]
                   }
                 },
                 {
                   "targetName": "LectioWatch",
                   "bundleIdentifier": "com.norvodesigns.lectio.watchkitapp",
                   "entitlements": {
-                    "com.apple.security.application-groups": ["group.com.norvodesigns.lectio"]
+                    "com.apple.security.application-groups": [
+                      "group.com.norvodesigns.lectio"
+                    ]
                   }
                 },
                 {
@@ -40,13 +46,44 @@
                   "bundleIdentifier": "com.norvodesigns.lectio.watchkitapp.widgets",
                   "parentBundleIdentifier": "com.norvodesigns.lectio.watchkitapp",
                   "entitlements": {
-                    "com.apple.security.application-groups": ["group.com.norvodesigns.lectio"]
+                    "com.apple.security.application-groups": [
+                      "group.com.norvodesigns.lectio"
+                    ]
+                  }
+                },
+                {
+                  "targetName": "LectioWidgets",
+                  "bundleIdentifier": "com.norvodesigns.lectio.widgets",
+                  "entitlements": {
+                    "com.apple.security.application-groups": [
+                      "group.com.norvodesigns.lectio"
+                    ]
+                  }
+                },
+                {
+                  "targetName": "LectioWatch",
+                  "bundleIdentifier": "com.norvodesigns.lectio.watchkitapp",
+                  "entitlements": {
+                    "com.apple.security.application-groups": [
+                      "group.com.norvodesigns.lectio"
+                    ]
+                  }
+                },
+                {
+                  "targetName": "LectioWatchWidgets",
+                  "bundleIdentifier": "com.norvodesigns.lectio.watchkitapp.widgets",
+                  "parentBundleIdentifier": "com.norvodesigns.lectio.watchkitapp",
+                  "entitlements": {
+                    "com.apple.security.application-groups": [
+                      "group.com.norvodesigns.lectio"
+                    ]
                   }
                 }
               ]
             }
           }
-        }
+        },
+        "projectId": "c630c107-d422-4940-8dfc-fa8775165d47"
       }
     }
   }
