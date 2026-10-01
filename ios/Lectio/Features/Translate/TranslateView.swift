@@ -160,7 +160,7 @@ struct TranslationDrillView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 6)
             }
-            .buttonStyle(.glassProminent)
+            .glassButton(prominent: true)
             .disabled(empty || grading)
             if model.aiAvailable == true {
                 Button("or self-score instead") { reveal() }
@@ -218,7 +218,7 @@ struct TranslationDrillView: View {
                 Text(saved ? "Saved" : "Log this attempt (\(score.formatted())/\(drill.segments.count))")
                     .font(.headline).frame(maxWidth: .infinity).padding(.vertical, 6)
             }
-            .buttonStyle(.glassProminent)
+            .glassButton(prominent: true)
             .disabled(scores.isEmpty || saved)
             if scores.count < drill.segments.count && !saved {
                 Text("\(drill.segments.count - scores.count) segment\(drill.segments.count - scores.count == 1 ? "" : "s") still unmarked.")

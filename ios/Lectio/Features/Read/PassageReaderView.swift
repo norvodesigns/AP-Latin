@@ -432,7 +432,7 @@ private struct SpanToolbar: View {
     @Namespace private var glass
 
     var body: some View {
-        GlassEffectContainer(spacing: 10) {
+        GlassGroup(spacing: 10) {
             HStack(spacing: 10) {
                 HStack(spacing: 14) {
                     ForEach(HighlightColor.allCases, id: \.self) { color in
@@ -452,8 +452,8 @@ private struct SpanToolbar: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
-                .glassEffect(.regular.interactive(), in: .capsule)
-                .glassEffectID("pigments", in: glass)
+                .lectioGlass(in: .capsule, interactive: true)
+                .lectioGlassID("pigments", in: glass)
 
                 HStack(spacing: 4) {
                     Button("Note", systemImage: "square.and.pencil", action: onNote)
@@ -464,8 +464,8 @@ private struct SpanToolbar: View {
                     Button("Done", systemImage: "xmark", action: onDone)
                 }
                 .labelStyle(.iconOnly)
-                .buttonStyle(.glass)
-                .glassEffectID("actions", in: glass)
+                .glassButton()
+                .lectioGlassID("actions", in: glass)
             }
         }
         .padding(.horizontal, 16)

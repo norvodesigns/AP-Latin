@@ -118,7 +118,7 @@ private struct SignInForm: View {
                     }
                     .padding(.vertical, 4)
                 }
-                .buttonStyle(.glassProminent)
+                .glassButton(prominent: true)
                 .disabled(working)
                 .listRowBackground(Color.clear)
             }

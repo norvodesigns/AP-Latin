@@ -101,14 +101,73 @@ private struct Tabs: View {
     @Environment(\.horizontalSizeClass) private var sizeClass
 
     var body: some View {
-        if sizeClass == .compact || UIDevice.current.userInterfaceIdiom == .phone {
-            PhoneTabs()
+        let compact = sizeClass == .compact || UIDevice.current.userInterfaceIdiom == .phone
+        // iOS 18 introduced the Tab API and the adaptable sidebar; before it
+        // (and for `-legacyChrome YES`) the classic tab bar and a split view.
+        if LectioChrome.forceLegacy {
+            classic(compact: compact)
+        } else if #available(iOS 18.0, *) {
+            if compact { PhoneTabs() } else { SidebarTabs() }
         } else {
-            SidebarTabs()
+            classic(compact: compact)
+        }
+    }
+
+    @ViewBuilder
+    private func classic(compact: Bool) -> some View {
+        if compact { ClassicPhoneTabs() } else { ClassicSidebar() }
+    }
+}
+
+/// What every phone tab bar does, whichever API draws it: a section outside
+/// the tab bar is a page pushed onto Today, the goal toast floats on top.
+private struct PhoneRouting: ViewModifier {
+    @Environment(AppModel.self) private var model
+
+    func body(content: Content) -> some View {
+        let tabs = model.phoneTabs
+        content
+            .overlay(alignment: .top) {
+                if model.goalJustReached { GoalToast() }
+            }
+            .animation(.spring(duration: 0.5), value: model.goalJustReached)
+            .onChange(of: model.selectedTab, initial: true) { old, new in
+                if !tabs.contains(new) {
+                    model.todayPath = NavigationPath([new])
+                } else if !tabs.contains(old) {
+                    model.todayPath = NavigationPath()
+                }
+            }
+            .onChange(of: model.todayPath.count) { _, count in
+                // Back from a pushed section is back to Today.
+                if count == 0, !model.phoneTabs.contains(model.selectedTab) { model.selectedTab = .today }
+            }
+    }
+}
+
+/// iOS 26's minimising tab bar and the due-cards pill above it. Earlier
+/// systems have neither, so the Vocab tab carries a badge instead.
+@available(iOS 18.0, *)
+private struct GlassTabChrome: ViewModifier {
+    func body(content: Content) -> some View {
+        if LectioChrome.forceLegacy {
+            content
+        } else if #available(iOS 26.0, *) {
+            content
+                .tabBarMinimizeBehavior(.onScrollDown)
+                .tabViewBottomAccessory { DueAccessory() }
+        } else {
+            content
         }
     }
 }
 
+/// Cards due, for a badge on the Vocab tab where there's no accessory pill.
+private func dueCount(_ model: AppModel) -> Int {
+    LectioChrome.usesGlass ? 0 : SpacedRepetition.due(model.vocab.values, on: StudyDates.today()).count
+}
+
+@available(iOS 18.0, *)
 private struct PhoneTabs: View {
     @Environment(AppModel.self) private var model
 
@@ -129,25 +188,50 @@ private struct PhoneTabs: View {
             }
             Tab("Read", systemImage: "book.closed", value: AppTab.read) { ReadIndexView() }
             Tab("Vocab", systemImage: "rectangle.on.rectangle.angled", value: AppTab.vocab) { VocabView() }
+                .badge(dueCount(model))
             Tab(value: AppTab.search, role: .search) { SearchView() }
         }
-        .tabBarMinimizeBehavior(.onScrollDown)
-        .tabViewBottomAccessory { DueAccessory() }
-        .overlay(alignment: .top) {
-            if model.goalJustReached { GoalToast() }
-        }
-        .animation(.spring(duration: 0.5), value: model.goalJustReached)
-        .onChange(of: model.selectedTab, initial: true) { old, new in
-            if !tabs.contains(new) {
-                model.todayPath = NavigationPath([new])
-            } else if !tabs.contains(old) {
-                model.todayPath = NavigationPath()
+        .modifier(GlassTabChrome())
+        .modifier(PhoneRouting())
+    }
+}
+
+/// The iPhone tab bar before iOS 18's Tab API (and for `-legacyChrome YES`):
+/// the same five places, drawn with `tabItem`.
+private struct ClassicPhoneTabs: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        let tabs = model.phoneTabs
+        let selection = Binding<AppTab>(
+            get: { tabs.contains(model.selectedTab) ? model.selectedTab : .today },
+            set: { model.selectedTab = $0 }
+        )
+        TabView(selection: selection) {
+            TodayView()
+                .tabItem { Label("Today", systemImage: "sun.horizon") }
+                .tag(AppTab.today)
+            if model.courseInTabBar {
+                CourseView()
+                    .tabItem { Label("Course", systemImage: "graduationcap") }
+                    .tag(AppTab.learn)
+            } else {
+                QuizView()
+                    .tabItem { Label("Quiz", systemImage: "checklist") }
+                    .tag(AppTab.quiz)
             }
+            ReadIndexView()
+                .tabItem { Label("Read", systemImage: "book.closed") }
+                .tag(AppTab.read)
+            VocabView()
+                .tabItem { Label("Vocab", systemImage: "rectangle.on.rectangle.angled") }
+                .tag(AppTab.vocab)
+                .badge(dueCount(model))
+            SearchView()
+                .tabItem { Label("Search", systemImage: "magnifyingglass") }
+                .tag(AppTab.search)
         }
-        .onChange(of: model.todayPath.count) { _, count in
-            // Back from a pushed section is back to Today.
-            if count == 0, !model.phoneTabs.contains(model.selectedTab) { model.selectedTab = .today }
-        }
+        .modifier(PhoneRouting())
     }
 }
 
@@ -182,6 +266,7 @@ struct PushedSection: View {
     }
 }
 
+@available(iOS 18.0, *)
 private struct SidebarTabs: View {
     @Environment(AppModel.self) private var model
 
@@ -227,14 +312,118 @@ private struct SidebarTabs: View {
             Tab(value: AppTab.search, role: .search) { SearchView() }
         }
         .tabViewStyle(.sidebarAdaptable)
-        .tabBarMinimizeBehavior(.onScrollDown)
-        .tabViewBottomAccessory { DueAccessory() }
+        .modifier(GlassTabChrome())
         .overlay(alignment: .top) {
             if model.goalJustReached { GoalToast() }
         }
         .animation(.spring(duration: 0.5), value: model.goalJustReached)
         // The sidebar shows every section itself; nothing is pushed on Today.
         .onAppear { model.todayPath = NavigationPath() }
+    }
+}
+
+/// The iPad sidebar before iOS 18 has no adaptable tab view: a split view
+/// with a list of every section, grouped as the website's sidebar groups
+/// them, and the section on the right.
+private struct ClassicSidebar: View {
+    @Environment(AppModel.self) private var model
+
+    private struct Row: Identifiable {
+        let tab: AppTab
+        let title: String
+        let systemImage: String
+        var id: AppTab { tab }
+    }
+
+    private static let groups: [(title: String?, rows: [Row])] = [
+        (nil, [
+            Row(tab: .today, title: "Today", systemImage: "sun.horizon"),
+            Row(tab: .learn, title: "Course", systemImage: "graduationcap"),
+            Row(tab: .read, title: "Read", systemImage: "book.closed"),
+            Row(tab: .vocab, title: "Vocab", systemImage: "rectangle.on.rectangle.angled"),
+            Row(tab: .quiz, title: "Quiz", systemImage: "checklist"),
+        ]),
+        ("Drill", [
+            Row(tab: .translate, title: "Translate", systemImage: "character.book.closed"),
+            Row(tab: .sight, title: "Sight Reading", systemImage: "eye"),
+            Row(tab: .scansion, title: "Scansion", systemImage: "waveform.path"),
+            Row(tab: .forge, title: "Forms Forge", systemImage: "hammer"),
+        ]),
+        ("Reference", [
+            Row(tab: .grammar, title: "Grammar", systemImage: "text.book.closed"),
+            Row(tab: .devices, title: "Devices", systemImage: "wand.and.stars"),
+            Row(tab: .context, title: "Context", systemImage: "building.columns"),
+        ]),
+        ("Exam", [
+            Row(tab: .frq, title: "FRQ Workshop", systemImage: "pencil.and.list.clipboard"),
+            Row(tab: .exam, title: "Practice Exam", systemImage: "timer"),
+            Row(tab: .plan, title: "Study Plan", systemImage: "calendar"),
+        ]),
+        ("You", [
+            Row(tab: .classroom, title: "Classroom", systemImage: "person.3"),
+            Row(tab: .settings, title: "Settings", systemImage: "gearshape"),
+            Row(tab: .search, title: "Search", systemImage: "magnifyingglass"),
+        ]),
+    ]
+
+    var body: some View {
+        let selection = Binding<AppTab?>(
+            get: { model.selectedTab },
+            set: { if let tab = $0 { model.selectedTab = tab } }
+        )
+        NavigationSplitView {
+            List(selection: selection) {
+                ForEach(Array(Self.groups.enumerated()), id: \.offset) { _, group in
+                    if let title = group.title {
+                        Section(title) { rows(group.rows) }
+                    } else {
+                        Section { rows(group.rows) }
+                    }
+                }
+            }
+            .navigationTitle("Lectio")
+        } detail: {
+            detail
+        }
+        .overlay(alignment: .top) {
+            if model.goalJustReached { GoalToast() }
+        }
+        .animation(.spring(duration: 0.5), value: model.goalJustReached)
+        // The sidebar shows every section itself; nothing is pushed on Today.
+        .onAppear { model.todayPath = NavigationPath() }
+    }
+
+    @ViewBuilder
+    private func rows(_ rows: [Row]) -> some View {
+        ForEach(rows) { row in
+            Label(row.title, systemImage: row.systemImage)
+                .badge(row.tab == .vocab ? dueCount(model) : 0)
+                .tag(row.tab)
+        }
+    }
+
+    @ViewBuilder
+    private var detail: some View {
+        switch model.selectedTab {
+        case .today: TodayView()
+        case .learn: CourseView()
+        case .read: ReadIndexView()
+        case .vocab: VocabView()
+        case .quiz: QuizView()
+        case .translate: TranslateView()
+        case .sight: SightReadingView()
+        case .scansion: ScansionLabView()
+        case .forge: ForgeView()
+        case .grammar: GrammarView()
+        case .devices: DevicesView()
+        case .context: ContextView()
+        case .frq: FrqWorkshopView()
+        case .exam: PracticeExamView()
+        case .plan: StudyPlanView()
+        case .classroom: ClassroomView()
+        case .settings: SettingsView()
+        case .search: SearchView()
+        }
     }
 }
 
@@ -249,7 +438,7 @@ private struct GoalToast: View {
             .foregroundStyle(Palette.rubric)
             .padding(.horizontal, 18)
             .padding(.vertical, 12)
-            .glassEffect(.regular, in: .capsule)
+            .lectioGlass(in: .capsule)
             .padding(.top, 8)
             .transition(.move(edge: .top).combined(with: .opacity))
             .sensoryFeedback(.success, trigger: model.goalJustReached)

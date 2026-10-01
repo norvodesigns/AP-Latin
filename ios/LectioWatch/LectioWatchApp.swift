@@ -129,7 +129,7 @@ struct WatchHome: View {
                         } label: {
                             Text(store.queue.isEmpty ? "All caught up" : "Review").frame(maxWidth: .infinity)
                         }
-                        .buttonStyle(.glassProminent)
+                        .watchGlass(prominent: true)
                         .disabled(store.queue.isEmpty)
                     } else {
                         Text("Open Lectio on your iPhone to send today's cards.")
@@ -162,14 +162,14 @@ struct WatchReviewView: View {
                 if flipped {
                     HStack {
                         Button { grade(id, 0) } label: { Image(systemName: "arrow.counterclockwise") }
-                            .buttonStyle(.glass)
+                            .watchGlass()
                             .accessibilityLabel("Practice again")
                         Button { grade(id, 4) } label: { Image(systemName: "checkmark") }
-                            .buttonStyle(.glassProminent)
+                            .watchGlass(prominent: true)
                             .accessibilityLabel("Got it")
                     }
                 } else {
-                    Button("Show") { withAnimation { flipped = true } }.buttonStyle(.glass)
+                    Button("Show") { withAnimation { flipped = true } }.watchGlass()
                 }
             }
             .contentShape(Rectangle())
@@ -194,4 +194,16 @@ struct WatchReviewView: View {
 /// Haptics, kept to one call site.
 enum WKInterfaceDeviceFeedback {
     static func play(_ type: WKHapticType) { WKInterfaceDevice.current().play(type) }
+}
+
+private extension View {
+    /// Glass buttons on watchOS 26 and later, the plain bordered ones before.
+    @ViewBuilder
+    func watchGlass(prominent: Bool = false) -> some View {
+        if #available(watchOS 26.0, *) {
+            if prominent { buttonStyle(.glassProminent) } else { buttonStyle(.glass) }
+        } else {
+            if prominent { buttonStyle(.borderedProminent) } else { buttonStyle(.bordered) }
+        }
+    }
 }

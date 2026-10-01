@@ -70,14 +70,13 @@ struct AskAboutLineSheet: View {
                             .onSubmit { ask(question) }
                             .padding(.horizontal, 16)
                             .padding(.vertical, 10)
-                            .glassEffect(.regular.interactive(), in: .capsule)
+                            .lectioGlass(in: .capsule, interactive: true)
                         Button {
                             ask(question)
                         } label: {
                             Image(systemName: "arrow.up").font(.headline)
                         }
-                        .buttonStyle(.glassProminent)
-                        .buttonBorderShape(.circle)
+                        .glassButton(prominent: true, circle: true)
                         .disabled(question.trimmingCharacters(in: .whitespaces).isEmpty || streaming)
                         .accessibilityLabel("Ask")
                     }

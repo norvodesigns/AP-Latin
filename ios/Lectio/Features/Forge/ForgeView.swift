@@ -96,13 +96,13 @@ private struct ForgeHome: View {
 
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Which tables").rubricLabel()
-                    GlassEffectContainer(spacing: 8) {
+                    GlassGroup(spacing: 8) {
                         HStack(spacing: 8) {
                             ForEach(Paradigm.Kind.allCases, id: \.self) { k in
                                 let on = kinds.contains(k)
                                 Button(k.label) { toggle(k) }
                                     .font(.subheadline)
-                                    .buttonStyle(.glass)
+                                    .glassButton()
                                     .tint(on ? Palette.rubric : nil)
                                     .accessibilityAddTraits(on ? .isSelected : [])
                             }
@@ -127,7 +127,7 @@ private struct ForgeHome: View {
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 6)
                     }
-                    .buttonStyle(.glassProminent)
+                    .glassButton(prominent: true)
                     .disabled(scope.isEmpty)
                 }
 
@@ -261,7 +261,7 @@ private struct ForgeRoundView: View {
                 .font(.prose(.body))
                 .foregroundStyle(Palette.inkMuted)
                 .multilineTextAlignment(.center)
-            GlassEffectContainer(spacing: 12) {
+            GlassGroup(spacing: 12) {
                 VStack(spacing: 12) {
                     Button {
                         var rng = SystemRandomNumberGenerator()
@@ -272,11 +272,11 @@ private struct ForgeRoundView: View {
                     } label: {
                         Text("Another round").font(.headline).frame(maxWidth: 300).padding(.vertical, 6)
                     }
-                    .buttonStyle(.glassProminent)
+                    .glassButton(prominent: true)
                     Button(action: onClose) {
                         Text("Done").frame(maxWidth: 300).padding(.vertical, 4)
                     }
-                    .buttonStyle(.glass)
+                    .glassButton()
                 }
             }
             .padding(.top, 10)
@@ -321,13 +321,13 @@ private struct ForgeVerdict: View {
             Button(action: onContinue) {
                 Text("Continue").font(.headline).frame(maxWidth: .infinity).padding(.vertical, 6)
             }
-            .buttonStyle(.glassProminent)
+            .glassButton(prominent: true)
             .keyboardShortcut(.return, modifiers: [])
             .padding(.top, 4)
         }
         .padding(18)
         .frame(maxWidth: 560, alignment: .leading)
-        .glassEffect(.regular, in: .rect(cornerRadius: 26))
+        .lectioGlass(in: .rect(cornerRadius: 26))
         .padding(.horizontal, 14)
         .padding(.bottom, 6)
         .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -357,7 +357,7 @@ private struct MakeQuestion: View {
             Text("Macrons are optional when you type.").font(.caption2).foregroundStyle(Palette.inkFaint)
             if verdict == nil {
                 Button("Check", action: check)
-                    .buttonStyle(.glassProminent)
+                    .glassButton(prominent: true)
                     .disabled(text.trimmingCharacters(in: .whitespaces).isEmpty)
             }
         }
@@ -445,7 +445,7 @@ private struct ChartQuestion: View {
             Text("Macrons are optional when you type.").font(.caption2).foregroundStyle(Palette.inkFaint)
             if verdict == nil {
                 Button("Check", action: check)
-                    .buttonStyle(.glassProminent)
+                    .glassButton(prominent: true)
                     .disabled(!filled)
             }
         }

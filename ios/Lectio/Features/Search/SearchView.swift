@@ -106,7 +106,7 @@ private struct WordSheet: View {
                 } label: {
                     Label("Add to my vocabulary deck", systemImage: "plus").frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.glassProminent)
+                .glassButton(prominent: true)
             }
         }
         .padding(24)

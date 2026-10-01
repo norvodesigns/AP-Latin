@@ -122,7 +122,7 @@ struct FrqWorkspaceView: View {
                     Text(saved ? "Saved" : "Log this attempt (\(earned.formatted())/\(totalPoints))")
                         .font(.headline).frame(maxWidth: .infinity).padding(.vertical, 6)
                 }
-                .buttonStyle(.glassProminent)
+                .glassButton(prominent: true)
                 .disabled(saved || selfScore.isEmpty)
 
                 priorAttempts
@@ -222,7 +222,7 @@ struct FrqWorkspaceView: View {
                 }
                 .frame(maxWidth: .infinity).padding(.vertical, 4)
             }
-            .buttonStyle(.glass)
+            .glassButton()
             .disabled(grading || (prompt.type == "short-answer" ? answers.values.allSatisfy { $0.isEmpty } : combined.count < 20 || (isProject && project == nil)))
         }
         if let gradeError {

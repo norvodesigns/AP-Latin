@@ -1,12 +1,20 @@
 import Foundation
 import LectioCore
 
-/// Sample progress for screenshots, applied only when the app is launched
-/// with `-seedDemo YES` (the CI screenshot job does this) and only on a
-/// device with no progress of its own.
+/// Sample progress for screenshots and for TestFlight testers: applied when
+/// the app is launched with `-seedDemo YES` (the CI screenshot job does
+/// this), or from Settings > Preview, and only on a device with no progress
+/// of its own.
 extension AppModel {
     func seedDemoIfRequested() {
-        guard UserDefaults.standard.bool(forKey: "seedDemo"), let library = content else { return }
+        guard UserDefaults.standard.bool(forKey: "seedDemo") else { return }
+        loadSampleProgress()
+    }
+
+    /// A few weeks of study, a part-way deck, graded work and the first two
+    /// lessons, so a fresh install has something on every screen.
+    func loadSampleProgress() {
+        guard let library = content else { return }
         // The same point in the day on every launch, so every screenshot agrees.
         studySecondsToday = 18 * 60
         studyGoalDate = StudyDates.today()

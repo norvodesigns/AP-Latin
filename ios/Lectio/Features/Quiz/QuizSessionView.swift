@@ -109,7 +109,7 @@ private struct QuestionView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 6)
                 }
-                .buttonStyle(.glassProminent)
+                .glassButton(prominent: true)
                 .padding(.horizontal, 20)
                 .padding(.bottom, 8)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -278,7 +278,7 @@ private struct QuizResultsView: View {
                 Button(action: onDone) {
                     Text("Done").font(.headline).frame(maxWidth: .infinity).padding(.vertical, 6)
                 }
-                .buttonStyle(.glassProminent)
+                .glassButton(prominent: true)
                 .padding(.top, 8)
             }
             .padding(20)

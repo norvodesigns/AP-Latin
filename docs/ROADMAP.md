@@ -366,3 +366,13 @@ finishing a lesson counts toward the streak and daily goal.
   and `verify` now fails a model answer that quotes Latin outside its passage, or a prompt whose
   lines are not in the passage. The exam's FRQ 2 is now drawn from all 19 translation drills (a
   retake sets a different passage) on both platforms, with the choice in LectioCore and a test.
+- 2026-10-01: Toward the first TestFlight build. The app now runs on iOS 17 and later (watchOS 10 and
+  later) from one build: Liquid Glass on 26+, a material look before it. Every glass call goes through
+  `GlassCompat.swift` (`lectioGlass`, `glassButton`, `GlassGroup`, `lectioGlassID`); the navigation
+  shell has the Tab API and adaptable sidebar (iOS 18, 26), and a classic tab bar and split view
+  (iOS 17), with a badge on Vocab where the glass accessory pill is missing. `-legacyChrome YES`, or
+  Settings > Preview > Classic look, shows the older look on a glass device, and CI screenshots it
+  (`*-classic-*`). New: a Release archive for a real device in CI (unsigned, watch app embedded and
+  checked), the TestFlight job checks its secrets first and keeps its logs, Settings > Preview can load
+  sample progress when signed out, and `ios/TESTFLIGHT.md` holds the setup steps and the text to paste
+  into TestFlight's What to Test.

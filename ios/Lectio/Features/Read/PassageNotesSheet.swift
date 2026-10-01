@@ -22,7 +22,7 @@ struct PassageNotesSheet: View {
                             Text(passage.summary).font(.prose()).foregroundStyle(Palette.ink)
                         } else {
                             Button("Reveal the English summary") { withAnimation { showEnglish = true } }
-                                .buttonStyle(.glass)
+                                .glassButton()
                         }
                     }
                     section("Context") {
@@ -69,7 +69,7 @@ struct PassageNotesSheet: View {
                             FlowLayout(lineSpacing: 8) {
                                 ForEach(state.flaggedLines, id: \.self) { n in
                                     Button("Line \(n)") { onJump(n) }
-                                        .buttonStyle(.glass)
+                                        .glassButton()
                                         .padding(.trailing, 6)
                                 }
                             }
@@ -99,7 +99,7 @@ struct PassageNotesSheet: View {
                 .foregroundStyle(Palette.inkMuted)
             if inRotation < total {
                 Button("Add all to deck") { model.update { $0.seedVocab(passage.vocabIds) } }
-                    .buttonStyle(.glass)
+                    .glassButton()
             }
         }
     }

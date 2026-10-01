@@ -117,7 +117,7 @@ struct ScansionLabView: View {
                         Text(work.isReady ? "Check the line" : "Mark every syllable and rule five boundaries")
                             .font(.headline).frame(maxWidth: .infinity).padding(.vertical, 6)
                     }
-                    .buttonStyle(.glassProminent)
+                    .glassButton(prominent: true)
                     .disabled(!work.isReady)
                 }
 
@@ -141,7 +141,7 @@ struct ScansionLabView: View {
                 }
                 .pickerStyle(.segmented)
                 .padding(8)
-                .glassEffect(.regular, in: .capsule)
+                .lectioGlass(in: .capsule)
                 .padding(.horizontal, 20)
                 .padding(.bottom, 8)
             }
@@ -160,8 +160,8 @@ struct ScansionLabView: View {
                 Text("Caesurae: " + work.line.caesurae.map(\.type).joined(separator: ", ")).font(.footnote).foregroundStyle(Palette.inkMuted)
             }
             HStack {
-                Button("Try it again") { retry() }.buttonStyle(.glass)
-                Button("Next line") { next() }.buttonStyle(.glassProminent)
+                Button("Try it again") { retry() }.glassButton()
+                Button("Next line") { next() }.glassButton(prominent: true)
             }
         }
     }

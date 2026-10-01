@@ -14,7 +14,7 @@ import PackageDescription
 
 let package = Package(
     name: "LectioCore",
-    platforms: [.iOS(.v26), .macOS(.v15), .watchOS(.v26)],
+    platforms: [.iOS(.v17), .macOS(.v15), .watchOS(.v10)],
     products: [
         .library(name: "LectioCore", targets: ["LectioCore"]),
     ],

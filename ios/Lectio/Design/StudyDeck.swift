@@ -33,7 +33,7 @@ struct StudyDeck<Item: Identifiable, Front: View, Back: View>: View where Item.I
                 VStack(spacing: 14) {
                     Image(systemName: "checkmark.seal").font(.system(size: 48)).foregroundStyle(Palette.correct)
                     Text("Every \(noun) done").font(.system(.title2, design: .serif))
-                    Button("Go again", action: reset).buttonStyle(.glassProminent)
+                    Button("Go again", action: reset).glassButton(prominent: true)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 40)
@@ -61,23 +61,23 @@ struct StudyDeck<Item: Identifiable, Front: View, Back: View>: View where Item.I
     }
 
     private var controls: some View {
-        GlassEffectContainer(spacing: 14) {
+        GlassGroup(spacing: 14) {
             if shown {
                 HStack(spacing: 14) {
                     Button { grade(again: true) } label: {
                         Label("Practice again", systemImage: "arrow.counterclockwise").frame(maxWidth: .infinity).padding(.vertical, 6)
                     }
-                    .buttonStyle(.glass)
+                    .glassButton()
                     Button { grade(again: false) } label: {
                         Label("Got it", systemImage: "checkmark").frame(maxWidth: .infinity).padding(.vertical, 6)
                     }
-                    .buttonStyle(.glassProminent)
+                    .glassButton(prominent: true)
                 }
             } else {
                 Button { withAnimation(.spring(duration: 0.35)) { shown = true } } label: {
                     Label("Turn over", systemImage: "arrow.turn.up.right").frame(maxWidth: .infinity).padding(.vertical, 6)
                 }
-                .buttonStyle(.glass)
+                .glassButton()
             }
         }
         .font(.headline)

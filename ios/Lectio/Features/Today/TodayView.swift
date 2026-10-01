@@ -453,7 +453,7 @@ private struct SententiaCard: View {
                     .font(.subheadline.weight(.semibold))
                     .padding(.vertical, 2)
             }
-            .buttonStyle(.glass)
+            .glassButton()
             .padding(.top, 4)
         }
         .accessibilityElement(children: .contain)

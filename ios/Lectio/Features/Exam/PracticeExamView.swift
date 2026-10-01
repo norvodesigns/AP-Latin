@@ -40,7 +40,7 @@ struct PracticeExamView: View {
                         } label: {
                             Text("Begin Section I").font(.headline).frame(maxWidth: .infinity).padding(.vertical, 6)
                         }
-                        .buttonStyle(.glassProminent)
+                        .glassButton(prominent: true)
                     }
 
                     let past = model.progress.examResults.suffix(5).reversed()
@@ -242,14 +242,14 @@ struct ExamSessionView: View {
             }
             .safeAreaInset(edge: .bottom) {
                 HStack {
-                    Button("Previous") { cursor -= 1 }.buttonStyle(.glass).disabled(cursor == 0)
+                    Button("Previous") { cursor -= 1 }.glassButton().disabled(cursor == 0)
                     Spacer()
                     Text("\(answers.count) of \(paper.mcq.count) answered").quietLabel()
                     Spacer()
                     if cursor < paper.mcq.count - 1 {
-                        Button("Next") { cursor += 1 }.buttonStyle(.glassProminent)
+                        Button("Next") { cursor += 1 }.glassButton(prominent: true)
                     } else {
-                        Button("End Section I") { endSectionI() }.buttonStyle(.glassProminent)
+                        Button("End Section I") { endSectionI() }.glassButton(prominent: true)
                     }
                 }
                 .padding(.horizontal, 20).padding(.bottom, 8)
@@ -278,7 +278,7 @@ struct ExamSessionView: View {
             } label: {
                 Text("Begin Section II").font(.headline).frame(maxWidth: .infinity).padding(.vertical, 6)
             }
-            .buttonStyle(.glassProminent)
+            .glassButton(prominent: true)
             Button("Skip Section II and score now") { finish() }
         }
         .padding(24)
@@ -331,7 +331,7 @@ struct ExamSessionView: View {
                 Button { finish() } label: {
                     Text("Finish and score").font(.headline).frame(maxWidth: .infinity).padding(.vertical, 6)
                 }
-                .buttonStyle(.glassProminent)
+                .glassButton(prominent: true)
             }
             .padding(20)
             .frame(maxWidth: 820, alignment: .leading)
@@ -430,7 +430,7 @@ struct ExamSessionView: View {
                 } label: {
                     Text(saved ? "Saved to your history" : "Save results").font(.headline).frame(maxWidth: .infinity).padding(.vertical, 6)
                 }
-                .buttonStyle(.glassProminent)
+                .glassButton(prominent: true)
                 .disabled(saved)
 
                 DisclosureGroup("Review every multiple-choice question") {

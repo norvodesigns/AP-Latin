@@ -133,7 +133,7 @@ struct SpeedRoundView: View {
                     .frame(maxWidth: 520)
                     .padding(.vertical, 8)
             }
-            .buttonStyle(.glassProminent)
+            .glassButton(prominent: true)
             .disabled(words.count < Self.minPool)
             .padding(.horizontal, 20)
             .padding(.bottom, 8)
@@ -291,12 +291,12 @@ struct SpeedRoundView: View {
             .frame(maxWidth: .infinity)
         }
         .safeAreaInset(edge: .bottom) {
-            GlassEffectContainer(spacing: 12) {
+            GlassGroup(spacing: 12) {
                 VStack(spacing: 10) {
                     Button { start() } label: {
                         Text("Again").font(.headline).frame(maxWidth: 520).padding(.vertical, 8)
                     }
-                    .buttonStyle(.glassProminent)
+                    .glassButton(prominent: true)
                     HStack(spacing: 10) {
                         if !toAdd.isEmpty && !added {
                             Button {
@@ -305,10 +305,10 @@ struct SpeedRoundView: View {
                             } label: {
                                 Text("Add \(toAdd.count) to flashcards").frame(maxWidth: .infinity).padding(.vertical, 4)
                             }
-                            .buttonStyle(.glass)
+                            .glassButton()
                         }
                         Button { dismiss() } label: { Text("Done").frame(maxWidth: .infinity).padding(.vertical, 4) }
-                            .buttonStyle(.glass)
+                            .glassButton()
                     }
                     .frame(maxWidth: 520)
                 }

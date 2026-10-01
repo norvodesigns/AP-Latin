@@ -97,7 +97,7 @@ struct SightReadingView: View {
                     }
                     .frame(maxWidth: .infinity).padding(.vertical, 4)
                 }
-                .buttonStyle(.glassProminent)
+                .glassButton(prominent: true)
                 .disabled(generating)
                 if let generateError {
                     Text(generateError).font(.footnote).foregroundStyle(Palette.ink2)
@@ -199,7 +199,7 @@ struct SightAttemptView: View {
                     } label: {
                         Text("Check answers").font(.headline).frame(maxWidth: .infinity).padding(.vertical, 6)
                     }
-                    .buttonStyle(.glassProminent)
+                    .glassButton(prominent: true)
                     .disabled(answers.isEmpty)
                 }
             }
@@ -250,7 +250,7 @@ struct SightAttemptView: View {
                 Text(item.summary).font(.prose()).foregroundStyle(Palette.ink)
             } else {
                 Button("Reveal the English summary") { withAnimation { showSummary = true } }
-                    .buttonStyle(.glass)
+                    .glassButton()
             }
         }
     }

@@ -88,7 +88,7 @@ struct OnboardingView: View {
             Button { step = .track } label: {
                 Text("Begin").font(.headline).frame(maxWidth: 280).padding(.vertical, 8)
             }
-            .buttonStyle(.glassProminent)
+            .glassButton(prominent: true)
             .padding(.top, 18)
             Button("I already have an account") {
                 returning = true
@@ -115,12 +115,12 @@ struct OnboardingView: View {
             header("Finding your level", "A quick check")
             Text("Up to \(placement.count) short questions, easiest first. It stops as soon as it finds your level, usually well before the end. No score is kept.")
                 .font(.prose(.body)).foregroundStyle(Palette.ink2).multilineTextAlignment(.center)
-            GlassEffectContainer(spacing: 12) {
+            GlassGroup(spacing: 12) {
                 VStack(spacing: 12) {
                     Button { step = .placement } label: { Text("Start the check").font(.headline).frame(maxWidth: 300).padding(.vertical, 6) }
-                        .buttonStyle(.glassProminent)
+                        .glassButton(prominent: true)
                     Button { step = .pickUnit } label: { Text("I’ll choose a unit").frame(maxWidth: 300).padding(.vertical, 4) }
-                        .buttonStyle(.glass)
+                        .glassButton()
                 }
             }
         }
@@ -177,12 +177,12 @@ struct OnboardingView: View {
                 }
             }
             .font(.prose(.body)).foregroundStyle(Palette.ink2).multilineTextAlignment(.center)
-            GlassEffectContainer(spacing: 12) {
+            GlassGroup(spacing: 12) {
                 VStack(spacing: 12) {
                     Button { step = .goal } label: { Text("Sounds good").font(.headline).frame(maxWidth: 300).padding(.vertical, 6) }
-                        .buttonStyle(.glassProminent)
+                        .glassButton(prominent: true)
                     Button { step = .pickUnit } label: { Text("Choose another unit").frame(maxWidth: 300).padding(.vertical, 4) }
-                        .buttonStyle(.glass)
+                        .glassButton()
                 }
             }
         }
@@ -234,7 +234,7 @@ struct OnboardingView: View {
                 }
             }
             Button { step = .reminder } label: { Text("Continue").font(.headline).frame(maxWidth: 300).padding(.vertical, 6) }
-                .buttonStyle(.glassProminent)
+                .glassButton(prominent: true)
                 .padding(.top, 8)
         }
     }
@@ -248,7 +248,7 @@ struct OnboardingView: View {
                 .datePickerStyle(.wheel)
                 .labelsHidden()
                 .frame(maxHeight: 160)
-            GlassEffectContainer(spacing: 12) {
+            GlassGroup(spacing: 12) {
                 VStack(spacing: 12) {
                     Button {
                         let c = Calendar.current.dateComponents([.hour, .minute], from: reminderTime)
@@ -258,9 +258,9 @@ struct OnboardingView: View {
                             next()
                         }
                     } label: { Text("Remind me").font(.headline).frame(maxWidth: 300).padding(.vertical, 6) }
-                        .buttonStyle(.glassProminent)
+                        .glassButton(prominent: true)
                     Button { next() } label: { Text("Not now").frame(maxWidth: 300).padding(.vertical, 4) }
-                        .buttonStyle(.glass)
+                        .glassButton()
                 }
             }
         }
@@ -280,12 +280,12 @@ struct OnboardingView: View {
                 }
             }
                 .font(.prose(.body)).foregroundStyle(Palette.ink2).multilineTextAlignment(.center)
-            GlassEffectContainer(spacing: 12) {
+            GlassGroup(spacing: 12) {
                 VStack(spacing: 12) {
                     Button { showAccount = true } label: { Text("Sign in or create an account").font(.headline).frame(maxWidth: 320).padding(.vertical, 6) }
-                        .buttonStyle(.glassProminent)
+                        .glassButton(prominent: true)
                     Button { finish() } label: { Text("Not now").frame(maxWidth: 320).padding(.vertical, 4) }
-                        .buttonStyle(.glass)
+                        .glassButton()
                 }
             }
         }

@@ -72,7 +72,7 @@ struct ContextView: View {
             } label: {
                 Text("Start").font(.headline).frame(maxWidth: .infinity).padding(.vertical, 6)
             }
-            .buttonStyle(.glassProminent)
+            .glassButton(prominent: true)
             .disabled(pool.isEmpty)
         }
     }

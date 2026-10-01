@@ -177,7 +177,7 @@ private struct SpotTheDevice: View {
                     } label: {
                         Text("Next").font(.headline).frame(maxWidth: .infinity).padding(.vertical, 6)
                     }
-                    .buttonStyle(.glassProminent)
+                    .glassButton(prominent: true)
                 }
             }
         }

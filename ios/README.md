@@ -1,8 +1,9 @@
 # Lectio for iPhone and iPad
 
-A native SwiftUI app with Liquid Glass (iOS/iPadOS 26+), built alongside the website from the same
-content and the same progress data. The website stays the place content is written. This folder
-is the app.
+A native SwiftUI app, built alongside the website from the same content and the same progress
+data. It runs on iOS and iPadOS 17 and later (watchOS 10 and later): Liquid Glass on 26 and later,
+and a quiet material look with a classic tab bar before that, from one build. The website stays the
+place content is written. This folder is the app.
 
 ```
 ios/
@@ -90,7 +91,19 @@ for the layer that floats above it:
 Colours are asset-catalog sets under `Lectio/Resources/Assets.xcassets/Palette`, with light and
 dark values taken from `src/app/globals.css`.
 
+**Older systems.** Every glass call goes through `Lectio/Design/GlassCompat.swift` (`lectioGlass`,
+`glassButton`, `GlassGroup`, `lectioGlassID`). On iOS 26+ each is the system's own Liquid Glass; before
+that each is a thin material with a hairline edge in the page's colours. The navigation shell
+(`App/RootView.swift`) has three forms: the Tab API with the adaptable sidebar (iOS 18 and 26), a
+classic `tabItem` tab bar for iPhone and a split view for iPad (iOS 17). Launch with
+`-legacyChrome YES`, or turn on Settings > Preview > Classic look and relaunch, to see the older look
+on a device that has glass. CI screenshots it that way too (`*-classic-*` in the screenshots artifact).
+A new view should use the wrappers, never `glassEffect` or `.buttonStyle(.glass)` directly: CI builds
+with a deployment target of iOS 17, so an unguarded iOS 26 call fails the build.
+
 ## Shipping to TestFlight
+
+The step-by-step is in [TESTFLIGHT.md](TESTFLIGHT.md). In short:
 
 Either route works:
 

@@ -190,7 +190,7 @@ struct LessonView: View {
                     .frame(maxWidth: 520)
                     .padding(.vertical, 8)
             }
-            .buttonStyle(.glassProminent)
+            .glassButton(prominent: true)
             .keyboardShortcut(.return, modifiers: [])
             .padding(.horizontal, 20)
             .padding(.bottom, 8)
@@ -307,7 +307,7 @@ struct LessonView: View {
             .frame(maxWidth: .infinity)
         }
         .safeAreaInset(edge: .bottom) {
-            GlassEffectContainer(spacing: 12) {
+            GlassGroup(spacing: 12) {
                 VStack(spacing: 10) {
                     if let next {
                         Button {
@@ -315,20 +315,20 @@ struct LessonView: View {
                         } label: {
                             Text("Next: \(RichText.plain(next.lesson.title))").font(.headline).lineLimit(1).frame(maxWidth: 520).padding(.vertical, 8)
                         }
-                        .buttonStyle(.glassProminent)
+                        .glassButton(prominent: true)
                         .keyboardShortcut(.return, modifiers: [])
                     }
                     HStack(spacing: 10) {
                         let choice = self.again
                         Button { choice.action() } label: { Text(choice.label).frame(maxWidth: .infinity).padding(.vertical, 4) }
-                            .buttonStyle(.glass)
+                            .glassButton()
                         if next == nil {
                             Button { dismiss() } label: { Text("Done").frame(maxWidth: .infinity).padding(.vertical, 4) }
-                                .buttonStyle(.glassProminent)
+                                .glassButton(prominent: true)
                                 .keyboardShortcut(.return, modifiers: [])
                         } else {
                             Button { dismiss() } label: { Text("Done").frame(maxWidth: .infinity).padding(.vertical, 4) }
-                                .buttonStyle(.glass)
+                                .glassButton()
                         }
                     }
                     .frame(maxWidth: 520)
@@ -351,7 +351,7 @@ private struct ContinueBar: View {
         Button(action: action) {
             Text("Continue").font(.headline).frame(maxWidth: 520).padding(.vertical, 8)
         }
-        .buttonStyle(.glassProminent)
+        .glassButton(prominent: true)
         .keyboardShortcut(.return, modifiers: [])
         .padding(.horizontal, 20)
         .padding(.bottom, 8)
@@ -382,13 +382,13 @@ private struct FeedbackPanel: View {
             Button(action: onContinue) {
                 Text("Continue").font(.headline).frame(maxWidth: .infinity).padding(.vertical, 6)
             }
-            .buttonStyle(.glassProminent)
+            .glassButton(prominent: true)
             .keyboardShortcut(.return, modifiers: [])
             .padding(.top, 4)
         }
         .padding(18)
         .frame(maxWidth: 560, alignment: .leading)
-        .glassEffect(.regular, in: .rect(cornerRadius: 26))
+        .lectioGlass(in: .rect(cornerRadius: 26))
         .padding(.horizontal, 14)
         .padding(.bottom, 6)
         .transition(.move(edge: .bottom).combined(with: .opacity))

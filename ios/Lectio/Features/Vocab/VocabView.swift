@@ -101,20 +101,20 @@ struct VocabView: View {
                     Text(due.isEmpty && fresh.isEmpty ? "Nothing due in this scope" : "Review \(due.count) due" + (fresh.isEmpty ? "" : " + \(fresh.count) new"))
                         .font(.headline).frame(maxWidth: .infinity).padding(.vertical, 6)
                 }
-                .buttonStyle(.glassProminent)
+                .glassButton(prominent: true)
                 .disabled(due.isEmpty && fresh.isEmpty)
                 .listRowBackground(Color.clear)
                 Button { model.openDerivatives() } label: {
                     Label("Derivatives · 10 questions", systemImage: "arrow.triangle.branch")
                         .font(.subheadline.weight(.semibold)).frame(maxWidth: .infinity).padding(.vertical, 4)
                 }
-                .buttonStyle(.glass)
+                .glassButton()
                 .listRowBackground(Color.clear)
                 Button { speed = true } label: {
                     Label("Speed round · \(SpeedRound.seconds) seconds", systemImage: "timer")
                         .font(.subheadline.weight(.semibold)).frame(maxWidth: .infinity).padding(.vertical, 4)
                 }
-                .buttonStyle(.glass)
+                .glassButton()
                 .listRowBackground(Color.clear)
             }
 

@@ -97,12 +97,45 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             | tee watch-build.log | grep -E '(error|warning: .*(deprecated|isolat|Sendable))|BUILD (SUCCEEDED|FAILED)' || true
           grep -q 'BUILD SUCCEEDED' watch-build.log
-      - name: Upload build log
+      # What TestFlight will receive, built the same way (Release, for a real
+      # device, watch app embedded) but unsigned, so a problem that only a
+      # device build or an archive has (an extension, the watch app, an asset
+      # catalog) shows here and not in the first upload.
+      - name: Archive for devices (Release, unsigned)
+        working-directory: ios
+        run: |
+          set -o pipefail
+          xcodebuild archive \
+            -project Lectio.xcodeproj \
+            -scheme Lectio \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/Lectio.xcarchive \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            | tee archive.log | grep -E '(error|warning: .*(deprecated|isolat|Sendable))|ARCHIVE (SUCCEEDED|FAILED)' || true
+          grep -q 'ARCHIVE SUCCEEDED' archive.log
+      - name: Check what the archive contains
+        working-directory: ios
+        run: |
+          APP=build/Lectio.xcarchive/Products/Applications/Lectio.app
+          test -d "$APP" || { echo "::error::no Lectio.app in the archive"; exit 1; }
+          echo "Plug-ins:"; ls "$APP/PlugIns"
+          test -d "$APP/PlugIns/LectioWidgets.appex" || { echo "::error::widgets extension missing"; exit 1; }
+          test -d "$APP/Watch/Lectio.app" || { echo "::error::watch app is not embedded"; exit 1; }
+          test -d "$APP/Watch/Lectio.app/PlugIns/LectioWatchWidgets.appex" || { echo "::error::watch complications missing"; exit 1; }
+          test -d "$APP/Content" || { echo "::error::content bundle missing"; exit 1; }
+          test -d "$APP/scansion" || { echo "::error::scansion corpus missing"; exit 1; }
+          for p in "$APP/Info.plist" "$APP/Watch/Lectio.app/Info.plist"; do
+            echo "$p"; plutil -p "$p" | grep -E 'MinimumOSVersion|CFBundleVersion|CFBundleShortVersionString|WKCompanionAppBundleIdentifier'
+          done
+          grep -q '"MinimumOSVersion" => "17.0"' <(plutil -p "$APP/Info.plist") || { echo "::error::the app should support iOS 17"; exit 1; }
+          du -sh "$APP"
+      - name: Upload build logs
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: xcodebuild-log
-          path: ios/*build.log
+          path: ios/*.log
 
   screenshots:
     name: Screenshots (iPhone + iPad, light + dark)
@@ -177,6 +210,15 @@ jobs:
                 xcrun simctl io "$udid" screenshot "shots/$label-$mode-onboarding-$step.png"
               done
             done
+            # The look older systems get (-legacyChrome YES): no glass, a
+            # classic tab bar on iPhone and a split view on iPad.
+            xcrun simctl ui "$udid" appearance light
+            for tab in today learn learn/prima-2-3 read read/aen-1-1-33 vocab quiz scansion settings; do
+              xcrun simctl terminate "$udid" com.norvodesigns.lectio || true
+              xcrun simctl launch "$udid" com.norvodesigns.lectio -seedDemo YES -legacyChrome YES -startTab "$tab"
+              sleep 8
+              xcrun simctl io "$udid" screenshot "shots/$label-classic-${tab//\//-}.png"
+            done
             xcrun simctl shutdown "$udid" || true
           }
           shoot "$(pick 'iPhone 17 Pro Max' 'Pro Max' 'iPhone')" iphone
@@ -193,6 +235,26 @@ jobs:
     needs: [core, app]
     runs-on: macos-26
     steps:
+      # Fail in seconds, saying what to add, rather than after a ten-minute
+      # build with an authentication error.
+      - name: Check the App Store Connect secrets
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          missing=""
+          for v in ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_P8; do
+            [ -z "${!v}" ] && missing="$missing $v"
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Missing repository secrets:$missing. Add them under Settings > Secrets and variables > Actions (see ios/README.md, Shipping to TestFlight)."
+            exit 1
+          fi
+          case "$ASC_KEY_P8" in
+            *"BEGIN PRIVATE KEY"*) ;;
+            *) echo "::error::ASC_KEY_P8 should be the full contents of the .p8 file, including the BEGIN PRIVATE KEY line."; exit 1 ;;
+          esac
       - uses: actions/checkout@v4
       - name: Toolchain
         run: brew install xcodegen
@@ -208,6 +270,7 @@ jobs:
       - name: Archive
         working-directory: ios
         run: |
+          set -o pipefail
           xcodebuild archive \
             -project Lectio.xcodeproj \
             -scheme Lectio \
@@ -217,10 +280,13 @@ jobs:
             -authenticationKeyPath "$RUNNER_TEMP/asc/key.p8" \
             -authenticationKeyID "${{ secrets.ASC_KEY_ID }}" \
             -authenticationKeyIssuerID "${{ secrets.ASC_ISSUER_ID }}" \
-            CURRENT_PROJECT_VERSION=${{ github.run_number }}
+            CURRENT_PROJECT_VERSION=${{ github.run_number }} \
+            | tee archive.log | grep -E '(error:|ARCHIVE (SUCCEEDED|FAILED))' || true
+          grep -q 'ARCHIVE SUCCEEDED' archive.log
       - name: Upload
         working-directory: ios
         run: |
+          set -o pipefail
           xcodebuild -exportArchive \
             -archivePath build/Lectio.xcarchive \
             -exportOptionsPlist ExportOptions.plist \
@@ -228,7 +294,19 @@ jobs:
             -allowProvisioningUpdates \
             -authenticationKeyPath "$RUNNER_TEMP/asc/key.p8" \
             -authenticationKeyID "${{ secrets.ASC_KEY_ID }}" \
-            -authenticationKeyIssuerID "${{ secrets.ASC_ISSUER_ID }}"
+            -authenticationKeyIssuerID "${{ secrets.ASC_ISSUER_ID }}" \
+            | tee export.log | grep -E '(error:|EXPORT (SUCCEEDED|FAILED)|Upload|Uploaded)' || true
+          grep -qE 'EXPORT SUCCEEDED|Uploaded' export.log
+      - name: Upload logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: testflight-logs
+          path: |
+            ios/archive.log
+            ios/export.log
+            ~/Library/Logs/gym/*.log
+          if-no-files-found: ignore
       - name: Remove key
         if: always()
         run: rm -rf "$RUNNER_TEMP/asc"

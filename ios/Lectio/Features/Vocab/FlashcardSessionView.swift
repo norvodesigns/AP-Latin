@@ -63,23 +63,23 @@ struct FlashcardSessionView: View {
 
     @ViewBuilder
     private func controls(for id: String) -> some View {
-        GlassEffectContainer(spacing: 16) {
+        GlassGroup(spacing: 16) {
             if flipped {
                 HStack(spacing: 16) {
                     Button { grade(id, quality: 0) } label: {
                         Label("Practice again", systemImage: "arrow.counterclockwise")
                             .frame(maxWidth: .infinity).padding(.vertical, 6)
                     }
-                    .buttonStyle(.glass)
-                    .glassEffectID("again", in: glass)
+                    .glassButton()
+                    .lectioGlassID("again", in: glass)
                     .keyboardShortcut("1", modifiers: [])
 
                     Button { grade(id, quality: 4) } label: {
                         Label("Got it", systemImage: "checkmark")
                             .frame(maxWidth: .infinity).padding(.vertical, 6)
                     }
-                    .buttonStyle(.glassProminent)
-                    .glassEffectID("got", in: glass)
+                    .glassButton(prominent: true)
+                    .lectioGlassID("got", in: glass)
                     .keyboardShortcut("2", modifiers: [])
                 }
             } else {
@@ -89,8 +89,8 @@ struct FlashcardSessionView: View {
                     Label("Show answer", systemImage: "eye")
                         .frame(maxWidth: .infinity).padding(.vertical, 6)
                 }
-                .buttonStyle(.glass)
-                .glassEffectID("got", in: glass)
+                .glassButton()
+                .lectioGlassID("got", in: glass)
                 .keyboardShortcut(.space, modifiers: [])
             }
         }
@@ -109,7 +109,7 @@ struct FlashcardSessionView: View {
                 .foregroundStyle(Palette.inkMuted)
                 .multilineTextAlignment(.center)
             Button("Done") { dismiss() }
-                .buttonStyle(.glassProminent)
+                .glassButton(prominent: true)
                 .padding(.top, 8)
         }
         .frame(maxHeight: .infinity)

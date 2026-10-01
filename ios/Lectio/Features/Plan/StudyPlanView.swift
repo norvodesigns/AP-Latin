@@ -88,9 +88,9 @@ struct StudyPlanView: View {
                     }
                     HStack {
                         if due > 0 {
-                            Button("Vocabulary (\(due))") { model.selectedTab = .vocab }.buttonStyle(.glassProminent)
+                            Button("Vocabulary (\(due))") { model.selectedTab = .vocab }.glassButton(prominent: true)
                         }
-                        Button("Reading Room") { model.selectedTab = .read }.buttonStyle(.glass)
+                        Button("Reading Room") { model.selectedTab = .read }.glassButton()
                     }
                     .padding(.top, 4)
                 }

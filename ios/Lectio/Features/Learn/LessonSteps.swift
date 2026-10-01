@@ -292,10 +292,10 @@ private struct TypeExercise: View {
             if result == nil {
                 HStack(spacing: 10) {
                     Button("Check", action: check)
-                        .buttonStyle(.glassProminent)
+                        .glassButton(prominent: true)
                         .disabled(text.trimmingCharacters(in: .whitespaces).isEmpty)
                     if let hint = step.hint, !showHint {
-                        Button("Hint") { withAnimation { showHint = true } }.buttonStyle(.glass)
+                        Button("Hint") { withAnimation { showHint = true } }.glassButton()
                             .accessibilityHint(RichText.plain(hint))
                     }
                 }
@@ -339,9 +339,9 @@ private struct TranslateExercise: View {
             if result == nil && !judging {
                 HStack(spacing: 10) {
                     Button("Check", action: check)
-                        .buttonStyle(.glassProminent)
+                        .glassButton(prominent: true)
                         .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    Button("I don’t know") { answer(false) }.buttonStyle(.glass)
+                    Button("I don’t know") { answer(false) }.glassButton()
                 }
             }
             if judging && result == nil {
@@ -350,10 +350,10 @@ private struct TranslateExercise: View {
                     Text(step.answers.first ?? "").font(.prose(.title3)).foregroundStyle(Palette.ink)
                     Text("English has many right answers. Does yours say the same thing?")
                         .font(.prose(.footnote)).foregroundStyle(Palette.inkMuted)
-                    GlassEffectContainer(spacing: 10) {
+                    GlassGroup(spacing: 10) {
                         HStack(spacing: 10) {
-                            Button("Mine means the same") { answer(true) }.buttonStyle(.glassProminent)
-                            Button("I had it wrong") { answer(false) }.buttonStyle(.glass)
+                            Button("Mine means the same") { answer(true) }.glassButton(prominent: true)
+                            Button("I had it wrong") { answer(false) }.glassButton()
                         }
                     }
                 }
@@ -428,10 +428,10 @@ private struct BuildExercise: View {
                     Button("Check") {
                         answer(LessonCheck.checkBuild(placed.compactMap { id in tiles.first { $0.id == id }?.text }, step: step))
                     }
-                    .buttonStyle(.glassProminent)
+                    .glassButton(prominent: true)
                     .disabled(placed.isEmpty)
                     if !placed.isEmpty {
-                        Button("Clear") { withAnimation(.spring(duration: 0.3)) { placed = [] } }.buttonStyle(.glass)
+                        Button("Clear") { withAnimation(.spring(duration: 0.3)) { placed = [] } }.glassButton()
                     }
                 }
             }

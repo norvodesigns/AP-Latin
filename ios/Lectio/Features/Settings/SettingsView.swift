@@ -9,6 +9,9 @@ struct SettingsView: View {
     @State private var pendingImport: ProgressDocument?
     @State private var importError: String?
     @State private var reminderOn = UserDefaults.standard.bool(forKey: "reminderEnabled")
+    /// Read at launch by LectioChrome, so a change applies on the next open.
+    @AppStorage("legacyChrome") private var classicLook = false
+    @State private var confirmClear = false
 
     var body: some View {
         @Bindable var model = model
@@ -94,6 +97,23 @@ struct SettingsView: View {
                     Text("Time counts while a study section is open on screen, the same way the website counts it. The reminder says how many cards are due.")
                 }
 
+                // For TestFlight: compare the two looks, and fill an empty
+                // device with sample progress so the screens have something
+                // to show. Sample progress is only offered while signed out,
+                // so it can never sync into an account.
+                Section {
+                    Toggle("Classic look", isOn: $classicLook)
+                    if model.account == nil {
+                        Button("Load sample progress", systemImage: "tray.and.arrow.down") { model.loadSampleProgress() }
+                            .disabled(!model.progress.vocab.isEmpty)
+                        Button("Clear all progress on this device", systemImage: "trash", role: .destructive) { confirmClear = true }
+                    }
+                } header: {
+                    Text("Preview")
+                } footer: {
+                    Text("Classic look is what iOS 17 and 18 get: no Liquid Glass and a classic tab bar. Restart the app to apply it. Sample progress fills an empty device so every screen has something to show; it is offered only while signed out.")
+                }
+
                 Section("About") {
                     LabeledContent("Version", value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "–")
                     if let library {
@@ -120,6 +140,13 @@ struct SettingsView: View {
             .navigationTitle("Settings")
             .fileImporter(isPresented: $importing, allowedContentTypes: [.json]) { result in
                 handleImport(result)
+            }
+            .confirmationDialog("Clear all progress on this device?", isPresented: $confirmClear, titleVisibility: .visible) {
+                Button("Clear progress", role: .destructive) {
+                    model.replaceProgress(with: .blank(prefersDark: model.appearance == .dark))
+                }
+            } message: {
+                Text("This can't be undone. Export a backup first if you want to keep it.")
             }
             .confirmationDialog("Replace your progress with this backup?", isPresented: Binding(
                 get: { pendingImport != nil }, set: { if !$0 { pendingImport = nil } }

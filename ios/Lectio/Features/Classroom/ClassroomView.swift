@@ -25,7 +25,7 @@ struct ClassroomView: View {
                     } description: {
                         Text("Sign in to join your teacher's classroom with a code, see what's assigned, and follow the leaderboard.")
                     } actions: {
-                        NavigationLink("Sign in") { AccountView() }.buttonStyle(.glassProminent)
+                        NavigationLink("Sign in") { AccountView() }.glassButton(prominent: true)
                     }
                 }
             }
@@ -49,7 +49,7 @@ struct ClassroomView: View {
                             .font(.system(.title3, design: .monospaced))
                             .onChange(of: code) { _, new in code = String(new.uppercased().filter { $0.isLetter || $0.isNumber }.prefix(6)) }
                         Button(joining ? "Joining…" : "Join") { Task { await join() } }
-                            .buttonStyle(.glassProminent)
+                            .glassButton(prominent: true)
                             .disabled(code.count != 6 || joining)
                     }
                     if let joinMessage { Text(joinMessage).font(.footnote).foregroundStyle(Palette.ink2) }

@@ -80,7 +80,7 @@ struct ContinueCard: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 6)
             }
-            .buttonStyle(.glassProminent)
+            .glassButton(prominent: true)
             .padding(.top, 6)
         }
         .padding(20)
@@ -126,7 +126,7 @@ private struct PracticeRows: View {
                     .font(.subheadline.weight(.semibold))
                     .padding(.vertical, 2)
             }
-            .buttonStyle(.glass)
+            .glassButton()
         }
         .padding(.vertical, 16)
     }

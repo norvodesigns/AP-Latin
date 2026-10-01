@@ -148,7 +148,7 @@ struct ComingSoonView: View {
                 Link(destination: AppConfig.web(webPath)) {
                     Label("Open on the web", systemImage: "safari")
                 }
-                .buttonStyle(.glassProminent)
+                .glassButton(prominent: true)
             }
             .navigationTitle(title)
             .pageBackground()

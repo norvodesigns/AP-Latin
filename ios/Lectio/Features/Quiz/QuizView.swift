@@ -89,7 +89,7 @@ struct QuizView: View {
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 4)
                     }
-                    .buttonStyle(.glass)
+                    .glassButton()
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
@@ -167,7 +167,7 @@ struct QuizView: View {
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 6)
                     }
-                    .buttonStyle(.glassProminent)
+                    .glassButton(prominent: true)
                     .disabled(pool.isEmpty)
                     Text(pool.isEmpty ? "Widen the type or scope selection." : "\(pool.count) question\(pool.count == 1 ? "" : "s") match")
                         .quietLabel()
