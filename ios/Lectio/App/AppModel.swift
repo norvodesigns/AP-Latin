@@ -1,6 +1,7 @@
 import Foundation
 import LectioCore
 import Observation
+import os
 import SwiftUI
 
 /// The app's single source of state: the content library, the student's
@@ -151,6 +152,7 @@ final class AppModel {
 
     func loadContent() async {
         guard case .loading = contentState else { return }
+        let started = ContinuousClock.now
         do {
             let (library, directory) = try await Task.detached(priority: .userInitiated) { () throws -> (ContentLibrary, URL) in
                 guard let url = ContentStore.activeDirectory(), let bundled = ContentStore.bundled else {
@@ -166,6 +168,13 @@ final class AppModel {
             }.value
             contentState = .ready(library)
             contentDirectory = directory
+            // How long launch waited for content, for Console on a real device.
+            let elapsed = ContinuousClock.now - started
+            Logger(subsystem: "com.norvodesigns.lectio", category: "content")
+                .info("Content loaded in \(String(describing: elapsed), privacy: .public)")
+            // The sentence builder is built on first use; build it now, in the
+            // background, so opening it later doesn't wait.
+            Task.detached(priority: .background) { _ = library.sentences }
             seedDemoIfRequested()
             // A saved session (the keychain outlives a reinstall) means a
             // returning student whose work is about to sync down.

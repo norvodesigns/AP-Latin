@@ -134,7 +134,12 @@ finishing a lesson counts toward the streak and daily goal.
         lesson) instead of the whole course; the Sententia lines load with their card
   - [x] Web: pages that list or quote passages no longer load the glossary with them (only the
         reader and Vocabulary, which use it)
-  - [ ] App: content decode time at launch, measured on a device
+  - [x] App: content load measured (release build, Linux CI-class machine): 0.27 s for the whole
+        library, of which 0.10 s was building the sentence builder for one screen; it is now built
+        on first use and warmed in the background after launch. Passages 0.08 s, the course 0.03 s,
+        vocabulary 0.02 s. The app logs the load time ("Content loaded in …", subsystem
+        com.norvodesigns.lectio) so it can be read off a device in Console
+  - [ ] App: confirm the launch time on a device (owner, with TestFlight)
 - [ ] Review pass over every new screen on iPhone and iPad, light and dark
 
 ## Log

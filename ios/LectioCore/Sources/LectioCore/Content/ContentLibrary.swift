@@ -39,8 +39,13 @@ public struct ContentLibrary: Sendable {
     public let sententiae: [Sententia]
     /// AP vocabulary id -> English derivatives, from the course's words.
     public let derivatives: [String: [String]]
-    /// Sentence builder's sentences and the forms for its decoys.
-    public let sentences: SentenceBuilder
+    /// Sentence builder's sentences and the forms for its decoys. Built on
+    /// first use, not at load: it was about a third of the time it took to
+    /// load everything else, for one screen.
+    public var sentences: SentenceBuilder {
+        sentenceCache.get { SentenceBuilder(course: course, paradigms: paradigms) }
+    }
+    private let sentenceCache = OnceValue<SentenceBuilder>()
 
     private let passageIndex: [String: Int]
     private let vocabIndex: [String: VocabEntry]
@@ -113,7 +118,6 @@ public struct ContentLibrary: Sendable {
             sententiae = []
         }
         derivatives = course.derivativesByVocab
-        sentences = SentenceBuilder(course: course, paradigms: paradigms)
 
         passageIndex = Dictionary(passages.enumerated().map { ($1.id, $0) }, uniquingKeysWith: { a, _ in a })
         // Core entries win over a supplementary entry that happens to share an id.
@@ -140,4 +144,19 @@ public struct UnitGroup: Sendable, Hashable, Identifiable {
     public let title: String
     public let passages: [Passage]
     public var id: String { unit }
+}
+
+/// A value worked out once, on first use, from whichever thread asks first.
+final class OnceValue<Value: Sendable>: @unchecked Sendable {
+    private let lock = NSLock()
+    private var value: Value?
+
+    func get(_ make: () -> Value) -> Value {
+        lock.lock()
+        defer { lock.unlock() }
+        if let value { return value }
+        let made = make()
+        value = made
+        return made
+    }
 }
