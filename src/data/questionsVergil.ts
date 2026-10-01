@@ -289,10 +289,10 @@ export const VERGIL_QUESTIONS: Question[] = [
   ),
   q(
     'a6788-3', 'meter', '2.B', '5',
-    'Line 789, Rōmānōsque tuōs. Hīc Caesar et omnis Iūlī, is unusual because',
-    ['it has a spondee in the fifth foot', 'it ends on a monosyllable', 'it has no caesura', 'it has six dactyls'],
+    'In line 789, Rōmānōsque tuōs. Hīc Caesar et omnis Iūlī, how does Iūlī scan?',
+    ['Ĭ-ū-lī: three syllables, so the line ends dactyl, spondee', 'Iū-lī: two syllables, so the fifth foot is a spondee', 'Iūl: one syllable, so the line ends on a monosyllable', 'Iū-lī, with omnis elided into it'],
     0,
-    'The site’s scansion gives SDSDSS: a spondaic fifth foot, rare in Vergil, which weighs down the name of the Julian line.',
+    'Vergil always gives Iūlus three syllables, with the I a vowel: om-nis Ĭ | ū-lī. The line scans SDSDDS. Read it as Iū-lī, like Iūlius, and you get a spondaic fifth foot that is not there.',
     { passageId: 'aen-6-788-800', lineRange: [789, 789] },
   ),
   q(
@@ -350,9 +350,9 @@ export const VERGIL_QUESTIONS: Question[] = [
   q(
     'a7783-2', 'meter', '2.B', '5',
     'Line 790, aurō īnsignībat, iam saetīs obsita, iam bōs, is unusual because',
-    ['it has six dactyls', 'it lacks a caesura', 'it has a hiatus at the caesura', 'it is spondaic in the fifth foot and ends on a monosyllable'],
+    ['it has six dactyls', 'it lacks a caesura', 'it has a hiatus at the caesura', 'it ends on a monosyllable after four heavy spondees'],
     3,
-    'The site’s scansion gives SDSSSS, with bōs as the last word: heavy and abrupt, for Io’s transformation into a cow.',
+    'aur(ō) īn | sig-nī | bat iam | sae-tīs | ob-si-ta | iam bōs: SSSSDS. Four slow spondees, then the one-syllable bōs lands at the line end, heavy and abrupt, as Io becomes a cow.',
     { passageId: 'aen-7-783-792', lineRange: [790, 790] },
   ),
   q(

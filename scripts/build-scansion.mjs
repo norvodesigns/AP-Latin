@@ -3,10 +3,20 @@
  *
  *   node scripts/build-scansion.mjs [--fetch] [--out public/scansion]
  *
- * Source: The Latin Library's Vergil, which carries vowel-quantity macrons
- * throughout — that is the whole reason this is tractable. Quantity by nature
- * cannot be recovered from unmarked text, so a macronised source is what lets
- * us produce an answer key rather than a guess.
+ * Source: The Latin Library's Vergil. It is unmarked text (only the opening
+ * lines of Book 1 carry macrons), and quantity by nature cannot be read off
+ * unmarked text. So nothing is assumed about it: the only quantities taken as
+ * known are diphthongs and syllables closed by two consonants, and the metre
+ * has to settle the rest. A line goes in only when it can settle it one way.
+ *
+ * Getting the syllables right is therefore everything, and bare spelling
+ * misleads in a few known ways, each handled below and each a source of
+ * confident wrong answers before it was: consonantal i after a prefix
+ * (con-iunx), vocalic i in Greek names (Ĭ-ū-lus, Trō-ï-us), vowel pairs that
+ * are not diphthongs (Trō-ës, Da-na-üm, a-ë-nus), Greek eu (Teu-crī,
+ * Mnes-theus), and the page's own habits (u for v, wrapped and transposed
+ * lines). The tell-tale sign of a slip is a spondaic fifth foot; Vergil has a
+ * handful, and the corpus should show only those.
  *
  * The method, in order:
  *
@@ -51,14 +61,21 @@ function argValue(flag) {
 /* ------------------------------------------------------------------ */
 
 const MACRONS = 'āēīōūȳĀĒĪŌŪȲ';
+/**
+ * A diaeresis marks a vowel that stands on its own: Trōës, aënus, Aenēïa. The
+ * respelling step below writes it where the bare spelling would mislead (a
+ * diphthong that is not one, an i that is not a consonant), and it is shown
+ * to students too, the way school texts print it.
+ */
+const DIAERESES = 'ëïüËÏÜ';
 const PLAIN_VOWELS = 'aeiouyAEIOUY';
-const VOWELS = PLAIN_VOWELS + MACRONS;
+const VOWELS = PLAIN_VOWELS + MACRONS + DIAERESES;
 const DIPHTHONGS = ['ae', 'au', 'ei', 'eu', 'oe', 'ui'];
 
 const stripMacrons = (s) =>
   s
-    .replace(/[āĀ]/g, 'a').replace(/[ēĒ]/g, 'e').replace(/[īĪ]/g, 'i')
-    .replace(/[ōŌ]/g, 'o').replace(/[ūŪ]/g, 'u').replace(/[ȳȲ]/g, 'y');
+    .replace(/[āĀ]/g, 'a').replace(/[ēĒëË]/g, 'e').replace(/[īĪïÏ]/g, 'i')
+    .replace(/[ōŌ]/g, 'o').replace(/[ūŪüÜ]/g, 'u').replace(/[ȳȲ]/g, 'y');
 
 const isVowel = (c) => VOWELS.includes(c);
 const hasMacron = (s) => [...s].some((c) => MACRONS.includes(c));
@@ -70,17 +87,34 @@ const hasMacron = (s) => [...s].some((c) => MACRONS.includes(c));
  * allowed only in the closed set of words where they genuinely are one.
  */
 const EU_WORDS = /^(heu|eheu|heus|seu|ceu|neu|neu[dt]er)/;
-const EU_GREEK = /(orpheu|orphe|theseu|peleu|tydeu|īleu|nēreu|acheu|prōteu|erectheu|capaneu|salmōneu|idomeneu)/;
+/**
+ * Greek names are where eu is a diphthong: at the start (Eu-ry-a-lus, Eu-rus,
+ * Teu-crī, Leu-cā-tē) and in the -eus of a nominative or vocative (Mnes-theus,
+ * Ī-li-o-neus, Ty-deu). Lower-case words never qualify that way, so de-us,
+ * e-unt and au-re-us are safe; Tartareus and Grȳnēus are adjectives, Tar-ta-re-us.
+ */
+const EU_START = /^(eu|teu|leu)/;
+const EU_END = /([^aeiouy]|typho)eu(s)?(que|ve|ne)?$/;
+const EU_NOT = /^(tartareus|gryneus|deus|meus|reus)/;
 const EI_WORDS = /^(deinde|dein|deinceps|hei|ei)$/;
 const UI_WORDS = /^(cui|huic|huius|cuius|quoi)$/;
 
 function isDiphthongAt(word, i) {
   const pair = stripMacrons(word.slice(i, i + 2)).toLowerCase();
   if (!DIPHTHONGS.includes(pair)) return false;
+  // A diaeresis on the second vowel says the pair is two syllables.
+  if (DIAERESES.includes(word[i + 1])) return false;
   if (pair === 'ae' || pair === 'au' || pair === 'oe') return true;
 
   const w = stripMacrons(word).toLowerCase();
-  if (pair === 'eu') return EU_WORDS.test(w) || EU_GREEK.test(w);
+  if (pair === 'eu') {
+    if (EU_WORDS.test(w)) return true;
+    const proper = /^[A-ZĀ-Ȳ]/.test(word);
+    if (!proper || EU_NOT.test(w)) return false;
+    if (EU_START.test(w) && i === w.indexOf('eu')) return true;
+    const end = w.search(/eu(s)?(que|ve|ne)?$/);
+    return EU_END.test(w) && i === end;
+  }
   if (pair === 'ei') return EI_WORDS.test(w);
   if (pair === 'ui') return UI_WORDS.test(w);
   return false;
@@ -129,8 +163,14 @@ function syllabify(word) {
     else if (n === 1) cut = end + 1;
     else {
       const last2 = stripMacrons(bare.slice(-2)).toLowerCase();
+      const last3 = stripMacrons(bare.slice(-3)).toLowerCase();
       // qu counts as a single consonant and goes forward with the vowel.
       if (last2 === 'qu' || last2 === 'gu') cut = nextStart - 2;
+      // So do ch, ph, th and rh, Greek single sounds written with two letters:
+      // An-chī-sēs, A-chā-tēs, Or-pheus, not Anc-hī-sēs. Display only: h never
+      // counts toward position, so the quantities come out the same either way.
+      else if (/^[cpt]h[lr]$/.test(last3) && n >= 3) cut = nextStart - 3;
+      else if (/^[cptr]h$/.test(last2)) cut = nextStart - 2;
       else if (/^[ptcbdgf][lr]$/.test(last2)) cut = nextStart - 2;
       else cut = nextStart - 1;
     }
@@ -184,6 +224,36 @@ function trailingConsonants(s) {
 }
 
 /**
+ * `i` starting the second half of a compound is a consonant too: con-iunx,
+ * ad-iuvat, ob-iectus, sub-iungō. Read as a vowel it adds a syllable that the
+ * foot search will happily fit as a short, giving a confident wrong answer
+ * (coniunx is two syllables, not co-ni-unx).
+ *
+ * Only two shapes are safe to rewrite. Before u it is consonantal. Before e it
+ * is consonantal in the iaciō family (ob-iēc-it, con-iec-tus) but a vowel in
+ * the compounds of eō (sub-i-ēre, ad-i-ēns), so e is taken only when c follows.
+ * Anything else (con-i-ciō, ab-i-it) stays a vowel. in- and per- are left out:
+ * verse keeps their i a vowel (i-ni-ū-ri-a at Aen. 1.27, a hand-checked line).
+ */
+const PREFIX_RE = /^(ab|ad|con|ob|sub|dis|circum)$/;
+
+/**
+ * Greek and foreign names whose opening I is a vowel, not a consonant: Ĭ-ū-lus
+ * (always three syllables in Vergil, line-final in pulcher Iūlus), Ī-ō, Ī-ō-pās,
+ * Ī-ar-bās, Ī-ā-pyx, Ī-a-si-us, Ī-ae-ra, Ī-ol-lās, Ī-ō-ni-us. Read as J they
+ * lose a syllable and the line comes out as a spondaic ending it does not have.
+ * Latin words (iam, Iūnō, Iuppiter, Iūlius, Iūturna, Iānus) stay consonantal.
+ */
+const VOCALIC_I = /^(iul(us|i|o|um|e)(que|ve|ne)?$|io$|iopas|ioni|iaer|iapy|iarb|iasi|ioll)/;
+
+function afterPrefix(word, i) {
+  const head = stripMacrons(word.slice(0, i)).toLowerCase();
+  if (!PREFIX_RE.test(head)) return false;
+  const next = stripMacrons(word.slice(i + 1, i + 3)).toLowerCase();
+  return next[0] === 'u' || (next[0] === 'e' && next[1] === 'c');
+}
+
+/**
  * `i` between vowels is a consonant (maior, Trōia, eius): it does not form a
  * syllable of its own, and it counts double for position — Trōia scans Trōj-ja.
  * Rewriting it to `j`/`jj` before analysis is what makes both fall out.
@@ -195,21 +265,30 @@ function trailingConsonants(s) {
 function normaliseConsonantalI(word) {
   const chars = [];
   const map = [];
-  const V = 'aeiouyāēīōūȳAEIOUYĀĒĪŌŪȲ';
+  const V = 'aeiouyāēīōūȳAEIOUYĀĒĪŌŪȲëïËÏ';
   const isV = (c) => c !== undefined && V.includes(c);
+  // The u of qu and ngu is a consonant, so an i after it is not between
+  // vowels: qui-ē-tus, qui-a, pin-gui-a.
+  const afterQu = (k) =>
+    k >= 2 && /[uU]/.test(word[k - 1]) && (/[qQ]/.test(word[k - 2]) || /ng/i.test(word.slice(k - 3, k - 1)));
 
   for (let i = 0; i < word.length; i += 1) {
     const c = word[i];
     const isI = c === 'i' || c === 'I';
-    if (isI && i === 0 && isV(word[1])) {
+    if (isI && i === 0 && isV(word[1]) && !VOCALIC_I.test(stripMacrons(word).toLowerCase())) {
       chars.push(c === 'I' ? 'J' : 'j');
       map.push(i);
       continue;
     }
-    if (isI && isV(word[i - 1]) && isV(word[i + 1])) {
+    if (isI && isV(word[i - 1]) && isV(word[i + 1]) && !afterQu(i)) {
       // Doubles: the preceding syllable closes on the first j.
       chars.push('j', 'j');
       map.push(i, i);
+      continue;
+    }
+    if (isI && i > 0 && afterPrefix(word, i)) {
+      chars.push('j');
+      map.push(i);
       continue;
     }
     chars.push(c);
@@ -230,7 +309,89 @@ const EITHER = 'either';
  * Build the syllable list for a line, with elisions marked and a quantity (or
  * `either`) attached to each metrical syllable.
  */
-function analyseLine(raw) {
+/**
+ * Words whose bare spelling misleads the analysis, respelled with a diaeresis
+ * on the vowel that stands alone. Each entry is [pattern on the lower-case,
+ * macron-free word, index of the vowel to mark].
+ *
+ *   oe that is two vowels:  Trō-ës, Be-ro-ë, Si-mo-ën-ta, Cy-mo-tho-ë
+ *   ae that is two vowels:  a-ë-nus (bronze), ā-ër, ā-ë-ri-us (of the air)
+ *   au that is two vowels: Da-na-um, Me-ne-lā-us
+ *   i between vowels that is a vowel, in Greek adjectives and names:
+ *                           Ae-nē-ï-a, Pri-a-mē-ï-us, Trō-ï-us, Dē-ï-o-pē-a
+ */
+const RESPELL = [
+  [/^(troe|beroe|cymothoe|pholoe|simoe|noem|typhoe)/, (w) => w.indexOf('oe') + 1],
+  [/^aen(a|ae|am|as|i|is|o|os|um|us)(que|ve|ne)?$/, () => 1],
+  [/^aer(que)?$/, () => 1],
+  [/^aeri(a|ae|am|as|i|is|o|os|um|us)(que|ve|ne)?$/, () => 1],
+  [/^(aene|lilybe|mino|nere|phine|priame|rhoete|typho)i[aeiou]/, (w) => w.search(/[eo]i[aeiou]/) + 1],
+  [/^deiop/, () => 2],
+  [/^troi(us|um|o|os|i|is)(que|ve|ne)?$/, () => 3],
+  [/^danaum(que)?$/, () => 4],
+  [/^menela(us|um)$/, () => 6],
+];
+
+/**
+ * Words that are spelled the same but scan two ways, so both are tried and a
+ * line is kept only if exactly one reading scans: Trōia the city is Trō-ja,
+ * Trōïa the adjective (Trōïa gaza) is Trō-ï-a; aera is ae-ra (bronzes) or ā-ë-ra
+ * (the air).
+ */
+const AMBIGUOUS = [
+  [/^troi(a|ae|am)(que|ve|ne)?$/, () => 3],
+  [/^aera(que|ve|ne)?$/, () => 1],
+];
+
+const markAt = (word, i) =>
+  word.slice(0, i) + ({ e: 'ë', i: 'ï', u: 'ü', E: 'Ë', I: 'Ï', U: 'Ü' }[word[i]] ?? word[i]) + word.slice(i + 1);
+
+function respell(word, alt) {
+  const w = stripMacrons(word).toLowerCase();
+  for (const [re, at] of RESPELL) if (re.test(w)) return markAt(word, at(w));
+  if (alt) for (const [re, at] of AMBIGUOUS) if (re.test(w)) return markAt(word, at(w));
+  return word;
+}
+
+const hasAmbiguous = (raw) =>
+  raw.split(/\s+/).some((t) => {
+    const w = stripMacrons(t.replace(/[^A-Za-zÀ-ÿĀ-ſ]/g, '')).toLowerCase();
+    return AMBIGUOUS.some(([re]) => re.test(w));
+  });
+
+/**
+ * The page writes u for v in a handful of words (paruus, aduectus, Mauortis).
+ * Read as a vowel the u adds a syllable, so they are put right before
+ * scanning, and in the text students see.
+ */
+const CORRECTIONS = {
+  lauabat: 'lavabat', adnve: 'adnue', achiuos: 'achivos', argiua: 'argiva', argiuae: 'argivae',
+  dolopumue: 'dolopumve', mauortia: 'mavortia', mauortis: 'mavortis', prouehimur: 'provehimur',
+  aduectus: 'advectus', aluo: 'alvo', auem: 'avem', auo: 'avo', conuexo: 'convexo', fuluo: 'fulvo',
+  longaeuo: 'longaevo', paruam: 'parvam', paruus: 'parvus', quidue: 'quidve', quoue: 'quove',
+  ulua: 'ulva', voluitur: 'volvitur', vlixes: 'ulixes',
+};
+
+/**
+ * Words Vergil scans with synizesis, two vowels run into one syllable: al-veō,
+ * ge-nua as gen-va, a-bie-te, Ī-li-o-nei. Nothing in the spelling says so, and a
+ * line one syllable long can still be fitted by trading a spondee for a
+ * dactyl, so lines with them are left out rather than scanned wrong.
+ */
+const SYNIZESIS = /^(alveo|alvei|genua|abiete|abietibus|parietibus|arietat|ilionei|oilei|dehinc)$/;
+
+const hasSynizesis = (raw) =>
+  raw.split(/\s+/).some((t) => SYNIZESIS.test(stripMacrons(t.replace(/[^A-Za-zÀ-ÿĀ-ſ]/g, '')).toLowerCase()));
+
+function correct(line) {
+  return line.replace(/[A-Za-z]+/g, (w) => {
+    const fix = CORRECTIONS[w.toLowerCase()];
+    if (!fix) return w;
+    return w[0] === w[0].toUpperCase() ? fix[0].toUpperCase() + fix.slice(1) : fix;
+  });
+}
+
+function analyseLine(raw, alt = false) {
   const words = raw
     // The Latin Library marks an em dash as the numeric entity `&#151;`
     // (a Windows-1252 legacy that many old pages carry), and does it with
@@ -242,7 +403,8 @@ function analyseLine(raw) {
     .replace(/&#151;|[—–]/g, ' ')
     .split(/\s+/)
     .map((w) => w.replace(/[^A-Za-zÀ-ÿĀ-ſ]/g, ''))
-    .filter(Boolean);
+    .filter(Boolean)
+    .map((w) => respell(w, alt));
   if (words.length === 0) return null;
 
   const normed = words.map(normaliseConsonantalI);
@@ -448,9 +610,25 @@ async function loadBook(book) {
 }
 
 /**
- * Pull verse lines out of the page. The Latin Library marks every fifth line
- * with its number; lines in between are unnumbered, so numbering is carried
- * forward from the last marker.
+ * Pull verse lines out of the page, each with its line number.
+ *
+ * The Latin Library prints a number on every fifth line, and the page's number
+ * is the authority: it follows the OCT where a count cannot (the page prints
+ * transposed lines in their new order, 10.663 before 10.661, and leaves out
+ * lines the editor deletes). So every printed number resets the count, in
+ * either direction, and lines in between count on from it.
+ *
+ * Two page habits would otherwise knock the count off by one for the rest of
+ * a book:
+ *   - A verse wrapped onto a second page line. When the number sits on a short
+ *     second part (4.540 `superbis 540`), the part is joined back on. When it
+ *     sits on the first part (7.45 `maius opus moveo. 45`, then `Rex arva
+ *     Latinus et urbes`), nothing on the page says which line is extra.
+ *   - Half-lines (`disce omnis.`), which are verses and must be counted even
+ *     though they cannot be scanned.
+ * So after counting, any stretch between two printed numbers that holds the
+ * wrong number of lines is dropped: a line with an uncertain citation is worse
+ * than a missing one.
  */
 function extractLines(html) {
   let text = html.replace(/<br\s*\/?>/gi, '\n');
@@ -461,32 +639,56 @@ function extractLines(html) {
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
-    .replace(/ /g, ' ');
+    .replace(/&#151;/g, '—')
+    .replace(/\u00a0/g, ' ');
 
-  const out = [];
+  const lines = [];
   let lastNumber = 0;
   for (const rawLine of text.split('\n')) {
     const line = rawLine.trim();
     if (!line) continue;
     // Skip navigation, headings and attribution.
-    if (/^(The Latin Library|The Classics Page|The Latin|P\. VERGILI|VERGIL|LIBER|Vergil)/i.test(line)) continue;
+    if (/^(The Latin Library|The Classics Page|The Latin|P\. VERGILI|VERGIL|LIBER|Vergil|Aeneid\b)/i.test(line)) continue;
     if (/^[IVXLC]+\.?$/.test(line)) continue;
 
-    const m = line.match(/^(.*?)\s{2,}(\d{1,4})$/) || line.match(/^(.*?)\s+(\d{1,4})$/);
-    let content = line;
-    let number = null;
-    if (m && Number(m[2]) > lastNumber && Number(m[2]) - lastNumber <= 12) {
-      content = m[1].trim();
-      number = Number(m[2]);
-    }
+    const m = line.match(/^(.*?)\s+(\d{1,4})$/);
+    const content = m ? m[1].trim() : line;
+    const printed = m ? Number(m[2]) : null;
     if (!/[a-zA-ZĀ-ſ]/.test(content)) continue;
-    // A verse line of the Aeneid is never this short or this long.
-    if (content.length < 12 || content.length > 90) continue;
+    // Nothing on these pages this long is a verse.
+    if (content.length > 90) continue;
 
-    lastNumber = number ?? lastNumber + 1;
-    out.push({ n: lastNumber, latin: content });
+    const prev = lines[lines.length - 1];
+    if (printed !== null && prev && printed === prev.n && content.length < 12) {
+      prev.latin = `${prev.latin} ${content}`;
+      prev.printed = true;
+      continue;
+    }
+
+    const n = printed ?? lastNumber + 1;
+    lines.push({ n, latin: content, printed: printed !== null });
+    lastNumber = n;
   }
-  return out;
+
+  // Between two printed numbers there must be exactly the lines they imply.
+  const keep = lines.map(() => true);
+  let anchor = -1;
+  lines.forEach((l, i) => {
+    if (!l.printed) return;
+    if (anchor >= 0 && l.n - lines[anchor].n !== i - anchor) {
+      for (let k = anchor + 1; k < i; k += 1) keep[k] = false;
+    }
+    anchor = i;
+  });
+
+  return {
+    lines: lines
+      .filter((l, i) => keep[i] && l.latin.length >= 12)
+      .map(({ n, latin }) => ({ n, latin: correct(latin) })),
+    // The book's length is its last line number, now that the numbering can be
+    // trusted: half-lines and dropped stretches still count as verses.
+    verses: lines.reduce((m, l) => Math.max(m, l.n), 0),
+  };
 }
 
 /* ------------------------------------------------------------------ */
@@ -501,21 +703,27 @@ await mkdir(OUT, { recursive: true });
 
 for (const book of BOOKS) {
   const html = await loadBook(book);
-  const lines = extractLines(html);
+  const { lines, verses } = extractLines(html);
   const solved = [];
   const bookStats = { book, total: 0, unique: 0, ambiguous: 0, unscannable: 0 };
 
   for (const { n, latin } of lines) {
     stats.total += 1;
     bookStats.total += 1;
-    const syllables = analyseLine(latin);
-    if (!syllables) { stats.unscannable += 1; bookStats.unscannable += 1; continue; }
+    // Every reading of the line, and every arrangement each one allows. A word
+    // that scans two ways (Trōia, aera) doubles the readings; the line is kept
+    // only when exactly one reading-and-arrangement survives.
+    if (hasSynizesis(latin)) { stats.ambiguous += 1; bookStats.ambiguous += 1; continue; }
+    const readings = (hasAmbiguous(latin) ? [false, true] : [false])
+      .map((alt) => analyseLine(latin, alt))
+      .filter(Boolean);
+    if (readings.length === 0) { stats.unscannable += 1; bookStats.unscannable += 1; continue; }
 
-    const solutions = solveFeet(syllables);
-    if (solutions.length === 0) { stats.unscannable += 1; bookStats.unscannable += 1; continue; }
-    if (solutions.length > 1) { stats.ambiguous += 1; bookStats.ambiguous += 1; continue; }
+    const found = readings.flatMap((syl) => solveFeet(syl).map((feet) => ({ syl, feet })));
+    if (found.length === 0) { stats.unscannable += 1; bookStats.unscannable += 1; continue; }
+    if (found.length > 1) { stats.ambiguous += 1; bookStats.ambiguous += 1; continue; }
 
-    const feet = solutions[0];
+    const { syl: syllables, feet } = found[0];
     const metrical = syllables.filter((s) => !s.elides);
 
     // Resolve every `either` against the winning arrangement, so the answer
@@ -574,7 +782,7 @@ for (const book of BOOKS) {
     path.join(OUT, `aen${book}.json`),
     JSON.stringify({ b: book, n: solved.length, l: solved }),
   );
-  index.push({ book, count: solved.length, sourceCount: lines.length });
+  index.push({ book, count: solved.length, sourceCount: verses });
   perBook.push(bookStats);
   process.stdout.write(`  Book ${String(book).padStart(2)}: ${String(solved.length).padStart(4)} lines\n`);
 }
@@ -584,7 +792,7 @@ await writeFile(
   JSON.stringify({
     work: 'Aeneid',
     author: 'Vergil',
-    source: 'The Latin Library (public domain, macronised)',
+    source: 'The Latin Library (public domain)',
     generated: new Date().toISOString().slice(0, 10),
     books: index,
     total: index.reduce((a, b) => a + b.count, 0),

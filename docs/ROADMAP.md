@@ -286,3 +286,13 @@ finishing a lesson counts toward the streak and daily goal.
 - 2026-10-01: Quiz bank, Vergil: 65 AP-style questions for the 16 required Aeneid passages that had
   none (Books 1, 2, 4, 6, 7, 11, 12): syntax, translation choice, scansion checked against the
   scansion corpus, figures, allusion and context. 172 questions in all.
+- 2026-10-01: Scansion corpus audit. The generator was confidently wrong on whole classes of
+  lines: consonantal i after a prefix (co-ni-unx for con-iunx), Greek vocalic i (Iū-lī for Ĭ-ū-lī,
+  26 phantom spondaic endings), false diphthongs (Troes, Danaum, aenus), Greek eu read as two
+  vowels (every Te-u-crī line), the page's u-for-v typos, and a line count that drifted one
+  ahead for most of Books 4, 5, 7 and 10 (wrapped and transposed lines), so citations there were
+  off by one. All fixed in the generator; ambiguous words (Trōia noun or adjective, aera) are
+  tried both ways and dropped unless one reading scans. Every AP passage line now matches its
+  corpus line by number, book lengths match the OCT (9,896), and the only spondaic fifth feet left
+  are Vergil's real ones (11). One hand-checked line (1.30) was itself wrong and is corrected; two
+  quiz questions built on the bad data are rewritten.
