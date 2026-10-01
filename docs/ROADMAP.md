@@ -64,7 +64,7 @@ finishing a lesson counts toward the streak and daily goal.
   - [x] U2 Pliny: Sura, Calpurnia, Trajan: 7.27 whole, 6.4, 6.7, 10.5–7, 10.37 and 10.90 (8 lessons)
   - [x] U3 Aeneid 1: the proem, Juno, the storm, Dido at the temple (1.1–33, 88–107, 496–508; 6 lessons)
   - [x] U4 Aeneid 2 and 4: Laocoön and the serpents (2.40–56, 201–249); Dido in love, the cave, Fama (4.74–89, 165–197); 6 lessons
-  - [ ] U5 Aeneid 4 and 6: Dido and Aeneas face to face (4.305–361); Dido's shade, Augustus, *tū regere imperiō* (6.450–476, 788–800, 847–853)
+  - [x] U5 Aeneid 4 and 6: Dido and Aeneas face to face (4.305–361); Dido's shade, Augustus, *tū regere imperiō* (6.450–476, 788–800, 847–853); 7 lessons
   - [ ] U6 Aeneid 7, 11 and 12: Latinus, Turnus, Camilla (7.45–58, 783–792, 803–817); Camilla's childhood (11.532–594); Jupiter and Juno (12.791–828); the death of Turnus (12.919–952)
 
 ## 2. Onboarding and placement
@@ -215,3 +215,7 @@ finishing a lesson counts toward the streak and daily goal.
   a lesson's result, the practice exam report, Scansion) stack instead of breaking words
   mid-letter, and label rows with a note at the end (the Sententia card, Laurels) put the note
   underneath. Found in CI's large-text screenshots.
+- 2026-10-01: Quārta Unit 5, seven lessons: Dido's reproach in two parts (*Mēne fugis?*,
+  *parvulus Aenēās*), Aeneas's answer in two (*hic amor, haec patria est*, *Ītaliam nōn sponte
+  sequor*), Dido's silent shade (*Quem fugis?*), Augustus and the golden age, and *parcere
+  subiectīs et dēbellāre superbōs*, pointed at the poem's last scene.
