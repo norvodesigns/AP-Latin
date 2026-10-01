@@ -1,4 +1,4 @@
-import type { Question, QuestionSet, QuestionType, SkillCode, SkillCategory } from './types';
+import type { Question, QuestionSet, QuestionType, SkillCode } from './types';
 
 /**
  * The multiple-choice bank.
@@ -11,35 +11,10 @@ import type { Question, QuestionSet, QuestionType, SkillCode, SkillCategory } fr
  * as the passage data. See CONTENT.md to add your own.
  */
 
-const cat = (skill: SkillCode): SkillCategory => skill[0] as SkillCategory;
+import { q } from './questionKit.ts';
+import { PLINY_QUESTIONS } from './questionsPliny.ts';
 
-function q(
-  id: string,
-  type: QuestionType,
-  skill: SkillCode,
-  unit: Question['unit'],
-  prompt: string,
-  options: string[],
-  answerIndex: number,
-  explanation: string,
-  extra: Partial<Question> = {},
-): Question {
-  return {
-    id,
-    type,
-    skill,
-    skillCategory: cat(skill),
-    unit,
-    prompt,
-    options: options.map((text, i) => ({ id: String.fromCharCode(97 + i), text })),
-    answerId: String.fromCharCode(97 + answerIndex),
-    explanation,
-    difficulty: 2,
-    ...extra,
-  };
-}
-
-export const questions: Question[] = [
+const BASE_QUESTIONS: Question[] = [
   /* ================= Aeneid 1.1–33 — the proem ================= */
   q(
     'aen1-1', 'form-identification', '1.B', '4',
@@ -664,6 +639,9 @@ export const questions: Question[] = [
     { difficulty: 2 },
   ),
 ];
+
+/** Every question: the original bank, then one per required passage group. */
+export const questions: Question[] = [...BASE_QUESTIONS, ...PLINY_QUESTIONS];
 
 /* ------------------------------------------------------------------ */
 /* CED-shaped sets                                                     */

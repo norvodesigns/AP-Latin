@@ -98,6 +98,16 @@ finishing a lesson counts toward the streak and daily goal.
 - [x] Lock Screen widget for the next lesson
 - [x] Live Activity for a timed practice-exam section
 
+## 4b. Exam practice content
+
+- [ ] Quiz bank: AP-style multiple choice for every required passage, at least four each (24 of 32
+      had none; the practice exam draws 52 at a time)
+  - [x] Pliny: 6.16.13–22, 6.20, 7.27.9–16, 6.4, 6.7, 10.5–7, 10.37, 10.90 (35 questions)
+  - [ ] Aeneid 1, 2 and 4
+  - [ ] Aeneid 6, 7, 11 and 12
+- [ ] More sight passages with question sets (6 now; aim for 15, prose and poetry)
+- [ ] More translation drills (8 now; one for each required passage group)
+
 ## 5. Quality
 
 - [x] Screenshot job covers Learn, a lesson in progress, onboarding
@@ -269,3 +279,6 @@ finishing a lesson counts toward the streak and daily goal.
   own Latin (translations, and choices that quote their line); the rest need the passage in front
   of you. Until now Level IV, every lesson of which is a reading, could never be reviewed. Shared
   rule on both platforms (`reviewExercises`), with a test that a passage-bound question stays out.
+- 2026-10-01: Quiz bank, Pliny: 35 new AP-style questions (grammar and syntax, translation choice,
+  figures, inference, context) for every Pliny letter on the syllabus that had none or few, each
+  with an explanation, answers spread across positions. 107 questions in all, on both platforms.
