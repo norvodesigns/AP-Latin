@@ -13,6 +13,7 @@ import type { Question, QuestionSet, QuestionType, SkillCode } from './types';
 
 import { q } from './questionKit.ts';
 import { PLINY_QUESTIONS } from './questionsPliny.ts';
+import { VERGIL_QUESTIONS } from './questionsVergil.ts';
 
 const BASE_QUESTIONS: Question[] = [
   /* ================= Aeneid 1.1–33 — the proem ================= */
@@ -641,7 +642,7 @@ const BASE_QUESTIONS: Question[] = [
 ];
 
 /** Every question: the original bank, then one per required passage group. */
-export const questions: Question[] = [...BASE_QUESTIONS, ...PLINY_QUESTIONS];
+export const questions: Question[] = [...BASE_QUESTIONS, ...PLINY_QUESTIONS, ...VERGIL_QUESTIONS];
 
 /* ------------------------------------------------------------------ */
 /* CED-shaped sets                                                     */
