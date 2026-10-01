@@ -57,6 +57,13 @@ need(sameGroups(app.ios?.entitlements?.["com.apple.security.application-groups"]
 
 // Every extension EAS signs: the same four targets as the project has.
 const listed = app.extra?.eas?.build?.experimental?.ios?.appExtensions ?? [];
+// `eas init` rewrites app.json and has once doubled this list; EAS would then
+// try to create each target's credentials twice.
+const names = listed.map((e) => e.targetName);
+need(new Set(names).size === names.length,
+  `app.json: appExtensions lists a target more than once (${names.filter((n, i) => names.indexOf(n) !== i)})`);
+need(/^[0-9a-f-]{36}$/.test(app.extra?.eas?.projectId ?? ""),
+  "app.json: extra.eas.projectId is missing; run `npx eas-cli init` in ios/ and commit it");
 for (const name of Object.keys(targets).filter((n) => n !== main)) {
   need(listed.some((e) => e.targetName === name),
     `app.json: target ${name} is in project.yml but not in extra.eas.build.experimental.ios.appExtensions, so EAS would not sign it`);
