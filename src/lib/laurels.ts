@@ -49,6 +49,7 @@ export const LAUREL_SPECS: LaurelSpec[] = [
   { id: 'prima', latin: 'Prīma perfecta', title: 'Level I, done', detail: 'Finish every lesson of Prīma.', target: 1 },
   { id: 'secunda', latin: 'Secunda perfecta', title: 'Level II, done', detail: 'Finish every lesson of Secunda.', target: 1 },
   { id: 'tertia', latin: 'Tertia perfecta', title: 'Level III, done', detail: 'Finish every lesson of Tertia.', target: 1 },
+  { id: 'quarta', latin: 'Quārta perfecta', title: 'Level IV, done', detail: 'Finish every lesson of Quārta: the whole AP syllabus, read with a guide.', target: 1 },
   { id: 'lessons-50', latin: 'Quīnquāgintā lēctiōnēs', title: 'Fifty lessons', detail: 'Finish fifty lessons of the course.', target: 50 },
   // Habit
   { id: 'streak-7', latin: 'Septem diēs', title: 'A week unbroken', detail: 'Study seven days in a row.', target: 7 },
@@ -102,6 +103,7 @@ export function laurels(data: SyncableData, course: CourseShape): Laurel[] {
     prima: levelDone('prima'),
     secunda: levelDone('secunda'),
     tertia: levelDone('tertia'),
+    quarta: levelDone('quarta'),
     'lessons-50': lessonsDone,
     'streak-7': longestStreak(data.studyDays ?? []),
     'streak-30': longestStreak(data.studyDays ?? []),

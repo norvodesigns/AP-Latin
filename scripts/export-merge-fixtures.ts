@@ -397,10 +397,16 @@ function laurelCases() {
     busy.lessons[id] = { completedAt: '2026-01-02T00:00:00.000Z', lastAt: '2026-01-02T00:00:00.000Z', best: 1, attempts: 1 };
   }
   busy.daily = Object.fromEntries(Array.from({ length: 9 }, (_, i) => [day(i * (i < 7 ? 1 : 3)), { id: 'x', score: 1, at: '' }]));
+  // Every lesson of the last level, and nothing else: a whole level earned.
+  const graduate = base();
+  for (const id of ALL_LESSONS.filter((p) => p.level.id === 'quarta').map((p) => p.lesson.id)) {
+    graduate.lessons[id] = { completedAt: '2026-05-01T00:00:00.000Z', lastAt: '2026-05-01T00:00:00.000Z', best: 1, attempts: 1 };
+  }
   return [
     { name: 'blank', data: base() },
     { name: 'rich-local', data: local },
     { name: 'busy', data: busy },
+    { name: 'graduate', data: graduate },
   ].map((c) => {
     const list = laurels(c.data, COURSE_SHAPE);
     return { name: c.name, data: c.data, expected: list.map((l) => ({ id: l.id, have: l.have, earned: l.earned })), next: nextLaurel(list)?.id ?? null };

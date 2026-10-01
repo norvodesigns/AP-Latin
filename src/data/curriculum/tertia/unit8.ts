@@ -284,16 +284,16 @@ export const unit: CurriculumUnit = {
     {
       id: 'tertia-8-5',
       title: 'Where to go from here',
-      summary: 'You have finished the course. The AP syllabus is next.',
+      summary: 'You have finished Level III. Next, the AP syllabus itself, in Level IV.',
       minutes: 6,
-      objectives: ['Know which parts of Lectio to use now', 'Look back over three levels in one review'],
+      objectives: ['Know what Level IV does, and which parts of Lectio to use beside it', 'Look back over three levels in one review'],
       words: [],
       steps: [
         {
           kind: 'teach',
           title: 'Fīnis, and a beginning',
           body: [
-            'You have come from *salvē* to Vergil. From here, the rest of Lectio is built for the AP syllabus itself.',
+            'You have come from *salvē* to Vergil. Level IV, *Quārta*, reads every passage the AP syllabus sets, Pliny first and then the Aeneid, with a guide at each step. Beside it, the rest of Lectio is built for the exam itself.',
             '**Reading Room**: every syllabus passage, with every word glossed. **Vocabulary**: the full AP list, with spaced repetition. **Quiz Engine**: AP-style questions. **Translate** and **Sight Reading** for practice under exam conditions. **FRQ Workshop** and **Practice Exam** for the real thing. And **Forms Forge** whenever an ending slips.',
           ],
           tip: 'Read a little every day. A passage you read three times is one you will recognize on the exam.',
@@ -301,15 +301,15 @@ export const unit: CurriculumUnit = {
         {
           kind: 'choice',
           prompt: 'Which is a deponent verb?',
-          options: ['sequor', 'secō', 'sedeō'],
-          answer: 0,
+          options: ['secō', 'sedeō', 'sequor'],
+          answer: 2,
           explain: 'Passive in form, active in meaning: “I follow” (Level II, Unit 1).',
         },
         {
           kind: 'choice',
           prompt: 'What is *urbe captā*?',
-          options: ['an ablative absolute', 'an indirect statement', 'a purpose clause'],
-          answer: 0,
+          options: ['an indirect statement', 'an ablative absolute', 'a purpose clause'],
+          answer: 1,
           explain: 'Level II, Unit 2.',
         },
         {
@@ -322,8 +322,8 @@ export const unit: CurriculumUnit = {
         {
           kind: 'choice',
           prompt: 'What is the pattern of *Arma virumque canō, Trōiae quī prīmus ab ōrīs*?',
-          options: ['DDSSDS', 'SSSSDS', 'DDDDDS'],
-          answer: 0,
+          options: ['SSSSDS', 'DDDDDS', 'DDSSDS'],
+          answer: 2,
           explain: 'Level III, Unit 5.',
         },
         {

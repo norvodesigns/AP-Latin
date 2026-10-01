@@ -30,6 +30,7 @@ public enum Laurels {
         Spec(id: "prima", latin: "Prīma perfecta", title: "Level I, done", detail: "Finish every lesson of Prīma.", target: 1),
         Spec(id: "secunda", latin: "Secunda perfecta", title: "Level II, done", detail: "Finish every lesson of Secunda.", target: 1),
         Spec(id: "tertia", latin: "Tertia perfecta", title: "Level III, done", detail: "Finish every lesson of Tertia.", target: 1),
+        Spec(id: "quarta", latin: "Quārta perfecta", title: "Level IV, done", detail: "Finish every lesson of Quārta: the whole AP syllabus, read with a guide.", target: 1),
         Spec(id: "lessons-50", latin: "Quīnquāgintā lēctiōnēs", title: "Fifty lessons", detail: "Finish fifty lessons of the course.", target: 50),
         // Habit
         Spec(id: "streak-7", latin: "Septem diēs", title: "A week unbroken", detail: "Study seven days in a row.", target: 7),
@@ -106,6 +107,7 @@ public enum Laurels {
             "prima": levelDone("prima"),
             "secunda": levelDone("secunda"),
             "tertia": levelDone("tertia"),
+            "quarta": levelDone("quarta"),
             "lessons-50": done.count,
             "streak-7": longest,
             "streak-30": longest,
