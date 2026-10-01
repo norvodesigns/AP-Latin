@@ -139,7 +139,23 @@ struct ExamSessionView: View {
         .onAppear {
             mcqStart = Date()
             model.update { $0.markStudied() }
+            ExamLiveActivity.start(.init(section: "Section I", detail: "Multiple choice", startedAt: mcqStart,
+                                         endsAt: mcqStart.addingTimeInterval(ExamPaper.mcqSeconds), done: 0, total: paper.mcq.count))
         }
+        .onChange(of: answers.count) { _, n in
+            if stage == .mcq { ExamLiveActivity.update(done: n) }
+        }
+        .onChange(of: frqDone) { _, n in
+            if stage == .frq { ExamLiveActivity.update(done: n) }
+        }
+        .onDisappear { ExamLiveActivity.end() }
+    }
+
+    /// Free-response questions with anything written in them.
+    private var frqDone: Int {
+        paper.frqs.filter { p in
+            p.subquestions.contains { !(frqAnswers["\(p.id):\($0.id)"] ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        }.count
     }
 
     @ViewBuilder
@@ -245,6 +261,7 @@ struct ExamSessionView: View {
         guard stage == .mcq else { return }
         mcqUsed = min(ExamPaper.mcqSeconds, Date().timeIntervalSince(mcqStart))
         stage = .rest
+        ExamLiveActivity.end()
     }
 
     private var restStage: some View {
@@ -256,6 +273,8 @@ struct ExamSessionView: View {
             Button {
                 frqStart = Date()
                 stage = .frq
+                ExamLiveActivity.start(.init(section: "Section II", detail: "Free response", startedAt: frqStart,
+                                             endsAt: frqStart.addingTimeInterval(ExamPaper.frqSeconds), done: 0, total: paper.frqs.count))
             } label: {
                 Text("Begin Section II").font(.headline).frame(maxWidth: .infinity).padding(.vertical, 6)
             }
@@ -321,6 +340,7 @@ struct ExamSessionView: View {
         if stage == .mcq { mcqUsed = min(ExamPaper.mcqSeconds, Date().timeIntervalSince(mcqStart)) }
         if stage == .frq { frqUsed = min(ExamPaper.frqSeconds, Date().timeIntervalSince(frqStart)) }
         stage = .report
+        ExamLiveActivity.end()
     }
 
     /* -------------------------------------------------------------- */

@@ -4,7 +4,7 @@ import WidgetKit
 
 /// Home Screen and Lock Screen widgets: days to the exam, cards due, the
 /// streak and today's study time; the Sententia of the day; the next course
-/// lesson. They read the snapshot the app writes to the shared app group
+/// lesson. Also the Live Activity for a timed practice-exam section. They read the snapshot the app writes to the shared app group
 /// (`WidgetSnapshot`), and work out what's due, the streak and the day's
 /// line for the moment they're shown, so they stay right overnight.
 @main
@@ -13,6 +13,7 @@ struct LectioWidgetBundle: WidgetBundle {
         TodayWidget()
         SententiaWidget()
         NextLessonWidget()
+        ExamActivityWidget()
     }
 }
 

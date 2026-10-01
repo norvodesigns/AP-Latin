@@ -96,7 +96,7 @@ finishing a lesson counts toward the streak and daily goal.
 - [x] App Shortcuts / Siri: "Review my Latin", "Continue my lesson", "Today's Latin line"
 - [x] Watch complication: cards due
 - [x] Lock Screen widget for the next lesson
-- [ ] Live Activity for a timed practice-exam section
+- [x] Live Activity for a timed practice-exam section
 
 ## 5. Quality
 
@@ -262,3 +262,6 @@ finishing a lesson counts toward the streak and daily goal.
   countdown where there is room. The watch app writes a small `WatchGlance` to its app group each
   time its deck arrives or a card is graded, and reloads the complications; at midnight they say so
   until the phone sends the new day's cards.
+- 2026-10-01: A Live Activity for the practice exam: each timed section shows on the Lock Screen
+  and in the Dynamic Island with the system-drawn countdown and how many questions are answered,
+  starting with the section and ending when it does, when the exam is scored, or when it is left.
