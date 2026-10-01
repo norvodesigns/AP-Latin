@@ -280,7 +280,7 @@ jobs:
             -authenticationKeyPath "$RUNNER_TEMP/asc/key.p8" \
             -authenticationKeyID "${{ secrets.ASC_KEY_ID }}" \
             -authenticationKeyIssuerID "${{ secrets.ASC_ISSUER_ID }}" \
-            CURRENT_PROJECT_VERSION=${{ github.run_number }} \
+            CURRENT_PROJECT_VERSION="$(date -u +%y%m%d%H%M)" \
             | tee archive.log | grep -E '(error:|ARCHIVE (SUCCEEDED|FAILED))' || true
           grep -q 'ARCHIVE SUCCEEDED' archive.log
       - name: Upload

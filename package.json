@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "verify": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/verify-content.mjs && npm run verify:scansion",
+    "verify": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/verify-content.mjs && npm run verify:scansion && node scripts/check-eas.mjs",
     "verify:scansion": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/verify-scansion.mjs",
     "build:scansion": "node scripts/build-scansion.mjs && npm run verify:scansion",
     "eval:grading": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/eval-grading.mjs",

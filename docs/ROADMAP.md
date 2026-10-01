@@ -376,3 +376,12 @@ finishing a lesson counts toward the streak and daily goal.
   checked), the TestFlight job checks its secrets first and keeps its logs, Settings > Preview can load
   sample progress when signed out, and `ios/TESTFLIGHT.md` holds the setup steps and the text to paste
   into TestFlight's What to Test.
+- 2026-10-01: TestFlight through Expo EAS, the Palette app's approach. EAS Build can build a plain SwiftUI
+  project through a custom build config, so `ios/` is now also a small EAS project: `package.json` (just
+  `expo`), `app.json` (bundle IDs, app group and the three extensions for signing), `eas.json` (the
+  `production` profile, Xcode 26 image) and `.eas/build/build-ios.yml` (XcodeGen, build-number stamp,
+  sign, archive). **Actions > TestFlight** queues a build and submits it, waits and prints the log of a
+  failed build. `scripts/check-eas.mjs` (part of `npm run verify`) fails if `app.json` drifts from
+  `project.yml`. Build numbers are now a timestamp on both the EAS and the GitHub-Mac routes. Not yet
+  run: it needs the owner's Expo and Apple logins (steps in `ios/TESTFLIGHT.md`); the macOS GitHub
+  route stays as the fallback.

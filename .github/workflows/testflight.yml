@@ -1,0 +1,78 @@
+name: TestFlight
+
+# Manual trigger: Actions tab -> TestFlight -> Run workflow (works from the
+# GitHub mobile app too). Queues a production iOS build of the native app on
+# EAS Build (Expo's cloud Macs) and, when it finishes, submits it to
+# TestFlight. Same idea as the Palette app's workflow.
+#
+# One-time setup is in ios/TESTFLIGHT.md (an EXPO_TOKEN secret, then the first
+# build run once interactively so EAS can create the signing credentials and
+# register the app group). The older route that builds on a GitHub Mac with an
+# App Store Connect key is the "Upload to TestFlight" job in ios.yml.
+
+on:
+  workflow_dispatch:
+    inputs:
+      submit:
+        description: Submit to TestFlight when the build finishes
+        type: boolean
+        default: true
+      wait:
+        description: Wait for the build and print its log if it fails (turn off to queue and exit)
+        type: boolean
+        default: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+    defaults:
+      run:
+        working-directory: ios
+    steps:
+      - name: Require EXPO_TOKEN
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error::Add an EXPO_TOKEN repository secret first. See ios/TESTFLIGHT.md"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ios/package-lock.json
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build on EAS
+        run: eas build --platform ios --profile production --non-interactive ${{ inputs.wait && '--wait' || '--no-wait' }} ${{ inputs.submit && '--auto-submit' || '' }}
+
+      # The EAS build log lives on expo.dev; when the build fails, copy its
+      # tail here so the failure can be read (and fixed) from the Actions run.
+      - name: Print the failed build's log
+        if: failure() && inputs.wait
+        continue-on-error: true
+        run: |
+          eas build:list --platform ios --limit 1 --non-interactive --json > latest-build.json || exit 0
+          node -e '
+            const b = JSON.parse(require("fs").readFileSync("latest-build.json", "utf8"))[0] || {};
+            console.log("Build", b.id, b.status, b.error ? JSON.stringify(b.error) : "");
+            for (const u of b.logFiles || []) console.log(u);
+          ' > log-urls.txt
+          cat log-urls.txt
+          grep '^https' log-urls.txt | while read -r url; do
+            echo "::group::$url"
+            curl -fsSL "$url" | tail -n 250 || true
+            echo "::endgroup::"
+          done

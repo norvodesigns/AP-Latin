@@ -103,26 +103,19 @@ with a deployment target of iOS 17, so an unguarded iOS 26 call fails the build.
 
 ## Shipping to TestFlight
 
-The step-by-step is in [TESTFLIGHT.md](TESTFLIGHT.md). In short:
+The step-by-step is in [TESTFLIGHT.md](TESTFLIGHT.md). In short, it builds in the cloud with Expo's
+EAS Build, like the Palette app, so no Mac is needed:
 
-Either route works:
+1. `cd ios && npm ci && npx eas-cli@latest login && npx eas-cli@latest init`, then commit the
+   `projectId` it writes into `app.json`.
+2. Once, interactively: `npx eas-cli@latest build -p ios --profile production --auto-submit`. EAS
+   signs in to Apple, creates the certificate, profiles and app group, creates the App Store Connect
+   app and uploads the build.
+3. After that: add an `EXPO_TOKEN` secret and run **Actions > TestFlight > Run workflow**.
 
-- **From Xcode:** Product → Archive, then Distribute App → App Store Connect.
-- **From GitHub:** Actions → iOS → Run workflow, then tick "Upload a build to TestFlight". This
-  needs three repository secrets (Settings → Secrets and variables → Actions):
-
-  | Secret | Value |
-  | --- | --- |
-  | `ASC_KEY_ID` | The API key's Key ID |
-  | `ASC_ISSUER_ID` | The Issuer ID shown above the keys list |
-  | `ASC_KEY_P8` | The full contents of the downloaded `.p8` file |
-
-  Create the key under App Store Connect → Users and Access → Integrations → App Store Connect
-  API, with the **Admin** role, so Xcode can create the distribution certificate itself. The
-  build number is the workflow run number.
-
-The app record has to exist in App Store Connect before the first upload: Apps → + → New App,
-bundle ID `com.norvodesigns.lectio`.
+Fallbacks that don't use EAS: Product > Archive in Xcode, or **Actions > iOS > Run workflow** with
+*Upload a build to TestFlight* ticked (needs the `ASC_KEY_ID`, `ASC_ISSUER_ID` and `ASC_KEY_P8`
+secrets; both are in TESTFLIGHT.md).
 
 ## What's in the app
 

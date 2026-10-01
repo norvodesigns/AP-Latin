@@ -41,3 +41,8 @@ yarn-error.log*
 
 # Cached source texts for scripts/build-scansion.mjs (re-fetch with --fetch).
 scripts/.cache/
+
+# EAS Build wrapper for the iOS app (ios/package.json)
+/ios/node_modules
+# Written on the EAS builder only: points ios/ at itself for Expo's signing step
+/ios/ios

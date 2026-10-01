@@ -14,7 +14,7 @@ if ! git cat-file -e "$base^{commit}" 2>/dev/null; then
   exit 1
 fi
 
-if git diff --quiet "$base" HEAD -- . ':(exclude)ios' ':(exclude).github/workflows/ios.yml' &&
+if git diff --quiet "$base" HEAD -- . ':(exclude)ios' ':(exclude).github/workflows/ios.yml' ':(exclude).github/workflows/testflight.yml' &&
   git diff --quiet "$base" HEAD -- ios/Content; then
   echo "Only the iOS app changed since $base; skipping the website build."
   exit 0

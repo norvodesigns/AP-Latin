@@ -3,35 +3,84 @@
 For a first build you can put on your own devices and give feedback on. Do the setup once, in order;
 after that a build is one button.
 
-## One-time setup (you)
+## The route: Expo EAS (same as Palette, no Mac needed)
 
-1. **A Mac with Xcode, and XcodeGen.** `brew install xcodegen`. Xcode 26 or later (the project is
-   written against the iOS 26 SDK; it runs on iOS 17 and later).
-2. **Run it once from Xcode, on your own iPhone.** This registers everything with Apple for you.
+Lectio builds in the cloud with **EAS Build**, the way the Palette app does. EAS isn't only for React
+Native: it runs `xcodebuild` on its own Macs, and a *custom build config* lets it build a plain SwiftUI
+project. The wrapper is the five files in `ios/`: `package.json` (just `expo`, which `eas-cli` needs to
+recognise the project; nothing from it ships in the app), `app.json` (bundle IDs and the app group for
+the app, widgets, watch app and complications), `eas.json` (the `production` profile on the Xcode 26
+image), `.eas/build/build-ios.yml` (install XcodeGen, stamp the build number, generate the project, sign,
+archive) and `package-lock.json`. `npm run verify` checks that `app.json` still matches `project.yml`.
+
+### One-time setup (you), about an hour, mostly waiting on Apple
+
+1. **Apple Developer Program:** done. **Expo account:** the one Palette uses is fine.
+2. **Link the project to Expo** (2 minutes, any computer with Node 20+, Mac not needed):
    ```bash
    git pull
-   cd ios && xcodegen && open Lectio.xcodeproj
+   cd ios && npm ci
+   npx eas-cli@latest login
+   npx eas-cli@latest init        # writes extra.eas.projectId into ios/app.json
+   git commit -am "Link EAS project" && git push
    ```
-   Select the **Lectio** scheme and your iPhone, Run. Xcode signs automatically under team
-   `M46ZNP323Y` and registers `com.norvodesigns.lectio`, the widgets
-   (`.widgets`), the watch app (`.watchkitapp`), its complications (`.watchkitapp.widgets`) and the app
-   group `group.com.norvodesigns.lectio`. If Xcode complains about any of them, send me the message.
-   Turn on Developer Mode on the phone first (Settings > Privacy & Security).
-3. **Create the app record.** App Store Connect > Apps > + > New App. Platform iOS, name "Lectio" (or
-   "Lectio: AP Latin" if taken), English (U.S.), bundle ID `com.norvodesigns.lectio`, any SKU.
-4. **Upload the first build.** Either:
-   - **From Xcode** (best for the first one, since errors are easiest to read): choose
-     *Any iOS Device (arm64)* as the destination, Product > Archive, then Distribute App > App Store
-     Connect > Distribute.
-   - **From GitHub:** create an App Store Connect API key (Users and Access > Integrations > App Store
-     Connect API, role **Admin**), add the repository secrets `ASC_KEY_ID`, `ASC_ISSUER_ID` and
-     `ASC_KEY_P8` (the whole .p8 file), then Actions > iOS > Run workflow with *Upload a build to
-     TestFlight* ticked. The job checks the three secrets in seconds and says which is missing. Never
-     paste the .p8 anywhere but the secret.
-5. **Wait for processing** (5 to 30 minutes), then in TestFlight create an **Internal Testing** group,
+   (Or send me your Expo username and the project ID from expo.dev and I'll add them.)
+3. **First build and upload, interactively** (30 to 45 minutes):
+   ```bash
+   cd ios
+   npx eas-cli@latest build --platform ios --profile production --auto-submit
+   ```
+   It has to be interactive once because EAS needs you to sign in to Apple: to create the distribution
+   certificate and four provisioning profiles, to register the bundle IDs
+   (`com.norvodesigns.lectio`, `.widgets`, `.watchkitapp`, `.watchkitapp.widgets`) and to register the
+   app group `group.com.norvodesigns.lectio` (Apple only lets a signed-in Apple ID do that part). Say
+   yes to generating the certificate and profiles. When it asks for the App Store Connect app, create
+   it: name **"Lectio"**, or **"Lectio: AP Latin"** if that's taken (the name under the icon stays
+   "Lectio" either way). Don't use `npx testflight` here; it's Expo's one-command build for Expo
+   projects and expects one.
+4. **Wait for processing** (5 to 30 minutes), then in TestFlight create an **Internal Testing** group,
    add your Apple ID, and add the build. Internal testers skip Beta App Review. Install the TestFlight
    app on your device and accept the invitation. Paste the text under "What to Test" below into the
    build's *Test Details*.
+
+### Later builds: one tap from GitHub
+
+1. On expo.dev: Account settings > Access tokens, create a token. In GitHub: Settings > Secrets and
+   variables > Actions > New repository secret, named `EXPO_TOKEN`.
+2. For unattended submission EAS needs an App Store Connect API key: `npx eas-cli credentials` > iOS >
+   production > *App Store Connect: Manage your API Key* > let it generate one. Then add the app's
+   Apple ID (App Store Connect > App Information) to `ios/eas.json`:
+   `"submit": { "production": { "ios": { "ascAppId": "1234567890" } } }`.
+3. **Actions > TestFlight > Run workflow.** It queues the build on EAS and, when it finishes, submits it.
+   By default it waits and, if the build fails, prints the tail of EAS's log in the run so it can be
+   read from GitHub; untick *Wait* to queue and exit instead (follow it on expo.dev).
+
+Build numbers are a timestamp (`yymmddHHMM`), set on every build, so they always rise and all four
+targets agree. You never edit them.
+
+### What may need a round or two
+
+This route hasn't run yet: EAS needs your Expo and Apple logins, which I don't have. It follows Expo's
+documented recipe for native iOS projects, but that recipe is lightly used, and a watch app with
+complications is the least-trodden part. If the first build fails, send me the failing phase's log (or
+run the TestFlight workflow, which prints it) and I'll fix the recipe. The routes below don't depend
+on EAS and stay as the fallback.
+
+## Fallback routes
+
+- **From Xcode, on a Mac.** `brew install xcodegen`; Xcode 26 or later. `cd ios && xcodegen && open
+  Lectio.xcodeproj`, select the **Lectio** scheme and your iPhone, Run (turn on Developer Mode on the
+  phone first: Settings > Privacy & Security). Xcode signs automatically under team `M46ZNP323Y` and
+  registers all four bundle IDs and the app group. Create the app record (App Store Connect > Apps > +
+  > New App, bundle ID `com.norvodesigns.lectio`), then *Any iOS Device (arm64)*, Product > Archive,
+  Distribute App > App Store Connect > Distribute. Best for a first build, since errors are easiest to
+  read there.
+- **From GitHub, on a GitHub Mac.** Create an App Store Connect API key (Users and Access >
+  Integrations > App Store Connect API, role **Admin**), add the repository secrets `ASC_KEY_ID`,
+  `ASC_ISSUER_ID` and `ASC_KEY_P8` (the whole .p8 file), then Actions > iOS > Run workflow with
+  *Upload a build to TestFlight* ticked. The job checks the three secrets in seconds and says which is
+  missing. The app record and the app group must already exist (one Xcode run does both). Never paste
+  the .p8 anywhere but the secret.
 
 CI already proves most of this before you start: every push builds the app, runs the tests, builds an
 unsigned **Release archive for a real device** with the watch app embedded (the part a simulator build
@@ -86,6 +135,6 @@ undoes it. Sample progress never reaches an account.
 
 ## If an upload is rejected
 
-Send me the full message from Xcode's Organizer or the failed Actions job (the *testflight-logs*
-artifact has the archive and export logs). The usual suspects are a missing app record (step 3), an
-app group that wasn't registered (step 2), or an unaccepted agreement in App Store Connect (Business).
+Send me the full message from Xcode's Organizer, the failed TestFlight job, or expo.dev (for the
+GitHub Mac route, the *testflight-logs* artifact has the archive and export logs). The usual suspects are a missing app record, an app group that
+wasn't registered, or an unaccepted agreement in App Store Connect (Business).
