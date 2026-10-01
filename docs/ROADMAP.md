@@ -95,8 +95,8 @@ finishing a lesson counts toward the streak and daily goal.
 - [x] Fill the syllabus gaps in the scansion corpus: 144 of the 448 required Aeneid lines were
       ambiguous from bare text; the course's macronized Level IV readings settle 121 more lines
       (424 of 448 now), each checked against what the bare text allows
-- [ ] Printable passage sheets: the Reader prints as a clean handout (Latin with line numbers, the
-      glossary as footnotes, room to write), for teachers and for annotating on paper
+- [x] Printable passage sheets: the Reader prints as a clean handout (Latin with line numbers, the
+      passage's vocabulary, room to write), for teachers and for annotating on paper
 - [x] Quiz from the Reader: "Questions on this passage" opens the quiz filtered to it
 
 ## 4. Apple platform extras
@@ -343,3 +343,8 @@ finishing a lesson counts toward the streak and daily goal.
   Vergil, so left out), the anceps i of mihi, and a ȳ the letter class dropped. Five lines' answers
   changed (2.9, 2.50, 4.81, 5.807, 11.254), 14 doubtful ones left. The lab no longer shows macrons,
   which gave answers away on the lines of Book 1 that had them.
+- 2026-10-01: Printable handouts: the Reader has a Print button, and on paper a passage becomes a
+  worksheet: author and citation with Name and Date lines, the Latin with its line or section
+  numbers and room to write between lines, and the passage's vocabulary in two columns (the CED words
+  the glossary finds in this text, worked out when the page is idle). Navigation, buttons, tips and
+  the side rail are left off, and paper is always black on white, even from dark mode.

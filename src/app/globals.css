@@ -1680,4 +1680,33 @@ h1, h2, h3, h4 {
 @media print {
   .no-print { display: none !important; }
   body { background: white; color: black; }
+
+  @page { margin: 0.6in 0.7in; }
+
+  /* Paper is white whatever the screen theme: ink colours, no parchment. */
+  :root,
+  [data-theme='dark'],
+  :root:not([data-theme='light']) {
+    --bg: #ffffff;
+    --bg-raised: #ffffff;
+    --bg-sunk: #ffffff;
+    --fg: #111111;
+    --ink2: #333333;
+    --fg-muted: #444444;
+    --fg-faint: #555555;
+    --rule: #bbbbbb;
+    --hair: #cccccc;
+    --accent: #9d2f24;
+    color-scheme: light;
+  }
+
+  /* A handout: the Latin double-spaced with room to write between lines,
+     never split across a page inside a line. */
+  .print-ruled > div { margin-bottom: 0 !important; break-inside: avoid; align-items: baseline; }
+  .print-ruled .latin-verse,
+  .print-ruled .latin { line-height: 2.6 !important; }
+  .print-ruled .verse-num { line-height: normal !important; }
+
+  .print-vocab { columns: 2; column-gap: 2rem; }
+  .print-vocab li { break-inside: avoid; margin-bottom: 0.2rem; }
 }

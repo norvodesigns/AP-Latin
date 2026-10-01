@@ -6,6 +6,7 @@ import type { Passage } from '@/data/types';
 import { tokenize, lookup, disambiguateInContext, type LookupResult } from '@/lib/latin';
 import { useStore, readingCoverage, type Annotation, type HighlightColor } from '@/store/useStore';
 import { passageVocabIds } from '@/data/passages/vocabIds';
+import { coreVocabulary } from '@/data/vocabulary';
 import { BackLink, CedLink, SupplementaryNotice } from '@/components/ui';
 import { useRevealChildren } from '@/hooks/useRevealChildren';
 import AskAboutLine from '@/components/AskAboutLine';
@@ -341,7 +342,7 @@ export default function Reader({
     <div className="mx-auto w-full max-w-[1160px]">
       {/* ── Running head ── */}
       <div
-        className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-b px-5 py-4 sm:px-10"
+        className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-b px-5 py-4 sm:px-10 print:hidden"
         style={{ borderColor: 'var(--rule)' }}
       >
         <div className="flex min-w-0 items-baseline gap-4">
@@ -390,6 +391,16 @@ export default function Reader({
         {/* ─────────── The Latin ─────────── */}
         <article className="min-w-0 px-5 py-10 sm:px-10 sm:py-14 lg:pr-12">
           <header className="mb-9">
+            {/* On paper: who it belongs to, and where the text comes from. */}
+            <div className="hidden print:mb-6 print:flex print:items-baseline print:justify-between print:gap-8">
+              <span className="slab-sm">
+                {passage.author === 'vergil' ? 'Vergil' : passage.author === 'pliny' ? 'Pliny' : passage.author},{' '}
+                {passage.citation}
+              </span>
+              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem' }}>
+                Name ______________________ Date __________
+              </span>
+            </div>
             <h1 style={{ fontSize: 'clamp(1.625rem, 1.3rem + 1.6vw, 2.25rem)', lineHeight: 1.15 }}>
               {passage.title}
             </h1>
@@ -406,7 +417,7 @@ export default function Reader({
                 {passage.salutation}
               </p>
             )}
-            <div className="mt-5 flex flex-wrap items-center gap-2">
+            <div className="mt-5 flex flex-wrap items-center gap-2 print:hidden">
               <button
                 type="button"
                 className={`btn ${!glossaryEnabled ? 'btn-primary' : ''}`}
@@ -435,6 +446,14 @@ export default function Reader({
                 </svg>
                 <span className="sr-only">Bookmark</span>
               </button>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => window.print()}
+                title="Print the passage as a handout, with its vocabulary and room to write"
+              >
+                Print
+              </button>
               {quizCount > 0 && (
                 <Link className="btn" href={`/quiz?passage=${passage.id}`}>
                   {quizCount} questions
@@ -449,7 +468,7 @@ export default function Reader({
           </header>
 
           <p
-            className="mb-8"
+            className="mb-8 print:hidden"
             style={{
               margin: '0 0 2rem',
               fontFamily: 'var(--font-sans)',
@@ -462,13 +481,13 @@ export default function Reader({
           </p>
 
           {!passage.required && (
-            <div className="mb-8">
+            <div className="mb-8 print:hidden">
               <SupplementaryNotice />
             </div>
           )}
 
           {/* The verse block: a red margin rule with the text ruled off it. */}
-          <div className="verse-block" ref={verseRef}>
+          <div className="verse-block print-ruled" ref={verseRef}>
             {passage.lines.map((line, li) => {
               const isFlagged = mounted && flagged.has(line.n);
               const tokens = tokenize(line.latin);
@@ -582,7 +601,7 @@ export default function Reader({
           </div>
 
           <p
-            className="measure mt-10 border-t pt-5"
+            className="measure mt-10 border-t pt-5 print:hidden"
             style={{
               borderColor: 'var(--hair)',
               fontFamily: 'var(--font-latin)',
@@ -599,14 +618,16 @@ export default function Reader({
             attach a note. This passage&rsquo;s place on the syllabus is set by the{' '}
             <CedLink to="requiredReading">CED&rsquo;s required reading list</CedLink>.
           </p>
+
+          <PrintVocabulary passage={passage} ids={vocabIds} />
         </article>
 
         {/* The ruling */}
-        <div className="hidden lg:block" style={{ background: 'var(--rule)' }} />
+        <div className="hidden lg:block print:hidden" style={{ background: 'var(--rule)' }} />
 
         {/* ─────────── Apparatus ─────────── */}
         <aside
-          className="flex min-w-0 flex-col gap-8 border-t px-5 py-10 sm:px-10 lg:border-t-0 lg:py-14 lg:pl-9 lg:pr-10"
+          className="flex min-w-0 flex-col gap-8 border-t px-5 py-10 sm:px-10 lg:border-t-0 lg:py-14 lg:pl-9 lg:pr-10 print:hidden"
           style={{ borderColor: 'var(--rule)' }}
         >
           <RailSection title="English summary">
@@ -1148,6 +1169,55 @@ function RailSection({
         {aside}
       </div>
       {children}
+    </section>
+  );
+}
+
+/**
+ * The passage's vocabulary, printed after the Latin as a handout's word list
+ * and never shown on screen, where every word glosses on a tap instead.
+ */
+function PrintVocabulary({ passage, ids }: { passage: Passage; ids: string[] }) {
+  // The reading's word list covers more than this passage, so it is narrowed
+  // to the words the glossary actually finds in the Latin on the page. Only
+  // paper uses it, so it is worked out once the page is idle, not on load.
+  const [entries, setEntries] = useState<typeof coreVocabulary>([]);
+  useEffect(() => {
+    const work = () => {
+      const listed = new Set(ids);
+      const found = new Set<string>();
+      for (const line of passage.lines) {
+        for (const t of tokenize(line.latin)) {
+          if (!t.isWord) continue;
+          const best = disambiguateInContext(passage.id, line.n, t.text, lookup(t.text), t.index)[0];
+          if (best && listed.has(best.entry.id)) found.add(best.entry.id);
+        }
+      }
+      setEntries(
+        coreVocabulary.filter((e) => found.has(e.id)).sort((a, b) => a.headword.localeCompare(b.headword, 'la')),
+      );
+    };
+    if ('requestIdleCallback' in window) {
+      const handle = window.requestIdleCallback(work);
+      return () => window.cancelIdleCallback(handle);
+    }
+    const timer = setTimeout(work, 200);
+    return () => clearTimeout(timer);
+  }, [passage, ids]);
+  if (entries.length === 0) return null;
+  return (
+    <section className="hidden print:mt-8 print:block">
+      <h2 className="slab-sm mb-3">Vocabulary</h2>
+      <ul className="print-vocab" style={{ fontSize: '0.8125rem', lineHeight: 1.45 }}>
+        {entries.map((e) => (
+          <li key={e.id}>
+            <span style={{ fontFamily: 'var(--font-latin)', fontWeight: 600 }}>{e.lemma}</span> {e.definition}
+          </li>
+        ))}
+      </ul>
+      <p className="mt-4" style={{ fontSize: '0.75rem' }}>
+        Latin text: The Latin Library (public domain). Printed from Lectio, lectio.norvodesigns.com.
+      </p>
     </section>
   );
 }
