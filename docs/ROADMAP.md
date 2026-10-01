@@ -300,3 +300,9 @@ finishing a lesson counts toward the streak and daily goal.
   to four or more (194 in all). The summaries of Letters 10.5 and 10.6 were wrong (10.5 described
   the ius trium liberorum of 10.2 and an Alexandrian step Pliny had not yet learned of) and are
   rewritten from the Latin.
+- 2026-10-01: Right answers spread across positions. Options are never shuffled on screen, and all
+  59 original quiz questions, all 13 sight questions, most of Tertia (units at 90–100%) and the
+  placement check had the answer in one slot, so "always pick A" passed. `scripts/rebalance-
+  answers.mjs` moves each right option to an evenly spread slot (wrong options keep their order;
+  lists with a natural order, like cases or numbers, stay as written): 351 items moved. `verify`
+  now fails any bank or unit with more than half its answers in one slot.

@@ -60,8 +60,8 @@ export const unit: CurriculumUnit = {
         {
           kind: 'choice',
           prompt: 'Whom does Aeneas call “three and four times blessed”?',
-          options: ['those who died at Troy before their fathers’ eyes', 'the gods', 'the Greeks who won'],
-          answer: 0,
+          options: ['the gods', 'those who died at Troy before their fathers’ eyes', 'the Greeks who won'],
+          answer: 1,
           explain: '*Quīs … contigit oppetere*: those to whom it fell to die at Troy.',
         },
         {
@@ -74,15 +74,15 @@ export const unit: CurriculumUnit = {
         {
           kind: 'choice',
           prompt: 'What does *Mēne … nōn potuisse* express?',
-          options: ['an exclamation of indignation: “That I could not have …!”', 'a question about the future', 'a command'],
-          answer: 0,
+          options: ['a question about the future', 'a command', 'an exclamation of indignation: “That I could not have …!”'],
+          answer: 2,
           explain: 'An accusative and infinitive standing alone makes an exclamation.',
         },
         {
           kind: 'choice',
           prompt: 'What does this first speech show about Aeneas?',
-          options: ['He is human and despairing, not yet the confident founder', 'He is eager to fight Juno', 'He has no feelings'],
-          answer: 0,
+          options: ['He is eager to fight Juno', 'He has no feelings', 'He is human and despairing, not yet the confident founder'],
+          answer: 2,
           explain: 'Vergil introduces his hero wishing he were dead, which makes his later endurance mean more.',
         },
         {
@@ -152,11 +152,11 @@ export const unit: CurriculumUnit = {
           kind: 'choice',
           prompt: 'What are Laocoön’s three possibilities about the horse?',
           options: [
-            'Greeks are hidden inside; it is a siege engine against the walls; or it hides some other trick',
             'It is a gift to Minerva; a boat; a statue',
+            'Greeks are hidden inside; it is a siege engine against the walls; or it hides some other trick',
             'It will burn; it will fall; it will float',
           ],
-          answer: 0,
+          answer: 1,
           explain: '*Aut … aut … aut*: three alternatives, a tricolon of suspicion.',
         },
         {
@@ -176,8 +176,8 @@ export const unit: CurriculumUnit = {
         {
           kind: 'choice',
           prompt: 'What does *et* mean in *timeō Danaōs et dōna ferentīs*?',
-          options: ['even', 'and', 'both'],
-          answer: 0,
+          options: ['and', 'both', 'even'],
+          answer: 2,
           explain: '“I fear the Greeks even (when) bearing gifts”: one of the most quoted lines in Latin.',
         },
         {
@@ -246,8 +246,8 @@ export const unit: CurriculumUnit = {
         {
           kind: 'choice',
           prompt: 'When does Hector appear?',
-          options: ['at the time of first sleep, in a dream', 'at dawn, in battle', 'at midday, in the temple'],
-          answer: 0,
+          options: ['at dawn, in battle', 'at the time of first sleep, in a dream', 'at midday, in the temple'],
+          answer: 1,
           explain: '*Tempus erat quō prīma quiēs … incipit*, and *in somnīs*.',
         },
         {
@@ -265,16 +265,16 @@ export const unit: CurriculumUnit = {
           kind: 'choice',
           prompt: 'What case is *exuviās* after *indūtus*?',
           latin: 'exuviās indūtus Achillī',
-          options: ['accusative: a passive participle of “putting on” can take an object', 'nominative', 'ablative'],
-          answer: 0,
+          options: ['nominative', 'ablative', 'accusative: a passive participle of “putting on” can take an object'],
+          answer: 2,
           explain: '“Having put on (clothed in) the spoils of Achilles”: a Greek-style accusative.',
         },
         {
           kind: 'choice',
           prompt: 'Which device is *Phrygiōs … ignīs* around *puppibus*?',
           latin: 'Danaum Phrygiōs iaculātus puppibus ignīs',
-          options: ['interlocked word order: the Trojan fires surround the Greek ships', 'litotes', 'simile'],
-          answer: 0,
+          options: ['litotes', 'interlocked word order: the Trojan fires surround the Greek ships', 'simile'],
+          answer: 1,
           explain: 'The adjective and its noun enclose the ships they fell on.',
         },
         {
@@ -311,11 +311,11 @@ export const unit: CurriculumUnit = {
           prompt: 'Which is the most accurate translation?',
           latin: 'Tempus erat quō prīma quiēs mortālibus aegrīs incipit.',
           options: [
-            'It was the time when first rest begins for weary mortals.',
             'It was night.',
+            'It was the time when first rest begins for weary mortals.',
             'The time was when the first rest had begun for sick people.',
           ],
-          answer: 0,
+          answer: 1,
           explain: 'The second leaves words out; the third changes the tense of *incipit*.',
         },
         {

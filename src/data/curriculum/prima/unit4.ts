@@ -109,8 +109,8 @@ export const unit: CurriculumUnit = {
           kind: 'choice',
           prompt: 'What does *dē* mean here?',
           latin: 'Poēta dē bellō nārrat.',
-          options: ['down from the war', 'about the war', 'without the war'],
-          answer: 1,
+          options: ['down from the war', 'without the war', 'about the war'],
+          answer: 2,
           explain: 'With a story, *dē* means “about”. (*Nārrat*: tells.)',
         },
         {
@@ -224,8 +224,8 @@ export const unit: CurriculumUnit = {
           kind: 'choice',
           prompt: 'What kind of ablative is *prīmā hōrā*?',
           latin: 'Prīmā hōrā nāvigant.',
-          options: ['means: by the first hour', 'time when: at the first hour', 'company: with the first hour'],
-          answer: 1,
+          options: ['time when: at the first hour', 'means: by the first hour', 'company: with the first hour'],
+          answer: 0,
           explain: 'A word for a time in the ablative says when: “at the first hour”.',
         },
         {
@@ -352,8 +352,8 @@ export const unit: CurriculumUnit = {
         {
           kind: 'choice',
           prompt: 'Which form is imperfect?',
-          options: ['clāmant', 'clāmābant', 'clāmāre'],
-          answer: 1,
+          options: ['clāmābant', 'clāmant', 'clāmāre'],
+          answer: 0,
           explain: '*Clāmābant*, “they were shouting”. *Clāmant* is present; *clāmāre* is the infinitive.',
         },
         {
@@ -420,15 +420,15 @@ export const unit: CurriculumUnit = {
           kind: 'choice',
           prompt: 'What does *nāvigābunt* mean?',
           latin: 'nāvigābunt',
-          options: ['they were sailing', 'they will sail', 'they sail'],
-          answer: 1,
+          options: ['they were sailing', 'they sail', 'they will sail'],
+          answer: 2,
           explain: '*-bunt* is future.',
         },
         {
           kind: 'choice',
           prompt: 'Which one is past?',
-          options: ['vidēbimus', 'vidēbāmus'],
-          answer: 1,
+          options: ['vidēbāmus', 'vidēbimus'],
+          answer: 0,
           explain: '*Vidēbāmus*, with *-ba-*, is imperfect: “we were seeing”. *Vidēbimus* is future.',
         },
         {
@@ -525,8 +525,8 @@ export const unit: CurriculumUnit = {
         {
           kind: 'choice',
           prompt: 'Where did the sailors live?',
-          options: ['on the mainland', 'on a small island', 'in a town'],
-          answer: 1,
+          options: ['on the mainland', 'in a town', 'on a small island'],
+          answer: 2,
           explain: '*In īnsulā parvā*.',
         },
         {
@@ -540,8 +540,8 @@ export const unit: CurriculumUnit = {
         {
           kind: 'choice',
           prompt: 'What does the old sailor predict?',
-          options: ['a calm day', 'a great storm', 'a good wind for sailing'],
-          answer: 1,
+          options: ['a great storm', 'a calm day', 'a good wind for sailing'],
+          answer: 0,
           explain: '*Tempestās magna erit*: “there will be a great storm”.',
         },
         {

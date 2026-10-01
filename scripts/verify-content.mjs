@@ -69,6 +69,22 @@ notes.push(`${sight.length} vetted sight passages`);
 notes.push(`${grammarTopics.length} grammar topics, ${deviceCards.length} device cards, ${contextCards.length} context cards`);
 notes.push(`${frqPrompts.length} free-response prompts (5 graded per sitting; short-essay offers 2 alternates)`);
 
+/**
+ * No option is shuffled on screen, so the order written here is the order a
+ * student sees. A bank whose right answers pile into one slot can be passed
+ * by always picking that slot; this once held for every original quiz and
+ * sight question. Fix with `node scripts/rebalance-answers.mjs <file>`.
+ */
+function checkSpread(label, positions) {
+  if (positions.length < 10) return;
+  const counts = new Map();
+  for (const p of positions) counts.set(p, (counts.get(p) ?? 0) + 1);
+  const [slot, most] = [...counts].sort((a, b) => b[1] - a[1])[0];
+  if (most / positions.length > 0.5) {
+    fail(`${label}: ${most} of ${positions.length} right answers are option ${slot + 1}; spread them (scripts/rebalance-answers.mjs)`);
+  }
+}
+
 /* --- passages ---------------------------------------------------- */
 const seenPassage = new Set();
 for (const p of passages) {
@@ -194,6 +210,16 @@ for (const s of scansion) {
     if (!line) fail(`scansion ${s.id}: its Latin does not match any line of ${p.citation}`);
   }
 }
+
+/* --- answer positions ------------------------------------------- */
+const slotOf = (q) => q.options.findIndex((o) => o.id === q.answerId);
+checkSpread('quiz bank', questions.map(slotOf));
+checkSpread('sight questions', sightQs.map(slotOf));
+// Per source file too, so a balanced file cannot hide a lopsided one.
+for (const [label, re] of [['quiz bank (Pliny)', /^p\d/], ['quiz bank (Vergil)', /^a\d/]]) {
+  checkSpread(label, questions.filter((q) => re.test(q.id)).map(slotOf));
+}
+checkSpread('quiz bank (questions.ts)', questions.filter((q) => !/^[pa]\d/.test(q.id)).map(slotOf));
 
 /* --- sight passages ---------------------------------------------- */
 const allQ = new Map([...questions, ...sightQs].map((q) => [q.id, q]));
@@ -453,6 +479,7 @@ for (const f of frqPrompts) {
         if (exercises.length < 3) fail(`${id}: only ${exercises.length} exercises`);
         lesson.steps.forEach((s, si) => checkStep(`${id} step ${si + 1} (${s.kind})`, s));
       });
+      checkSpread(unit.id, unit.lessons.flatMap((l) => l.steps.filter((s) => s.kind === 'choice').map((s) => s.answer)));
     }
     if (!existsSync(join(levelsDir, levelId, 'index.ts'))) fail(`curriculum/${levelId}: no index.ts`);
   }
@@ -476,6 +503,7 @@ for (const f of frqPrompts) {
     lastIndex = Math.max(lastIndex, idx);
     if (!Number.isInteger(p.step.answer) || p.step.answer < 0 || p.step.answer >= p.step.options.length) fail(`${at}: answer is not an option`);
   });
+  checkSpread('placement check', PLACEMENT.map((p) => p.step.answer));
   notes.push(`${PLACEMENT.length} placement questions`);
 
   /* --- Forms Forge (src/data/forms) --- */

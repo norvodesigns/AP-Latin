@@ -52,8 +52,8 @@ export const unit: CurriculumUnit = {
           kind: 'choice',
           prompt: 'Who is writing to whom?',
           latin: 'C. Plīnius Tacitō suō s.',
-          options: ['Pliny to Tacitus', 'Tacitus to Pliny', 'Pliny about Tacitus'],
-          answer: 0,
+          options: ['Tacitus to Pliny', 'Pliny about Tacitus', 'Pliny to Tacitus'],
+          answer: 2,
           explain: 'The writer is nominative, *Plīnius*; the reader is dative, *Tacitō*.',
         },
         {
@@ -67,8 +67,8 @@ export const unit: CurriculumUnit = {
           kind: 'choice',
           prompt: 'What kind of clause is *ut tibi … exitum scrībam*?',
           latin: 'Petis ut tibi avunculī meī exitum scrībam.',
-          options: ['an indirect command after *petis*', 'a result clause', 'a clause of fearing'],
-          answer: 0,
+          options: ['a result clause', 'an indirect command after *petis*', 'a clause of fearing'],
+          answer: 1,
           explain: '*Petō ut*: “ask that”, a reported request.',
         },
         {
@@ -130,8 +130,8 @@ export const unit: CurriculumUnit = {
           kind: 'choice',
           prompt: 'How is *indicat* best translated in a story about the past?',
           latin: 'Māter mea indicat eī appārēre nūbem.',
-          options: ['as a past: “my mother pointed out to him”', 'as a future: “will point out”', 'as a command'],
-          answer: 0,
+          options: ['as a future: “will point out”', 'as a past: “my mother pointed out to him”', 'as a command'],
+          answer: 1,
           explain: 'A historical present in a past narrative.',
         },
         {
@@ -231,8 +231,8 @@ export const unit: CurriculumUnit = {
         {
           kind: 'choice',
           prompt: 'What was Pliny’s uncle doing when the cloud was reported?',
-          options: ['Reading', 'Sailing', 'Sleeping'],
-          answer: 0,
+          options: ['Sailing', 'Sleeping', 'Reading'],
+          answer: 2,
           explain: '*Quī tum librōs legēbat*.',
         },
         {
@@ -245,16 +245,16 @@ export const unit: CurriculumUnit = {
         {
           kind: 'choice',
           prompt: 'What did the cloud look like?',
-          options: ['a pine tree', 'a mountain', 'a ship'],
-          answer: 0,
+          options: ['a mountain', 'a pine tree', 'a ship'],
+          answer: 1,
           explain: '*Similis erat pīnō*: a tall trunk spreading into branches.',
         },
         {
           kind: 'choice',
           prompt: 'What does Pliny answer when his uncle invites him?',
           latin: 'Respondī mē studēre mālle.',
-          options: ['that he would rather study', 'that he wanted to come', 'that he was afraid'],
-          answer: 0,
+          options: ['that he wanted to come', 'that he was afraid', 'that he would rather study'],
+          answer: 2,
           explain: 'An indirect statement: *mē … mālle*, “that I preferred”.',
         },
         {
@@ -319,8 +319,8 @@ export const unit: CurriculumUnit = {
         {
           kind: 'choice',
           prompt: 'Why did the uncle change his plan?',
-          options: ['Rectina begged him to rescue her', 'The wind changed', 'Pliny refused to come'],
-          answer: 0,
+          options: ['The wind changed', 'Rectina begged him to rescue her', 'Pliny refused to come'],
+          answer: 1,
           explain: '*Rēctīna ōrābat ut sē … ēriperet*: an indirect command.',
         },
         {
@@ -334,16 +334,16 @@ export const unit: CurriculumUnit = {
           kind: 'choice',
           prompt: 'What tense is *properat*, and why?',
           latin: 'Properat illūc unde aliī fugiunt.',
-          options: ['a historical present, making the moment vivid', 'a future', 'a present, because it happens now'],
-          answer: 0,
+          options: ['a future', 'a present, because it happens now', 'a historical present, making the moment vivid'],
+          answer: 2,
           explain: 'Pliny switches into the present at the turning point of the story.',
         },
         {
           kind: 'choice',
           prompt: 'What did the helmsman advise?',
           latin: 'Gubernātor monuit ut retrō flecterent.',
-          options: ['to turn back', 'to go faster', 'to head for Pomponianus'],
-          answer: 0,
+          options: ['to go faster', 'to head for Pomponianus', 'to turn back'],
+          answer: 2,
           explain: 'An indirect command: *ut retrō flecterent*, “to turn back”.',
         },
         {
@@ -403,8 +403,8 @@ export const unit: CurriculumUnit = {
         {
           kind: 'choice',
           prompt: 'What do *inūsitātā … magnitūdine et speciē* describe?',
-          options: ['the cloud: unusual in size and appearance', 'the mother', 'the hour'],
-          answer: 0,
+          options: ['the mother', 'the cloud: unusual in size and appearance', 'the hour'],
+          answer: 1,
           explain: 'An ablative of description attached to *nūbem*.',
         },
         {
@@ -418,8 +418,8 @@ export const unit: CurriculumUnit = {
         {
           kind: 'choice',
           prompt: 'How is *cunctātus* best translated?',
-          options: ['having hesitated, after hesitating', 'having been delayed', 'about to hesitate'],
-          answer: 0,
+          options: ['having been delayed', 'about to hesitate', 'having hesitated, after hesitating'],
+          answer: 2,
           explain: '*Cunctor* is deponent, so its perfect participle is active.',
         },
         {

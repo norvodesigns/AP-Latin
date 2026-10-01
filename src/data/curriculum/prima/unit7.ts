@@ -84,8 +84,8 @@ export const unit: CurriculumUnit = {
           kind: 'choice',
           prompt: 'A girl says “My brother is a sailor.” Which is right?',
           latin: '___ nauta est.',
-          options: ['Frāter mea', 'Frāter meus', 'Frātrem meum'],
-          answer: 1,
+          options: ['Frāter mea', 'Frātrem meum', 'Frāter meus'],
+          answer: 2,
           explain: '*Meus* agrees with *frāter*, which is masculine, whoever is speaking. And the brother is the subject, so nominative.',
         },
         {
@@ -308,8 +308,8 @@ export const unit: CurriculumUnit = {
           kind: 'choice',
           prompt: 'Which form fits?',
           latin: 'Rēx ___ mīlitem laudāvit.',
-          options: ['ille', 'illum', 'illī'],
-          answer: 1,
+          options: ['ille', 'illī', 'illum'],
+          answer: 2,
           explain: '*Mīlitem* is masculine accusative singular: *illum mīlitem*, “that soldier”.',
         },
         {
@@ -409,8 +409,8 @@ export const unit: CurriculumUnit = {
           kind: 'choice',
           prompt: 'Why is it *quam*, not *quae*?',
           latin: 'Urbs quam vīdimus magna erat.',
-          options: ['*Urbs* is the object of *vīdimus*', 'The relative is the object of *vīdimus* in its own clause', 'Feminine relatives are always *quam*'],
-          answer: 1,
+          options: ['*Urbs* is the object of *vīdimus*', 'Feminine relatives are always *quam*', 'The relative is the object of *vīdimus* in its own clause'],
+          answer: 2,
           explain: 'Feminine singular from *urbs*, but accusative because we saw it: *quam*.',
         },
         {
@@ -505,8 +505,8 @@ export const unit: CurriculumUnit = {
           kind: 'choice',
           prompt: 'In line 2, what does *quae* refer to?',
           latin: 'Subitō ūvās vīdit, quae in altā vīte pendēbant.',
-          options: ['the fox', 'the grapes', 'the vine'],
-          answer: 1,
+          options: ['the fox', 'the vine', 'the grapes'],
+          answer: 2,
           explain: '*Quae* is plural here (its verb *pendēbant* is plural): the grapes, which were hanging.',
         },
         {

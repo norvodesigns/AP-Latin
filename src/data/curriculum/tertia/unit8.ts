@@ -32,15 +32,15 @@ export const unit: CurriculumUnit = {
         {
           kind: 'choice',
           prompt: 'What should you do first with an unseen passage?',
-          options: ['Read the title, introduction and questions', 'Translate the first word', 'Look up every word'],
-          answer: 0,
+          options: ['Translate the first word', 'Look up every word', 'Read the title, introduction and questions'],
+          answer: 2,
           explain: 'They tell you the situation before you start.',
         },
         {
           kind: 'choice',
           prompt: 'What decides which words go together?',
-          options: ['their endings', 'their order', 'their length'],
-          answer: 0,
+          options: ['their order', 'their endings', 'their length'],
+          answer: 1,
           explain: 'Order helps in prose, but in verse especially, only the endings are reliable.',
         },
         {
@@ -53,8 +53,8 @@ export const unit: CurriculumUnit = {
         {
           kind: 'choice',
           prompt: 'Your translation says “the wall ate the king”. What now?',
-          options: ['Recheck the endings: something is in the wrong case', 'Keep it: Latin is strange', 'Change the story to fit'],
-          answer: 0,
+          options: ['Keep it: Latin is strange', 'Change the story to fit', 'Recheck the endings: something is in the wrong case'],
+          answer: 2,
           explain: 'Step 6: if it makes no sense, an ending has been misread.',
         },
       ],
@@ -100,11 +100,11 @@ export const unit: CurriculumUnit = {
           kind: 'choice',
           prompt: 'What is the joke of the Sabidius poem?',
           options: [
-            'Martial says he cannot say why, and then says only that he doesn’t like him: the reason is the dislike itself',
             'Sabidius cannot speak',
+            'Martial says he cannot say why, and then says only that he doesn’t like him: the reason is the dislike itself',
             'Martial loves Sabidius',
           ],
-          answer: 0,
+          answer: 1,
           explain: 'The poem ends by repeating its first words, *nōn amō tē*: a circle with nothing inside.',
         },
         {
@@ -126,8 +126,8 @@ export const unit: CurriculumUnit = {
         {
           kind: 'choice',
           prompt: 'When does the book “begin to be” Fidentinus’s?',
-          options: ['when he recites it badly', 'when he buys it', 'when he writes his own'],
-          answer: 0,
+          options: ['when he buys it', 'when he writes his own', 'when he recites it badly'],
+          answer: 2,
           explain: '*Male cum recitās*: he ruins it so thoroughly it might as well be his.',
         },
         {
@@ -187,8 +187,8 @@ export const unit: CurriculumUnit = {
         {
           kind: 'choice',
           prompt: 'What is *prece fīnītā*?',
-          options: ['an ablative absolute: “the prayer having been finished”', 'the subject of *occupat*', 'a dative'],
-          answer: 0,
+          options: ['the subject of *occupat*', 'an ablative absolute: “the prayer having been finished”', 'a dative'],
+          answer: 1,
           explain: 'A noun and participle in the ablative: she has scarcely finished praying when the change begins.',
         },
         {
@@ -202,19 +202,19 @@ export const unit: CurriculumUnit = {
         {
           kind: 'choice',
           prompt: 'Which device is *in frondem crīnēs, in rāmōs bracchia*?',
-          options: ['anaphora of *in*, with parallel phrases', 'litotes', 'apostrophe'],
-          answer: 0,
+          options: ['litotes', 'apostrophe', 'anaphora of *in*, with parallel phrases'],
+          answer: 2,
           explain: '*In … in*: each part of her becomes part of a tree, step by step.',
         },
         {
           kind: 'choice',
           prompt: 'What is the point of *pēs modo tam vēlōx pigrīs rādīcibus haeret*?',
           options: [
-            'The contrast: the swift foot that fled Apollo is now held fast by slow roots',
             'Daphne is still running',
+            'The contrast: the swift foot that fled Apollo is now held fast by slow roots',
             'Apollo is caught by roots',
           ],
-          answer: 0,
+          answer: 1,
           explain: '*Vēlōx* against *pigrīs*: her escape has stopped her for ever.',
         },
         {
@@ -249,22 +249,22 @@ export const unit: CurriculumUnit = {
         {
           kind: 'choice',
           prompt: 'How many multiple-choice questions are in Section I?',
-          options: ['52', '40', '75'],
-          answer: 0,
+          options: ['40', '52', '75'],
+          answer: 1,
           explain: '52 questions in 65 minutes.',
         },
         {
           kind: 'choice',
           prompt: 'Which free-response question is scored word by word, in segments?',
-          options: ['the translation', 'the short essay', 'the project essays'],
-          answer: 0,
+          options: ['the short essay', 'the project essays', 'the translation'],
+          answer: 2,
           explain: 'As in Unit 7: every word, in its exact form.',
         },
         {
           kind: 'choice',
           prompt: 'What do the essays reward most?',
-          options: ['a clear argument supported by quoted and explained Latin', 'long summaries of the plot', 'lists of devices without explanation'],
-          answer: 0,
+          options: ['long summaries of the plot', 'a clear argument supported by quoted and explained Latin', 'lists of devices without explanation'],
+          answer: 1,
           explain: 'Name, quote, explain, and connect it to your argument.',
         },
         {
@@ -301,29 +301,29 @@ export const unit: CurriculumUnit = {
         {
           kind: 'choice',
           prompt: 'Which is a deponent verb?',
-          options: ['secō', 'sedeō', 'sequor'],
-          answer: 2,
+          options: ['sequor', 'secō', 'sedeō'],
+          answer: 0,
           explain: 'Passive in form, active in meaning: “I follow” (Level II, Unit 1).',
         },
         {
           kind: 'choice',
           prompt: 'What is *urbe captā*?',
-          options: ['an indirect statement', 'an ablative absolute', 'a purpose clause'],
-          answer: 1,
+          options: ['an indirect statement', 'a purpose clause', 'an ablative absolute'],
+          answer: 2,
           explain: 'Level II, Unit 2.',
         },
         {
           kind: 'choice',
           prompt: 'What does *nē* mean after *timeō*?',
-          options: ['that', 'not', 'so that … not'],
-          answer: 0,
+          options: ['not', 'that', 'so that … not'],
+          answer: 1,
           explain: 'Level II, Unit 7: after verbs of fearing, *nē* is “that”.',
         },
         {
           kind: 'choice',
           prompt: 'What is the pattern of *Arma virumque canō, Trōiae quī prīmus ab ōrīs*?',
-          options: ['SSSSDS', 'DDDDDS', 'DDSSDS'],
-          answer: 2,
+          options: ['DDSSDS', 'SSSSDS', 'DDDDDS'],
+          answer: 0,
           explain: 'Level III, Unit 5.',
         },
         {
