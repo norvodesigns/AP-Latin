@@ -100,12 +100,12 @@ finishing a lesson counts toward the streak and daily goal.
 
 ## 4b. Exam practice content
 
-- [ ] Quiz bank: AP-style multiple choice for every required passage, at least four each (24 of 32
+- [x] Quiz bank: AP-style multiple choice for every required passage, at least four each (24 of 32
       had none; the practice exam draws 52 at a time)
   - [x] Pliny: 6.16.13–22, 6.20, 7.27.9–16, 6.4, 6.7, 10.5–7, 10.37, 10.90 (35 questions)
   - [x] Aeneid 1, 2 and 4
   - [x] Aeneid 6, 7, 11 and 12 (65 Vergil questions in all)
-  - [ ] Top up the six passages still under four
+  - [x] Top up the passages still under four (10.5, 10.6, 10.7, 10.34, 10.90, Aen. 12.791–812)
 - [ ] More sight passages with question sets (6 now; aim for 15, prose and poetry)
 - [ ] More translation drills (8 now; one for each required passage group)
 
@@ -296,3 +296,7 @@ finishing a lesson counts toward the streak and daily goal.
   corpus line by number, book lengths match the OCT (9,896), and the only spondaic fifth feet left
   are Vergil's real ones (11). One hand-checked line (1.30) was itself wrong and is corrected; two
   quiz questions built on the bad data are rewritten.
+- 2026-10-01: Quiz bank complete: 22 more questions bring every passage, required or supplementary,
+  to four or more (194 in all). The summaries of Letters 10.5 and 10.6 were wrong (10.5 described
+  the ius trium liberorum of 10.2 and an Alexandrian step Pliny had not yet learned of) and are
+  rewritten from the Latin.
