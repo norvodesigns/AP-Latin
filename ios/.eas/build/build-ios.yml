@@ -1,0 +1,46 @@
+# EAS Build's recipe for the native SwiftUI app (eas.json > build > production
+# > ios > config). Expo's own build steps assume a React Native project; this
+# swaps the React Native parts (prebuild, pods) for XcodeGen and keeps the
+# parts that do the signing and the archive. Runs on EAS's macOS builder, in
+# the ios/ folder, so project.yml is right here.
+build:
+  name: Build Lectio for the App Store
+  steps:
+    - eas/checkout
+    - eas/install_node_modules
+    - eas/resolve_build_config
+
+    # The Xcode project is generated from project.yml and never committed.
+    - run:
+        name: Install XcodeGen
+        command: command -v xcodegen >/dev/null || brew install xcodegen
+
+    # Apple wants every upload's build number to be higher than the last, and
+    # all four targets to agree. A timestamp does both, and matches the manual
+    # GitHub route in .github/workflows/ios.yml, so the two can be mixed.
+    - run:
+        name: Stamp the build number
+        command: |
+          BUILD="$(date -u +%y%m%d%H%M)"
+          sed -i.bak -E "s/(CURRENT_PROJECT_VERSION: )\"[0-9]+\"/\1\"$BUILD\"/" project.yml
+          grep -n "CURRENT_PROJECT_VERSION" project.yml
+
+    - run:
+        name: Generate the Xcode project
+        command: xcodegen generate
+
+    # EAS's signing step looks for the Xcode project under ./ios. Here the
+    # project is already in this folder, so ios points back at it.
+    - run:
+        name: Point ios at this folder
+        command: ln -sfn . ios
+
+    # Assigns each target (app, widgets, watch app, complications) its own
+    # provisioning profile, from the credentials EAS holds.
+    - eas/configure_ios_credentials
+    - eas/generate_gymfile_from_template:
+        inputs:
+          credentials: ${ eas.job.secrets.buildCredentials }
+          scheme: Lectio
+    - eas/run_fastlane
+    - eas/find_and_upload_build_artifacts

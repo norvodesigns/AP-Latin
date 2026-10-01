@@ -4,6 +4,8 @@ Lectio/Info.plist
 
 # Build products
 build/
+# ...but not EAS's build recipe, which lives in .eas/build/
+!/.eas/build/
 DerivedData/
 LectioCore/.build/
 .swiftpm/

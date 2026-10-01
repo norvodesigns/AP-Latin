@@ -6,6 +6,7 @@
 //
 //   node scripts/check-eas.mjs
 
+import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
@@ -77,6 +78,13 @@ for (const ext of listed) {
 // The build recipe the profile points at must exist.
 need(existsSync(new URL(`../ios/.eas/build/${profile.config}`, import.meta.url)),
   `eas.json: ios.config ${profile.config} is not in ios/.eas/build/`);
+// EAS uploads what git tracks, so a file the ignore rules swallow (ios/.gitignore
+// ignores build/, which once swallowed .eas/build/) never reaches the builder.
+for (const f of [`ios/.eas/build/${profile.config}`, "ios/package-lock.json", "ios/app.json", "ios/eas.json"]) {
+  let ignored = false;
+  try { execFileSync("git", ["check-ignore", "-q", f], { cwd: new URL("..", import.meta.url) }); ignored = true; } catch { /* exit 1: not ignored, or no git here */ }
+  need(!ignored, `${f} is git-ignored, so EAS would not receive it`);
+}
 need(existsSync(new URL("../ios/package-lock.json", import.meta.url)),
   "ios/package-lock.json is missing; `npm ci` on the EAS builder needs it (run `npm install --package-lock-only` in ios/)");
 
