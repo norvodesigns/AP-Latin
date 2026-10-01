@@ -19,8 +19,10 @@ jobs:
       - run: npm run lint
       - run: npm run verify
       # The iOS app bundles src/data as JSON, and ports the progress logic
-      # against fixtures the TypeScript generates — both must be regenerated
-      # (and committed) whenever the source they come from changes.
+      # against fixtures the TypeScript generates; the website lists lessons
+      # from a generated outline. All must be regenerated (and committed)
+      # whenever the source they come from changes.
       - run: npm run export:content -- --check
       - run: npm run export:fixtures -- --check
+      - run: npm run export:outline -- --check
       - run: npm run build

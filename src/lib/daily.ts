@@ -5,7 +5,7 @@
  * (LectioCore `Daily`).
  */
 
-import { SENTENTIAE, type Sententia } from '@/data/daily';
+import type { Sententia } from '@/data/daily';
 import type { Lesson } from '@/data/curriculum';
 import type { DailyResult } from '@/store/useStore';
 
@@ -27,7 +27,12 @@ export function shiftDay(day: string, n: number): string {
   return new Date((dayNumber(day) + n) * 86_400_000).toISOString().slice(0, 10);
 }
 
-export function sententiaFor(day: string, list: Sententia[] = SENTENTIAE): Sententia {
+/**
+ * The line for a day, from the list (`SENTENTIAE` in src/data/daily). The list
+ * is passed in so that this module stays small: the dashboard loads the
+ * lines only when its card is drawn.
+ */
+export function sententiaFor(day: string, list: Sententia[]): Sententia {
   const n = list.length;
   return list[((dayNumber(day) % n) + n) % n];
 }

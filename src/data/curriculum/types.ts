@@ -1,7 +1,7 @@
 /**
  * The course: Latin from the first day to the AP syllabus.
  *
- *   Level  (Prīma, Secunda, Tertia) → Unit → Lesson → Steps
+ *   Level  (Prīma, Secunda, Tertia, Quārta) → Unit → Lesson → Steps
  *
  * A lesson is a short, fixed sequence of steps: a few that teach and many
  * that ask. Everything here is plain data. The website (/learn) and the app
@@ -187,4 +187,39 @@ export interface MatchStep {
 
 export function isExercise(step: LessonStep): step is ExerciseStep {
   return step.kind !== 'teach' && step.kind !== 'read';
+}
+
+/* ------------------------------------------------------------------ */
+/* The outline: the course without its steps                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * A lesson as the course map and the dashboard show it. Generated from the
+ * course into `outline.generated.ts` (npm run export:outline), so pages that
+ * only list lessons never load every exercise.
+ */
+export interface OutlineLesson {
+  id: string;
+  title: string;
+  summary: string;
+  minutes: number;
+  /** Has a reading step (Review leaves these out). */
+  reading: boolean;
+}
+
+export interface OutlineUnit {
+  id: string;
+  n: number;
+  title: string;
+  blurb: string;
+  lessons: OutlineLesson[];
+}
+
+export interface OutlineLevel {
+  id: LevelId;
+  numeral: string;
+  title: string;
+  subtitle: string;
+  blurb: string;
+  units: OutlineUnit[];
 }

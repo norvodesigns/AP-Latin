@@ -2,7 +2,12 @@
 
 import Link from 'next/link';
 import { useStore } from '@/store/useStore';
-import { COURSE, nextLesson, unitProgress, ALL_LESSONS } from '@/data/curriculum';
+import {
+  OUTLINE as COURSE,
+  OUTLINE_LESSONS as ALL_LESSONS,
+  nextOutlineLesson as nextLesson,
+  unitProgress,
+} from '@/data/curriculum/outline';
 import { Page, PageHeader, Section, CalledOut, Hairline } from '@/components/ui';
 import { Rich } from '@/components/Rich';
 
@@ -19,7 +24,7 @@ export default function CourseMap() {
   const next = nextLesson(lessons, learner?.startLessonId);
   const doneCount = ALL_LESSONS.filter((p) => lessons[p.lesson.id]).length;
   // Review draws on finished lessons that aren't readings (src/lib/review.ts).
-  const reviewable = ALL_LESSONS.some((p) => lessons[p.lesson.id] && !p.lesson.steps.some((s) => s.kind === 'read'));
+  const reviewable = ALL_LESSONS.some((p) => lessons[p.lesson.id] && !p.lesson.reading);
 
   return (
     <Page>

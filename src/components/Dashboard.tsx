@@ -12,9 +12,7 @@ import {
   EXAM_DATE,
   getSyncableData,
 } from '@/store/useStore';
-import { requiredPassages } from '@/data/passages';
-import { coreVocabulary } from '@/data/vocabulary';
-import { supplementaryVocabulary } from '@/data/supplementaryVocabulary';
+import { REQUIRED_PASSAGE_IDS, VOCAB_COUNT } from '@/data/curriculum/outline.generated';
 import { CalledOut, CedLink, Roman, SkillMeter, SourceNote, toRoman } from '@/components/ui';
 import { useRevealChildren } from '@/hooks/useRevealChildren';
 import { loadIndex } from '@/data/scansionCorpus';
@@ -29,9 +27,15 @@ import {
   type WeakSpot,
 } from '@/lib/progress';
 import { formatDuration } from '@/lib/format';
-import { ALL_LESSONS, nextLesson, unitProgress, type LessonPlace } from '@/data/curriculum';
+import {
+  OUTLINE_LESSONS as ALL_LESSONS,
+  nextOutlineLesson as nextLesson,
+  unitProgress,
+  type OutlinePlace as LessonPlace,
+} from '@/data/curriculum/outline';
 import { Rich } from '@/components/Rich';
 import { dailyStreak, localDay, sententiaFor } from '@/lib/daily';
+import type { Sententia } from '@/data/daily';
 import { COURSE_SHAPE, laurels, nextLaurel } from '@/lib/laurels';
 import type { SkillCategory } from '@/data/types';
 import type { UpcomingAssignment } from '@/lib/supabase/dashboard';
@@ -99,7 +103,7 @@ export default function Dashboard({
   const due = useMemo(() => (mounted ? dueVocab(vocab) : []), [vocab, mounted]);
 
   const read = useMemo(
-    () => requiredPassages.filter((p) => passages[p.id]?.lastOpened).length,
+    () => REQUIRED_PASSAGE_IDS.filter((id) => passages[id]?.lastOpened).length,
     [passages],
   );
 
@@ -428,13 +432,13 @@ export default function Dashboard({
                 {
                   label: 'Syllabus passages read',
                   value: mounted ? read : 0,
-                  max: requiredPassages.length,
+                  max: REQUIRED_PASSAGE_IDS.length,
                   href: '/read',
                 },
                 {
                   label: 'Vocabulary in rotation',
                   value: mounted ? Object.keys(vocab).length : 0,
-                  max: coreVocabulary.length + supplementaryVocabulary.length,
+                  max: VOCAB_COUNT,
                   href: '/vocab',
                 },
                 {
@@ -1174,9 +1178,20 @@ function CourseHero({
 function SententiaCard() {
   const daily = useStore((s) => s.daily);
   const day = localDay();
-  const line = sententiaFor(day);
+  // The 120 lines are fetched when the card is drawn, not with the page.
+  const [line, setLine] = useState<Sententia | null>(null);
+  useEffect(() => {
+    let live = true;
+    import('@/data/daily').then((m) => {
+      if (live) setLine(sententiaFor(day, m.SENTENTIAE));
+    });
+    return () => {
+      live = false;
+    };
+  }, [day]);
   const done = daily?.[day];
   const streak = dailyStreak(daily ?? {}, day);
+  if (!line) return <section aria-busy="true" style={{ minHeight: '9rem' }} />;
   return (
     <section>
       <div className="mb-3 flex items-baseline justify-between gap-3">

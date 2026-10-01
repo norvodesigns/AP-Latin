@@ -14,7 +14,8 @@
     "build:scansion": "node scripts/build-scansion.mjs && npm run verify:scansion",
     "eval:grading": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/eval-grading.mjs",
     "export:content": "tsx scripts/export-content.ts",
-    "export:fixtures": "tsx scripts/export-merge-fixtures.ts"
+    "export:fixtures": "tsx scripts/export-merge-fixtures.ts",
+    "export:outline": "tsx scripts/export-outline.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^1.2.22",

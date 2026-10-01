@@ -5,8 +5,6 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNod
 import { useStore } from '@/store/useStore';
 import {
   isExercise,
-  lessonAfter,
-  lessonPlace,
   type BuildStep,
   type ChoiceStep,
   type Lesson,
@@ -16,7 +14,7 @@ import {
   type TeachStep,
   type TranslateStep,
   type TypeStep,
-} from '@/data/curriculum';
+} from '@/data/curriculum/types';
 import { checkBuild, checkTranslation, checkTyped, lessonScore } from '@/lib/lessonCheck';
 import { Page, BackLink, CalledOut, Panel } from '@/components/ui';
 import { Rich, plain } from '@/components/Rich';
@@ -46,16 +44,28 @@ export interface Session {
 }
 
 /**
+ * A lesson of the course, as its page hands it over: the lesson itself and
+ * just enough of its place in the course, so the player never needs the
+ * whole course in the browser.
+ */
+export interface CourseLesson {
+  lesson: Lesson;
+  /** "Prīma · Unit 2 · Lesson 3". */
+  eyebrow: string;
+  /** The lesson after this one, if any. */
+  next: { id: string; title: string } | null;
+}
+
+/**
  * One lesson, start to finish: what it teaches, then its steps one at a
  * time, then a result. An exercise answered wrong is shown again once at the
  * end, but only the first try counts toward the score.
  */
-export default function LessonPlayer({ lessonId, session }: { lessonId?: string; session?: Session }) {
-  const place = session ? null : lessonPlace(lessonId ?? '') ?? null;
-  const lesson = session?.lesson ?? place!.lesson;
+export default function LessonPlayer({ course, session }: { course?: CourseLesson; session?: Session }) {
+  const lesson = session?.lesson ?? course!.lesson;
   const back = session?.back ?? { href: '/learn', label: 'Course', button: 'Back to the course' };
   const completeLesson = useStore((s) => s.completeLesson);
-  const previous = useStore((s) => (session || !lessonId ? undefined : s.lessons[lessonId]));
+  const previous = useStore((s) => (session ? undefined : s.lessons[lesson.id]));
 
   const [phase, setPhase] = useState<Phase>('intro');
   const [queue, setQueue] = useState<number[]>(() => lesson.steps.map((_, i) => i));
@@ -69,9 +79,7 @@ export default function LessonPlayer({ lessonId, session }: { lessonId?: string;
 
   const stepIndex = queue[pos];
   const step = lesson.steps[stepIndex];
-  const eyebrow = place
-    ? `${place.level.title} · Unit ${place.unit.n} · Lesson ${place.unit.lessons.indexOf(lesson) + 1}`
-    : session!.eyebrow;
+  const eyebrow = session?.eyebrow ?? course!.eyebrow;
 
   function answered(right: boolean) {
     setResult(right);
@@ -123,6 +131,7 @@ export default function LessonPlayer({ lessonId, session }: { lessonId?: string;
     return (
       <Done
         lesson={lesson}
+        next={session ? null : (course?.next ?? null)}
         session={session}
         back={back}
         score={score}
@@ -248,6 +257,7 @@ function Intro({
 
 function Done({
   lesson,
+  next,
   session,
   back,
   score,
@@ -256,6 +266,7 @@ function Done({
   onRetry,
 }: {
   lesson: Lesson;
+  next: CourseLesson['next'];
   session?: Session;
   back: Session['back'];
   score: number;
@@ -263,7 +274,6 @@ function Done({
   firstTry: Record<number, boolean>;
   onRetry: () => void;
 }) {
-  const next = session ? null : lessonAfter(lesson.id);
   const right = Object.values(firstTry).filter(Boolean).length;
   const deckWords = lesson.words.filter((w) => w.vocabId);
   const verdict = score >= 0.9 ? 'Optimē!' : score >= 0.7 ? 'Bene!' : 'Satis.';
@@ -294,8 +304,8 @@ function Done({
 
       <div className="mt-9 flex flex-wrap items-center gap-4">
         {next ? (
-          <Link href={`/learn/${next.lesson.id}`} className="btn btn-primary" autoFocus>
-            Next: {plain(next.lesson.title)} →
+          <Link href={`/learn/${next.id}`} className="btn btn-primary" autoFocus>
+            Next: {plain(next.title)} →
           </Link>
         ) : (
           <Link href={back.href} className="btn btn-primary">{back.button}</Link>

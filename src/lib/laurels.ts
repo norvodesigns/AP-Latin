@@ -7,7 +7,7 @@
  */
 
 import { longestStreak, scansionStatsByLine, type SyncableData } from '@/store/useStore';
-import { COURSE } from '@/data/curriculum';
+import { OUTLINE } from '@/data/curriculum/outline';
 
 export interface LaurelSpec {
   id: string;
@@ -27,7 +27,7 @@ export interface Laurel extends LaurelSpec {
 export type CourseShape = Array<{ id: string; units: string[][] }>;
 
 /** This site's course, in that shape. */
-export const COURSE_SHAPE: CourseShape = COURSE.map((l) => ({ id: l.id, units: l.units.map((u) => u.lessons.map((x) => x.id)) }));
+export const COURSE_SHAPE: CourseShape = OUTLINE.map((l) => ({ id: l.id, units: l.units.map((u) => u.lessons.map((x) => x.id)) }));
 
 /** Longest run of consecutive YYYY-MM-DD days in a list. */
 function longestRun(days: string[]): number {

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
 import { dailyLesson, dailyStreak, localDay, sententiaFor } from '@/lib/daily';
+import { SENTENTIAE } from '@/data/daily';
 import LessonPlayer from '../learn/[id]/LessonPlayer';
 
 /** Today's line as a short lesson. The day is the reader's own, so it is worked out after mount. */
@@ -11,7 +12,7 @@ export default function DailySession() {
   useEffect(() => setDay(localDay()), []);
   if (!day) return null;
 
-  const line = sententiaFor(day);
+  const line = sententiaFor(day, SENTENTIAE);
   const date = new Date(`${day}T12:00:00`).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
   return (
     <LessonPlayer

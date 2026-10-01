@@ -105,8 +105,10 @@ finishing a lesson counts toward the streak and daily goal.
 - [ ] Performance: content decode time, big lists
   - [x] Web: pages no longer download the whole course, glossary and passages (the 404 page's client
         components resolved to the dashboard's chunks; first-run and search data now load on demand)
-  - [ ] Web: the home page and the glossary-heavy pages (Quiz, Read, Vocabulary) still ship the
-        full vocabulary; split it per section or load it lazily
+  - [x] Web: the dashboard, course map and lesson pages load a generated outline (or just their own
+        lesson) instead of the whole course; the Sententia lines load with their card
+  - [ ] Web: Quiz, Read and Vocabulary still ship the full glossary (137 kB) and every passage;
+        check what each really needs
   - [ ] App: content decode time at launch, measured on a device
 - [ ] Review pass over every new screen on iPhone and iPad, light and dark
 
@@ -241,3 +243,8 @@ finishing a lesson counts toward the streak and daily goal.
   (with the course for the placement check) load only for a new visitor, and the search palette
   fetches the passage list when first opened. Settings now loads 203 kB; Quiz, Read and the course
   about 410 kB.
+- 2026-10-01: Web performance, part two. A generated course outline (titles, ids and minutes, no
+  steps; `npm run export:outline`, checked in CI like the iOS bundle) now feeds the dashboard, the
+  course map and laurels, and each lesson page is handed only its own lesson by the server. The
+  dashboard's Sententia card fetches the lines when drawn. JS loaded per page (compressed, before
+  onload): home 699 → 240 kB, course map 702 → 213 kB, a lesson 706 → 206 kB, Settings 203 kB.
