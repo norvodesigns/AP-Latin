@@ -92,9 +92,9 @@ finishing a lesson counts toward the streak and daily goal.
 - [x] Word of the day (web card, iOS widget): done as the Sententia of the day, a card on the web and a Home and Lock Screen widget
 - [x] Scansion Lab: work through a set passage line by line (picker, `?passage=` links, "Scan this
       passage" in the Reading Room), now that corpus line numbers match the syllabus
-- [ ] Fill the syllabus gaps in the scansion corpus: 144 of the 448 required Aeneid lines are
-      ambiguous from bare text, but the course's Level IV lessons carry them with macrons, which
-      settle quantity by nature; scan those with the same solver and add them, checked
+- [x] Fill the syllabus gaps in the scansion corpus: 144 of the 448 required Aeneid lines were
+      ambiguous from bare text; the course's macronized Level IV readings settle 121 more lines
+      (424 of 448 now), each checked against what the bare text allows
 - [ ] Printable passage sheets: the Reader prints as a clean handout (Latin with line numbers, the
       glossary as footnotes, room to write), for teachers and for annotating on paper
 - [x] Quiz from the Reader: "Questions on this passage" opens the quiz filtered to it
@@ -334,3 +334,12 @@ finishing a lesson counts toward the streak and daily goal.
   opening the Quiz Engine set to it (`/quiz?passage=…`; the count is taken on the server so the
   question bank is not sent with the page). In the app a Practice menu in the Reader's toolbar
   starts a set on the passage's questions and, for required Vergil, opens the Scansion Lab on it.
+- 2026-10-01: The scansion corpus now uses the course's own macronized readings: where bare text
+  leaves a line open, Level IV's marked text (an unmarked open vowel is short) usually settles it,
+  and only an answer the bare text allows is taken. 121 lines settled; the syllabus passages go from
+  304 to 424 of 448 lines. Run over the lines the metre settles alone, the same mode is an audit: it
+  found the page's remaining u-for-v spellings (ualidis, uox; now a rule), the iaciō compounds that
+  make the prefix long (sub-ji-ci-unt), consonantal u in suādeō (swā-), cōnūbium (both quantities in
+  Vergil, so left out), the anceps i of mihi, and a ȳ the letter class dropped. Five lines' answers
+  changed (2.9, 2.50, 4.81, 5.807, 11.254), 14 doubtful ones left. The lab no longer shows macrons,
+  which gave answers away on the lines of Book 1 that had them.

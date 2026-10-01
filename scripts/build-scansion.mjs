@@ -40,8 +40,9 @@
  */
 
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const BOOKS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 const SRC = (b) => `https://www.thelatinlibrary.com/vergil/aen${b}.shtml`;
@@ -155,7 +156,7 @@ function syllabify(word) {
     const end = nu[k][0] + nu[k][1] - 1; // last char of this nucleus
     const nextStart = nu[k + 1][0];
     const cluster = word.slice(end + 1, nextStart);
-    const bare = cluster.replace(/[^A-Za-zÀ-ÿĀ-ſ]/g, '');
+    const bare = cluster.replace(/[^A-Za-zÀ-ÿĀ-ſȲȳ]/g, '');
     const n = bare.length;
 
     let cut;
@@ -237,6 +238,18 @@ function trailingConsonants(s) {
  */
 const PREFIX_RE = /^(ab|ad|con|ob|sub|dis|circum)$/;
 
+function iacioCompound(word, i) {
+  const head = stripMacrons(word.slice(0, i)).toLowerCase();
+  const next = stripMacrons(word.slice(i + 1, i + 3)).toLowerCase();
+  return /^(ab|ad|con|in|ob|sub)$/.test(head) && next[0] === 'c' && /[aeiou]/.test(next[1] ?? '');
+}
+
+function consonantalSu(word, i) {
+  const w = stripMacrons(word).toLowerCase();
+  const m = /^(as|con|man|per)?su(?=(a[dv]|as[aeiou]|esc|et))/.exec(w);
+  return Boolean(m) && i === m[0].length - 1;
+}
+
 /**
  * Greek and foreign names whose opening I is a vowel, not a consonant: Ĭ-ū-lus
  * (always three syllables in Vergil, line-final in pulcher Iūlus), Ī-ō, Ī-ō-pās,
@@ -288,6 +301,20 @@ function normaliseConsonantalI(word) {
     }
     if (isI && i > 0 && afterPrefix(word, i)) {
       chars.push('j');
+      map.push(i);
+      continue;
+    }
+    // The iaciō compounds spelled with one i (sub-iciō, con-iciō, ob-icis)
+    // say j-i: the j closes the prefix, which is long by position.
+    if (isI && i > 0 && iacioCompound(word, i)) {
+      chars.push('j', c);
+      map.push(i, i);
+      continue;
+    }
+    // The u of suādeō, suāvis, suēscō is a consonant (swā-dent), unlike the
+    // u of suus, sua.
+    if ((c === 'u' || c === 'U') && consonantalSu(word, i)) {
+      chars.push('w');
       map.push(i);
       continue;
     }
@@ -355,7 +382,7 @@ function respell(word, alt) {
 
 const hasAmbiguous = (raw) =>
   raw.split(/\s+/).some((t) => {
-    const w = stripMacrons(t.replace(/[^A-Za-zÀ-ÿĀ-ſ]/g, '')).toLowerCase();
+    const w = stripMacrons(t.replace(/[^A-Za-zÀ-ÿĀ-ſȲȳ]/g, '')).toLowerCase();
     return AMBIGUOUS.some(([re]) => re.test(w));
   });
 
@@ -374,24 +401,36 @@ const CORRECTIONS = {
 
 /**
  * Words Vergil scans with synizesis, two vowels run into one syllable: al-veō,
- * ge-nua as gen-va, a-bie-te, Ī-li-o-nei. Nothing in the spelling says so, and a
+ * ge-nua as gen-va, a-bie-te, Ī-li-o-nei; and cōnūbium, whose u he treats
+ * both ways. Nothing in the spelling says so, and a
  * line one syllable long can still be fitted by trading a spondee for a
  * dactyl, so lines with them are left out rather than scanned wrong.
  */
-const SYNIZESIS = /^(alveo|alvei|genua|abiete|abietibus|parietibus|arietat|ilionei|oilei|dehinc)$/;
+const SYNIZESIS = /^(alveo|alvei|genua|abiete|abietibus|parietibus|arietat|ilionei|oilei|dehinc|conubi(a|i|is|o|um))$/;
 
 const hasSynizesis = (raw) =>
-  raw.split(/\s+/).some((t) => SYNIZESIS.test(stripMacrons(t.replace(/[^A-Za-zÀ-ÿĀ-ſ]/g, '')).toLowerCase()));
+  raw.split(/\s+/).some((t) => SYNIZESIS.test(stripMacrons(t.replace(/[^A-Za-zÀ-ÿĀ-ſȲȳ]/g, '')).toLowerCase()));
 
 function correct(line) {
   return line.replace(/[A-Za-z]+/g, (w) => {
     const fix = CORRECTIONS[w.toLowerCase()];
-    if (!fix) return w;
-    return w[0] === w[0].toUpperCase() ? fix[0].toUpperCase() + fix.slice(1) : fix;
+    if (fix) return w[0] === w[0].toUpperCase() ? fix[0].toUpperCase() + fix.slice(1) : fix;
+    // A u that starts a word before a vowel, or stands between vowels, is
+    // the page writing u for v (ualidis, uox, lauabat, Mauortis); Greek Eu-
+    // names (Euanthen) keep their diphthong.
+    if (/^Eu[aeiou]/.test(w)) return w;
+    return w
+      .replace(/^([Uu])(?=[aeiou])/, (u) => (u === 'U' ? 'V' : 'v'))
+      .replace(/(?<=[aeioAEIO])u(?=[aeiou])/g, 'v');
   });
 }
 
-function analyseLine(raw, alt = false) {
+/**
+ * `macronized` says the text marks every long vowel, as the course's own
+ * readings do. Then an unmarked vowel in an open syllable is known short,
+ * not merely unknown, and far more lines settle to one scansion.
+ */
+function analyseLine(raw, alt = false, macronized = false) {
   const words = raw
     // The Latin Library marks an em dash as the numeric entity `&#151;`
     // (a Windows-1252 legacy that many old pages carry), and does it with
@@ -402,7 +441,7 @@ function analyseLine(raw, alt = false) {
     // spaces around it, so it is normalised to a space before splitting.
     .replace(/&#151;|[—–]/g, ' ')
     .split(/\s+/)
-    .map((w) => w.replace(/[^A-Za-zÀ-ÿĀ-ſ]/g, ''))
+    .map((w) => w.replace(/[^A-Za-zÀ-ÿĀ-ſȲȳ]/g, ''))
     .filter(Boolean)
     .map((w) => respell(w, alt));
   if (words.length === 0) return null;
@@ -477,7 +516,7 @@ function analyseLine(raw, alt = false) {
       const nextText = flat[i + 1].analysis;
       const lead = leadingConsonants(nextText);
       // A mute+liquid pair may or may not make position — the ambiguous case.
-      const bare = stripMacrons(nextText.replace(/[^A-Za-zÀ-ÿĀ-ſ]/g, ''));
+      const bare = stripMacrons(nextText.replace(/[^A-Za-zÀ-ÿĀ-ſȲȳ]/g, ''));
       if (count === 0 && /^[ptcbdgf][lr]/i.test(bare)) muteLiquidBreak = true;
       count += lead;
     }
@@ -486,9 +525,12 @@ function analyseLine(raw, alt = false) {
     // closed by two consonants. Quantity by nature is invisible without
     // macrons, so an open syllable is left OPEN and the metre decides it —
     // which is exactly the reasoning a student does when scanning.
-    if (byNature) s.quantity = LONG;
+    // mihi, tibi, sibi, ibi, ubi end in a vowel verse treats as either length,
+    // whatever a text marks.
+    const anceps = s.isWordFinal && /^(mihi|tibi|sibi|ibi|ubi)$/.test(stripMacrons(words[s.wordIndex]).toLowerCase());
+    if (byNature && !anceps) s.quantity = LONG;
     else if (count >= 2) s.quantity = muteLiquidBreak ? EITHER : LONG;
-    else s.quantity = EITHER;
+    else s.quantity = macronized && !anceps ? SHORT : EITHER;
   }
 
   return flat;
@@ -692,10 +734,77 @@ function extractLines(html) {
 }
 
 /* ------------------------------------------------------------------ */
+/* The course's macronized readings                                    */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Level IV of the course reads the syllabus Aeneid with every long vowel
+ * marked. Bare text leaves about a third of those lines open between two or
+ * more scansions; the macrons settle most of them. Each reading step is
+ * titled with its lines ("Aeneid 1.1–7") and holds one verse per entry, so a
+ * line's number is the step's first line plus its place in the step.
+ */
+async function loadCourseLines() {
+  const out = new Map();
+  const dir = 'src/data/curriculum';
+  if (!existsSync(dir)) return out;
+  for (const level of readdirSync(dir, { withFileTypes: true }).filter((d) => d.isDirectory())) {
+    for (const file of readdirSync(path.join(dir, level.name)).filter((f) => /^unit\d+\.ts$/.test(f))) {
+      const { unit } = await import(pathToFileURL(path.resolve(dir, level.name, file)).href);
+      for (const lesson of unit.lessons) {
+        for (const step of lesson.steps) {
+          if (step.kind !== 'read') continue;
+          const m = /^Aeneid (\d+)\.(\d+)[–-](\d+)$/.exec(step.title ?? '');
+          if (!m) continue;
+          const [book, from, to] = m.slice(1).map(Number);
+          if (to - from + 1 !== step.lines.length) continue; // not one verse per entry
+          step.lines.forEach((l, i) => out.set(`${book}.${from + i}`, l.la));
+        }
+      }
+    }
+  }
+  return out;
+}
+
+/** The same words letter for letter, ignoring marks, case, punctuation, u/v and i/j. */
+const sameText = (a, b) => {
+  const f = (s) => stripMacrons(s).toLowerCase().replace(/v/g, 'u').replace(/j/g, 'i').replace(/[^a-z]/g, '');
+  return f(a) === f(b);
+};
+
+/** Long marks off, for display: a macron on screen would give the answer away. */
+const unmark = (s) =>
+  s.replace(/[āĀ]/g, (c) => (c === 'ā' ? 'a' : 'A')).replace(/[ēĒ]/g, (c) => (c === 'ē' ? 'e' : 'E'))
+    .replace(/[īĪ]/g, (c) => (c === 'ī' ? 'i' : 'I')).replace(/[ōŌ]/g, (c) => (c === 'ō' ? 'o' : 'O'))
+    .replace(/[ūŪ]/g, (c) => (c === 'ū' ? 'u' : 'U')).replace(/[ȳȲ]/g, (c) => (c === 'ȳ' ? 'y' : 'Y'));
+
+/**
+ * The scansion the course's macrons give for a line, or null. Only an answer
+ * the bare text also allows is accepted, so a slip in the course's macrons can
+ * at worst leave a line out, never put in a scansion the metre forbids.
+ */
+function settleWithMacrons(course, found) {
+  const marked = (hasAmbiguous(course) ? [false, true] : [false])
+    .map((alt) => analyseLine(course, alt, true))
+    .filter(Boolean)
+    .flatMap((syl) => solveFeet(syl).map((feet) => ({ syl, feet })));
+  if (marked.length !== 1) return null;
+  const { syl, feet } = marked[0];
+  const elisions = (x) => x.map((y) => (y.elides ? 1 : 0)).join('');
+  const match = found.filter(
+    (f) => f.feet.join() === feet.join() && f.syl.length === syl.length && elisions(f.syl) === elisions(syl),
+  );
+  return match.length === 1 ? match[0] : null;
+}
+
+/* ------------------------------------------------------------------ */
 /* Build                                                               */
 /* ------------------------------------------------------------------ */
 
-const stats = { total: 0, unique: 0, ambiguous: 0, unscannable: 0 };
+const stats = { total: 0, unique: 0, ambiguous: 0, unscannable: 0, settled: 0 };
+const courseLines = await loadCourseLines();
+/** Lines the bare text settles on its own where the course's macrons disagree. */
+const disagreements = [];
 const perBook = [];
 const index = [];
 
@@ -721,9 +830,21 @@ for (const book of BOOKS) {
 
     const found = readings.flatMap((syl) => solveFeet(syl).map((feet) => ({ syl, feet })));
     if (found.length === 0) { stats.unscannable += 1; bookStats.unscannable += 1; continue; }
-    if (found.length > 1) { stats.ambiguous += 1; bookStats.ambiguous += 1; continue; }
 
-    const { syl: syllables, feet } = found[0];
+    const course = courseLines.get(`${book}.${n}`);
+    const marked = course && sameText(course, latin) ? course : null;
+    let chosen = found.length === 1 ? found[0] : null;
+    if (!chosen && marked) {
+      chosen = settleWithMacrons(marked, found);
+      if (chosen) stats.settled += 1;
+    } else if (chosen && marked) {
+      // An audit of the course's macrons against lines the metre settles alone.
+      const check = settleWithMacrons(marked, found);
+      if (!check) disagreements.push(`${book}.${n}  ${marked}`);
+    }
+    if (!chosen) { stats.ambiguous += 1; bookStats.ambiguous += 1; continue; }
+
+    const { syl: syllables, feet } = chosen;
     const metrical = syllables.filter((s) => !s.elides);
 
     // Resolve every `either` against the winning arrangement, so the answer
@@ -753,7 +874,7 @@ for (const book of BOOKS) {
       .map((s, i) => {
         const prev = syllables[i - 1];
         const sep = i === 0 ? '' : prev.wordIndex === s.wordIndex ? '|' : ' ';
-        return sep + s.text;
+        return sep + unmark(s.text);
       })
       .join('');
 
@@ -766,7 +887,7 @@ for (const book of BOOKS) {
 
     solved.push({
       i: n,
-      t: latin,
+      t: unmark(latin),
       s: sylString,
       f: feet.map((x) => (x === 'dactyl' ? 'D' : 'S')).join(''),
       e: syllables.map((s, i) => (s.elides ? i : -1)).filter((i) => i >= 0),
@@ -825,4 +946,9 @@ console.log(`
   scanned         ${stats.unique}  (${pct(stats.unique, stats.total)})
   ambiguous       ${stats.ambiguous}  (${pct(stats.ambiguous, stats.total)})  — dropped
   no solution     ${stats.unscannable}  (${pct(stats.unscannable, stats.total)})  — dropped
+  settled by the course's macrons: ${stats.settled}
 `);
+if (disagreements.length) {
+  console.log(`  ${disagreements.length} line(s) where the course's macrons disagree with the metre:`);
+  for (const d of disagreements) console.log(`    ${d}`);
+}
