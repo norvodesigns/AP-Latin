@@ -107,8 +107,8 @@ finishing a lesson counts toward the streak and daily goal.
         components resolved to the dashboard's chunks; first-run and search data now load on demand)
   - [x] Web: the dashboard, course map and lesson pages load a generated outline (or just their own
         lesson) instead of the whole course; the Sententia lines load with their card
-  - [ ] Web: Quiz, Read and Vocabulary still ship the full glossary (137 kB) and every passage;
-        check what each really needs
+  - [x] Web: pages that list or quote passages no longer load the glossary with them (only the
+        reader and Vocabulary, which use it)
   - [ ] App: content decode time at launch, measured on a device
 - [ ] Review pass over every new screen on iPhone and iPad, light and dark
 
@@ -248,3 +248,7 @@ finishing a lesson counts toward the streak and daily goal.
   course map and laurels, and each lesson page is handed only its own lesson by the server. The
   dashboard's Sententia card fetches the lines when drawn. JS loaded per page (compressed, before
   onload): home 699 → 240 kB, course map 702 → 213 kB, a lesson 706 → 206 kB, Settings 203 kB.
+- 2026-10-01: Web performance, part three: `passageVocabIds` moved out of the passages index, which
+  had made every page that touches a passage (Quiz, Reading Room, Grammar, Exam, Translate, FRQ,
+  Devices, Study Plan) download the whole glossary. Each drops by about 140 kB (Quiz 419 → 277 kB,
+  Reading Room 402 → 260 kB).

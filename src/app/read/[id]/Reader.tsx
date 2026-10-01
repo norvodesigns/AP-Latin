@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Passage } from '@/data/types';
 import { tokenize, lookup, disambiguateInContext, type LookupResult } from '@/lib/latin';
 import { useStore, readingCoverage, type Annotation, type HighlightColor } from '@/store/useStore';
-import { passageVocabIds } from '@/data/passages';
+import { passageVocabIds } from '@/data/passages/vocabIds';
 import { BackLink, CedLink, SupplementaryNotice } from '@/components/ui';
 import { useRevealChildren } from '@/hooks/useRevealChildren';
 import AskAboutLine from '@/components/AskAboutLine';

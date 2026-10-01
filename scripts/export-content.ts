@@ -25,7 +25,8 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { allPassages, passageVocabIds, UNIT_TITLES } from '../src/data/passages/index';
+import { allPassages, UNIT_TITLES } from '../src/data/passages/index';
+import { passageVocabIds } from '../src/data/passages/vocabIds';
 import { coreVocabulary } from '../src/data/vocabulary';
 import { supplementaryVocabulary } from '../src/data/supplementaryVocabulary';
 import { questions, questionSets, QUESTION_TYPE_LABELS, SKILL_LABELS } from '../src/data/questions';
