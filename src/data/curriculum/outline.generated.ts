@@ -21,28 +21,28 @@ export const OUTLINE: OutlineLevel[] = [
             "title": "Salvē! How Latin sounds",
             "summary": "Read Latin aloud the way the Romans did, and say hello.",
             "minutes": 6,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "prima-1-2",
             "title": "Est: saying who someone is",
             "summary": "“Julia is a girl”, “Marcus is a sailor”, and why Latin needs no “a” or “the”.",
             "minutes": 7,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "prima-1-3",
             "title": "Sum: I am, you are",
             "summary": "The whole verb “to be”, and the six endings that tell you who.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "prima-1-4",
             "title": "Why endings matter",
             "summary": "How Latin shows who does what to whom, whatever the word order.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           }
         ]
       },
@@ -57,28 +57,28 @@ export const OUTLINE: OutlineLevel[] = [
             "title": "One girl, many girls",
             "summary": "Singular and plural, subject and object: *puella, puellae, puellam, puellās*.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "prima-2-2",
             "title": "Amō: the present tense",
             "summary": "Verbs like *amō*, “I love”, in all six persons.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "prima-2-3",
             "title": "Of, to, with: the other three cases",
             "summary": "Genitive, dative and ablative, and the whole first declension.",
             "minutes": 10,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "prima-2-4",
             "title": "Reading: Iūlia et nautae",
             "summary": "A first story, and questions on it.",
             "minutes": 8,
-            "reading": true
+            "reviewable": true
           }
         ]
       },
@@ -93,35 +93,35 @@ export const OUTLINE: OutlineLevel[] = [
             "title": "Servus, dominus: the second declension",
             "summary": "A second family of nouns, mostly masculine, ending in *-us*.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "prima-3-2",
             "title": "Puer, ager, bellum",
             "summary": "Second-declension nouns in *-er*, and neuters in *-um*.",
             "minutes": 9,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "prima-3-3",
             "title": "Bonus, bona, bonum: adjectives",
             "summary": "Adjectives take the gender, number and case of their noun.",
             "minutes": 9,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "prima-3-4",
             "title": "Moneō: the second conjugation",
             "summary": "Verbs with *-ē-*: *moneō, habeō, videō, timeō*, and asking a question with *-ne*.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "prima-3-5",
             "title": "Reading: Mārcus et equus",
             "summary": "A boy, a friend, and a large horse in a field.",
             "minutes": 8,
-            "reading": true
+            "reviewable": true
           }
         ]
       },
@@ -136,35 +136,35 @@ export const OUTLINE: OutlineLevel[] = [
             "title": "Where to, where from",
             "summary": "Prepositions with the accusative and with the ablative, and the two meanings of *in*.",
             "minutes": 9,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "prima-4-2",
             "title": "The ablative on its own",
             "summary": "With a sword, with great care, at the first hour: the ablative without a preposition.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "prima-4-3",
             "title": "Amābam: the imperfect",
             "summary": "What was going on, or used to happen: *-bā-* and *eram*.",
             "minutes": 9,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "prima-4-4",
             "title": "Amābō: the future",
             "summary": "*Will do*: the future of the first two conjugations, and *erō*.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "prima-4-5",
             "title": "Reading: Tempestās",
             "summary": "Young sailors, an old one, and a storm.",
             "minutes": 8,
-            "reading": true
+            "reviewable": true
           }
         ]
       },
@@ -179,42 +179,42 @@ export const OUTLINE: OutlineLevel[] = [
             "title": "Rēx, rēgis: the third declension",
             "summary": "Nouns whose stem hides in the genitive.",
             "minutes": 9,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "prima-5-2",
             "title": "Urbs, mare, nāvis: i-stems",
             "summary": "Third-declension nouns with an *i* in the genitive plural, and the sea.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "prima-5-3",
             "title": "Regō, capiō, audiō",
             "summary": "The third and fourth conjugations in the present.",
             "minutes": 9,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "prima-5-4",
             "title": "Regēbam, regam: past and future",
             "summary": "The imperfect and future of the third and fourth conjugations.",
             "minutes": 9,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "prima-5-5",
             "title": "Venī! Commands and calling someone",
             "summary": "The imperative, *nōlī*, and the vocative.",
             "minutes": 7,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "prima-5-6",
             "title": "Reading: Mīles fīdus",
             "summary": "A bad king, a loyal soldier, and enemies at night.",
             "minutes": 9,
-            "reading": true
+            "reviewable": true
           }
         ]
       },
@@ -229,35 +229,35 @@ export const OUTLINE: OutlineLevel[] = [
             "title": "Principal parts",
             "summary": "The four forms every Latin verb is learned by.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "prima-6-2",
             "title": "Vēnī, vīdī, vīcī: the perfect",
             "summary": "What happened, once and for all.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "prima-6-3",
             "title": "Was doing, or did?",
             "summary": "The imperfect and the perfect side by side: the background and the event.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "prima-6-4",
             "title": "Had done, will have done",
             "summary": "The pluperfect and the future perfect.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "prima-6-5",
             "title": "Reading: Arīōn et delphīnus",
             "summary": "A famous singer, greedy sailors, and a dolphin.",
             "minutes": 9,
-            "reading": true
+            "reviewable": true
           }
         ]
       },
@@ -272,35 +272,35 @@ export const OUTLINE: OutlineLevel[] = [
             "title": "Ego, tū, nōs, vōs",
             "summary": "Me and you, us and you all, and the words for “my” and “your”.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "prima-7-2",
             "title": "Is, ea, id; suus",
             "summary": "“He, she, it, they”, and the difference between *eius* and *suus*.",
             "minutes": 9,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "prima-7-3",
             "title": "Hic and ille",
             "summary": "“This” and “that”, and how they turn into “the latter” and “the former”.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "prima-7-4",
             "title": "Quī, quae, quod",
             "summary": "Who, which, that: joining two sentences with the relative pronoun.",
             "minutes": 10,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "prima-7-5",
             "title": "Reading: Vulpēs et ūvae",
             "summary": "Aesop’s fox and the grapes, in Latin.",
             "minutes": 8,
-            "reading": true
+            "reviewable": true
           }
         ]
       },
@@ -315,35 +315,35 @@ export const OUTLINE: OutlineLevel[] = [
             "title": "Omnis, fortis, ingēns",
             "summary": "Third-declension adjectives.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "prima-8-2",
             "title": "Manus and rēs",
             "summary": "The fourth and fifth declensions, and the special forms of *domus*.",
             "minutes": 9,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "prima-8-3",
             "title": "Amor: the passive voice",
             "summary": "Is loved, was being loved, will be loved; and who did it, *ā* or *ab*.",
             "minutes": 10,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "prima-8-4",
             "title": "Amātus est: the perfect passive",
             "summary": "Was loved, had been loved: the participle and *sum*.",
             "minutes": 9,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "prima-8-5",
             "title": "Reading: Rōmulus et Remus",
             "summary": "The founding of Rome, told the Roman way.",
             "minutes": 10,
-            "reading": true
+            "reviewable": true
           }
         ]
       }
@@ -367,49 +367,49 @@ export const OUTLINE: OutlineLevel[] = [
             "title": "Loquor: deponent verbs",
             "summary": "Verbs that are passive in form and active in meaning.",
             "minutes": 9,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-1-2",
             "title": "Morior, patior, ūtor",
             "summary": "More deponents, the ablative with *ūtor*, and verbs that are only half deponent.",
             "minutes": 9,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-1-3",
             "title": "Possum: I can",
             "summary": "*Possum*, and the infinitive that finishes its meaning.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-1-4",
             "title": "Volō, nōlō, mālō",
             "summary": "Want, not want, prefer: three irregular verbs.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-1-5",
             "title": "Eō and ferō",
             "summary": "Go and carry: two short verbs with a great many compounds.",
             "minutes": 9,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-1-6",
             "title": "Fīō: become, happen",
             "summary": "The passive of *faciō*, and a look back over the unit.",
             "minutes": 7,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-1-7",
             "title": "Reading: Daedalus et Īcarus",
             "summary": "The inventor, his son, and wings of feathers and wax.",
             "minutes": 10,
-            "reading": true
+            "reviewable": true
           }
         ]
       },
@@ -424,35 +424,35 @@ export const OUTLINE: OutlineLevel[] = [
             "title": "Captus: the perfect participle",
             "summary": "A verb used as an adjective: *urbs capta*, “the captured city”.",
             "minutes": 9,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-2-2",
             "title": "Currēns: the present participle",
             "summary": "Calling, running, singing: the participle of the same time.",
             "minutes": 9,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-2-3",
             "title": "Futūrus: the future participle",
             "summary": "“About to”: the third participle, and all three side by side.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-2-4",
             "title": "Urbe captā: the ablative absolute",
             "summary": "A noun and a participle in the ablative, standing apart from the rest of the sentence.",
             "minutes": 10,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-2-5",
             "title": "Reading: Horātius Cocles",
             "summary": "One man holds the bridge while Rome cuts it down behind him. From Livy.",
             "minutes": 11,
-            "reading": true
+            "reviewable": true
           }
         ]
       },
@@ -467,35 +467,35 @@ export const OUTLINE: OutlineLevel[] = [
             "title": "Six infinitives",
             "summary": "To love, to be loved, to have loved: every infinitive, active and passive.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-3-2",
             "title": "Dīcit eum venīre",
             "summary": "Reporting what someone says or thinks: the accusative and infinitive.",
             "minutes": 9,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-3-3",
             "title": "Before, during, after",
             "summary": "The tense of the infinitive, and translating when the main verb is past.",
             "minutes": 9,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-3-4",
             "title": "Sē, negō, and dīcitur",
             "summary": "Who is “he”? The reflexive in reported speech, *negō*, and “he is said to”.",
             "minutes": 9,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-3-5",
             "title": "Reading: Mūcius Scaevola",
             "summary": "A young Roman, the wrong man, and a hand in the fire. From Livy.",
             "minutes": 11,
-            "reading": true
+            "reviewable": true
           }
         ]
       },
@@ -510,42 +510,42 @@ export const OUTLINE: OutlineLevel[] = [
             "title": "Altior: the comparative",
             "summary": "More, rather, too: *-ior*, and two ways to say “than”.",
             "minutes": 9,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-4-2",
             "title": "Optimus: the superlative",
             "summary": "Most, very: *-issimus*, and the adjectives that compare irregularly.",
             "minutes": 9,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-4-3",
             "title": "Fortiter: adverbs",
             "summary": "How something is done: *-ē* and *-iter*, and comparing adverbs.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-4-4",
             "title": "Ūnus, duo, trēs",
             "summary": "Counting to a thousand, first to tenth, and the nine adjectives that go like *ūnus*.",
             "minutes": 10,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-4-5",
             "title": "Ipse, īdem, quis",
             "summary": "Himself, the same, and asking “who?”",
             "minutes": 9,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-4-6",
             "title": "Reading: Horātiī et Cūriātiī",
             "summary": "Three brothers against three, and one clever retreat. From Livy.",
             "minutes": 10,
-            "reading": true
+            "reviewable": true
           }
         ]
       },
@@ -560,42 +560,42 @@ export const OUTLINE: OutlineLevel[] = [
             "title": "Amem, moneam: the present subjunctive",
             "summary": "A new mood, and how to recognize its present tense.",
             "minutes": 9,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-5-2",
             "title": "Amārem: the imperfect subjunctive",
             "summary": "The easiest tense in Latin: the infinitive plus an ending.",
             "minutes": 7,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-5-3",
             "title": "Ut and nē: purpose",
             "summary": "In order to, so as not to: why someone did something.",
             "minutes": 10,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-5-4",
             "title": "Tam … ut: result",
             "summary": "So much that, so many that: what happened as a result.",
             "minutes": 9,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-5-5",
             "title": "Purpose or result?",
             "summary": "Two clauses with the same *ut*, and how to tell them apart.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-5-6",
             "title": "Reading: Androclēs et leō",
             "summary": "A runaway slave, a thorn, and a lion that remembers. From Aulus Gellius.",
             "minutes": 11,
-            "reading": true
+            "reviewable": true
           }
         ]
       },
@@ -610,35 +610,35 @@ export const OUTLINE: OutlineLevel[] = [
             "title": "Amāverim, amāvissem",
             "summary": "The perfect and pluperfect subjunctive, and all four tenses side by side.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-6-2",
             "title": "Cum: when, since, although",
             "summary": "The conjunction *cum* with the subjunctive, and how to choose its meaning.",
             "minutes": 9,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-6-3",
             "title": "The sequence of tenses",
             "summary": "Which subjunctive to expect: primary and secondary, same time and before.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-6-4",
             "title": "Rogat quid faciās",
             "summary": "Indirect questions: asking, knowing and wondering.",
             "minutes": 9,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-6-5",
             "title": "Reading: Pȳramus et Thisbē",
             "summary": "Two lovers, a wall, a lioness and a mulberry tree. From Ovid.",
             "minutes": 12,
-            "reading": true
+            "reviewable": true
           }
         ]
       },
@@ -653,42 +653,42 @@ export const OUTLINE: OutlineLevel[] = [
             "title": "Imperat ut pugnent",
             "summary": "Indirect commands: ordering, begging, urging and persuading.",
             "minutes": 9,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-7-2",
             "title": "Timeō nē: fear clauses",
             "summary": "After “I fear”, *nē* means “that” and *ut* means “that … not”.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-7-3",
             "title": "Gaudeāmus: the subjunctive on its own",
             "summary": "Let us, let him, what am I to do, if only: the subjunctive in a main clause.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-7-4",
             "title": "Ad urbem capiendam",
             "summary": "The gerund, a verbal noun, and the gerundive, a verbal adjective.",
             "minutes": 10,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-7-5",
             "title": "Carthāgō dēlenda est",
             "summary": "Must be done: the passive periphrastic and the dative of agent.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-7-6",
             "title": "Reading: Rēgulus",
             "summary": "A Roman prisoner, a promise, and the senate. From Cicero.",
             "minutes": 11,
-            "reading": true
+            "reviewable": true
           }
         ]
       },
@@ -703,35 +703,35 @@ export const OUTLINE: OutlineLevel[] = [
             "title": "Sī and nisi",
             "summary": "Real conditions: simple, and future more vivid.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-8-2",
             "title": "Sī adesset: unreal conditions",
             "summary": "Should and would, were and would, had and would have.",
             "minutes": 10,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-8-3",
             "title": "Sunt quī, and dum",
             "summary": "The kind of person who…, and three words for time: *dum*, *dōnec*, *priusquam*.",
             "minutes": 9,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-8-4",
             "title": "Which subjunctive?",
             "summary": "Every use from this level in one place, and practice telling them apart.",
             "minutes": 10,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "secunda-8-5",
             "title": "Reading: Orpheus et Eurydicē",
             "summary": "A singer goes down to the dead for his wife, on one condition. From Vergil and Ovid.",
             "minutes": 14,
-            "reading": true
+            "reviewable": true
           }
         ]
       }
@@ -755,35 +755,35 @@ export const OUTLINE: OutlineLevel[] = [
             "title": "Find the verb",
             "summary": "Read the whole sentence, find the main verb, then its subject.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "tertia-1-2",
             "title": "Box the clauses",
             "summary": "Bracket each clause, read the main clause, then open the brackets.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "tertia-1-3",
             "title": "Caesar’s army",
             "summary": "The camp, the march, the battle line: phrases Caesar uses on every page.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "tertia-1-4",
             "title": "Reading: Gallia est omnis dīvīsa",
             "summary": "The first sentences of Caesar’s *Gallic War*, as he wrote them.",
             "minutes": 12,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "tertia-1-5",
             "title": "Reading: fortissimī sunt Belgae",
             "summary": "Why Caesar calls the Belgae the bravest of the Gauls.",
             "minutes": 12,
-            "reading": true
+            "reviewable": true
           }
         ]
       },
@@ -798,35 +798,35 @@ export const OUTLINE: OutlineLevel[] = [
             "title": "A letter to Tacitus",
             "summary": "Who Pliny was, how a Roman letter opens and closes, and the words of an eruption.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "tertia-2-2",
             "title": "Telling it vividly",
             "summary": "The historical present, *iam … iam*, and “the closer, the hotter”.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "tertia-2-3",
             "title": "Reading: nūbēs ingēns",
             "summary": "A strange cloud over the bay, and an uncle who wants a closer look. Adapted.",
             "minutes": 11,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "tertia-2-4",
             "title": "Reading: fortēs fortūna iuvat",
             "summary": "A letter begging for rescue, and the admiral turns toward the mountain. Adapted.",
             "minutes": 11,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "tertia-2-5",
             "title": "Reading: Pliny’s own words",
             "summary": "Three sentences of the letter as Pliny wrote them.",
             "minutes": 12,
-            "reading": true
+            "reviewable": true
           }
         ]
       },
@@ -841,28 +841,28 @@ export const OUTLINE: OutlineLevel[] = [
             "title": "Reading: the house at Athens",
             "summary": "A cheap house, a philosopher, and chains in the night. Adapted from Letters 7.27.",
             "minutes": 11,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "tertia-3-2",
             "title": "Reading: what the ghost wanted",
             "summary": "The ghost leads the way, and the ending in Pliny’s own words.",
             "minutes": 12,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "tertia-3-3",
             "title": "Pliny and Trajan: a fire at Nicomedia",
             "summary": "A governor asks for a fire brigade, and the emperor says no.",
             "minutes": 12,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "tertia-3-4",
             "title": "Reading: to Calpurnia",
             "summary": "A whole letter, exactly as Pliny wrote it: he misses his wife.",
             "minutes": 12,
-            "reading": true
+            "reviewable": true
           }
         ]
       },
@@ -877,35 +877,35 @@ export const OUTLINE: OutlineLevel[] = [
             "title": "Words far apart",
             "summary": "Hyperbaton: pairing an adjective with a noun lines away, by its ending.",
             "minutes": 9,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "tertia-4-2",
             "title": "Crossed and interlocked",
             "summary": "Chiasmus, synchysis, and the golden line.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "tertia-4-3",
             "title": "Poets’ short forms",
             "summary": "*-ēre* for *-ērunt*, *-um* for *-ōrum*, shortened perfects, and words left out.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "tertia-4-4",
             "title": "Reading: Arma virumque canō",
             "summary": "The first seven lines of the *Aeneid*.",
             "minutes": 13,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "tertia-4-5",
             "title": "Reading: Mūsa, mihi causās memorā",
             "summary": "Vergil asks the Muse why a goddess hates so good a man.",
             "minutes": 12,
-            "reading": true
+            "reviewable": true
           }
         ]
       },
@@ -920,28 +920,28 @@ export const OUTLINE: OutlineLevel[] = [
             "title": "Long and short syllables",
             "summary": "Long by nature, long by position, and the few exceptions.",
             "minutes": 9,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "tertia-5-2",
             "title": "Elision",
             "summary": "When one word’s last vowel runs into the next word’s first.",
             "minutes": 7,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "tertia-5-3",
             "title": "Six feet",
             "summary": "Dactyls and spondees, and how every hexameter ends.",
             "minutes": 9,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "tertia-5-4",
             "title": "Scanning Vergil",
             "summary": "Four more lines from Aeneid 1, and the caesura.",
             "minutes": 11,
-            "reading": false
+            "reviewable": true
           }
         ]
       },
@@ -956,35 +956,35 @@ export const OUTLINE: OutlineLevel[] = [
             "title": "Figures of sound",
             "summary": "Alliteration, assonance and onomatopoeia.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "tertia-6-2",
             "title": "Figures of arrangement",
             "summary": "Anaphora, asyndeton, polysyndeton, tricolon, enjambment.",
             "minutes": 9,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "tertia-6-3",
             "title": "Figures of meaning",
             "summary": "Simile, personification, apostrophe, metonymy, synecdoche, litotes, hyperbole, hendiadys.",
             "minutes": 10,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "tertia-6-4",
             "title": "Reading: the storm",
             "summary": "Aeolus sets the winds loose on Aeneas’s fleet. Aeneid 1.81–91.",
             "minutes": 13,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "tertia-6-5",
             "title": "Writing about style",
             "summary": "Name it, quote it, explain it: the three steps of an AP answer.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           }
         ]
       },
@@ -999,28 +999,28 @@ export const OUTLINE: OutlineLevel[] = [
             "title": "Reading: Ō terque quaterque beātī",
             "summary": "Aeneas’s first words in the poem: he wishes he had died at Troy. Aeneid 1.92–101.",
             "minutes": 14,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "tertia-7-2",
             "title": "Reading: timeō Danaōs",
             "summary": "Laocoön warns the Trojans against the wooden horse. Aeneid 2.40–49.",
             "minutes": 14,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "tertia-7-3",
             "title": "Reading: Hector’s ghost",
             "summary": "On Troy’s last night, the dead Hector appears to Aeneas in a dream. Aeneid 2.268–276.",
             "minutes": 13,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "tertia-7-4",
             "title": "Translating for the exam",
             "summary": "Literal, complete, exact in tense and case: how a translation is scored.",
             "minutes": 10,
-            "reading": false
+            "reviewable": true
           }
         ]
       },
@@ -1035,35 +1035,35 @@ export const OUTLINE: OutlineLevel[] = [
             "title": "Reading at sight",
             "summary": "A method for a passage you have never seen before.",
             "minutes": 8,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "tertia-8-2",
             "title": "At sight: Martial",
             "summary": "Three epigrams: short, sharp, and ending on a twist.",
             "minutes": 11,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "tertia-8-3",
             "title": "At sight: Ovid’s Daphne",
             "summary": "A nymph becomes a laurel tree, in five lines of the *Metamorphoses*.",
             "minutes": 12,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "tertia-8-4",
             "title": "The AP exam",
             "summary": "What is on it, how long it takes, and what each part asks.",
             "minutes": 7,
-            "reading": false
+            "reviewable": true
           },
           {
             "id": "tertia-8-5",
             "title": "Where to go from here",
             "summary": "You have finished Level III. Next, the AP syllabus itself, in Level IV.",
             "minutes": 6,
-            "reading": false
+            "reviewable": true
           }
         ]
       }
@@ -1087,49 +1087,49 @@ export const OUTLINE: OutlineLevel[] = [
             "title": "Letters 6.16.1–3: facere scrībenda",
             "summary": "Tacitus has asked for an account of the elder Pliny’s death. Pliny explains why the request honors his uncle.",
             "minutes": 12,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-1-2",
             "title": "Letters 6.16.5–7: the cloud like a pine",
             "summary": "The scholar sees a cloud like a pine tree rise over the bay, and decides to take a closer look.",
             "minutes": 14,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-1-3",
             "title": "Letters 6.16.8–10: from scholar to rescuer",
             "summary": "A desperate note from Rectina changes the plan: the admiral launches the warships and steers into danger.",
             "minutes": 14,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-1-4",
             "title": "Letters 6.16.12–16: calm at Stabiae",
             "summary": "At Pomponianus’s house the admiral bathes, dines and sleeps, and in the morning they choose between falling roofs and falling stones.",
             "minutes": 15,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-1-5",
             "title": "Letters 6.16.17–22: the end on the shore",
             "summary": "Darkness at midday, the smell of sulfur, and the admiral’s death; then Pliny’s last word on letters and history.",
             "minutes": 14,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-1-6",
             "title": "Letters 6.20.1–10: a night at Misenum",
             "summary": "Tacitus asks for more. Pliny, seventeen, reads Livy through an earthquake, until the sea draws back and a family friend loses patience.",
             "minutes": 15,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-1-7",
             "title": "Letters 6.20.11–20: in the dark",
             "summary": "Pliny’s mother begs him to leave her; the darkness overtakes the crowd; and at last a pale sun on a world covered in ash.",
             "minutes": 15,
-            "reading": true
+            "reviewable": true
           }
         ]
       },
@@ -1144,56 +1144,56 @@ export const OUTLINE: OutlineLevel[] = [
             "title": "Letters 7.27.1–4: are ghosts real?",
             "summary": "Pliny asks a learned friend whether ghosts exist, and tells the story of Curtius Rufus and the woman who called herself Africa.",
             "minutes": 13,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-2-2",
             "title": "Letters 7.27.5–6: the house at Athens",
             "summary": "In Pliny’s own words: the clank of chains in the night, the old man in fetters, and the house left empty to its monster.",
             "minutes": 13,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-2-3",
             "title": "Letters 7.27.7–11: Athenodorus keeps writing",
             "summary": "A philosopher rents the cheap house anyway, sits down to write, and follows the ghost to where the bones lie.",
             "minutes": 15,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-2-4",
             "title": "Letters 7.27.12–16: haircuts in the night",
             "summary": "Pliny’s own evidence: two of his household wake up shorn, and he escapes a trial. Then he asks Sura for a verdict.",
             "minutes": 14,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-2-5",
             "title": "Letters 6.4: to Calpurnia, away",
             "summary": "His wife has gone to Campania to recover. Pliny, kept in Rome by work, imagines the worst and asks for a letter every day.",
             "minutes": 13,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-2-6",
             "title": "Letters 6.7: reading each other’s letters",
             "summary": "Calpurnia keeps his books where he used to be; Pliny rereads her letters as if they were new, and they make it worse.",
             "minutes": 12,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-2-7",
             "title": "Letters 10.5–7: a doctor’s citizenship",
             "summary": "Governor to emperor: Pliny asks Trajan to make his doctor a Roman citizen, finds he has done it in the wrong order, and asks again.",
             "minutes": 14,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-2-8",
             "title": "Letters 10.37 and 10.90: water for two cities",
             "summary": "Governor Pliny finds two abandoned aqueducts at Nicomedia, and a thirsty colony at Sinope, and asks Trajan for help.",
             "minutes": 13,
-            "reading": true
+            "reviewable": true
           }
         ]
       },
@@ -1208,42 +1208,42 @@ export const OUTLINE: OutlineLevel[] = [
             "title": "Aeneid 1.1–7: arma virumque",
             "summary": "Seven lines that set out the whole poem: a man driven by fate, a goddess’s anger, and at the end of it all, the walls of Rome.",
             "minutes": 13,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-3-2",
             "title": "Aeneid 1.8–18: the Muse, and Carthage",
             "summary": "Vergil asks the Muse why a goddess would torment so good a man, then shows us the city Juno loves.",
             "minutes": 13,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-3-3",
             "title": "Aeneid 1.19–33: tantae mōlis erat",
             "summary": "Juno’s reasons: a prophecy against her Carthage, an old war, a beauty contest lost, and a Trojan boy taken up to heaven.",
             "minutes": 15,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-3-4",
             "title": "Aeneid 1.88–101: Ō terque quaterque beātī",
             "summary": "Juno’s storm hits. Darkness, thunder and lightning, and the hero’s first words in the poem: a wish that he had died at Troy.",
             "minutes": 14,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-3-5",
             "title": "Aeneid 1.102–107: a mountain of water",
             "summary": "Six lines of shipwreck in sound and meter: the gale screams, oars snap, and a sheer wall of sea crashes down.",
             "minutes": 11,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-3-6",
             "title": "Aeneid 1.496–508: Dido like Diana",
             "summary": "Aeneas, hidden in a cloud, sees the queen of Carthage arrive at her temple, as radiant as Diana among her nymphs.",
             "minutes": 14,
-            "reading": true
+            "reviewable": true
           }
         ]
       },
@@ -1258,42 +1258,42 @@ export const OUTLINE: OutlineLevel[] = [
             "title": "Aeneid 2.40–56: Laocoön’s spear",
             "summary": "The priest warns the Trojans against the gift, then drives his spear into the horse, and it groans.",
             "minutes": 13,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-4-2",
             "title": "Aeneid 2.201–227: the serpents",
             "summary": "Two serpents cross the calm sea from Tenedos, kill Laocoön’s sons, then the priest himself, and vanish into Minerva’s temple.",
             "minutes": 15,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-4-3",
             "title": "Aeneid 2.228–249: the horse comes in",
             "summary": "The Trojans read the omen wrong, break down their own walls, and haul the horse, pregnant with soldiers, to the citadel, singing.",
             "minutes": 14,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-4-4",
             "title": "Aeneid 4.74–89: a city stands still",
             "summary": "Dido, wounded by love, shows Aeneas her city, asks for his story again, lies on his couch at night, and lets Carthage go unbuilt.",
             "minutes": 14,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-4-5",
             "title": "Aeneid 4.165–177: the cave, and Rumor",
             "summary": "A storm drives the hunting party apart; Dido and Aeneas shelter in the same cave; Nature stages a wedding; and Rumor starts to run.",
             "minutes": 13,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-4-6",
             "title": "Aeneid 4.178–197: Fama",
             "summary": "Vergil’s monster of Rumor: all feathers, eyes, tongues and ears, spreading true and false alike, until she reaches a jealous king.",
             "minutes": 14,
-            "reading": true
+            "reviewable": true
           }
         ]
       },
@@ -1308,49 +1308,49 @@ export const OUTLINE: OutlineLevel[] = [
             "title": "Aeneid 4.305–319: Mēne fugis?",
             "summary": "Dido has learned that Aeneas is secretly readying his ships. She confronts him.",
             "minutes": 15,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-5-2",
             "title": "Aeneid 4.320–330: parvulus Aenēās",
             "summary": "What Dido has lost for him, enemies all round, and the child she wishes she had.",
             "minutes": 13,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-5-3",
             "title": "Aeneid 4.331–347: hic amor, haec patria est",
             "summary": "Aeneas answers, holding his feelings down: he owes her everything, he never promised marriage, and his love is Italy.",
             "minutes": 15,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-5-4",
             "title": "Aeneid 4.347–361: Ītaliam nōn sponte sequor",
             "summary": "Aeneas turns Dido’s own exile against her, names his father’s ghost, his son and Mercury, and stops.",
             "minutes": 14,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-5-5",
             "title": "Aeneid 6.450–476: Dido among the shades",
             "summary": "In the Fields of Mourning Aeneas meets Dido, weeps, swears he left unwillingly, and gets no answer.",
             "minutes": 15,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-5-6",
             "title": "Aeneid 6.788–800: Augustus",
             "summary": "Anchises shows his son the Romans to come, and points to the man who will bring back the golden age.",
             "minutes": 13,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-5-7",
             "title": "Aeneid 6.847–853: tū regere imperiō",
             "summary": "Others will make finer statues and speeches; the Roman’s arts are ruling, peace, mercy, and war on the proud.",
             "minutes": 12,
-            "reading": true
+            "reviewable": true
           }
         ]
       },
@@ -1365,42 +1365,42 @@ export const OUTLINE: OutlineLevel[] = [
             "title": "Aeneid 7.45–58: maius opus",
             "summary": "Vergil begins the second half of the poem: an old king at peace, a daughter of age to marry, and portents against the obvious match.",
             "minutes": 12,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-6-2",
             "title": "Aeneid 7.783–792: Turnus in arms",
             "summary": "At the end of the catalogue of Italian heroes, Turnus: a head taller than all, a fire-breathing Chimaera on his helmet, and Io on his shield.",
             "minutes": 12,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-6-3",
             "title": "Aeneid 7.803–817: Camilla",
             "summary": "Last in the catalogue rides Camilla, a warrior girl who could run over the grain without bending it, and all Italy turns out to stare.",
             "minutes": 13,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-6-4",
             "title": "Aeneid 11.532–551: Diana remembers",
             "summary": "Camilla rides to her last battle. In heaven, Diana tells a nymph how Camilla’s father fled with her as a baby and came to a flooded river.",
             "minutes": 14,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-6-5",
             "title": "Aeneid 11.552–572: a baby on a spear",
             "summary": "Metabus ties his daughter to his spear, vows her to Diana, and hurls her across the river; then raises her in the wild on a mare’s milk.",
             "minutes": 14,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-6-6",
             "title": "Aeneid 11.573–594: a huntress grows up",
             "summary": "Camilla’s childhood with a spear and sling, the mothers who wanted her as a daughter-in-law, and Diana’s order to avenge her.",
             "minutes": 14,
-            "reading": true
+            "reviewable": true
           }
         ]
       },
@@ -1415,28 +1415,28 @@ export const OUTLINE: OutlineLevel[] = [
             "title": "Aeneid 12.791–812: Jupiter and Juno",
             "summary": "As the duel nears, Jupiter tells Juno to stop. She yields, and says she would be fighting in the front line if she had not.",
             "minutes": 14,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-7-2",
             "title": "Aeneid 12.818–828: let Troy stay fallen",
             "summary": "Juno’s one request: when Trojans and Latins unite, let the Latins keep their name, their language and their dress.",
             "minutes": 13,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-7-3",
             "title": "Aeneid 12.919–938: Turnus begs",
             "summary": "Aeneas’s spear strikes Turnus down. The Rutulian, on his knees, admits defeat, and asks to be returned to his father.",
             "minutes": 14,
-            "reading": true
+            "reviewable": true
           },
           {
             "id": "quarta-7-4",
             "title": "Aeneid 12.938–952: Pallās tē immolat",
             "summary": "Aeneas hesitates, sees Pallas’s belt on Turnus’s shoulder, and kills him in fury. The poem ends.",
             "minutes": 15,
-            "reading": true
+            "reviewable": true
           }
         ]
       }

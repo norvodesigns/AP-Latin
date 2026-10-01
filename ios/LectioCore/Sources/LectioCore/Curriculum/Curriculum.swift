@@ -36,6 +36,19 @@ public struct Lesson: Decodable, Sendable, Hashable, Identifiable {
     /// The AP-list words it teaches, which join the deck when it's finished.
     public var vocabIds: [String] { words.compactMap(\.vocabId) }
     public var exerciseCount: Int { steps.filter(\.isExercise).count }
+
+    /// The exercises a review can use. A reading lesson's questions mostly
+    /// point back at its passage, so only those carrying their own Latin
+    /// come along: translations, and choices that quote their line. The
+    /// web's `reviewExercises` (src/data/curriculum/reviewable.ts).
+    public var reviewExercises: [LessonStep] {
+        let reading = steps.contains { if case .read = $0 { true } else { false } }
+        return steps.filter { step in
+            guard step.isExercise else { return false }
+            guard reading, case .choice(let choice) = step else { return true }
+            return !(choice.latin ?? "").isEmpty
+        }
+    }
 }
 
 public struct LessonWord: Decodable, Sendable, Hashable {

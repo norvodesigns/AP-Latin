@@ -1,4 +1,5 @@
 import type { CurriculumLevel, OutlineLevel } from './types';
+import { reviewExercises } from './reviewable';
 
 /** The course without its steps (see outline.ts). */
 export function outlineOf(course: CurriculumLevel[]): OutlineLevel[] {
@@ -18,7 +19,7 @@ export function outlineOf(course: CurriculumLevel[]): OutlineLevel[] {
         title: lesson.title,
         summary: lesson.summary,
         minutes: lesson.minutes,
-        reading: lesson.steps.some((s) => s.kind === 'read'),
+        reviewable: reviewExercises(lesson).length > 0,
       })),
     })),
   }));

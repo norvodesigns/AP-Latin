@@ -203,8 +203,8 @@ export interface OutlineLesson {
   title: string;
   summary: string;
   minutes: number;
-  /** Has a reading step (Review leaves these out). */
-  reading: boolean;
+  /** Has exercises a review can use (see reviewable.ts). */
+  reviewable: boolean;
 }
 
 export interface OutlineUnit {

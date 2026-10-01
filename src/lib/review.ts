@@ -4,12 +4,13 @@
  * done for a while. It plays in the ordinary lesson player; finishing it
  * counts the day as studied but records no lesson.
  *
- * Reading lessons are left out: their questions only make sense with the
- * passage in front of you. The app builds the same kind of review
- * (LectioCore `Course.review`).
+ * From a reading lesson only the questions that carry their own Latin are
+ * used (`reviewExercises`); the rest need the passage in front of you. The
+ * app builds the same kind of review (LectioCore `Course.review`).
  */
 
-import { ALL_LESSONS, isExercise, type Lesson, type LessonStep } from '@/data/curriculum';
+import { ALL_LESSONS, type Lesson, type LessonStep } from '@/data/curriculum';
+import { reviewExercises } from '@/data/curriculum/reviewable';
 import type { LessonProgress } from '@/store/useStore';
 
 export const REVIEW_ID = 'review';
@@ -29,10 +30,9 @@ export function buildReview(
   rng: Rng = Math.random,
   now = Date.now(),
 ): Lesson | null {
-  const pool = ALL_LESSONS.filter((p) => done[p.lesson.id] && !p.lesson.steps.some((s) => s.kind === 'read')).map((p) => ({
-    exercises: p.lesson.steps.filter(isExercise) as LessonStep[],
-    weight: reviewWeight(done[p.lesson.id], now),
-  }));
+  const pool = ALL_LESSONS.filter((p) => done[p.lesson.id])
+    .map((p) => ({ exercises: reviewExercises(p.lesson), weight: reviewWeight(done[p.lesson.id], now) }))
+    .filter((p) => p.exercises.length > 0);
   const available = pool.reduce((n, p) => n + p.exercises.length, 0);
   if (available === 0) return null;
 

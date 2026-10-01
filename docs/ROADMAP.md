@@ -265,3 +265,7 @@ finishing a lesson counts toward the streak and daily goal.
 - 2026-10-01: A Live Activity for the practice exam: each timed section shows on the Lock Screen
   and in the Dynamic Island with the system-drawn countdown and how many questions are answered,
   starting with the section and ending when it does, when the exam is scored, or when it is left.
+- 2026-10-01: Review now draws on reading lessons too, taking only the questions that carry their
+  own Latin (translations, and choices that quote their line); the rest need the passage in front
+  of you. Until now Level IV, every lesson of which is a reading, could never be reviewed. Shared
+  rule on both platforms (`reviewExercises`), with a test that a passage-bound question stays out.

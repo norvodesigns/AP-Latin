@@ -23,8 +23,8 @@ export default function CourseMap() {
   const learner = useStore((s) => s.learner);
   const next = nextLesson(lessons, learner?.startLessonId);
   const doneCount = ALL_LESSONS.filter((p) => lessons[p.lesson.id]).length;
-  // Review draws on finished lessons that aren't readings (src/lib/review.ts).
-  const reviewable = ALL_LESSONS.some((p) => lessons[p.lesson.id] && !p.lesson.reading);
+  // Review draws on finished lessons' self-contained exercises (src/lib/review.ts).
+  const reviewable = ALL_LESSONS.some((p) => lessons[p.lesson.id] && p.lesson.reviewable);
 
   return (
     <Page>

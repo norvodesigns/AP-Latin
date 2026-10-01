@@ -23,13 +23,12 @@ extension Course {
         return (1.2 - min(1, max(0, p.best))) * (1 + min(days, 30) / 10)
     }
 
-    /// Lessons a review can draw on: finished, and not readings (whose
-    /// questions need the passage in front of you).
+    /// Lessons a review can draw on: finished, with exercises it can use
+    /// (`Lesson.reviewExercises`: from a reading, only questions that carry
+    /// their own Latin).
     public func reviewable(done: [String: LessonProgress]) -> [LessonPlace] {
         lessons.filter { place in
-            done[place.lesson.id] != nil
-                && !place.lesson.steps.contains { if case .read = $0 { true } else { false } }
-                && place.lesson.exerciseCount > 0
+            done[place.lesson.id] != nil && !place.lesson.reviewExercises.isEmpty
         }
     }
 
@@ -40,7 +39,7 @@ extension Course {
         using rng: inout G
     ) -> LessonPlace? {
         var pool = reviewable(done: done).map { place in
-            ReviewSource(exercises: place.lesson.steps.filter(\.isExercise), weight: Self.reviewWeight(done[place.lesson.id]!, now: now))
+            ReviewSource(exercises: place.lesson.reviewExercises, weight: Self.reviewWeight(done[place.lesson.id]!, now: now))
         }
         let available = pool.reduce(0) { $0 + $1.exercises.count }
         guard available > 0 else { return nil }

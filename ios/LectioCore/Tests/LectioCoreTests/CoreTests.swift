@@ -447,7 +447,7 @@ import Testing
 
         let ids = Array(course.lessons.prefix(4).map(\.lesson.id))
         let finished = done(ids)
-        let allowed = Set(course.reviewable(done: finished).flatMap { $0.lesson.steps.filter(\.isExercise) })
+        let allowed = Set(course.reviewable(done: finished).flatMap(\.lesson.reviewExercises))
         for _ in 0..<20 {
             let review = try #require(course.review(done: finished, using: &rng))
             #expect(Course.isReview(review.lesson.id))
@@ -458,11 +458,19 @@ import Testing
         }
     }
 
-    @Test func leavesOutReadingsAndLeansOnWeakLessons() throws {
+    @Test func takesOnlySelfContainedQuestionsFromReadingsAndLeansOnWeakLessons() throws {
         let course = try ContentLibrary(directory: Paths.content).course
         let readings = course.lessons.filter { $0.lesson.steps.contains { if case .read = $0 { true } else { false } } }
-        let reading = try #require(readings.first)
-        #expect(course.reviewable(done: done([reading.lesson.id])).isEmpty)
+        // A reading lesson with a question that only makes sense beside its passage.
+        let reading = try #require(readings.first { place in
+            place.lesson.steps.contains { if case .choice(let c) = $0 { c.latin == nil } else { false } }
+        })
+        let kept = reading.lesson.reviewExercises
+        #expect(kept.count < reading.lesson.exerciseCount)
+        #expect(!kept.contains { if case .choice(let c) = $0 { c.latin == nil } else { false } })
+        // An ordinary lesson keeps every exercise.
+        let plain = try #require(course.lessons.first { !readings.contains($0) && $0.lesson.exerciseCount > 0 })
+        #expect(plain.lesson.reviewExercises.count == plain.lesson.exerciseCount)
 
         let now = ISO8601DateFormatter().date(from: "2026-09-30T12:00:00Z")!
         let weakOld = LessonProgress(completedAt: "2026-08-01T12:00:00.000Z", lastAt: "2026-08-01T12:00:00.000Z", best: 0.4, attempts: 1)
