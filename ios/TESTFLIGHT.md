@@ -113,7 +113,8 @@ undoes it. Sample progress never reaches an account.
 > text size (Settings > Accessibility > Display & Text Size > Larger Text):
 >
 > 1. The first-run screens (delete and reinstall to see them again).
-> 2. Today, then each tab, then the Everything list.
+> 2. Today (scroll through every panel), then each tab, then Browse (the search tab), which lists every
+>    section of the app, with Jump to on Today as the quick way to the same places.
 > 3. The Course: open a lesson and finish it.
 > 4. The Reading Room: open Aeneid 1.1–33, tap words, hold to highlight, add a note.
 > 5. Vocabulary: a flashcard session, and the Speed round.
