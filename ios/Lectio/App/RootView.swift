@@ -8,7 +8,7 @@ nonisolated enum AppTab: String, Hashable, Sendable {
     case translate, sight, scansion, forge
     case grammar, devices, context
     case frq, exam, plan
-    case classroom, settings, search
+    case classroom, settings, search, laurels
 
     /// A deep link's host — lectio://vocab opens Vocabulary.
     init?(host: String?) {
@@ -256,6 +256,7 @@ struct PushedSection: View {
             case .settings: SettingsView()
             case .learn: CourseView()
             case .quiz: QuizView()
+            case .laurels: LaurelsView()
             case .today, .read, .vocab, .search: EmptyView()
             }
         }
@@ -301,9 +302,10 @@ private struct SidebarTabs: View {
             }
             .defaultVisibility(.hidden, for: .tabBar)
 
-            // A tab view's builder takes at most ten children, so these two
-            // share a section.
+            // A tab view's builder takes at most ten children, so these share
+            // a section.
             TabSection("You") {
+                Tab("Laurels", systemImage: "laurel.leading", value: AppTab.laurels) { NavigationStack { LaurelsView() } }
                 Tab("Classroom", systemImage: "person.3", value: AppTab.classroom) { ClassroomView() }
                 Tab("Settings", systemImage: "gearshape", value: AppTab.settings) { SettingsView() }
             }
@@ -360,6 +362,7 @@ private struct ClassicSidebar: View {
             Row(tab: .plan, title: "Study Plan", systemImage: "calendar"),
         ]),
         ("You", [
+            Row(tab: .laurels, title: "Laurels", systemImage: "laurel.leading"),
             Row(tab: .classroom, title: "Classroom", systemImage: "person.3"),
             Row(tab: .settings, title: "Settings", systemImage: "gearshape"),
             Row(tab: .search, title: "Search", systemImage: "magnifyingglass"),
@@ -423,6 +426,7 @@ private struct ClassicSidebar: View {
         case .classroom: ClassroomView()
         case .settings: SettingsView()
         case .search: SearchView()
+        case .laurels: NavigationStack { LaurelsView() }
         }
     }
 }

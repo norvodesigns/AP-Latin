@@ -388,3 +388,13 @@ finishing a lesson counts toward the streak and daily goal.
 - 2026-10-01: First EAS build of the app finished and produced an .ipa (the owner ran it: project linked as
   @norvodesigns/lectio, signing created, XcodeGen recipe and watch targets built). The submission step was
   cut off by a dropped connection on the owner's Mac; resubmit with `eas submit -p ios --latest`.
+- 2026-10-02: First TestFlight feedback: "everything works very well" but hard to find things. Browse (the
+  Search tab) is now the whole menu as one list of glass cards in the website's groups (Study, Drill,
+  Reference, Exam, You), each with its one-line description and a note where there is one (cards due,
+  lessons done); typing turns it into a search over sections, passages, words and grammar. Laurels is a
+  section of its own (iPad sidebar, Browse), as it is on the web. Today is rebuilt as labelled Liquid Glass
+  panels over a soft pigment wash: Today (countdown or course progress, a goal ring, streak, longest, cards
+  due), Pick up, the Sententia, Jump to (a grid of the sections outside the tab bar, and Browse), then in a
+  grid Vocabulary (due, learning, mature, the week's forecast), Reading Room (passages opened of the
+  syllabus), This week, Mastery by skill, Weak spots and Laurels. The long "Everything" list is gone from
+  Today, since Browse has it. The L as transparent PNGs and an SVG is in `ios/Brand` for Icon Composer.

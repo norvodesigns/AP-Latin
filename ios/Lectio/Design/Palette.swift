@@ -31,6 +31,10 @@ enum Palette {
     /// A word marked under the reader's finger.
     static let redTint = Color("RedTint")
     static let gilt = Color("Gilt")
+    /// The other two pigments of the manuscript: a blue and a green, for
+    /// telling the app's groups of sections apart.
+    static let woad = Color("FillWoad")
+    static let verdigris = Color("FillVerdigris")
 
     static let correct = Color("Correct")
     static let correctWash = Color("CorrectWash")

@@ -61,8 +61,21 @@ struct ContinueCard: View {
     @Environment(AppModel.self) private var model
     let place: LessonPlace
     let first: Bool
+    /// False where the card already sits in a panel of its own (Today).
+    var framed = true
 
     var body: some View {
+        if framed {
+            content
+                .padding(20)
+                .background(Palette.slip, in: .rect(cornerRadius: 20))
+                .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(Palette.rule, lineWidth: 0.5))
+        } else {
+            content
+        }
+    }
+
+    private var content: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(first ? "Start here" : "Continue").rubricLabel()
             Text("\(place.level.title) · Unit \(place.unit.n) · Lesson \(place.number)").quietLabel()
@@ -83,9 +96,6 @@ struct ContinueCard: View {
             .glassButton(prominent: true)
             .padding(.top, 6)
         }
-        .padding(20)
-        .background(Palette.slip, in: .rect(cornerRadius: 20))
-        .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(Palette.rule, lineWidth: 0.5))
     }
 }
 

@@ -86,6 +86,57 @@ extension View {
     }
 }
 
+/// Parchment with a faint wash of the manuscript's pigments (rubric, gilt,
+/// woad) behind it. Flat parchment gives glass nothing to catch; this does,
+/// without ever sitting under the Latin itself. Used behind the screens made
+/// of glass panels: Today and Browse.
+struct AmbientBackground: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .scrollContentBackground(.hidden)
+            .background {
+                ZStack {
+                    Palette.parchment
+                    RadialGradient(colors: [Palette.rubric.opacity(0.14), .clear], center: .topTrailing, startRadius: 0, endRadius: 480)
+                    RadialGradient(colors: [Palette.gilt.opacity(0.16), .clear], center: .leading, startRadius: 0, endRadius: 520)
+                    RadialGradient(colors: [Palette.woad.opacity(0.11), .clear], center: .bottomTrailing, startRadius: 0, endRadius: 560)
+                }
+                .ignoresSafeArea()
+            }
+    }
+}
+
+extension View {
+    /// Parchment with a soft wash of colour, for a screen of glass panels.
+    func ambientBackground() -> some View { modifier(AmbientBackground()) }
+}
+
+/// A labelled panel of Liquid Glass (a material with a hairline edge before
+/// iOS 26): the dashboard's unit. The label is the small rubric heading the
+/// whole app uses, with an optional quiet note at the far end.
+struct GlassPanel<Content: View>: View {
+    var title: String? = nil
+    var trailing: String? = nil
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            if let title {
+                LabelRow {
+                    Text(title).rubricLabel()
+                } trailing: {
+                    if let trailing { Text(trailing).quietLabel() }
+                }
+            }
+            content
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .lectioGlass(in: RoundedRectangle(cornerRadius: 26, style: .continuous))
+        .accessibilityElement(children: .contain)
+    }
+}
+
 /// Lays children out left to right, wrapping onto new lines — how a line of
 /// Latin is set as individually tappable words.
 struct FlowLayout: Layout {
