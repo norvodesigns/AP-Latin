@@ -1,4 +1,5 @@
 import type { ChoiceStep } from './types';
+import { verbaPlacement } from './verba/build.ts';
 
 /**
  * The placement check: quick questions in course order, two per unit (one
@@ -62,3 +63,11 @@ export const PLACEMENT: PlacementQuestion[] = [
   q('tertia-7', 'What does this mean?', 'Timeō Danaōs et dōna ferentēs.', ['The Greeks fear the gifts they are bringing.', 'I fear the Greeks, even when they bring gifts.', 'I fear the Greeks and the gifts are being carried.'], 1, '*et* here means “even”; *ferentēs* is a present participle with *Danaōs*.'),
   q('tertia-8', 'Meeting a long sentence you have never seen, what do you look for first?', undefined, ['The main verb and its subject', 'Words that look like English', 'The last word'], 0, 'Find the frame of the sentence, then fit the clauses and phrases around it.'),
 ];
+
+/**
+ * The level check's vocabulary half: two words from each unit of Verba, the
+ * AP list by letter. Asked after the grammar questions; a unit whose two
+ * words are both known is offered as its unit test first (`knownVocabUnits`
+ * and `nextWords`, src/lib/path.ts).
+ */
+export const VOCAB_PLACEMENT: PlacementQuestion[] = verbaPlacement();

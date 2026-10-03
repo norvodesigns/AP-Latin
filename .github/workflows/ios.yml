@@ -191,6 +191,11 @@ jobs:
                 sleep 8
                 xcrun simctl io "$udid" screenshot "shots/$label-$mode-${tab//\//-}.png"
               done
+              # The course's vocabulary track.
+              xcrun simctl terminate "$udid" com.norvodesigns.lectio || true
+              xcrun simctl launch "$udid" com.norvodesigns.lectio -seedDemo YES -startTab learn -courseTrackOnLaunch vocabulary
+              sleep 8
+              xcrun simctl io "$udid" screenshot "shots/$label-$mode-learn-vocabulary.png"
               # Today's lower panels: scrolled to by -todayScroll.
               for scroll in jump panels end; do
                 xcrun simctl terminate "$udid" com.norvodesigns.lectio || true

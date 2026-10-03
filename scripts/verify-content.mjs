@@ -532,6 +532,33 @@ for (const f of frqPrompts) {
   checkSpread('placement check', PLACEMENT.map((p) => p.step.answer));
   notes.push(`${PLACEMENT.length} placement questions`);
 
+  // Verba, the AP list by letter: every word on the list taught exactly
+  // once, each unit ending in its one unit test, and the level check's
+  // vocabulary questions pointing at its units.
+  {
+    const taught = new Map();
+    const verbaUnits = unitOrder.filter((u) => u.startsWith('verba-'));
+    if (verbaUnits.length === 0) fail('verba: no units');
+    for (const unitId of verbaUnits) {
+      const { unit } = await load(`src/data/curriculum/verba/unit${unitId.split('-')[1]}.ts`);
+      const tests = unit.lessons.filter((l) => l.test);
+      if (tests.length !== 1 || !unit.lessons[unit.lessons.length - 1].test) fail(`${unitId}: needs exactly one unit test, as its last lesson`);
+      for (const t of tests) if (t.words.length) fail(`${t.id}: a unit test teaches no words`);
+      for (const l of unit.lessons) for (const w of l.words) taught.set(w.vocabId, [...(taught.get(w.vocabId) ?? []), l.id]);
+    }
+    for (const v of vocab) {
+      const where = taught.get(v.id) ?? [];
+      if (where.length !== 1) fail(`verba: "${v.id}" is taught ${where.length} times${where.length ? ` (${where.join(', ')})` : ''}`);
+    }
+    const { VOCAB_PLACEMENT } = await load('src/data/curriculum/placement.ts');
+    VOCAB_PLACEMENT.forEach((p, i) => {
+      const at = `vocabulary placement question ${i + 1}`;
+      if (!verbaUnits.includes(p.unit)) fail(`${at}: unknown unit ${p.unit}`);
+      checkStep(at, p.step);
+    });
+    notes.push(`Verba: ${vocab.length} AP words in ${verbaUnits.length} units; ${VOCAB_PLACEMENT.length} vocabulary placement questions`);
+  }
+
   /* --- Forms Forge (src/data/forms) --- */
   const { PARADIGMS, cellForms } = await load('src/data/forms/index.ts');
   const paradigmIds = new Set();

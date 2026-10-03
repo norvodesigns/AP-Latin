@@ -9,6 +9,8 @@ import Foundation
 /// table cell or an example `puell|ae` marks the ending after the bar.
 public struct CurriculumLevel: Decodable, Sendable, Hashable, Identifiable {
     public let id: String
+    /// "vocabulary" for Verba, the AP list by letter; absent for grammar.
+    public var track: String? = nil
     public let numeral: String
     public let title: String
     public let subtitle: String
@@ -32,6 +34,10 @@ public struct Lesson: Decodable, Sendable, Hashable, Identifiable {
     public let objectives: [String]
     public let words: [LessonWord]
     public let steps: [LessonStep]
+    /// A unit test: passed, it counts its whole unit as done (`Path`).
+    public var test: Bool? = nil
+
+    public var isTest: Bool { test ?? false }
 
     /// The AP-list words it teaches, which join the deck when it's finished.
     public var vocabIds: [String] { words.compactMap(\.vocabId) }
@@ -207,15 +213,24 @@ public struct LessonPlace: Sendable, Hashable, Identifiable {
 }
 
 public struct Course: Sendable {
+    /// Every level, both tracks: the grammar levels in order, then Verba.
     public let levels: [CurriculumLevel]
+    /// Every lesson of both tracks.
     public let lessons: [LessonPlace]
+    /// The grammar lessons, in order.
+    public let grammarLessons: [LessonPlace]
+    /// The vocabulary lessons (Verba), in order, unit tests included.
+    public let vocabLessons: [LessonPlace]
     /// The placement check, in course order.
     public let placement: [PlacementQuestion]
+    /// The level check's vocabulary questions: two from each Verba unit.
+    public let vocabPlacement: [PlacementQuestion]
     private let index: [String: Int]
 
-    public init(levels: [CurriculumLevel], placement: [PlacementQuestion] = []) {
+    public init(levels: [CurriculumLevel], placement: [PlacementQuestion] = [], vocabPlacement: [PlacementQuestion] = []) {
         self.levels = levels
         self.placement = placement
+        self.vocabPlacement = vocabPlacement
         var places: [LessonPlace] = []
         for level in levels {
             for unit in level.units {
@@ -225,28 +240,55 @@ public struct Course: Sendable {
             }
         }
         lessons = places
+        grammarLessons = places.filter { !$0.level.isVocabulary }
+        vocabLessons = places.filter(\.level.isVocabulary)
         index = Dictionary(places.map { ($0.lesson.id, $0.index) }, uniquingKeysWith: { a, _ in a })
     }
 
     public func place(_ id: String) -> LessonPlace? { index[id].map { lessons[$0] } }
 
-    /// Every unit's id, in course order.
-    public var unitIds: [String] { levels.flatMap { $0.units.map(\.id) } }
+    /// The grammar levels, in order.
+    public var grammarLevels: [CurriculumLevel] { levels.filter { !$0.isVocabulary } }
+    /// Verba, the AP list by letter, when the content has it.
+    public var vocabLevel: CurriculumLevel? { levels.first(where: \.isVocabulary) }
+
+    /// Every grammar unit's id, in course order.
+    public var unitIds: [String] { grammarLevels.flatMap { $0.units.map(\.id) } }
 
     /// The first lesson of a unit, by unit id.
     public func firstLesson(ofUnit unitId: String) -> LessonPlace? { lessons.first { $0.unit.id == unitId } }
 
-    /// The first lesson not yet finished, from the student's starting point
-    /// if they chose one; nil when every lesson written so far is done. Same
-    /// as the web's `nextLesson`.
+    /// The first grammar lesson not yet finished, from the student's starting
+    /// point if they chose one; nil when every grammar lesson written so far
+    /// is done. Same as the web's `nextLesson`. The vocabulary track has its
+    /// own (`nextWords`).
     public func next(done: Set<String>, startingAt start: String? = nil) -> LessonPlace? {
-        let from = start.flatMap { index[$0] } ?? 0
-        return lessons[from...].first { !done.contains($0.lesson.id) } ?? lessons.first { !done.contains($0.lesson.id) }
+        let from = start.flatMap { id in grammarLessons.firstIndex { $0.lesson.id == id } } ?? 0
+        return grammarLessons[from...].first { !done.contains($0.lesson.id) } ?? grammarLessons.first { !done.contains($0.lesson.id) }
     }
 
+    /// The lesson after this one in its own track.
     public func after(_ id: String) -> LessonPlace? {
-        guard let i = index[id], i + 1 < lessons.count else { return nil }
-        return lessons[i + 1]
+        guard let place = place(id) else { return nil }
+        let track = place.level.isVocabulary ? vocabLessons : grammarLessons
+        guard let i = track.firstIndex(where: { $0.lesson.id == id }), i + 1 < track.count else { return nil }
+        return track[i + 1]
+    }
+
+    /// A unit's lessons as `Path` reads them.
+    public func pathLessons(ofUnit unitId: String) -> [PathLesson] {
+        lessons.filter { $0.unit.id == unitId }.map { PathLesson(id: $0.lesson.id, unitId: unitId, vocabIds: $0.lesson.vocabIds, test: $0.lesson.isTest) }
+    }
+
+    /// The vocabulary track as `Path` reads it.
+    public var vocabPath: [PathLesson] {
+        vocabLessons.map { PathLesson(id: $0.lesson.id, unitId: $0.unit.id, vocabIds: $0.lesson.vocabIds, test: $0.lesson.isTest) }
+    }
+
+    /// The vocabulary lesson to do next (the web's `nextWords`).
+    public func nextWords(done: Set<String>, vocab: [String: VocabCard], knownUnits: [String] = []) -> LessonPlace? {
+        let doneMap = Dictionary(uniqueKeysWithValues: done.map { ($0, true) })
+        return Path.nextWords(vocabPath, done: doneMap, intervals: vocab.mapValues(\.interval), knownUnits: knownUnits).flatMap { place($0.id) }
     }
 
     public static func unitProgress(_ unit: CurriculumUnit, done: Set<String>) -> Double {
@@ -255,7 +297,13 @@ public struct Course: Sendable {
     }
 }
 
+extension CurriculumLevel {
+    /// Verba, the AP list by letter: a track of its own beside the grammar.
+    public var isVocabulary: Bool { track == "vocabulary" }
+}
+
 struct CurriculumFile: Decodable {
     let levels: [CurriculumLevel]
     let placement: [PlacementQuestion]?
+    let vocabPlacement: [PlacementQuestion]?
 }

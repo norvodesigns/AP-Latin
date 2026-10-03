@@ -105,7 +105,7 @@ public struct ContentLibrary: Sendable {
         scansionLines = try load("scansion.json")
         if FileManager.default.fileExists(atPath: directory.appendingPathComponent("curriculum.json").path) {
             let file: CurriculumFile = try load("curriculum.json")
-            course = Course(levels: file.levels, placement: file.placement ?? [])
+            course = Course(levels: file.levels, placement: file.placement ?? [], vocabPlacement: file.vocabPlacement ?? [])
         } else {
             course = Course(levels: [])
         }

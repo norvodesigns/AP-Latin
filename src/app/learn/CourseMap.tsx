@@ -5,9 +5,20 @@ import { useStore } from '@/store/useStore';
 import {
   OUTLINE as COURSE,
   OUTLINE_LESSONS as ALL_LESSONS,
+  OUTLINE_VOCAB_LESSONS as VOCAB_LESSONS,
   nextOutlineLesson as nextLesson,
+  outlinePlace,
   unitProgress,
 } from '@/data/curriculum/outline';
+import { nextWords, type PathLesson } from '@/lib/path';
+
+/** The vocabulary track as `nextWords` reads it. */
+const VOCAB_PATH: PathLesson[] = VOCAB_LESSONS.map((p) => ({
+  id: p.lesson.id,
+  unitId: p.unit.id,
+  vocabIds: p.lesson.vocabIds ?? [],
+  test: Boolean(p.lesson.test),
+}));
 import { Page, PageHeader, Section, CalledOut, Hairline } from '@/components/ui';
 import { Rich } from '@/components/Rich';
 
@@ -21,7 +32,12 @@ const COMING = [
 export default function CourseMap() {
   const lessons = useStore((s) => s.lessons);
   const learner = useStore((s) => s.learner);
+  const vocab = useStore((s) => s.vocab);
   const next = nextLesson(lessons, learner?.startLessonId);
+  // The vocabulary track adapts: known words are passed over, and a unit the
+  // level check found known starts with its test (src/lib/path.ts).
+  const wordsNextId = nextWords(VOCAB_PATH, lessons, vocab, learner?.knownVocabUnits ?? [])?.id;
+  const wordsNext = wordsNextId ? outlinePlace(wordsNextId) : undefined;
   const doneCount = ALL_LESSONS.filter((p) => lessons[p.lesson.id]).length;
   // Review draws on finished lessons' self-contained exercises (src/lib/review.ts).
   const reviewable = ALL_LESSONS.some((p) => lessons[p.lesson.id] && p.lesson.reviewable);
@@ -50,6 +66,26 @@ export default function CourseMap() {
             </div>
             <Link href={`/learn/${next.lesson.id}`} className="btn btn-primary">
               {doneCount === 0 ? 'Begin' : 'Continue'} · {next.lesson.minutes} min
+            </Link>
+          </div>
+        </CalledOut>
+      )}
+      {wordsNext && (
+        <CalledOut rubric={wordsNext.lesson.test ? 'Words you probably know' : 'Next words'} className="mb-12">
+          <div className="flex flex-wrap items-end justify-between gap-5">
+            <div className="min-w-0">
+              <div className="slab-sm mb-1.5" style={{ color: 'var(--fg-muted)' }}>
+                {wordsNext.level.title} · {wordsNext.unit.title}
+              </div>
+              <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.5rem', lineHeight: 1.2 }}>
+                {wordsNext.lesson.title}
+              </div>
+              <p className="measure mt-1.5" style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem', color: 'var(--ink2)', margin: 0 }}>
+                <Rich text={wordsNext.lesson.summary} />
+              </p>
+            </div>
+            <Link href={`/learn/${wordsNext.lesson.id}`} className="btn btn-primary">
+              {wordsNext.lesson.test ? 'Take the test' : 'Learn them'} · {wordsNext.lesson.minutes} min
             </Link>
           </div>
         </CalledOut>
@@ -117,7 +153,7 @@ export default function CourseMap() {
                 <ol className="pl-0" style={{ listStyle: 'none' }}>
                   {unit.lessons.map((lesson, i) => {
                     const done = lessons[lesson.id];
-                    const isNext = next?.lesson.id === lesson.id;
+                    const isNext = (next?.lesson.id ?? null) === lesson.id || wordsNextId === lesson.id;
                     return (
                       <li key={lesson.id} className="border-t" style={{ borderColor: 'var(--rule)' }}>
                         <Link href={`/learn/${lesson.id}`} className="row-hover flex items-baseline gap-4 py-3.5">

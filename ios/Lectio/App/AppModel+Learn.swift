@@ -7,9 +7,42 @@ extension AppModel {
     /// Lesson ids finished.
     var courseDone: Set<String> { Set(progress.lessons.keys) }
 
-    /// The lesson to do next, from the student's starting point.
+    /// The grammar lesson to do next, from the student's starting point.
     var nextCourseLesson: LessonPlace? {
         content?.course.next(done: courseDone, startingAt: progress.learner?.startLessonId)
+    }
+
+    /// Vocabulary units the level check found probably known.
+    var knownVocabUnits: [String] { progress.learner?.knownVocabUnits ?? [] }
+
+    /// The vocabulary lesson to do next (Verba, the AP list by letter):
+    /// adapted to the words already known (LectioCore `Path`).
+    var nextVocabLesson: LessonPlace? {
+        content?.course.nextWords(done: courseDone, vocab: vocab, knownUnits: knownVocabUnits)
+    }
+
+    /// Grammar lessons finished, and how many there are.
+    var grammarProgress: (done: Int, total: Int) {
+        let lessons = content?.course.grammarLessons ?? []
+        let done = courseDone
+        return (lessons.filter { done.contains($0.lesson.id) }.count, lessons.count)
+    }
+
+    /// The AP-list words that are well known (a mature card), out of the list.
+    var wordsKnown: (known: Int, total: Int) {
+        let total = content?.coreVocabulary.count ?? 0
+        return (vocab.values.filter { $0.interval >= Path.knownInterval }.count, total)
+    }
+
+    /// The level check's answers: the grammar start, and the vocabulary units
+    /// probably known. A student who hasn't onboarded gets a profile.
+    func applyLevelCheck(startLessonId: String?, knownVocabUnits units: [String]) {
+        update { doc in
+            var profile = doc.learner ?? LearnerProfile(track: .some, startLessonId: nil, onboardedAt: StudyDates.isoTimestamp(.now))
+            if let startLessonId { profile.startLessonId = startLessonId }
+            profile.knownVocabUnits = units.isEmpty ? nil : units
+            doc.setLearner(profile)
+        }
     }
 
     /// Whether the iPhone's tab bar leads with the course rather than the
@@ -26,7 +59,7 @@ extension AppModel {
     /// a student who chose the course, or who has only done lessons so far.
     /// The website's dashboard uses the same rule.
     var courseFirstOnToday: Bool {
-        guard content?.course.lessons.isEmpty == false else { return false }
+        guard content?.course.grammarLessons.isEmpty == false else { return false }
         if let track = progress.learner?.track { return track == .new || track == .some }
         let apWork = !progress.quizAttempts.isEmpty || !(progress.raw["passages"]?.objectValue?.isEmpty ?? true)
         return !progress.lessons.isEmpty && !apWork
@@ -97,7 +130,15 @@ extension AppModel {
             refreshWidgets()
             return
         }
-        update { $0.completeLesson(lesson.id, score: score, vocabIds: lesson.vocabIds) }
+        // A unit test passed counts its whole unit as done, and puts the
+        // unit's words in the deck as known (Path.testOut).
+        let unitLessons: [PathLesson]? = lesson.isTest && Path.testPassed(score)
+            ? content?.course.place(lesson.id).flatMap { content?.course.pathLessons(ofUnit: $0.unit.id) }
+            : nil
+        update { doc in
+            doc.completeLesson(lesson.id, score: score, vocabIds: lesson.vocabIds)
+            if let unitLessons { doc.passUnitTest(unitLessons, score: score) }
+        }
         refreshWidgets()
         sendWatchDeck()
     }

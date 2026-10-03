@@ -243,9 +243,8 @@ private struct SectionCard: View {
             let due = SpacedRepetition.due(model.vocab.values, on: StudyDates.today()).count
             return due > 0 ? "\(due) due" : nil
         case "learn":
-            let done = model.courseDone.count
-            let total = model.content?.course.lessons.count ?? 0
-            return done > 0 && total > 0 ? "\(done) of \(total)" : nil
+            let grammar = model.grammarProgress
+            return grammar.done > 0 && grammar.total > 0 ? "\(grammar.done) of \(grammar.total)" : nil
         case "daily":
             return model.progress.daily[model.dailyDay] != nil ? "Done" : nil
         default:

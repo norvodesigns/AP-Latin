@@ -398,3 +398,17 @@ finishing a lesson counts toward the streak and daily goal.
   grid Vocabulary (due, learning, mature, the week's forecast), Reading Room (passages opened of the
   syllabus), This week, Mastery by skill, Weak spots and Laurels. The long "Everything" list is gone from
   Today, since Browse has it. The L as transparent PNGs and an SVG is in `ios/Brand` for Icon Composer.
+- 2026-10-03: An adaptive curriculum in two tracks. **Grammar** is the four levels as before, taken in order from
+  where the level check starts it. **Vocabulary (Verba)** is new: all 992 words of the AP list (CED Appendix 2)
+  by letter, in seven units (A–C, D–F, G–I, L–N, O–Q, R–S, T–V), 86 lessons of about twelve words (the words,
+  a match, the meaning of each, the Latin for the rest, two typed from memory) and a 20-question unit test per
+  unit. It is built from the list itself (`src/data/curriculum/verba/build.ts`), so nothing is hand-copied, and
+  the verifier checks every word is taught exactly once. It adapts (`src/lib/path.ts`, LectioCore `Path`, with
+  parity fixtures): lessons whose words are already mature in the deck are passed over; a passed unit test
+  (85%) counts the unit done and adds its words as known, due over three weeks; and the level check now has a
+  vocabulary half (two words per unit) whose known units start with their test. The app's Course tab is
+  rebuilt: "Your path" (the next lesson of each track, and **Find my level**, the level check any time),
+  a Grammar | Vocabulary switch, units as collapsible glass panels, unit tests, "known" and "tested out"
+  marks. Today's Pick up has the next words; onboarding ends with the vocabulary check. On the web, the course
+  map shows the next words and a passed unit test counts the unit. New laurel: *Omnia verba*. New app icon
+  (the owner's Icon Composer design, flattened for the asset catalog; master in `ios/Brand/Lectio-icon.png`).

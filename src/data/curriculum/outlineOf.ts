@@ -5,6 +5,7 @@ import { reviewExercises } from './reviewable';
 export function outlineOf(course: CurriculumLevel[]): OutlineLevel[] {
   return course.map((level) => ({
     id: level.id,
+    ...(level.track ? { track: level.track } : {}),
     numeral: level.numeral,
     title: level.title,
     subtitle: level.subtitle,
@@ -20,6 +21,8 @@ export function outlineOf(course: CurriculumLevel[]): OutlineLevel[] {
         summary: lesson.summary,
         minutes: lesson.minutes,
         reviewable: reviewExercises(lesson).length > 0,
+        ...(lesson.test ? { test: true } : {}),
+        ...(level.track === 'vocabulary' ? { vocabIds: lesson.words.flatMap((w) => (w.vocabId ? [w.vocabId] : [])) } : {}),
       })),
     })),
   }));

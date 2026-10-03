@@ -290,6 +290,19 @@ struct LessonView: View {
                     Figure(value: "\(right) / \(exerciseCount)", caption: "right first time")
                     if !deck.isEmpty { Figure(value: "\(deck.count)", caption: deck.count == 1 ? "word to your deck" : "words to your deck") }
                 }
+                if lesson.isTest {
+                    let unit = model.content?.course.place(lesson.id)?.unit.title ?? "the unit"
+                    Label {
+                        Text(Path.testPassed(score)
+                             ? "Passed. Every lesson of \(unit) now counts as done, and its words are in your flashcards as words you know, a few coming back each day for the next three weeks."
+                             : "\(Int((Path.testPass * 100).rounded()))% passes. The unit's lessons are waiting, and the test is here whenever you want another go.")
+                    } icon: {
+                        Image(systemName: Path.testPassed(score) ? "checkmark.seal.fill" : "arrow.uturn.backward.circle")
+                            .foregroundStyle(Path.testPassed(score) ? Palette.correct : Palette.inkMuted)
+                    }
+                    .font(.prose(.body))
+                    .foregroundStyle(Palette.ink2)
+                }
                 if isDaily {
                     let streak = model.dailyStreak
                     Text(streak > 1 ? "\(streak) days in a row. A new line tomorrow." : "A new line tomorrow.")

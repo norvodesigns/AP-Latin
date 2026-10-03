@@ -128,10 +128,10 @@ struct TodayView: View {
     /// For a student in the course: lessons finished, and the unit in hand.
     private var courseFigure: some View {
         let done = model.courseDone
-        let total = library?.course.lessons.count ?? 0
+        let grammar = model.grammarProgress
         let next = model.nextCourseLesson
         return VStack(alignment: .leading, spacing: 8) {
-            Figure(value: "\(done.count)", caption: "of \(total) lessons finished", tint: Palette.rubric)
+            Figure(value: "\(grammar.done)", caption: "of \(grammar.total) lessons finished", tint: Palette.rubric)
             if let next {
                 let pct = Course.unitProgress(next.unit, done: done)
                 ProgressView(value: pct)
@@ -297,6 +297,17 @@ private struct PickUpPanel: View {
                             title: model.courseDone.isEmpty ? "Start the course" : "Continue the course",
                             detail: "\(lesson.level.title) \(lesson.unit.n).\(lesson.number) · \(RichText.plain(lesson.lesson.title))",
                             systemImage: "graduationcap", action: .lesson(lesson.id)))
+        }
+        // The vocabulary track: the next words, or a unit test the level
+        // check thinks will skip a unit.
+        if let words = model.nextVocabLesson {
+            out.append(Item(id: "words",
+                            title: words.lesson.isTest ? "Take the \(words.unit.title) test" : "Learn new words",
+                            detail: words.lesson.isTest
+                                ? "You probably know these. Pass to skip the unit"
+                                : "Verba · \(RichText.plain(words.lesson.title)) · \(words.lesson.words.count) words",
+                            systemImage: words.lesson.isTest ? "checkmark.seal" : "character.book.closed",
+                            action: .lesson(words.lesson.id)))
         }
         if let passage = model.lastOpenedPassage {
             out.append(Item(id: "read", title: "Continue reading", detail: passage.citation,

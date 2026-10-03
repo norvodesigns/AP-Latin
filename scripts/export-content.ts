@@ -46,7 +46,7 @@ import {
 import { sightPassages, sightQuestions, SIGHT_AUTHORS } from '../src/data/sight';
 import { translationDrills } from '../src/data/translation';
 import { scansionLines } from '../src/data/scansion';
-import { COURSE, PLACEMENT } from '../src/data/curriculum';
+import { COURSE, PLACEMENT, VOCAB_PLACEMENT } from '../src/data/curriculum';
 import { PARADIGMS } from '../src/data/forms';
 import { SENTENTIAE } from '../src/data/daily';
 import { tokenize, lookup, disambiguateInContext } from '../src/lib/latin';
@@ -113,7 +113,7 @@ const files: Record<string, unknown> = {
   'sight.json': { passages: sightPassages, questions: sightQuestions, authors: SIGHT_AUTHORS },
   'translation.json': translationDrills,
   'scansion.json': scansionLines,
-  'curriculum.json': { levels: COURSE, placement: PLACEMENT },
+  'curriculum.json': { levels: COURSE, placement: PLACEMENT, vocabPlacement: VOCAB_PLACEMENT },
   'forms.json': { paradigms: PARADIGMS },
   'daily.json': { sententiae: SENTENTIAE },
   'meta.json': {

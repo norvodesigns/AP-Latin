@@ -31,6 +31,7 @@ import { nearMiss, otherForms, sentenceWords } from '../src/lib/sentences';
 import { ALL_LESSONS } from '../src/data/curriculum';
 import { COURSE_SHAPE, LAUREL_SPECS, laurels, nextLaurel } from '../src/lib/laurels';
 import { weeklyRecap } from '../src/lib/recap';
+import { addDays, knownCard, knownVocabUnits, lessonKnown, nextWords, testOut, KNOWN_INTERVAL, type PathLesson } from '../src/lib/path';
 import type { VocabEntry } from '../src/data/types';
 
 /** Every "now" the real code sees while this script runs. (The imports above
@@ -446,6 +447,57 @@ function recapCases() {
 const recapFixture = { cases: recapCases() };
 
 /* ------------------------------------------------------------------ */
+/* The adaptive path                                                   */
+/* ------------------------------------------------------------------ */
+
+// Two small units of the vocabulary track, each two lessons and a test.
+function pathFixture() {
+  const L = (id: string, unitId: string, vocabIds: string[], test = false): PathLesson => ({ id, unitId, vocabIds, test });
+  const lessons: PathLesson[] = [
+    L('v-1-1', 'v-1', ['a', 'b', 'c']),
+    L('v-1-2', 'v-1', ['d', 'e']),
+    L('v-1-3', 'v-1', [], true),
+    L('v-2-1', 'v-2', ['f', 'g']),
+    L('v-2-2', 'v-2', ['h']),
+    L('v-2-3', 'v-2', [], true),
+  ];
+  const card = (interval: number) => ({ interval });
+  const known = KNOWN_INTERVAL;
+  const nextCases = [
+    { name: 'fresh', done: {}, vocab: {}, knownUnits: [] },
+    { name: 'first lesson done', done: { 'v-1-1': true }, vocab: {}, knownUnits: [] },
+    { name: 'first lesson known from the deck', done: {}, vocab: { a: card(known), b: card(known + 5), c: card(known) }, knownUnits: [] },
+    { name: 'one word not yet known', done: {}, vocab: { a: card(known), b: card(known - 1), c: card(known) }, knownUnits: [] },
+    { name: 'unit one done, test skipped', done: { 'v-1-1': true, 'v-1-2': true }, vocab: {}, knownUnits: [] },
+    { name: 'unit one probably known', done: {}, vocab: {}, knownUnits: ['v-1'] },
+    { name: 'probably known, test taken', done: { 'v-1-3': true }, vocab: {}, knownUnits: ['v-1'] },
+    { name: 'second unit probably known', done: { 'v-1-1': true, 'v-1-2': true }, vocab: {}, knownUnits: ['v-2'] },
+    { name: 'everything done', done: Object.fromEntries(lessons.filter((l) => !l.test).map((l) => [l.id, true])), vocab: {}, knownUnits: [] },
+  ].map((c) => ({ ...c, expected: nextWords(lessons, c.done, c.vocab, c.knownUnits)?.id ?? null }));
+  const knownCases = [
+    { vocabIds: [], vocab: {} },
+    { vocabIds: ['a'], vocab: { a: card(known) } },
+    { vocabIds: ['a', 'b'], vocab: { a: card(known), b: card(3) } },
+    { vocabIds: ['a', 'b'], vocab: { a: card(known) } },
+  ].map((c) => ({ ...c, expected: lessonKnown(c.vocabIds, c.vocab) }));
+  const unit1 = lessons.filter((l) => l.unitId === 'v-1');
+  const testOutCases = [
+    { done: {}, vocab: {} },
+    { done: { 'v-1-1': true }, vocab: { b: {}, d: {} } },
+  ].map((c) => ({ ...c, expected: testOut(unit1, c.done, c.vocab) }));
+  const dayCases = [
+    ['2026-10-15', 1], ['2026-10-31', 1], ['2026-12-31', 1], ['2028-02-28', 1], ['2027-02-28', 1], ['2026-03-01', -1], ['2026-10-15', 21],
+  ].map(([iso, n]) => ({ iso, n, expected: addDays(iso as string, n as number) }));
+  const cardCases = [0, 1, 20, 21, 45].map((i) => ({ index: i, today: '2026-10-15', expected: knownCard(`w${i}`, i, '2026-10-15') }));
+  const probeCases = [
+    [],
+    [{ unit: 'v-1', right: true }, { unit: 'v-1', right: true }, { unit: 'v-2', right: true }, { unit: 'v-2', right: false }],
+    [{ unit: 'v-2', right: true }, { unit: 'v-1', right: false }, { unit: 'v-2', right: true }],
+  ].map((answers) => ({ answers, expected: knownVocabUnits(answers) }));
+  return { knownInterval: known, lessons, nextCases, knownCases, testOutCases, dayCases, cardCases, probeCases };
+}
+
+/* ------------------------------------------------------------------ */
 /* Write, or verify                                                    */
 /* ------------------------------------------------------------------ */
 
@@ -459,6 +511,7 @@ const rendered: Record<string, string> = {
   'sentences.json': JSON.stringify(sentencesFixture) + '\n',
   'laurels.json': JSON.stringify(laurelsFixture) + '\n',
   'recap.json': JSON.stringify(recapFixture) + '\n',
+  'path.json': JSON.stringify(pathFixture(), null, 1) + '\n',
 };
 
 if (check) {

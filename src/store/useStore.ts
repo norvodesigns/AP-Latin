@@ -3,6 +3,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage, subscribeWithSelector } from 'zustand/middleware';
 import type { SkillCategory, QuestionType, UnitId } from '@/data/types';
+import { knownCard, testOut, type PathLesson } from '@/lib/path';
 import { bumpActivityStats } from '@/lib/supabase/sync';
 
 export const STORE_VERSION = 1;
@@ -236,6 +237,9 @@ export interface LearnerProfile {
   /** The lesson they chose or the placement check suggested, if any. */
   startLessonId: string | null;
   onboardedAt: string;
+  /** Vocabulary units (e.g. "verba-2") the level check found probably known,
+   *  offered as unit tests first (src/lib/path.ts). */
+  knownVocabUnits?: string[];
 }
 
 /**
@@ -408,6 +412,10 @@ export interface StoreState {
   /** Records a finished lesson: its score (0–1), and the AP-list words it
    *  taught, which join the flashcard deck. Counts as a study day. */
   completeLesson: (lessonId: string, score: number, vocabIds: string[]) => void;
+  /** A passed unit test (src/lib/path.ts `testOut`): the unit's other lessons
+   *  count as done (with no attempts of their own), and its words not yet in
+   *  the deck join it as known, due over the next three weeks. */
+  passUnitTest: (unitLessons: PathLesson[], score: number) => void;
   setLearner: (profile: LearnerProfile | null) => void;
   /** Records the day's Sententia (0–1). Counts as a study day. */
   completeDaily: (day: string, id: string, score: number) => void;
@@ -857,6 +865,21 @@ export const useStore = create<StoreState>()(
             vocab,
             studyDays: s.studyDays.includes(d) ? s.studyDays : [...s.studyDays, d].slice(-800),
           };
+        }),
+
+      passUnitTest: (unitLessons, score) =>
+        set((s) => {
+          const now = new Date().toISOString();
+          const d = today();
+          const { lessonIds, vocabIds } = testOut(unitLessons, s.lessons, s.vocab);
+          const best = Math.max(0, Math.min(1, score));
+          const lessons = { ...s.lessons };
+          for (const id of lessonIds) lessons[id] = { completedAt: now, lastAt: now, best, attempts: 0 };
+          const vocab = { ...s.vocab };
+          vocabIds.forEach((id, i) => {
+            vocab[id] = knownCard(id, i, d);
+          });
+          return { lessons, vocab };
         }),
 
       setLearner: (profile) => set({ learner: profile }),

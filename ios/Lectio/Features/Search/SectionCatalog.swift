@@ -50,7 +50,7 @@ struct SectionEntry: Identifiable {
     static let all: [SectionEntry] = [
         SectionEntry(id: "today", title: "Today", short: "Today", blurb: "Countdown, progress, what to study next",
                      systemImage: "sun.horizon", group: .study, action: .tab(.today)),
-        SectionEntry(id: "learn", title: "Course", short: "Course", blurb: "Latin from the first word: short lessons, in order, up to AP",
+        SectionEntry(id: "learn", title: "Course", short: "Course", blurb: "Grammar from the first word to AP, and the AP word list by letter, adapted to what you know",
                      systemImage: "graduationcap", group: .study, action: .tab(.learn)),
         SectionEntry(id: "daily", title: "Sententia of the day", short: "Sententia", blurb: "One famous line of Latin a day, and three quick questions on it",
                      systemImage: "text.quote", group: .study, action: .daily),

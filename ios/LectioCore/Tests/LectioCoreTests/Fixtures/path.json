@@ -1,0 +1,394 @@
+{
+ "knownInterval": 21,
+ "lessons": [
+  {
+   "id": "v-1-1",
+   "unitId": "v-1",
+   "vocabIds": [
+    "a",
+    "b",
+    "c"
+   ],
+   "test": false
+  },
+  {
+   "id": "v-1-2",
+   "unitId": "v-1",
+   "vocabIds": [
+    "d",
+    "e"
+   ],
+   "test": false
+  },
+  {
+   "id": "v-1-3",
+   "unitId": "v-1",
+   "vocabIds": [],
+   "test": true
+  },
+  {
+   "id": "v-2-1",
+   "unitId": "v-2",
+   "vocabIds": [
+    "f",
+    "g"
+   ],
+   "test": false
+  },
+  {
+   "id": "v-2-2",
+   "unitId": "v-2",
+   "vocabIds": [
+    "h"
+   ],
+   "test": false
+  },
+  {
+   "id": "v-2-3",
+   "unitId": "v-2",
+   "vocabIds": [],
+   "test": true
+  }
+ ],
+ "nextCases": [
+  {
+   "name": "fresh",
+   "done": {},
+   "vocab": {},
+   "knownUnits": [],
+   "expected": "v-1-1"
+  },
+  {
+   "name": "first lesson done",
+   "done": {
+    "v-1-1": true
+   },
+   "vocab": {},
+   "knownUnits": [],
+   "expected": "v-1-2"
+  },
+  {
+   "name": "first lesson known from the deck",
+   "done": {},
+   "vocab": {
+    "a": {
+     "interval": 21
+    },
+    "b": {
+     "interval": 26
+    },
+    "c": {
+     "interval": 21
+    }
+   },
+   "knownUnits": [],
+   "expected": "v-1-2"
+  },
+  {
+   "name": "one word not yet known",
+   "done": {},
+   "vocab": {
+    "a": {
+     "interval": 21
+    },
+    "b": {
+     "interval": 20
+    },
+    "c": {
+     "interval": 21
+    }
+   },
+   "knownUnits": [],
+   "expected": "v-1-1"
+  },
+  {
+   "name": "unit one done, test skipped",
+   "done": {
+    "v-1-1": true,
+    "v-1-2": true
+   },
+   "vocab": {},
+   "knownUnits": [],
+   "expected": "v-2-1"
+  },
+  {
+   "name": "unit one probably known",
+   "done": {},
+   "vocab": {},
+   "knownUnits": [
+    "v-1"
+   ],
+   "expected": "v-1-3"
+  },
+  {
+   "name": "probably known, test taken",
+   "done": {
+    "v-1-3": true
+   },
+   "vocab": {},
+   "knownUnits": [
+    "v-1"
+   ],
+   "expected": "v-1-1"
+  },
+  {
+   "name": "second unit probably known",
+   "done": {
+    "v-1-1": true,
+    "v-1-2": true
+   },
+   "vocab": {},
+   "knownUnits": [
+    "v-2"
+   ],
+   "expected": "v-2-3"
+  },
+  {
+   "name": "everything done",
+   "done": {
+    "v-1-1": true,
+    "v-1-2": true,
+    "v-2-1": true,
+    "v-2-2": true
+   },
+   "vocab": {},
+   "knownUnits": [],
+   "expected": null
+  }
+ ],
+ "knownCases": [
+  {
+   "vocabIds": [],
+   "vocab": {},
+   "expected": false
+  },
+  {
+   "vocabIds": [
+    "a"
+   ],
+   "vocab": {
+    "a": {
+     "interval": 21
+    }
+   },
+   "expected": true
+  },
+  {
+   "vocabIds": [
+    "a",
+    "b"
+   ],
+   "vocab": {
+    "a": {
+     "interval": 21
+    },
+    "b": {
+     "interval": 3
+    }
+   },
+   "expected": false
+  },
+  {
+   "vocabIds": [
+    "a",
+    "b"
+   ],
+   "vocab": {
+    "a": {
+     "interval": 21
+    }
+   },
+   "expected": false
+  }
+ ],
+ "testOutCases": [
+  {
+   "done": {},
+   "vocab": {},
+   "expected": {
+    "lessonIds": [
+     "v-1-1",
+     "v-1-2"
+    ],
+    "vocabIds": [
+     "a",
+     "b",
+     "c",
+     "d",
+     "e"
+    ]
+   }
+  },
+  {
+   "done": {
+    "v-1-1": true
+   },
+   "vocab": {
+    "b": {},
+    "d": {}
+   },
+   "expected": {
+    "lessonIds": [
+     "v-1-2"
+    ],
+    "vocabIds": [
+     "a",
+     "c",
+     "e"
+    ]
+   }
+  }
+ ],
+ "dayCases": [
+  {
+   "iso": "2026-10-15",
+   "n": 1,
+   "expected": "2026-10-16"
+  },
+  {
+   "iso": "2026-10-31",
+   "n": 1,
+   "expected": "2026-11-01"
+  },
+  {
+   "iso": "2026-12-31",
+   "n": 1,
+   "expected": "2027-01-01"
+  },
+  {
+   "iso": "2028-02-28",
+   "n": 1,
+   "expected": "2028-02-29"
+  },
+  {
+   "iso": "2027-02-28",
+   "n": 1,
+   "expected": "2027-03-01"
+  },
+  {
+   "iso": "2026-03-01",
+   "n": -1,
+   "expected": "2026-02-28"
+  },
+  {
+   "iso": "2026-10-15",
+   "n": 21,
+   "expected": "2026-11-05"
+  }
+ ],
+ "cardCases": [
+  {
+   "index": 0,
+   "today": "2026-10-15",
+   "expected": {
+    "id": "w0",
+    "ef": 2.5,
+    "interval": 10,
+    "repetitions": 2,
+    "due": "2026-10-16",
+    "lapses": 0,
+    "reviews": 0
+   }
+  },
+  {
+   "index": 1,
+   "today": "2026-10-15",
+   "expected": {
+    "id": "w1",
+    "ef": 2.5,
+    "interval": 10,
+    "repetitions": 2,
+    "due": "2026-10-17",
+    "lapses": 0,
+    "reviews": 0
+   }
+  },
+  {
+   "index": 20,
+   "today": "2026-10-15",
+   "expected": {
+    "id": "w20",
+    "ef": 2.5,
+    "interval": 10,
+    "repetitions": 2,
+    "due": "2026-11-05",
+    "lapses": 0,
+    "reviews": 0
+   }
+  },
+  {
+   "index": 21,
+   "today": "2026-10-15",
+   "expected": {
+    "id": "w21",
+    "ef": 2.5,
+    "interval": 10,
+    "repetitions": 2,
+    "due": "2026-10-16",
+    "lapses": 0,
+    "reviews": 0
+   }
+  },
+  {
+   "index": 45,
+   "today": "2026-10-15",
+   "expected": {
+    "id": "w45",
+    "ef": 2.5,
+    "interval": 10,
+    "repetitions": 2,
+    "due": "2026-10-19",
+    "lapses": 0,
+    "reviews": 0
+   }
+  }
+ ],
+ "probeCases": [
+  {
+   "answers": [],
+   "expected": []
+  },
+  {
+   "answers": [
+    {
+     "unit": "v-1",
+     "right": true
+    },
+    {
+     "unit": "v-1",
+     "right": true
+    },
+    {
+     "unit": "v-2",
+     "right": true
+    },
+    {
+     "unit": "v-2",
+     "right": false
+    }
+   ],
+   "expected": [
+    "v-1"
+   ]
+  },
+  {
+   "answers": [
+    {
+     "unit": "v-2",
+     "right": true
+    },
+    {
+     "unit": "v-1",
+     "right": false
+    },
+    {
+     "unit": "v-2",
+     "right": true
+    }
+   ],
+   "expected": [
+    "v-2"
+   ]
+  }
+ ]
+}

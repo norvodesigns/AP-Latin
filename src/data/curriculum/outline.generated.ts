@@ -1441,6 +1441,1901 @@ export const OUTLINE: OutlineLevel[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "verba",
+    "track": "vocabulary",
+    "numeral": "A–V",
+    "title": "Verba",
+    "subtitle": "The AP word list",
+    "blurb": "Every word on the AP list, by letter: seven units, lessons of about twelve words, and a test at the end of each unit that lets you skip what you already know.",
+    "units": [
+      {
+        "id": "verba-1",
+        "n": 1,
+        "title": "A, B and C",
+        "blurb": "209 words from the AP list, *a* to *custos*, in 18 lessons of about twelve, then a unit test. Know them already? Take the test first.",
+        "lessons": [
+          {
+            "id": "verba-1-1",
+            "title": "a to addo",
+            "summary": "Twelve words: a, abeo, absum, accedo…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "a",
+              "abeo",
+              "absum",
+              "accedo",
+              "accendo",
+              "accido",
+              "accipio",
+              "accuso",
+              "acer",
+              "acies",
+              "ad",
+              "addo"
+            ]
+          },
+          {
+            "id": "verba-1-2",
+            "title": "adeo to aequus",
+            "summary": "Twelve words: adeo, adhuc, adsum, adsurgo…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "adeo",
+              "adhuc",
+              "adsum",
+              "adsurgo",
+              "adversus",
+              "aedificium",
+              "aedifico",
+              "aeger",
+              "aeneas",
+              "aequo",
+              "aequor",
+              "aequus"
+            ]
+          },
+          {
+            "id": "verba-1-3",
+            "title": "aestas to alienus",
+            "summary": "Twelve words: aestas, aetas, aether, affirmo…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "aestas",
+              "aetas",
+              "aether",
+              "affirmo",
+              "ager",
+              "agmen",
+              "ago",
+              "agricola",
+              "aio",
+              "albus",
+              "alexandrinus",
+              "alienus"
+            ]
+          },
+          {
+            "id": "verba-1-4",
+            "title": "aliqui to amo",
+            "summary": "Twelve words: aliqui, aliquis, alius, alter…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "aliqui",
+              "aliquis",
+              "alius",
+              "alter",
+              "altum",
+              "altus",
+              "ambulo",
+              "amicitia",
+              "amicus",
+              "amitto",
+              "amnis",
+              "amo"
+            ]
+          },
+          {
+            "id": "verba-1-5",
+            "title": "amor to antiquus",
+            "summary": "Twelve words: amor, amplector, an, ancilla…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "amor",
+              "amplector",
+              "an",
+              "ancilla",
+              "angustus",
+              "anima",
+              "animal",
+              "animus",
+              "annus",
+              "ante",
+              "antea",
+              "antiquus"
+            ]
+          },
+          {
+            "id": "verba-1-6",
+            "title": "anxius to arcus",
+            "summary": "Twelve words: anxius, aperio, appareo, appello…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "anxius",
+              "aperio",
+              "appareo",
+              "appello",
+              "appia",
+              "appropinquo",
+              "apud",
+              "aqua",
+              "ara",
+              "arbor",
+              "architectus",
+              "arcus"
+            ]
+          },
+          {
+            "id": "verba-1-7",
+            "title": "ardens to ater",
+            "summary": "Twelve words: ardens, ardeo, area, arena…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "ardens",
+              "ardeo",
+              "area",
+              "arena",
+              "arma",
+              "ars",
+              "arvum",
+              "arx",
+              "ascendo",
+              "aspicio",
+              "at",
+              "ater"
+            ]
+          },
+          {
+            "id": "verba-1-8",
+            "title": "Athenae to aureus",
+            "summary": "Twelve words: Athenae, athleta, atque, atrium…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "athenae",
+              "athleta",
+              "atque",
+              "atrium",
+              "attonitus",
+              "audacia",
+              "audax",
+              "audeo",
+              "audio",
+              "aura",
+              "aurelius",
+              "aureus"
+            ]
+          },
+          {
+            "id": "verba-1-9",
+            "title": "auris to bibo",
+            "summary": "Twelve words: auris, aurum, aut, autem…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "auris",
+              "aurum",
+              "aut",
+              "autem",
+              "auxilium",
+              "avunculus",
+              "beatus",
+              "bellum",
+              "bene",
+              "beneficium",
+              "benignus",
+              "bibo"
+            ]
+          },
+          {
+            "id": "verba-1-10",
+            "title": "bonus to cano",
+            "summary": "Twelve words: bonus, brevis, cado, caedes…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "bonus",
+              "brevis",
+              "cado",
+              "caedes",
+              "caelius",
+              "caelum",
+              "caligo",
+              "camilla",
+              "campus",
+              "candidus",
+              "canis",
+              "cano"
+            ]
+          },
+          {
+            "id": "verba-1-11",
+            "title": "capillus to causa",
+            "summary": "Twelve words: capillus, capio, caput, carmen…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "capillus",
+              "capio",
+              "caput",
+              "carmen",
+              "carthago",
+              "carus",
+              "castra",
+              "castrum",
+              "casus",
+              "catena",
+              "caterva",
+              "causa"
+            ]
+          },
+          {
+            "id": "verba-1-12",
+            "title": "caveo to ceterus",
+            "summary": "Eleven words: caveo, cedo, celebro, celer…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "caveo",
+              "cedo",
+              "celebro",
+              "celer",
+              "celeritas",
+              "celo",
+              "cena",
+              "ceno",
+              "certamen",
+              "certus",
+              "ceterus"
+            ]
+          },
+          {
+            "id": "verba-1-13",
+            "title": "cibus to classis",
+            "summary": "Eleven words: cibus, cingo, cinis, circum…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "cibus",
+              "cingo",
+              "cinis",
+              "circum",
+              "civis",
+              "civitas",
+              "clam",
+              "clamo",
+              "clamor",
+              "clarus",
+              "classis"
+            ]
+          },
+          {
+            "id": "verba-1-14",
+            "title": "Claudia to committo",
+            "summary": "Eleven words: Claudia, claudo, cliens, clipeus…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "claudia",
+              "claudo",
+              "cliens",
+              "clipeus",
+              "coepio",
+              "cognosco",
+              "cogo",
+              "colo",
+              "coma",
+              "comes",
+              "committo"
+            ]
+          },
+          {
+            "id": "verba-1-15",
+            "title": "commodus to consul",
+            "summary": "Eleven words: commodus, commoveo, comparo, compono…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "commodus",
+              "commoveo",
+              "comparo",
+              "compono",
+              "condo",
+              "coniunx",
+              "consido",
+              "consilium",
+              "conspicio",
+              "constituo",
+              "consul"
+            ]
+          },
+          {
+            "id": "verba-1-16",
+            "title": "consulo to corpus",
+            "summary": "Eleven words: consulo, consumo, contendo, contingo…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "consulo",
+              "consumo",
+              "contendo",
+              "contingo",
+              "contra",
+              "conubium",
+              "copia",
+              "coquo",
+              "cornelia",
+              "cornu",
+              "corpus"
+            ]
+          },
+          {
+            "id": "verba-1-17",
+            "title": "corripio to cunctor",
+            "summary": "Eleven words: corripio, cotidie, cras, credo…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "corripio",
+              "cotidie",
+              "cras",
+              "credo",
+              "cresco",
+              "crimen",
+              "crudelis",
+              "cubiculum",
+              "culina",
+              "cum",
+              "cunctor"
+            ]
+          },
+          {
+            "id": "verba-1-18",
+            "title": "cunctus to custos",
+            "summary": "Eleven words: cunctus, cupiditas, cupio, cur…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "cunctus",
+              "cupiditas",
+              "cupio",
+              "cur",
+              "cura",
+              "curo",
+              "curro",
+              "currus",
+              "cursus",
+              "custodio",
+              "custos"
+            ]
+          },
+          {
+            "id": "verba-1-19",
+            "title": "Unit test: A, B and C",
+            "summary": "Twenty words from the whole unit. Pass it to skip what you already know.",
+            "minutes": 7,
+            "reviewable": true,
+            "test": true,
+            "vocabIds": []
+          }
+        ]
+      },
+      {
+        "id": "verba-2",
+        "n": 2,
+        "title": "D, E and F",
+        "blurb": "128 words from the AP list, *Danai* to *futurus*, in 11 lessons of about twelve, then a unit test. Know them already? Take the test first.",
+        "lessons": [
+          {
+            "id": "verba-2-1",
+            "title": "Danai to denique",
+            "summary": "Twelve words: Danai, de, dea, debeo…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "danai",
+              "de",
+              "dea",
+              "debeo",
+              "decius",
+              "defendo",
+              "defessus",
+              "deindeordein",
+              "delecto",
+              "deleo",
+              "demonstro",
+              "denique"
+            ]
+          },
+          {
+            "id": "verba-2-2",
+            "title": "densus to Dido",
+            "summary": "Twelve words: densus, descendo, desero, desum…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "densus",
+              "descendo",
+              "desero",
+              "desum",
+              "detineo",
+              "deus",
+              "devoro",
+              "dexter",
+              "dextra",
+              "diana",
+              "dico",
+              "dido"
+            ]
+          },
+          {
+            "id": "verba-2-3",
+            "title": "dies to diva",
+            "summary": "Twelve words: dies, difficilis, digitus, dignus…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "dies",
+              "difficilis",
+              "digitus",
+              "dignus",
+              "diligens",
+              "diligentia",
+              "discedo",
+              "discipulus",
+              "disco",
+              "dissimilis",
+              "diu",
+              "diva"
+            ]
+          },
+          {
+            "id": "verba-2-4",
+            "title": "dives to dubius",
+            "summary": "Twelve words: dives, divus, do, doceo…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "dives",
+              "divus",
+              "do",
+              "doceo",
+              "doleo",
+              "dolor",
+              "domina",
+              "dominus",
+              "domus",
+              "donum",
+              "dormio",
+              "dubius"
+            ]
+          },
+          {
+            "id": "verba-2-5",
+            "title": "duco to enim",
+            "summary": "Twelve words: duco, dulcis, dum, duo…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "duco",
+              "dulcis",
+              "dum",
+              "duo",
+              "durus",
+              "dux",
+              "ecce",
+              "effundo",
+              "ego",
+              "egredior",
+              "emo",
+              "enim"
+            ]
+          },
+          {
+            "id": "verba-2-6",
+            "title": "eo to excipio",
+            "summary": "Twelve words: eo, epistula, eques, equidem…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "eo",
+              "epistula",
+              "eques",
+              "equidem",
+              "equus",
+              "ergo",
+              "eripio",
+              "erro",
+              "et",
+              "etiam",
+              "ex",
+              "excipio"
+            ]
+          },
+          {
+            "id": "verba-2-7",
+            "title": "excito to fabula",
+            "summary": "Twelve words: excito, exemplum, exerceo, exercitus…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "excito",
+              "exemplum",
+              "exerceo",
+              "exercitus",
+              "exigo",
+              "exitus",
+              "explico",
+              "exspectoorexpecto",
+              "exstinguoorextinguo",
+              "extra",
+              "extremus",
+              "fabula"
+            ]
+          },
+          {
+            "id": "verba-2-8",
+            "title": "facies to fero",
+            "summary": "Eleven words: facies, facilis, facio, fama…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "facies",
+              "facilis",
+              "facio",
+              "fama",
+              "familia",
+              "fatalis",
+              "fatum",
+              "faveo",
+              "felix",
+              "femina",
+              "fero"
+            ]
+          },
+          {
+            "id": "verba-2-9",
+            "title": "ferox to fio",
+            "summary": "Eleven words: ferox, ferrum, ferus, festino…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "ferox",
+              "ferrum",
+              "ferus",
+              "festino",
+              "fides",
+              "figura",
+              "filia",
+              "filius",
+              "fingo",
+              "finis",
+              "fio"
+            ]
+          },
+          {
+            "id": "verba-2-10",
+            "title": "flamma to fortasse",
+            "summary": "Eleven words: flamma, flecto, fleo, flos…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "flamma",
+              "flecto",
+              "fleo",
+              "flos",
+              "fluctus",
+              "flumen",
+              "fluo",
+              "for",
+              "forma",
+              "formido",
+              "fortasse"
+            ]
+          },
+          {
+            "id": "verba-2-11",
+            "title": "forte to futurus",
+            "summary": "Eleven words: forte, fortis, fortuna, forum…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "forte",
+              "fortis",
+              "fortuna",
+              "forum",
+              "frango",
+              "frater",
+              "frustra",
+              "fuga",
+              "fugio",
+              "furor",
+              "futurus"
+            ]
+          },
+          {
+            "id": "verba-2-12",
+            "title": "Unit test: D, E and F",
+            "summary": "Twenty words from the whole unit. Pass it to skip what you already know.",
+            "minutes": 7,
+            "reviewable": true,
+            "test": true,
+            "vocabIds": []
+          }
+        ]
+      },
+      {
+        "id": "verba-3",
+        "n": 3,
+        "title": "G, H and I",
+        "blurb": "115 words from the AP list, *Gaius* to *iuxta*, in 10 lessons of about twelve, then a unit test. Know them already? Take the test first.",
+        "lessons": [
+          {
+            "id": "verba-3-1",
+            "title": "Gaius to gradus",
+            "summary": "Twelve words: Gaius, gaudeo, gaudium, geminus…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "gaius",
+              "gaudeo",
+              "gaudium",
+              "geminus",
+              "gemitus",
+              "gens",
+              "genus",
+              "gero",
+              "gladiator",
+              "gladius",
+              "gloria",
+              "gradus"
+            ]
+          },
+          {
+            "id": "verba-3-2",
+            "title": "gratia to herba",
+            "summary": "Twelve words: gratia, gratus, gravis, habeo…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "gratia",
+              "gratus",
+              "gravis",
+              "habeo",
+              "habito",
+              "haereo",
+              "harpocras",
+              "hasta",
+              "haudorhaut",
+              "haurio",
+              "helvia",
+              "herba"
+            ]
+          },
+          {
+            "id": "verba-3-3",
+            "title": "heri to horreo",
+            "summary": "Twelve words: heri, hic, hic, hiems…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "heri",
+              "hic",
+              "hic-adv",
+              "hiems",
+              "hinc",
+              "historia",
+              "hodie",
+              "homo",
+              "honor",
+              "hora",
+              "horrendus",
+              "horreo"
+            ]
+          },
+          {
+            "id": "verba-3-4",
+            "title": "hortus to ibi",
+            "summary": "Twelve words: hortus, hospes, hostis, huc…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "hortus",
+              "hospes",
+              "hostis",
+              "huc",
+              "humanus",
+              "iaceo",
+              "iacio",
+              "iacto",
+              "iam",
+              "ianua",
+              "iatraliptaores",
+              "ibi"
+            ]
+          },
+          {
+            "id": "verba-3-5",
+            "title": "idem to imperium",
+            "summary": "Twelve words: idem, igitur, ignavus, ignis…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "idem",
+              "igitur",
+              "ignavus",
+              "ignis",
+              "ille",
+              "illic",
+              "imago",
+              "immineo",
+              "immortalis",
+              "impello",
+              "imperator",
+              "imperium"
+            ]
+          },
+          {
+            "id": "verba-3-6",
+            "title": "impetus to induo",
+            "summary": "Eleven words: impetus, implico, impono, in…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "impetus",
+              "implico",
+              "impono",
+              "in",
+              "incendium",
+              "incertus",
+              "incido",
+              "incipio",
+              "incito",
+              "inde",
+              "induo"
+            ]
+          },
+          {
+            "id": "verba-3-7",
+            "title": "infans to inspicio",
+            "summary": "Eleven words: infans, infelix, inferus, ingenium…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "infans",
+              "infelix",
+              "inferus",
+              "ingenium",
+              "ingens",
+              "inimicus",
+              "initium",
+              "iniuria",
+              "inquam",
+              "insanus",
+              "inspicio"
+            ]
+          },
+          {
+            "id": "verba-3-8",
+            "title": "insula to intro",
+            "summary": "Eleven words: insula, intellego, intendo, intentus…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "insula",
+              "intellego",
+              "intendo",
+              "intentus",
+              "inter",
+              "interdum",
+              "interea",
+              "interficio",
+              "interim",
+              "intra",
+              "intro"
+            ]
+          },
+          {
+            "id": "verba-3-9",
+            "title": "invenio to iter",
+            "summary": "Eleven words: invenio, invitus, ipse, ira…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "invenio",
+              "invitus",
+              "ipse",
+              "ira",
+              "iratus",
+              "is",
+              "iste",
+              "ita",
+              "italia",
+              "itaque",
+              "iter"
+            ]
+          },
+          {
+            "id": "verba-3-10",
+            "title": "iterum to iuxta",
+            "summary": "Eleven words: iterum, iubeo, iudex, iugum…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "iterum",
+              "iubeo",
+              "iudex",
+              "iugum",
+              "iulia",
+              "iuno",
+              "iuppiter",
+              "ius",
+              "iuvenis",
+              "iuvo",
+              "iuxta"
+            ]
+          },
+          {
+            "id": "verba-3-11",
+            "title": "Unit test: G, H and I",
+            "summary": "Twenty words from the whole unit. Pass it to skip what you already know.",
+            "minutes": 7,
+            "reviewable": true,
+            "test": true,
+            "vocabIds": []
+          }
+        ]
+      },
+      {
+        "id": "verba-4",
+        "n": 4,
+        "title": "L, M and N",
+        "blurb": "151 words from the AP list, *labor* to *nympha*, in 13 lessons of about twelve, then a unit test. Know them already? Take the test first.",
+        "lessons": [
+          {
+            "id": "verba-4-1",
+            "title": "labor to laudo",
+            "summary": "Twelve words: labor, laboro, lacrima, lacrimo…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "labor",
+              "laboro",
+              "lacrima",
+              "lacrimo",
+              "laedo",
+              "laetitia",
+              "laetus",
+              "laocon",
+              "lapis",
+              "latium",
+              "latus",
+              "laudo"
+            ]
+          },
+          {
+            "id": "verba-4-2",
+            "title": "laus to liberi",
+            "summary": "Twelve words: laus, lavo, lectus, legatus…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "laus",
+              "lavo",
+              "lectus",
+              "legatus",
+              "legio",
+              "lego",
+              "lentus",
+              "leo",
+              "levis",
+              "lex",
+              "liber",
+              "liberi"
+            ]
+          },
+          {
+            "id": "verba-4-3",
+            "title": "libero to longe",
+            "summary": "Twelve words: libero, liberta, libertas, libertus…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "libero",
+              "liberta",
+              "libertas",
+              "libertus",
+              "licet",
+              "limen",
+              "lingua",
+              "littera",
+              "litus",
+              "livia",
+              "locusorlocum",
+              "longe"
+            ]
+          },
+          {
+            "id": "verba-4-4",
+            "title": "longus to magister",
+            "summary": "Twelve words: longus, loquor, Lucilius, ludo…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "longus",
+              "loquor",
+              "lucilius",
+              "ludo",
+              "ludus",
+              "lumen",
+              "luna",
+              "lupus",
+              "lux",
+              "machina",
+              "magis",
+              "magister"
+            ]
+          },
+          {
+            "id": "verba-4-5",
+            "title": "magnus to medicus",
+            "summary": "Twelve words: magnus, malo, malum, malus…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "magnus",
+              "malo",
+              "malum",
+              "malus",
+              "mane",
+              "maneo",
+              "manus",
+              "mare",
+              "maritus",
+              "mater",
+              "maximeormaxume",
+              "medicus"
+            ]
+          },
+          {
+            "id": "verba-4-6",
+            "title": "medium to metuo",
+            "summary": "Twelve words: medium, medius, membrum, memini…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "medium",
+              "medius",
+              "membrum",
+              "memini",
+              "memor",
+              "memoria",
+              "mens",
+              "mensa",
+              "mensis",
+              "mercator",
+              "mereo",
+              "metuo"
+            ]
+          },
+          {
+            "id": "verba-4-7",
+            "title": "metus to modus",
+            "summary": "Twelve words: metus, meus, miles, mille…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "metus",
+              "meus",
+              "miles",
+              "mille",
+              "minus",
+              "mirabilis",
+              "misceo",
+              "misenum",
+              "miser",
+              "mitto",
+              "modo",
+              "modus"
+            ]
+          },
+          {
+            "id": "verba-4-8",
+            "title": "moenia to mox",
+            "summary": "Twelve words: moenia, mollis, moneo, mons…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "moenia",
+              "mollis",
+              "moneo",
+              "mons",
+              "monstrum",
+              "mora",
+              "morior",
+              "moror",
+              "mors",
+              "mos",
+              "moveo",
+              "mox"
+            ]
+          },
+          {
+            "id": "verba-4-9",
+            "title": "mulier to narro",
+            "summary": "Eleven words: mulier, multitudo, multum, multus…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "mulier",
+              "multitudo",
+              "multum",
+              "multus",
+              "mundus",
+              "munus",
+              "murus",
+              "musonius",
+              "muto",
+              "namornamque",
+              "narro"
+            ]
+          },
+          {
+            "id": "verba-4-10",
+            "title": "nascor to neglego",
+            "summary": "Eleven words: nascor, natura, natus, nauta…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "nascor",
+              "natura",
+              "natus",
+              "nauta",
+              "navigo",
+              "navis",
+              "ne",
+              "ne-enclitic",
+              "necesse",
+              "necorneque",
+              "neglego"
+            ]
+          },
+          {
+            "id": "verba-4-11",
+            "title": "nego to nolo",
+            "summary": "Eleven words: nego, negotium, nemo, nemus…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "nego",
+              "negotium",
+              "nemo",
+              "nemus",
+              "nescio",
+              "ni",
+              "niger",
+              "nihilornil",
+              "nisi",
+              "nobilis",
+              "nolo"
+            ]
+          },
+          {
+            "id": "verba-4-12",
+            "title": "nomen to nubes",
+            "summary": "Eleven words: nomen, non, nondum, nonne…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "nomen",
+              "non",
+              "nondum",
+              "nonne",
+              "nos",
+              "nosco",
+              "noster",
+              "notus",
+              "novus",
+              "nox",
+              "nubes"
+            ]
+          },
+          {
+            "id": "verba-4-13",
+            "title": "nubila to nympha",
+            "summary": "Eleven words: nubila, nullus, num, numen…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "nubila",
+              "nullus",
+              "num",
+              "numen",
+              "numero",
+              "numerus",
+              "numquam",
+              "nunc",
+              "nuntio",
+              "nuntius",
+              "nympha"
+            ]
+          },
+          {
+            "id": "verba-4-14",
+            "title": "Unit test: L, M and N",
+            "summary": "Twenty words from the whole unit. Pass it to skip what you already know.",
+            "minutes": 7,
+            "reviewable": true,
+            "test": true,
+            "vocabIds": []
+          }
+        ]
+      },
+      {
+        "id": "verba-5",
+        "n": 5,
+        "title": "O, P and Q",
+        "blurb": "147 words from the AP list, *o* to *quotus*, in 13 lessons of about twelve, then a unit test. Know them already? Take the test first.",
+        "lessons": [
+          {
+            "id": "verba-5-1",
+            "title": "o to oppidum",
+            "summary": "Twelve words: o, ob, obscurus, occido…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "o",
+              "ob",
+              "obscurus",
+              "occido",
+              "occupo",
+              "occurro",
+              "oculus",
+              "odium",
+              "olim",
+              "omnis",
+              "operio",
+              "oppidum"
+            ]
+          },
+          {
+            "id": "verba-5-2",
+            "title": "ops to otium",
+            "summary": "Twelve words: ops, opto, opus, ora…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "ops",
+              "opto",
+              "opus",
+              "ora",
+              "oratio",
+              "orator",
+              "orbis",
+              "ordo",
+              "oro",
+              "os",
+              "ostendo",
+              "otium"
+            ]
+          },
+          {
+            "id": "verba-5-3",
+            "title": "paene to parvus",
+            "summary": "Twelve words: paene, Pallas, palma, panis…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "paene",
+              "pallas",
+              "palma",
+              "panis",
+              "par",
+              "parco",
+              "parens",
+              "pariter",
+              "paro",
+              "pars",
+              "parum",
+              "parvus"
+            ]
+          },
+          {
+            "id": "verba-5-4",
+            "title": "pater to pello",
+            "summary": "Twelve words: pater, patior, patria, patrona…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "pater",
+              "patior",
+              "patria",
+              "patrona",
+              "patronus",
+              "paucus",
+              "paulum",
+              "pauper",
+              "pax",
+              "pectus",
+              "pecunia",
+              "pello"
+            ]
+          },
+          {
+            "id": "verba-5-5",
+            "title": "pendeo to pharetra",
+            "summary": "Eleven words: pendeo, per, perdo, pereo…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "pendeo",
+              "per",
+              "perdo",
+              "pereo",
+              "periculosus",
+              "periculumorpericlum",
+              "persuadeo",
+              "pervenio",
+              "pes",
+              "peto",
+              "pharetra"
+            ]
+          },
+          {
+            "id": "verba-5-6",
+            "title": "pictura to pono",
+            "summary": "Eleven words: pictura, placeo, plaudo, plenus…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "pictura",
+              "placeo",
+              "plaudo",
+              "plenus",
+              "plinius",
+              "plus",
+              "poculum",
+              "poena",
+              "poeta",
+              "pompa",
+              "pono"
+            ]
+          },
+          {
+            "id": "verba-5-7",
+            "title": "pons to postquam",
+            "summary": "Eleven words: pons, populus, Porcius, porta…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "pons",
+              "populus",
+              "porcius",
+              "porta",
+              "porto",
+              "portus",
+              "posco",
+              "possum",
+              "post",
+              "postea",
+              "postquamorpostquam"
+            ]
+          },
+          {
+            "id": "verba-5-8",
+            "title": "potens to prior",
+            "summary": "Eleven words: potens, potestas, praemium, praesidium…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "potens",
+              "potestas",
+              "praemium",
+              "praesidium",
+              "praesto",
+              "precor",
+              "premo",
+              "primum",
+              "primus",
+              "princeps",
+              "prior"
+            ]
+          },
+          {
+            "id": "verba-5-9",
+            "title": "prius to prosum",
+            "summary": "Eleven words: prius, priusquam, pro, procul…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "prius",
+              "priusquamorpriusquam",
+              "pro",
+              "procul",
+              "proelium",
+              "proficiscor",
+              "prope",
+              "propero",
+              "propius",
+              "propter",
+              "prosum"
+            ]
+          },
+          {
+            "id": "verba-5-10",
+            "title": "provincia to pumex",
+            "summary": "Eleven words: provincia, proximus, prudens, prudentia…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "provincia",
+              "proximusorproxumus",
+              "prudens",
+              "prudentia",
+              "puella",
+              "puer",
+              "pugna",
+              "pugno",
+              "pulcher",
+              "pulso",
+              "pumex"
+            ]
+          },
+          {
+            "id": "verba-5-11",
+            "title": "punio to quasi",
+            "summary": "Eleven words: punio, puto, qua, quaero…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "punio",
+              "puto",
+              "qua",
+              "quaero",
+              "qualis",
+              "quam",
+              "quamquam",
+              "quamvis",
+              "quando",
+              "quantus",
+              "quasi"
+            ]
+          },
+          {
+            "id": "verba-5-12",
+            "title": "quater to quis",
+            "summary": "Eleven words: quater, qui, quia, quicumque…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "quater",
+              "qui",
+              "quia",
+              "quicumque",
+              "quidam",
+              "quidem",
+              "quidque",
+              "quiesco",
+              "quin",
+              "quippe",
+              "quis"
+            ]
+          },
+          {
+            "id": "verba-5-13",
+            "title": "quisquam to quotus",
+            "summary": "Eleven words: quisquam, quisque, quisquis, quo…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "quisquam",
+              "quisque",
+              "quisquis",
+              "quo",
+              "quod",
+              "quodcumque",
+              "quodquod",
+              "quomodo",
+              "quoque",
+              "quot",
+              "quotus"
+            ]
+          },
+          {
+            "id": "verba-5-14",
+            "title": "Unit test: O, P and Q",
+            "summary": "Twenty words from the whole unit. Pass it to skip what you already know.",
+            "minutes": 7,
+            "reviewable": true,
+            "test": true,
+            "vocabIds": []
+          }
+        ]
+      },
+      {
+        "id": "verba-6",
+        "n": 6,
+        "title": "R and S",
+        "blurb": "119 words from the AP list, *rapio* to *suus*, in 10 lessons of about twelve, then a unit test. Know them already? Take the test first.",
+        "lessons": [
+          {
+            "id": "verba-6-1",
+            "title": "rapio to reliquus",
+            "summary": "Twelve words: rapio, ratio, recipio, recito…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "rapio",
+              "ratio",
+              "recipio",
+              "recito",
+              "reddo",
+              "redeo",
+              "refero",
+              "regina",
+              "regnum",
+              "rego",
+              "relinquo",
+              "reliquus"
+            ]
+          },
+          {
+            "id": "verba-6-2",
+            "title": "requiro to rursus",
+            "summary": "Twelve words: requiro, res, resideo, respicio…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "requiro",
+              "res",
+              "resideo",
+              "respicio",
+              "respondeo",
+              "rex",
+              "rideo",
+              "rogo",
+              "roma",
+              "romanus",
+              "rumpo",
+              "rursusorrursum"
+            ]
+          },
+          {
+            "id": "verba-6-3",
+            "title": "rusticus to sapiens",
+            "summary": "Twelve words: rusticus, sacer, sacrificium, saeculum…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "rusticus",
+              "sacer",
+              "sacrificium",
+              "saeculumorsaeclum",
+              "saepe",
+              "saevus",
+              "salio",
+              "salus",
+              "saluto",
+              "sanguis",
+              "sanus",
+              "sapiens"
+            ]
+          },
+          {
+            "id": "verba-6-4",
+            "title": "sapientia to sedes",
+            "summary": "Twelve words: sapientia, satis, saxum, scelestus…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "sapientia",
+              "satisorsat",
+              "saxum",
+              "scelestus",
+              "scelus",
+              "schola",
+              "scientia",
+              "scio",
+              "scribo",
+              "sed",
+              "sedeo",
+              "sedes"
+            ]
+          },
+          {
+            "id": "verba-6-5",
+            "title": "sella to servus",
+            "summary": "Twelve words: sella, semper, senator, senatus…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "sella",
+              "semper",
+              "senator",
+              "senatus",
+              "senex",
+              "sententia",
+              "sentio",
+              "sepulcrum",
+              "sequor",
+              "sermo",
+              "servo",
+              "servus"
+            ]
+          },
+          {
+            "id": "verba-6-6",
+            "title": "severus to sinus",
+            "summary": "Twelve words: severus, si, sic, sidus…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "severus",
+              "si",
+              "sic",
+              "sidus",
+              "significo",
+              "signum",
+              "silva",
+              "similis",
+              "simul",
+              "sine",
+              "sinister",
+              "sinus"
+            ]
+          },
+          {
+            "id": "verba-6-7",
+            "title": "sive to sordidus",
+            "summary": "Twelve words: sive, socius, sol, soleo…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "siveorseu",
+              "socius",
+              "sol",
+              "soleo",
+              "sollicitus",
+              "solus",
+              "solvo",
+              "somnium",
+              "somnus",
+              "sono",
+              "sonus",
+              "sordidus"
+            ]
+          },
+          {
+            "id": "verba-6-8",
+            "title": "soror to statua",
+            "summary": "Twelve words: soror, sors, spatium, spectaculum…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "soror",
+              "sors",
+              "spatium",
+              "spectaculum",
+              "spectator",
+              "specto",
+              "spero",
+              "spes",
+              "spiritus",
+              "spiro",
+              "statim",
+              "statua"
+            ]
+          },
+          {
+            "id": "verba-6-9",
+            "title": "sterno to sum",
+            "summary": "Twelve words: sterno, stilus, sto, stola…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "sterno",
+              "stilus",
+              "sto",
+              "stola",
+              "strideo",
+              "studeo",
+              "studium",
+              "stultus",
+              "sub",
+              "subito",
+              "subsisto",
+              "sum"
+            ]
+          },
+          {
+            "id": "verba-6-10",
+            "title": "summus to suus",
+            "summary": "Eleven words: summus, sumo, super, superbus…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "summus",
+              "sumo",
+              "super",
+              "superbus",
+              "supero",
+              "superus",
+              "supra",
+              "surgo",
+              "suspendo",
+              "sustineo",
+              "suus"
+            ]
+          },
+          {
+            "id": "verba-6-11",
+            "title": "Unit test: R and S",
+            "summary": "Twenty words from the whole unit. Pass it to skip what you already know.",
+            "minutes": 7,
+            "reviewable": true,
+            "test": true,
+            "vocabIds": []
+          }
+        ]
+      },
+      {
+        "id": "verba-7",
+        "n": 7,
+        "title": "T, U and V",
+        "blurb": "123 words from the AP list, *taberna* to *vultus*, in 11 lessons of about twelve, then a unit test. Know them already? Take the test first.",
+        "lessons": [
+          {
+            "id": "verba-7-1",
+            "title": "taberna to tantum modo",
+            "summary": "Twelve words: taberna, tabula, taceo, tacitus…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "taberna",
+              "tabula",
+              "taceo",
+              "tacitus",
+              "talis",
+              "tam",
+              "tamen",
+              "tamquamortanquam",
+              "tandem",
+              "tango",
+              "tantum",
+              "tantummodo"
+            ]
+          },
+          {
+            "id": "verba-7-2",
+            "title": "tantus to tenebrae",
+            "summary": "Twelve words: tantus, tardus, tectum, tego…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "tantus",
+              "tardus",
+              "tectum",
+              "tego",
+              "tellus",
+              "telum",
+              "tempestas",
+              "templum",
+              "tempto",
+              "tempus",
+              "tendo",
+              "tenebrae"
+            ]
+          },
+          {
+            "id": "verba-7-3",
+            "title": "teneo to timor",
+            "summary": "Eleven words: teneo, tener, tergum, terra…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "teneo",
+              "tener",
+              "tergum",
+              "terra",
+              "terreo",
+              "terribilis",
+              "teucri",
+              "theatrum",
+              "timeo",
+              "timidus",
+              "timor"
+            ]
+          },
+          {
+            "id": "verba-7-4",
+            "title": "toga to tremor",
+            "summary": "Eleven words: toga, tollo, torqueo, tot…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "toga",
+              "tollo",
+              "torqueo",
+              "tot",
+              "totus",
+              "trado",
+              "traho",
+              "traianus",
+              "trans",
+              "transeo",
+              "tremor"
+            ]
+          },
+          {
+            "id": "verba-7-5",
+            "title": "tristis to tutus",
+            "summary": "Eleven words: tristis, Troia, Troianus, tu…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "tristis",
+              "troia",
+              "troianus",
+              "tu",
+              "tum",
+              "tumultus",
+              "tunc",
+              "turba",
+              "turnus",
+              "turpis",
+              "tutus"
+            ]
+          },
+          {
+            "id": "verba-7-6",
+            "title": "tuus to unus",
+            "summary": "Eleven words: tuus, ubi, ubique, ullus…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "tuus",
+              "ubi",
+              "ubique",
+              "ullus",
+              "ultimus",
+              "umbra",
+              "umerus",
+              "umquam",
+              "unda",
+              "unde",
+              "unus"
+            ]
+          },
+          {
+            "id": "verba-7-7",
+            "title": "urbs to vehemens",
+            "summary": "Eleven words: urbs, usus, uterque, utor…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "urbs",
+              "usus",
+              "uterque",
+              "utor",
+              "utoruti",
+              "utrumque",
+              "uxor",
+              "vacuus",
+              "valeo",
+              "varius",
+              "vehemens"
+            ]
+          },
+          {
+            "id": "verba-7-8",
+            "title": "vel to vester",
+            "summary": "Eleven words: vel, velut, vendo, venio…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "vel",
+              "velutorveluti",
+              "vendo",
+              "venio",
+              "ventus",
+              "verbum",
+              "vero",
+              "vertex",
+              "verto",
+              "verus",
+              "vester"
+            ]
+          },
+          {
+            "id": "verba-7-9",
+            "title": "vestigium to vinculum",
+            "summary": "Eleven words: vestigium, vestis, vetus, vexo…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "vestigium",
+              "vestis",
+              "vetus",
+              "vexo",
+              "via",
+              "victor",
+              "victoria",
+              "video",
+              "villa",
+              "vinco",
+              "vinculumorvinclum"
+            ]
+          },
+          {
+            "id": "verba-7-10",
+            "title": "vinum to vivus",
+            "summary": "Eleven words: vinum, vir, virgo, virtus…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "vinum",
+              "vir",
+              "virgo",
+              "virtus",
+              "vis",
+              "visito",
+              "vita",
+              "vitium",
+              "vitupero",
+              "vivo",
+              "vivus"
+            ]
+          },
+          {
+            "id": "verba-7-11",
+            "title": "vix to vultus",
+            "summary": "Eleven words: vix, voco, volo, voluptas…",
+            "minutes": 8,
+            "reviewable": true,
+            "vocabIds": [
+              "vix",
+              "voco",
+              "volo",
+              "voluptas",
+              "volvo",
+              "vos",
+              "votum",
+              "vox",
+              "vulnero",
+              "vulnus",
+              "vultus"
+            ]
+          },
+          {
+            "id": "verba-7-12",
+            "title": "Unit test: T, U and V",
+            "summary": "Twenty words from the whole unit. Pass it to skip what you already know.",
+            "minutes": 7,
+            "reviewable": true,
+            "test": true,
+            "vocabIds": []
+          }
+        ]
+      }
+    ]
   }
 ];
 

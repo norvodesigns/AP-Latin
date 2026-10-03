@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useStore } from '@/store/useStore';
+import { testPassed, UNIT_TEST_PASS, type PathLesson } from '@/lib/path';
 import {
   isExercise,
   type BuildStep,
@@ -54,6 +55,8 @@ export interface CourseLesson {
   eyebrow: string;
   /** The lesson after this one, if any. */
   next: { id: string; title: string } | null;
+  /** For a unit test: its unit's lessons, which a pass counts as done. */
+  unitLessons?: PathLesson[];
 }
 
 /**
@@ -65,6 +68,7 @@ export default function LessonPlayer({ course, session }: { course?: CourseLesso
   const lesson = session?.lesson ?? course!.lesson;
   const back = session?.back ?? { href: '/learn', label: 'Course', button: 'Back to the course' };
   const completeLesson = useStore((s) => s.completeLesson);
+  const passUnitTest = useStore((s) => s.passUnitTest);
   const previous = useStore((s) => (session ? undefined : s.lessons[lesson.id]));
 
   const [phase, setPhase] = useState<Phase>('intro');
@@ -101,7 +105,11 @@ export default function LessonPlayer({ course, session }: { course?: CourseLesso
     const s = lessonScore(right, exerciseCount);
     setScore(s);
     if (session) session.onFinish(s);
-    else completeLesson(lesson.id, s, lesson.words.flatMap((w) => (w.vocabId ? [w.vocabId] : [])));
+    else {
+      completeLesson(lesson.id, s, lesson.words.flatMap((w) => (w.vocabId ? [w.vocabId] : [])));
+      // A unit test passed counts its whole unit (src/lib/path.ts).
+      if (lesson.test && course?.unitLessons && testPassed(s)) passUnitTest(course.unitLessons, s);
+    }
     setPhase('done');
     window.scrollTo({ top: 0 });
   }
@@ -294,6 +302,13 @@ function Done({
         {deckWords.length > 0 && <Figure value={String(deckWords.length)} caption={deckWords.length === 1 ? 'word to your deck' : 'words to your deck'} />}
       </div>
       {session?.after}
+      {lesson.test && !session && (
+        <p className="measure mt-7" style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem', color: 'var(--ink2)' }}>
+          {testPassed(score)
+            ? 'Passed. Every lesson of the unit now counts as done, and its words are in your flashcards as words you know, a few coming back each day for the next three weeks.'
+            : `${Math.round(UNIT_TEST_PASS * 100)}% passes. The unit’s lessons are waiting, and the test is here whenever you want another go.`}
+        </p>
+      )}
 
       {deckWords.length > 0 && (
         <p className="measure mt-7" style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem', color: 'var(--ink2)' }}>

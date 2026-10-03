@@ -1,62 +1,196 @@
 import LectioCore
 import SwiftUI
 
-/// The course map — the web's /learn. Levels, units and their lessons, with
-/// where to pick up at the top. A lesson opens over everything, full screen
-/// (see LessonView).
+/// The course: two tracks side by side, the web's /learn.
+///
+/// - **Grammar**, Prīma to Quārta, taken in order from where the level check
+///   (or the student) starts it.
+/// - **Vocabulary**, Verba: every word on the AP list, by letter, in lessons
+///   of about twelve. It adapts: lessons whose words are already known are
+///   passed over, and each unit ends in a test that, passed, skips the unit.
+///
+/// At the top, "Your path": the next lesson of each track, and the level check.
+/// A lesson opens over everything, full screen (see LessonView).
 struct CourseView: View {
     var body: some View {
         SectionStack { CourseMap() }
     }
 }
 
+/// Which track the map shows.
+enum CourseTrack: String, CaseIterable, Identifiable {
+    case grammar, vocabulary
+    var id: Self { self }
+    var title: String { self == .grammar ? "Grammar" : "Vocabulary" }
+}
+
 private struct CourseMap: View {
     @Environment(AppModel.self) private var model
     @Environment(\.library) private var library
+    @AppStorage("courseTrack") private var track: CourseTrack = .grammar
+    /// `-courseTrackOnLaunch vocabulary` (CI screenshots) shows a track for
+    /// this launch only, without changing the one remembered.
+    @State private var forced = CourseTrack(rawValue: UserDefaults.standard.string(forKey: "courseTrackOnLaunch") ?? "")
+    @State private var checking = false
 
     var body: some View {
         let done = model.courseDone
         ScrollView {
-            VStack(alignment: .leading, spacing: 28) {
+            VStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Latin, from the first word")
                         .font(.system(.title, design: .serif))
                         .foregroundStyle(Palette.ink)
-                    Text("Short lessons in order, each teaching a little and asking a lot. The words you learn join your flashcards, and the path leads to the AP syllabus.")
+                    Text("Grammar in short lessons, in order, and the AP word list by letter beside it. The words you learn join your flashcards, and the path leads to the AP syllabus.")
                         .font(.prose(.body))
                         .foregroundStyle(Palette.inkMuted)
                 }
                 .padding(.top, 8)
 
-                if let next = model.nextCourseLesson {
-                    ContinueCard(place: next, first: done.isEmpty)
-                } else if let library, !library.course.lessons.isEmpty {
-                    Text("You have finished every lesson written so far. New ones appear here as they're added.")
-                        .font(.prose(.callout))
-                        .foregroundStyle(Palette.inkMuted)
+                PathPanel(checking: $checking)
+
+                if library?.course.grammarLessons.isEmpty == false {
+                    GlassPanel(title: "Practise") { PracticeRows() }
                 }
 
-                if library?.course.lessons.isEmpty == false { PracticeRows() }
+                Picker("Track", selection: Binding(get: { forced ?? track }, set: { forced = nil; track = $0 })) {
+                    ForEach(CourseTrack.allCases) { Text($0.title).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                .padding(.top, 10)
 
                 if let library {
-                    ForEach(library.course.levels) { level in
-                        LevelSection(level: level, done: done, next: model.nextCourseLesson?.id)
+                    switch forced ?? track {
+                    case .grammar:
+                        ForEach(library.course.grammarLevels) { level in
+                            LevelHeader(level: level)
+                            ForEach(level.units) { unit in
+                                UnitPanel(unit: unit, label: "\(level.title) · Unit \(unit.n)", done: done, next: model.nextCourseLesson?.id)
+                            }
+                        }
+                    case .vocabulary:
+                        if let verba = library.course.vocabLevel {
+                            VerbaHeader(level: verba)
+                            ForEach(verba.units) { unit in
+                                UnitPanel(unit: unit, label: "Unit \(unit.n)", done: done, next: model.nextVocabLesson?.id)
+                            }
+                        } else {
+                            Text("The vocabulary track arrives with the next content update.")
+                                .font(.prose(.callout))
+                                .foregroundStyle(Palette.inkMuted)
+                        }
                     }
                 }
-
-                ComingLevels(written: Set((library?.course.levels ?? []).map(\.numeral)))
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 40)
-            .frame(maxWidth: 720, alignment: .leading)
+            .frame(maxWidth: 760, alignment: .leading)
             .frame(maxWidth: .infinity)
         }
-        .pageBackground()
+        .ambientBackground()
         .navigationTitle("Course")
+        .fullScreenCover(isPresented: $checking) {
+            LevelCheckView()
+                .environment(model)
+                .environment(\.library, library)
+        }
     }
 }
 
-/// The next lesson, large, with its button. Also leads Today for a student in the course.
+/* ------------------------------------------------------------------ */
+/* Your path                                                           */
+/* ------------------------------------------------------------------ */
+
+/// The next lesson of each track, and the level check.
+private struct PathPanel: View {
+    @Environment(AppModel.self) private var model
+    @Binding var checking: Bool
+
+    var body: some View {
+        GlassPanel(title: "Your path") {
+            VStack(spacing: 0) {
+                PathRow(track: .grammar, place: model.nextCourseLesson,
+                        empty: "You have finished every grammar lesson written so far.")
+                Hairline(color: Palette.hair)
+                PathRow(track: .vocabulary, place: model.nextVocabLesson,
+                        empty: "You know every word on the AP list. Your flashcards keep them fresh.")
+            }
+            Button { checking = true } label: {
+                Label(model.progress.learner == nil ? "Find my level" : "Check my level again", systemImage: "scope")
+                    .font(.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 2)
+            }
+            .glassButton()
+        }
+    }
+}
+
+private struct PathRow: View {
+    @Environment(AppModel.self) private var model
+    let track: CourseTrack
+    let place: LessonPlace?
+    let empty: String
+
+    var body: some View {
+        if let place {
+            Button { model.openLesson(place.lesson.id) } label: {
+                HStack(spacing: 14) {
+                    Image(systemName: icon(place))
+                        .font(.title3)
+                        .foregroundStyle(tint)
+                        .frame(width: 44, height: 44)
+                        .background(tint.opacity(0.14), in: .circle)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(track.title).quietLabel()
+                        Text(rich: place.lesson.title)
+                            .font(.system(.headline, design: .serif))
+                            .foregroundStyle(Palette.ink)
+                        Text(detail(place))
+                            .font(.subheadline)
+                            .foregroundStyle(Palette.inkMuted)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 8)
+                    Image(systemName: "play.circle.fill")
+                        .font(.title2)
+                        .foregroundStyle(Palette.rubric)
+                        .accessibilityHidden(true)
+                }
+                .padding(.vertical, 10)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint("Opens the lesson")
+        } else {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(track.title).quietLabel()
+                Text(empty).font(.prose(.callout)).foregroundStyle(Palette.inkMuted)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.vertical, 10)
+        }
+    }
+
+    private var tint: Color { track == .grammar ? Palette.rubric : Palette.woad }
+
+    private func icon(_ place: LessonPlace) -> String {
+        if place.lesson.isTest { return "checkmark.seal" }
+        return track == .grammar ? "text.book.closed" : "character.book.closed"
+    }
+
+    private func detail(_ place: LessonPlace) -> String {
+        if place.lesson.isTest {
+            return "The level check thinks you know these. Pass the test to skip the unit · \(place.lesson.minutes) min"
+        }
+        if place.level.isVocabulary {
+            return "Verba · \(place.unit.title) · \(place.lesson.words.count) words · \(place.lesson.minutes) min"
+        }
+        return "\(place.level.title) · Unit \(place.unit.n) · Lesson \(place.number) · \(place.lesson.minutes) min"
+    }
+}
+
+/// The next lesson, large, with its button. Leads Today for a student in the course.
 struct ContinueCard: View {
     @Environment(AppModel.self) private var model
     let place: LessonPlace
@@ -99,34 +233,29 @@ struct ContinueCard: View {
     }
 }
 
-/// Ways to practise what the course has taught, between the next lesson and
-/// the map: Review (ten exercises from finished lessons, Course.review) when
-/// there is something to review, and the sentence builder (SentenceBuilder).
-/// The web's course page has the same rows.
+/// Ways to practise what the course has taught: Review (ten exercises from
+/// finished lessons, Course.review) when there is something to review, and
+/// the sentence builder (SentenceBuilder). The web's course page has the same rows.
 private struct PracticeRows: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Hairline(color: Palette.rule)
             if model.canReview {
-                row(title: "Review",
-                    body: "Ten exercises from lessons you have finished, weighted toward the ones you found hardest.",
+                row(title: "Review", detail: "Ten exercises from lessons you have finished, weighted toward the ones you found hardest.",
                     button: "Review · about 6 min", systemImage: "arrow.triangle.2.circlepath") { model.openReview() }
                 Hairline(color: Palette.hair)
             }
-            row(title: "Sentence builder",
-                body: "Eight sentences from the course, built from tiles: the Latin from its English, or the English from its Latin.",
+            row(title: "Sentence builder", detail: "Eight sentences from the course, built from tiles: the Latin from its English, or the English from its Latin.",
                 button: "Build · about 5 min", systemImage: "square.stack.3d.up") { model.openSentences() }
-            Hairline(color: Palette.rule)
         }
     }
 
-    private func row(title: String, body: String, button: String, systemImage: String, action: @escaping () -> Void) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title).rubricLabel()
-                Text(body)
+    private func row(title: String, detail: String, button: String, systemImage: String, action: @escaping () -> Void) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title).font(.system(.headline, design: .serif)).foregroundStyle(Palette.ink)
+                Text(detail)
                     .font(.prose(.callout))
                     .foregroundStyle(Palette.ink2)
                     .fixedSize(horizontal: false, vertical: true)
@@ -138,64 +267,133 @@ private struct PracticeRows: View {
             }
             .glassButton()
         }
-        .padding(.vertical, 16)
+        .padding(.vertical, 10)
     }
 }
 
-private struct LevelSection: View {
+/* ------------------------------------------------------------------ */
+/* The map                                                             */
+/* ------------------------------------------------------------------ */
+
+private struct LevelHeader: View {
     let level: CurriculumLevel
-    let done: Set<String>
-    let next: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            HStack(alignment: .firstTextBaseline, spacing: 12) {
-                Text(level.numeral)
-                    .font(.system(size: 40, weight: .regular, design: .serif))
-                    .foregroundStyle(Palette.rubric)
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("\(level.title) · \(Text(level.subtitle).foregroundStyle(Palette.inkMuted))")
-                        .font(.system(.title2, design: .serif))
-                        .foregroundStyle(Palette.ink)
-                    Text(level.blurb)
-                        .font(.prose(.callout))
-                        .foregroundStyle(Palette.ink2)
-                }
-            }
-            ForEach(level.units) { unit in
-                UnitBlock(unit: unit, done: done, next: next)
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            Text(level.numeral)
+                .font(.system(size: 40, weight: .regular, design: .serif))
+                .foregroundStyle(Palette.rubric)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("\(level.title) · \(Text(level.subtitle).foregroundStyle(Palette.inkMuted))")
+                    .font(.system(.title2, design: .serif))
+                    .foregroundStyle(Palette.ink)
+                Text(level.blurb)
+                    .font(.prose(.callout))
+                    .foregroundStyle(Palette.ink2)
             }
         }
+        .padding(.top, 14)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isHeader)
     }
 }
 
-private struct UnitBlock: View {
+/// Verba's heading: what it is, and how much of the list is known.
+private struct VerbaHeader: View {
+    @Environment(AppModel.self) private var model
+    let level: CurriculumLevel
+
+    var body: some View {
+        let words = model.wordsKnown
+        let inDeck = model.vocab.count
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("\(level.title) · \(Text(level.subtitle).foregroundStyle(Palette.inkMuted))")
+                    .font(.system(.title2, design: .serif))
+                    .foregroundStyle(Palette.ink)
+                Text(level.blurb)
+                    .font(.prose(.callout))
+                    .foregroundStyle(Palette.ink2)
+            }
+            .accessibilityAddTraits(.isHeader)
+            FigureRow(spacing: 26) {
+                Figure(value: "\(words.known)", caption: "words known", tint: Palette.woad)
+                Figure(value: "\(inDeck)", caption: "in your deck")
+                Figure(value: "\(words.total)", caption: "on the list")
+            }
+        }
+        .padding(.top, 14)
+    }
+}
+
+/// A unit as a glass panel: its title, progress and, opened, its lessons.
+/// The unit holding the next lesson starts open. A vocabulary unit shows its
+/// test, the quickest way past words already known, even when closed.
+private struct UnitPanel: View {
     @Environment(AppModel.self) private var model
     let unit: CurriculumUnit
+    let label: String
     let done: Set<String>
     let next: String?
+    @State private var expanded: Bool
+
+    init(unit: CurriculumUnit, label: String, done: Set<String>, next: String?) {
+        self.unit = unit
+        self.label = label
+        self.done = done
+        self.next = next
+        _expanded = State(initialValue: unit.lessons.contains { $0.id == next })
+    }
 
     var body: some View {
         let progress = Course.unitProgress(unit, done: done)
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("Unit \(unit.n) · \(unit.title)").rubricLabel()
-                Spacer()
-                Text("\(Int((progress * 100).rounded()))%")
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(progress >= 1 ? Palette.correct : Palette.inkMuted)
+        let test = unit.lessons.first(where: \.isTest)
+        let lessons = unit.lessons.filter { !$0.isTest }
+        GlassPanel {
+            Button {
+                withAnimation(.snappy(duration: 0.3)) { expanded.toggle() }
+            } label: {
+                HStack(alignment: .center, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(label).rubricLabel()
+                        Text(rich: unit.title)
+                            .font(.system(.title3, design: .serif))
+                            .foregroundStyle(Palette.ink)
+                            .multilineTextAlignment(.leading)
+                    }
+                    Spacer(minLength: 8)
+                    Text("\(Int((progress * 100).rounded()))%")
+                        .font(.subheadline.monospacedDigit())
+                        .foregroundStyle(progress >= 1 ? Palette.correct : Palette.inkMuted)
+                    Image(systemName: "chevron.down")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(Palette.inkFaint)
+                        .rotationEffect(.degrees(expanded ? 0 : -90))
+                }
+                .contentShape(Rectangle())
             }
-            Text(rich: unit.blurb)
-                .font(.prose(.subheadline))
-                .foregroundStyle(Palette.inkMuted)
+            .buttonStyle(.plain)
+            .accessibilityValue("\(Int((progress * 100).rounded())) percent done")
+            .accessibilityHint(expanded ? "Hides the lessons" : "Shows the lessons")
+
             ProgressView(value: progress)
                 .tint(progress >= 1 ? Palette.correct : Palette.rubric)
-                .accessibilityLabel("Unit \(unit.n), \(Int(progress * 100)) percent done")
-            VStack(spacing: 0) {
-                ForEach(Array(unit.lessons.enumerated()), id: \.element.id) { i, lesson in
-                    Hairline(color: Palette.hair)
-                    LessonRow(number: i + 1, lesson: lesson, best: model.progress.lessons[lesson.id]?.best, isNext: lesson.id == next) {
-                        model.openLesson(lesson.id)
+                .accessibilityHidden(true)
+
+            if let test { TestRow(test: test, unit: unit) }
+
+            if expanded {
+                Text(rich: unit.blurb)
+                    .font(.prose(.subheadline))
+                    .foregroundStyle(Palette.inkMuted)
+                VStack(spacing: 0) {
+                    ForEach(Array(lessons.enumerated()), id: \.element.id) { i, lesson in
+                        if i > 0 { Hairline(color: Palette.hair) }
+                        LessonRow(number: i + 1, lesson: lesson, record: model.progress.lessons[lesson.id],
+                                  known: Path.lessonKnown(lesson.vocabIds, intervals: model.vocab.mapValues(\.interval)),
+                                  isNext: lesson.id == next) {
+                            model.openLesson(lesson.id)
+                        }
                     }
                 }
             }
@@ -203,19 +401,55 @@ private struct UnitBlock: View {
     }
 }
 
+/// A vocabulary unit's test: what it does, how the last try went, and the
+/// button. Prominent when the level check thinks the unit is known.
+private struct TestRow: View {
+    @Environment(AppModel.self) private var model
+    let test: Lesson
+    let unit: CurriculumUnit
+
+    var body: some View {
+        let record = model.progress.lessons[test.id]
+        let suggested = model.knownVocabUnits.contains(unit.id) && record == nil
+        let passed = (record?.best ?? 0) >= Path.testPass
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(passed ? "Unit test passed" : suggested ? "You probably know these" : "Know these already?")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(passed ? Palette.correct : Palette.ink)
+                Text(record.map { "Best \(Int(($0.best * 100).rounded()))% · \(Int((Path.testPass * 100).rounded()))% passes" }
+                     ?? "\(test.exerciseCount) words from the whole unit. Pass to skip it.")
+                    .font(.footnote)
+                    .foregroundStyle(Palette.inkMuted)
+            }
+            Spacer(minLength: 8)
+            Button { model.openLesson(test.id) } label: {
+                Label(record == nil ? "Take the test" : "Again", systemImage: "checkmark.seal")
+                    .font(.subheadline.weight(.semibold))
+            }
+            .glassButton(prominent: suggested)
+        }
+    }
+}
+
 private struct LessonRow: View {
     let number: Int
     let lesson: Lesson
-    let best: Double?
+    let record: LessonProgress?
+    /// Every word it teaches is already well known.
+    let known: Bool
     let isNext: Bool
     let open: () -> Void
 
     var body: some View {
+        let testedOut = record?.attempts == 0
         Button(action: open) {
             HStack(alignment: .firstTextBaseline, spacing: 14) {
                 Group {
-                    if best != nil {
+                    if record != nil {
                         Image(systemName: "checkmark").foregroundStyle(Palette.correct)
+                    } else if known {
+                        Image(systemName: "checkmark").foregroundStyle(Palette.inkFaint)
                     } else {
                         Text("\(number)").foregroundStyle(isNext ? Palette.rubric : Palette.inkFaint)
                     }
@@ -224,63 +458,31 @@ private struct LessonRow: View {
                 .frame(width: 22)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(rich: lesson.title)
-                        .font(.system(.headline, design: .serif).weight(.regular))
-                        .foregroundStyle(Palette.ink)
+                        .font(.system(.headline, design: .serif).weight(isNext ? .semibold : .regular))
+                        .foregroundStyle(isNext ? Palette.rubric : Palette.ink)
                     Text(rich: lesson.summary)
                         .font(.prose(.subheadline))
                         .foregroundStyle(Palette.inkMuted)
                         .multilineTextAlignment(.leading)
                 }
                 Spacer(minLength: 8)
-                Text(best.map { "\(Int(($0 * 100).rounded()))%" } ?? "\(lesson.minutes) min")
+                Text(status(testedOut: testedOut))
                     .font(.caption.monospacedDigit())
-                    .foregroundStyle(best != nil ? Palette.correct : Palette.inkFaint)
+                    .foregroundStyle(record != nil ? Palette.correct : Palette.inkFaint)
             }
-            .padding(.vertical, 12)
+            .padding(.vertical, 11)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
-        .accessibilityHint(best != nil ? "Finished. Opens the lesson again." : "Opens the lesson.")
-    }
-}
-
-/// The levels still being written, so the map shows where the course goes.
-/// One drops out by itself once its first unit arrives, bundled or downloaded.
-private struct ComingLevels: View {
-    /// Numerals of the levels the content already has.
-    let written: Set<String>
-
-    private struct Planned: Identifiable {
-        let numeral, title, subtitle, blurb: String
-        var id: String { numeral }
+        .accessibilityValue(isNext ? "Next" : "")
+        .accessibilityHint(record != nil ? "Finished. Opens the lesson again." : "Opens the lesson.")
     }
 
-    private static let levels = [
-        Planned(numeral: "II", title: "Secunda", subtitle: "Intermediate", blurb: "Deponent and irregular verbs, participles and the ablative absolute, indirect statement, and the subjunctive and its clauses."),
-        Planned(numeral: "III", title: "Tertia", subtitle: "Toward AP", blurb: "Adapted Caesar and Pliny, poetic word order, meter, and reading at sight: the bridge into Vergil."),
-    ]
-
-    var body: some View {
-        let coming = Self.levels.filter { !written.contains($0.numeral) }
-        if !coming.isEmpty {
-            VStack(alignment: .leading, spacing: 16) {
-                Hairline()
-                ForEach(coming) { level in
-                    self.coming(level.numeral, level.title, level.subtitle, level.blurb)
-                }
-            }
-            .opacity(0.75)
-        }
-    }
-
-    private func coming(_ numeral: String, _ title: String, _ subtitle: String, _ blurb: String) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 12) {
-            Text(numeral).font(.system(size: 30, design: .serif)).foregroundStyle(Palette.inkFaint)
-            VStack(alignment: .leading, spacing: 3) {
-                Text("\(title) · \(subtitle)").font(.system(.headline, design: .serif)).foregroundStyle(Palette.ink)
-                Text("In preparation. \(blurb)").font(.prose(.subheadline)).foregroundStyle(Palette.inkMuted)
-            }
-        }
+    private func status(testedOut: Bool) -> String {
+        if testedOut { return "tested out" }
+        if let record { return "\(Int((record.best * 100).rounded()))%" }
+        if known { return "known" }
+        return "\(lesson.minutes) min"
     }
 }

@@ -394,6 +394,26 @@ public struct ProgressDocument: Sendable, Equatable {
         markStudied(now: now)
     }
 
+    /// A passed unit test (the web's `passUnitTest`): the unit's other
+    /// lessons count as done, with no attempts of their own, and its words
+    /// not yet in the deck join it as known, due over the next three weeks.
+    public mutating func passUnitTest(_ unitLessons: [PathLesson], score: Double, now: Date = Date()) {
+        let stamp = StudyDates.isoTimestamp(now)
+        let today = StudyDates.today(now)
+        var vocab = raw.object("vocab")
+        let out = Path.testOut(unitLessons, done: Set(lessons.keys), inDeck: Set(vocab.keys))
+        let best = Swift.min(1, Swift.max(0, score))
+        var all = raw.object("lessons")
+        for id in out.lessonIds {
+            all[id] = try? JSONValue(encoding: LessonProgress(completedAt: stamp, lastAt: stamp, best: best, attempts: 0))
+        }
+        raw["lessons"] = .object(all)
+        for (i, id) in out.vocabIds.enumerated() {
+            vocab[id] = try? JSONValue(encoding: Path.knownCard(id: id, index: i, today: today))
+        }
+        raw["vocab"] = .object(vocab)
+    }
+
     public mutating func setLearner(_ profile: LearnerProfile?) {
         raw["learner"] = profile.flatMap { try? JSONValue(encoding: $0) } ?? .null
     }

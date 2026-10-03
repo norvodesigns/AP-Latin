@@ -279,18 +279,24 @@ public struct LearnerProfile: Codable, Sendable, Hashable {
     public var track: Track
     public var startLessonId: String?
     public var onboardedAt: String
+    /// Vocabulary units (e.g. "verba-2") the level check found probably
+    /// known, offered as unit tests first (`Path.nextWords`).
+    public var knownVocabUnits: [String]?
 
-    public init(track: Track, startLessonId: String?, onboardedAt: String) {
+    public init(track: Track, startLessonId: String?, onboardedAt: String, knownVocabUnits: [String]? = nil) {
         self.track = track
         self.startLessonId = startLessonId
         self.onboardedAt = onboardedAt
+        self.knownVocabUnits = knownVocabUnits
     }
 
-    // `startLessonId` is written as null, not left out, as the web writes it.
+    // `startLessonId` is written as null, not left out, as the web writes it;
+    // `knownVocabUnits` only when there are some, as the web leaves it out.
     public func encode(to encoder: any Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
         try c.encode(track, forKey: .track)
         try c.encode(startLessonId, forKey: .startLessonId)
         try c.encode(onboardedAt, forKey: .onboardedAt)
+        try c.encodeIfPresent(knownVocabUnits, forKey: .knownVocabUnits)
     }
 }

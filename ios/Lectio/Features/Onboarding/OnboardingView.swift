@@ -8,13 +8,15 @@ struct OnboardingView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.library) private var library
 
-    private enum Step: String, Hashable { case welcome, track, placementIntro, placement, result, pickUnit, goal, reminder, account }
+    private enum Step: String, Hashable { case welcome, track, placementIntro, placement, result, pickUnit, vocab, goal, reminder, account }
 
     /// `-onboardingStep placement` starts part-way in (CI screenshots).
     @State private var step: Step = Step(rawValue: UserDefaults.standard.string(forKey: "onboardingStep") ?? "") ?? .welcome
     @State private var track: LearnerProfile.Track = .some
     @State private var start: String?
     @State private var answers: [Placement.Answer] = []
+    /// The level check's vocabulary half: two words from each Verba unit.
+    @State private var vocabAnswers: [Placement.Answer] = []
     @State private var chosen: Int?
     @State private var minutes = 20
     @State private var reminderTime = Calendar.current.date(bySettingHour: 16, minute: 0, second: 0, of: .now) ?? .now
@@ -24,6 +26,9 @@ struct OnboardingView: View {
     @State private var returning = false
 
     private var placement: [PlacementQuestion] { library?.course.placement ?? [] }
+    private var vocabPlacement: [PlacementQuestion] { library?.course.vocabPlacement ?? [] }
+    /// After the grammar (or straight away, for an AP student): the words.
+    private var afterGrammar: Step { vocabPlacement.isEmpty ? .goal : .vocab }
 
     var body: some View {
         NavigationStack {
@@ -36,7 +41,7 @@ struct OnboardingView: View {
                     .frame(maxWidth: 560)
                     // Centered in the screen, except the two steps whose
                     // height changes as you go (a list, and the questions).
-                    .frame(maxWidth: .infinity, minHeight: proxy.size.height, alignment: step == .placement || step == .pickUnit ? .top : .center)
+                    .frame(maxWidth: .infinity, minHeight: proxy.size.height, alignment: step == .placement || step == .pickUnit || step == .vocab ? .top : .center)
                     .id(step)
                     .transition(.asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity), removal: .opacity))
                 }
@@ -70,6 +75,7 @@ struct OnboardingView: View {
         case .placement: placementQuestion
         case .result: result
         case .pickUnit: pickUnit
+        case .vocab: vocabQuestion
         case .goal: goal
         case .reminder: reminder
         case .account: account
@@ -179,7 +185,7 @@ struct OnboardingView: View {
             .font(.prose(.body)).foregroundStyle(Palette.ink2).multilineTextAlignment(.center)
             GlassGroup(spacing: 12) {
                 VStack(spacing: 12) {
-                    Button { step = .goal } label: { Text("Sounds good").font(.headline).frame(maxWidth: 300).padding(.vertical, 6) }
+                    Button { step = afterGrammar } label: { Text("Sounds good").font(.headline).frame(maxWidth: 300).padding(.vertical, 6) }
                         .glassButton(prominent: true)
                     Button { step = .pickUnit } label: { Text("Choose another unit").frame(maxWidth: 300).padding(.vertical, 4) }
                         .glassButton()
@@ -191,12 +197,12 @@ struct OnboardingView: View {
     private var pickUnit: some View {
         VStack(alignment: .leading, spacing: 0) {
             header("Choose a unit", "Where would you like to start?").frame(maxWidth: .infinity).padding(.bottom, 14)
-            ForEach(library?.course.levels ?? []) { level in
+            ForEach(library?.course.grammarLevels ?? []) { level in
                 ForEach(level.units) { unit in
                     Hairline(color: Palette.hair)
                     Button {
                         start = unit.lessons.first?.id
-                        step = .goal
+                        step = afterGrammar
                     } label: {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("\(level.title) · Unit \(unit.n)").quietLabel()
@@ -209,6 +215,30 @@ struct OnboardingView: View {
                     .buttonStyle(.plain)
                 }
             }
+        }
+    }
+
+    /// Two words from each part of the AP list. Where both are known, that
+    /// part's unit test comes first on the vocabulary track (Path).
+    @ViewBuilder
+    private var vocabQuestion: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            header("Your vocabulary", "Do you know these?").frame(maxWidth: .infinity)
+            Text("Two words from each part of the AP list. Where you know both, that part starts with a quick test you can pass to skip it.")
+                .font(.prose(.callout)).foregroundStyle(Palette.inkMuted)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .multilineTextAlignment(.center)
+            if vocabAnswers.count < vocabPlacement.count {
+                PlacementCard(question: vocabPlacement[vocabAnswers.count], number: vocabAnswers.count + 1, total: vocabPlacement.count) { right in
+                    vocabAnswers.append(Placement.Answer(unit: vocabPlacement[vocabAnswers.count].unit, right: right))
+                    if vocabAnswers.count >= vocabPlacement.count { step = .goal }
+                }
+                .id(vocabAnswers.count)
+            }
+            Button("Skip the words") { step = .goal }
+                .font(.subheadline)
+                .tint(Palette.inkMuted)
+                .frame(maxWidth: .infinity)
         }
     }
 
@@ -319,11 +349,14 @@ struct OnboardingView: View {
         track = t
         switch t {
         case .new:
-            start = library?.course.lessons.first?.lesson.id
+            start = library?.course.grammarLessons.first?.lesson.id
             step = .goal
         case .some:
             step = .placementIntro
-        case .ap, .teacher:
+        case .ap:
+            start = nil
+            step = afterGrammar
+        case .teacher:
             start = nil
             step = .goal
         }
@@ -351,7 +384,9 @@ struct OnboardingView: View {
     private func next() { step = .account }
 
     private func finish() {
-        model.finishOnboarding(LearnerProfile(track: track, startLessonId: start, onboardedAt: StudyDates.isoTimestamp(.now)), minutes: minutes)
+        let known = Path.knownVocabUnits(vocabAnswers)
+        model.finishOnboarding(LearnerProfile(track: track, startLessonId: start, onboardedAt: StudyDates.isoTimestamp(.now),
+                                              knownVocabUnits: known.isEmpty ? nil : known), minutes: minutes)
     }
 
     private func optionBackground(_ i: Int, _ q: PlacementQuestion) -> Color {

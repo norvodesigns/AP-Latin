@@ -17,10 +17,18 @@
  *     set in rubric red. The bar never shows.
  */
 
-export type LevelId = 'prima' | 'secunda' | 'tertia' | 'quarta';
+export type LevelId = 'prima' | 'secunda' | 'tertia' | 'quarta' | 'verba';
+
+/**
+ * The course runs as two tracks side by side: the grammar levels, taken in
+ * order, and the vocabulary list by letter (Verba), taken alongside.
+ */
+export type Track = 'grammar' | 'vocabulary';
 
 export interface CurriculumLevel {
   id: LevelId;
+  /** Absent for the grammar levels. */
+  track?: Track;
   /** "I", "II", "III". */
   numeral: string;
   /** "Prīma". */
@@ -51,6 +59,8 @@ export interface Lesson {
   minutes: number;
   /** What the student can do afterwards, shown before starting. */
   objectives: string[];
+  /** A unit test: passed, it counts its whole unit as done (src/lib/path.ts). */
+  test?: boolean;
   /** The words this lesson introduces. Those on the AP list join the
    *  student's flashcard deck when the lesson is finished. */
   words: LessonWord[];
@@ -205,6 +215,10 @@ export interface OutlineLesson {
   minutes: number;
   /** Has exercises a review can use (see reviewable.ts). */
   reviewable: boolean;
+  test?: boolean;
+  /** The vocabulary track's lessons only: the AP words they teach, so the
+   *  map can pass over lessons already known (src/lib/path.ts). */
+  vocabIds?: string[];
 }
 
 export interface OutlineUnit {
@@ -217,6 +231,7 @@ export interface OutlineUnit {
 
 export interface OutlineLevel {
   id: LevelId;
+  track?: Track;
   numeral: string;
   title: string;
   subtitle: string;
