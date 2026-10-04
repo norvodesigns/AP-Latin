@@ -81,11 +81,12 @@ public enum Laurels {
     public static func all(_ doc: ProgressDocument, course: Course) -> [Laurel] {
         let done = doc.lessons
         let isDone = { (id: String) in done[id] != nil }
-        let units = course.levels.flatMap(\.units).map { $0.lessons.map(\.id) }
+        // Unit tests aside: a unit is done when its lessons are.
+        let units = course.levels.flatMap(\.units).map { $0.lessons.filter { !$0.isTest }.map(\.id) }
         let unitsDone = units.filter { !$0.isEmpty && $0.allSatisfy(isDone) }.count
         let levelDone = { (id: String) -> Int in
             let us = course.levels.first { $0.id == id }?.units ?? []
-            return !us.isEmpty && us.allSatisfy { $0.lessons.allSatisfy { isDone($0.id) } } ? 1 : 0
+            return !us.isEmpty && us.allSatisfy { $0.lessons.filter { !$0.isTest }.allSatisfy { isDone($0.id) } } ? 1 : 0
         }
         let intervals = doc.raw.object("vocab").map { $0.value["interval"]?.doubleValue ?? 0 }
         let passages = doc.raw.object("passages").map(\.value)

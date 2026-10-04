@@ -423,3 +423,11 @@ finishing a lesson counts toward the streak and daily goal.
   The app's Vocab tab now leads with the vocabulary track (the next words, how much of the list is known, and
   the way to all seven units). The website has **Find my level** at /learn/level (both halves of the level
   check, saving the grammar start and the known vocabulary units, as the app does), linked from the course map.
+- 2026-10-04: Unit tests for grammar too. 23 of the 31 grammar units now end in a test of up to sixteen
+  questions drawn from the unit's own lessons (`src/data/curriculum/unitTest.ts`: no translations, and from a
+  reading lesson only questions that quote their Latin; units with fewer than six such questions get none).
+  Passed at 85% it counts the unit done, like a Verba test, so a student can skip grammar they know mid-course,
+  not only at placement. Tests are never "next", never counted in a unit's progress or its laurels, and stay
+  out of Review. Verified like any lesson; mirrored in LectioCore (next, after, unitProgress, laurels, review).
+  Laurels became Earned / Under way / Still ahead panels; Today's Pick up shows five rows at most; each
+  vocabulary unit shows its words in the deck and known.

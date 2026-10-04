@@ -559,6 +559,23 @@ for (const f of frqPrompts) {
     notes.push(`Verba: ${vocab.length} AP words in ${verbaUnits.length} units; ${VOCAB_PLACEMENT.length} vocabulary placement questions`);
   }
 
+  // The grammar units' tests, built from their lessons (unitTest.ts): every
+  // step checked like any lesson's.
+  {
+    const { unitTestFor } = await load('src/data/curriculum/unitTest.ts');
+    let tests = 0;
+    for (const unitId of unitOrder.filter((u) => !u.startsWith('verba-'))) {
+      const [levelId, n] = unitId.split('-');
+      const { unit } = await load(`src/data/curriculum/${levelId}/unit${n}.ts`);
+      const t = unitTestFor(unit);
+      if (!t) continue;
+      tests += 1;
+      if (seenLessons.has(t.id)) fail(`${t.id}: clashes with a lesson id`);
+      t.steps.forEach((s, si) => checkStep(`${t.id} step ${si + 1} (${s.kind})`, s));
+    }
+    notes.push(`${tests} grammar unit tests`);
+  }
+
   /* --- Forms Forge (src/data/forms) --- */
   const { PARADIGMS, cellForms } = await load('src/data/forms/index.ts');
   const paradigmIds = new Set();

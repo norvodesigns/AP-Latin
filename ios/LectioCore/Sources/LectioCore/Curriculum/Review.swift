@@ -27,8 +27,9 @@ extension Course {
     /// (`Lesson.reviewExercises`: from a reading, only questions that carry
     /// their own Latin).
     public func reviewable(done: [String: LessonProgress]) -> [LessonPlace] {
+        // Unit tests borrow their lessons' questions; those count once, with their lessons.
         lessons.filter { place in
-            done[place.lesson.id] != nil && !place.lesson.reviewExercises.isEmpty
+            done[place.lesson.id] != nil && !place.lesson.isTest && !place.lesson.reviewExercises.isEmpty
         }
     }
 

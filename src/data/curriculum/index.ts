@@ -4,6 +4,7 @@ import { secunda } from './secunda';
 import { tertia } from './tertia';
 import { quarta } from './quarta';
 import { verba } from './verba';
+import { withUnitTests } from './unitTest';
 import { indexCourse, type Place } from './places';
 
 export * from './types';
@@ -12,7 +13,7 @@ export { VERBA_TEST_PASS } from './verba/build.ts';
 export { unitProgress } from './places';
 
 /** The whole course: the grammar levels in order, then the vocabulary track. */
-export const COURSE: CurriculumLevel[] = [prima, secunda, tertia, quarta, verba];
+export const COURSE: CurriculumLevel[] = [...[prima, secunda, tertia, quarta].map(withUnitTests), verba];
 
 /** The grammar levels, taken in order. */
 export const GRAMMAR_LEVELS: CurriculumLevel[] = COURSE.filter((l) => (l.track ?? 'grammar') === 'grammar');

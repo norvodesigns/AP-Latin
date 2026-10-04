@@ -30,7 +30,8 @@ export function buildReview(
   rng: Rng = Math.random,
   now = Date.now(),
 ): Lesson | null {
-  const pool = ALL_LESSONS.filter((p) => done[p.lesson.id])
+  // Unit tests borrow their lessons' questions; those count once, with their lessons.
+  const pool = ALL_LESSONS.filter((p) => done[p.lesson.id] && !p.lesson.test)
     .map((p) => ({ exercises: reviewExercises(p.lesson), weight: reviewWeight(done[p.lesson.id], now) }))
     .filter((p) => p.exercises.length > 0);
   const available = pool.reduce((n, p) => n + p.exercises.length, 0);

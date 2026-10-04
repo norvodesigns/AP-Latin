@@ -43,6 +43,14 @@ export const OUTLINE: OutlineLevel[] = [
             "summary": "How Latin shows who does what to whom, whatever the word order.",
             "minutes": 8,
             "reviewable": true
+          },
+          {
+            "id": "prima-1-test",
+            "title": "Unit test: Sounds and first words",
+            "summary": "Sixteen questions from the whole unit. Pass it to skip what you already know.",
+            "minutes": 8,
+            "reviewable": true,
+            "test": true
           }
         ]
       },
@@ -79,6 +87,14 @@ export const OUTLINE: OutlineLevel[] = [
             "summary": "A first story, and questions on it.",
             "minutes": 8,
             "reviewable": true
+          },
+          {
+            "id": "prima-2-test",
+            "title": "Unit test: The first declension and the present tense",
+            "summary": "Sixteen questions from the whole unit. Pass it to skip what you already know.",
+            "minutes": 8,
+            "reviewable": true,
+            "test": true
           }
         ]
       },
@@ -122,6 +138,14 @@ export const OUTLINE: OutlineLevel[] = [
             "summary": "A boy, a friend, and a large horse in a field.",
             "minutes": 8,
             "reviewable": true
+          },
+          {
+            "id": "prima-3-test",
+            "title": "Unit test: The second declension and adjectives",
+            "summary": "Sixteen questions from the whole unit. Pass it to skip what you already know.",
+            "minutes": 8,
+            "reviewable": true,
+            "test": true
           }
         ]
       },
@@ -165,6 +189,14 @@ export const OUTLINE: OutlineLevel[] = [
             "summary": "Young sailors, an old one, and a storm.",
             "minutes": 8,
             "reviewable": true
+          },
+          {
+            "id": "prima-4-test",
+            "title": "Unit test: Prepositions, the ablative, past and future",
+            "summary": "Sixteen questions from the whole unit. Pass it to skip what you already know.",
+            "minutes": 8,
+            "reviewable": true,
+            "test": true
           }
         ]
       },
@@ -215,6 +247,14 @@ export const OUTLINE: OutlineLevel[] = [
             "summary": "A bad king, a loyal soldier, and enemies at night.",
             "minutes": 9,
             "reviewable": true
+          },
+          {
+            "id": "prima-5-test",
+            "title": "Unit test: The third declension; regō and audiō",
+            "summary": "Sixteen questions from the whole unit. Pass it to skip what you already know.",
+            "minutes": 8,
+            "reviewable": true,
+            "test": true
           }
         ]
       },
@@ -258,6 +298,14 @@ export const OUTLINE: OutlineLevel[] = [
             "summary": "A famous singer, greedy sailors, and a dolphin.",
             "minutes": 9,
             "reviewable": true
+          },
+          {
+            "id": "prima-6-test",
+            "title": "Unit test: The perfect system",
+            "summary": "Sixteen questions from the whole unit. Pass it to skip what you already know.",
+            "minutes": 8,
+            "reviewable": true,
+            "test": true
           }
         ]
       },
@@ -301,6 +349,14 @@ export const OUTLINE: OutlineLevel[] = [
             "summary": "Aesop’s fox and the grapes, in Latin.",
             "minutes": 8,
             "reviewable": true
+          },
+          {
+            "id": "prima-7-test",
+            "title": "Unit test: Pronouns",
+            "summary": "Sixteen questions from the whole unit. Pass it to skip what you already know.",
+            "minutes": 8,
+            "reviewable": true,
+            "test": true
           }
         ]
       },
@@ -344,6 +400,14 @@ export const OUTLINE: OutlineLevel[] = [
             "summary": "The founding of Rome, told the Roman way.",
             "minutes": 10,
             "reviewable": true
+          },
+          {
+            "id": "prima-8-test",
+            "title": "Unit test: The last declensions, and the passive",
+            "summary": "Sixteen questions from the whole unit. Pass it to skip what you already know.",
+            "minutes": 8,
+            "reviewable": true,
+            "test": true
           }
         ]
       }
@@ -410,6 +474,14 @@ export const OUTLINE: OutlineLevel[] = [
             "summary": "The inventor, his son, and wings of feathers and wax.",
             "minutes": 10,
             "reviewable": true
+          },
+          {
+            "id": "secunda-1-test",
+            "title": "Unit test: Deponent and irregular verbs",
+            "summary": "Sixteen questions from the whole unit. Pass it to skip what you already know.",
+            "minutes": 8,
+            "reviewable": true,
+            "test": true
           }
         ]
       },
@@ -453,6 +525,14 @@ export const OUTLINE: OutlineLevel[] = [
             "summary": "One man holds the bridge while Rome cuts it down behind him. From Livy.",
             "minutes": 11,
             "reviewable": true
+          },
+          {
+            "id": "secunda-2-test",
+            "title": "Unit test: Participles and the ablative absolute",
+            "summary": "Sixteen questions from the whole unit. Pass it to skip what you already know.",
+            "minutes": 8,
+            "reviewable": true,
+            "test": true
           }
         ]
       },
@@ -496,6 +576,14 @@ export const OUTLINE: OutlineLevel[] = [
             "summary": "A young Roman, the wrong man, and a hand in the fire. From Livy.",
             "minutes": 11,
             "reviewable": true
+          },
+          {
+            "id": "secunda-3-test",
+            "title": "Unit test: Infinitives and indirect statement",
+            "summary": "Sixteen questions from the whole unit. Pass it to skip what you already know.",
+            "minutes": 8,
+            "reviewable": true,
+            "test": true
           }
         ]
       },
@@ -546,6 +634,14 @@ export const OUTLINE: OutlineLevel[] = [
             "summary": "Three brothers against three, and one clever retreat. From Livy.",
             "minutes": 10,
             "reviewable": true
+          },
+          {
+            "id": "secunda-4-test",
+            "title": "Unit test: Comparison, numbers and pronouns",
+            "summary": "Sixteen questions from the whole unit. Pass it to skip what you already know.",
+            "minutes": 8,
+            "reviewable": true,
+            "test": true
           }
         ]
       },
@@ -596,6 +692,14 @@ export const OUTLINE: OutlineLevel[] = [
             "summary": "A runaway slave, a thorn, and a lion that remembers. From Aulus Gellius.",
             "minutes": 11,
             "reviewable": true
+          },
+          {
+            "id": "secunda-5-test",
+            "title": "Unit test: The subjunctive: purpose and result",
+            "summary": "Sixteen questions from the whole unit. Pass it to skip what you already know.",
+            "minutes": 8,
+            "reviewable": true,
+            "test": true
           }
         ]
       },
@@ -639,6 +743,14 @@ export const OUTLINE: OutlineLevel[] = [
             "summary": "Two lovers, a wall, a lioness and a mulberry tree. From Ovid.",
             "minutes": 12,
             "reviewable": true
+          },
+          {
+            "id": "secunda-6-test",
+            "title": "Unit test: Cum clauses and indirect questions",
+            "summary": "Sixteen questions from the whole unit. Pass it to skip what you already know.",
+            "minutes": 8,
+            "reviewable": true,
+            "test": true
           }
         ]
       },
@@ -689,6 +801,14 @@ export const OUTLINE: OutlineLevel[] = [
             "summary": "A Roman prisoner, a promise, and the senate. From Cicero.",
             "minutes": 11,
             "reviewable": true
+          },
+          {
+            "id": "secunda-7-test",
+            "title": "Unit test: Commands, fears, wishes, and “must”",
+            "summary": "Sixteen questions from the whole unit. Pass it to skip what you already know.",
+            "minutes": 8,
+            "reviewable": true,
+            "test": true
           }
         ]
       },
@@ -732,6 +852,14 @@ export const OUTLINE: OutlineLevel[] = [
             "summary": "A singer goes down to the dead for his wife, on one condition. From Vergil and Ovid.",
             "minutes": 14,
             "reviewable": true
+          },
+          {
+            "id": "secunda-8-test",
+            "title": "Unit test: Conditions, and the whole subjunctive",
+            "summary": "Sixteen questions from the whole unit. Pass it to skip what you already know.",
+            "minutes": 8,
+            "reviewable": true,
+            "test": true
           }
         ]
       }
@@ -784,6 +912,14 @@ export const OUTLINE: OutlineLevel[] = [
             "summary": "Why Caesar calls the Belgae the bravest of the Gauls.",
             "minutes": 12,
             "reviewable": true
+          },
+          {
+            "id": "tertia-1-test",
+            "title": "Unit test: Reading real sentences",
+            "summary": "Sixteen questions from the whole unit. Pass it to skip what you already know.",
+            "minutes": 8,
+            "reviewable": true,
+            "test": true
           }
         ]
       },
@@ -827,6 +963,14 @@ export const OUTLINE: OutlineLevel[] = [
             "summary": "Three sentences of the letter as Pliny wrote them.",
             "minutes": 12,
             "reviewable": true
+          },
+          {
+            "id": "tertia-2-test",
+            "title": "Unit test: Pliny: the eruption of Vesuvius",
+            "summary": "Fourteen questions from the whole unit. Pass it to skip what you already know.",
+            "minutes": 7,
+            "reviewable": true,
+            "test": true
           }
         ]
       },
@@ -906,6 +1050,14 @@ export const OUTLINE: OutlineLevel[] = [
             "summary": "Vergil asks the Muse why a goddess hates so good a man.",
             "minutes": 12,
             "reviewable": true
+          },
+          {
+            "id": "tertia-4-test",
+            "title": "Unit test: Poetic Latin",
+            "summary": "Sixteen questions from the whole unit. Pass it to skip what you already know.",
+            "minutes": 8,
+            "reviewable": true,
+            "test": true
           }
         ]
       },
@@ -942,6 +1094,14 @@ export const OUTLINE: OutlineLevel[] = [
             "summary": "Four more lines from Aeneid 1, and the caesura.",
             "minutes": 11,
             "reviewable": true
+          },
+          {
+            "id": "tertia-5-test",
+            "title": "Unit test: The dactylic hexameter",
+            "summary": "Sixteen questions from the whole unit. Pass it to skip what you already know.",
+            "minutes": 8,
+            "reviewable": true,
+            "test": true
           }
         ]
       },
@@ -985,6 +1145,14 @@ export const OUTLINE: OutlineLevel[] = [
             "summary": "Name it, quote it, explain it: the three steps of an AP answer.",
             "minutes": 8,
             "reviewable": true
+          },
+          {
+            "id": "tertia-6-test",
+            "title": "Unit test: Figures of speech",
+            "summary": "Sixteen questions from the whole unit. Pass it to skip what you already know.",
+            "minutes": 8,
+            "reviewable": true,
+            "test": true
           }
         ]
       },
@@ -1064,6 +1232,14 @@ export const OUTLINE: OutlineLevel[] = [
             "summary": "You have finished Level III. Next, the AP syllabus itself, in Level IV.",
             "minutes": 6,
             "reviewable": true
+          },
+          {
+            "id": "tertia-8-test",
+            "title": "Unit test: At sight, and on to the exam",
+            "summary": "Sixteen questions from the whole unit. Pass it to skip what you already know.",
+            "minutes": 8,
+            "reviewable": true,
+            "test": true
           }
         ]
       }
@@ -1130,6 +1306,14 @@ export const OUTLINE: OutlineLevel[] = [
             "summary": "Pliny’s mother begs him to leave her; the darkness overtakes the crowd; and at last a pale sun on a world covered in ash.",
             "minutes": 15,
             "reviewable": true
+          },
+          {
+            "id": "quarta-1-test",
+            "title": "Unit test: Pliny: Vesuvius",
+            "summary": "Eight questions from the whole unit. Pass it to skip what you already know.",
+            "minutes": 5,
+            "reviewable": true,
+            "test": true
           }
         ]
       },

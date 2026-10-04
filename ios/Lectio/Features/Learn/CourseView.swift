@@ -65,14 +65,14 @@ private struct CourseMap: View {
                         ForEach(library.course.grammarLevels) { level in
                             LevelHeader(level: level)
                             ForEach(level.units) { unit in
-                                UnitPanel(unit: unit, label: "\(level.title) · Unit \(unit.n)", done: done, next: model.nextCourseLesson?.id)
+                                UnitPanel(unit: unit, label: "\(level.title) · Unit \(unit.n)", isVocabulary: false, done: done, next: model.nextCourseLesson?.id)
                             }
                         }
                     case .vocabulary:
                         if let verba = library.course.vocabLevel {
                             VerbaHeader(level: verba)
                             ForEach(verba.units) { unit in
-                                UnitPanel(unit: unit, label: "Unit \(unit.n)", done: done, next: model.nextVocabLesson?.id)
+                                UnitPanel(unit: unit, label: "Unit \(unit.n)", isVocabulary: true, done: done, next: model.nextVocabLesson?.id)
                             }
                         } else {
                             Text("The vocabulary track arrives with the next content update.")
@@ -367,19 +367,21 @@ private struct VerbaHeader: View {
 }
 
 /// A unit as a glass panel: its title, progress and, opened, its lessons.
-/// The unit holding the next lesson starts open. A vocabulary unit shows its
-/// test, the quickest way past words already known, even when closed.
+/// The unit holding the next lesson starts open. A unit's test, the quickest
+/// way past what's already known, shows even when it's closed.
 private struct UnitPanel: View {
     @Environment(AppModel.self) private var model
     let unit: CurriculumUnit
     let label: String
+    let isVocabulary: Bool
     let done: Set<String>
     let next: String?
     @State private var expanded: Bool
 
-    init(unit: CurriculumUnit, label: String, done: Set<String>, next: String?) {
+    init(unit: CurriculumUnit, label: String, isVocabulary: Bool, done: Set<String>, next: String?) {
         self.unit = unit
         self.label = label
+        self.isVocabulary = isVocabulary
         self.done = done
         self.next = next
         _expanded = State(initialValue: unit.lessons.contains { $0.id == next })
@@ -420,7 +422,7 @@ private struct UnitPanel: View {
                 .tint(progress >= 1 ? Palette.correct : Palette.rubric)
                 .accessibilityHidden(true)
 
-            if test != nil {
+            if isVocabulary {
                 // A vocabulary unit: how many of its words are in the deck,
                 // and how many are held fast.
                 let ids = unit.lessons.flatMap(\.vocabIds)
@@ -451,8 +453,8 @@ private struct UnitPanel: View {
     }
 }
 
-/// A vocabulary unit's test: what it does, how the last try went, and the
-/// button. Prominent when the level check thinks the unit is known.
+/// A unit's test (grammar or vocabulary): what it does, how the last try
+/// went, and the button. Prominent when the level check thinks the unit is known.
 private struct TestRow: View {
     @Environment(AppModel.self) private var model
     let test: Lesson
@@ -468,7 +470,7 @@ private struct TestRow: View {
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(passed ? Palette.correct : Palette.ink)
                 Text(record.map { "Best \(Int(($0.best * 100).rounded()))% · \(Int((Path.testPass * 100).rounded()))% passes" }
-                     ?? "\(test.exerciseCount) words from the whole unit. Pass to skip it.")
+                     ?? "\(test.exerciseCount) questions from the whole unit. Pass to skip it.")
                     .font(.footnote)
                     .foregroundStyle(Palette.inkMuted)
             }

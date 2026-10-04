@@ -15,7 +15,7 @@ export interface Place<L, U, V> {
 type UnitOf<V extends CourseLevel> = V['units'][number];
 type LessonOf<V extends CourseLevel> = UnitOf<V>['lessons'][number];
 interface CourseLevel {
-  units: { lessons: { id: string }[] }[];
+  units: { lessons: { id: string; test?: boolean }[] }[];
 }
 
 export function indexCourse<V extends CourseLevel>(levels: V[]) {
@@ -34,19 +34,23 @@ export function indexCourse<V extends CourseLevel>(levels: V[]) {
      * course (as written so far) is done.
      */
     next(done: Record<string, unknown>, startLessonId?: string | null): Place<L, U, V> | null {
+      // A unit test is never "next": it's there for whoever wants to skip.
+      const open = (p: Place<L, U, V>) => !done[p.lesson.id] && !p.lesson.test;
       const start = (startLessonId && byId.get(startLessonId)?.index) || 0;
-      return all.slice(start).find((p) => !done[p.lesson.id]) ?? all.find((p) => !done[p.lesson.id]) ?? null;
+      return all.slice(start).find(open) ?? all.find(open) ?? null;
     },
-    /** The lesson after this one in the course, if any. */
+    /** The lesson after this one in the course, if any, unit tests aside. */
     after(id: string): Place<L, U, V> | null {
       const p = byId.get(id);
-      return p ? (all[p.index + 1] ?? null) : null;
+      return p ? (all.slice(p.index + 1).find((q) => !q.lesson.test) ?? null) : null;
     },
   };
 }
 
 /** Share of a unit's lessons finished, 0–1. */
-export function unitProgress(unit: { lessons: { id: string }[] }, done: Record<string, unknown>): number {
-  if (unit.lessons.length === 0) return 0;
-  return unit.lessons.filter((l) => done[l.id]).length / unit.lessons.length;
+export function unitProgress(unit: { lessons: { id: string; test?: boolean }[] }, done: Record<string, unknown>): number {
+  // A unit test is a way past the lessons, not one of them.
+  const lessons = unit.lessons.filter((l) => !l.test);
+  if (lessons.length === 0) return 0;
+  return lessons.filter((l) => done[l.id]).length / lessons.length;
 }

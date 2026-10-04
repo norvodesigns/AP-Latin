@@ -26,8 +26,8 @@ export interface Laurel extends LaurelSpec {
 /** The course's shape, as laurels need it: level id -> its units' lesson ids. */
 export type CourseShape = Array<{ id: string; units: string[][] }>;
 
-/** This site's course, in that shape. */
-export const COURSE_SHAPE: CourseShape = OUTLINE.map((l) => ({ id: l.id, units: l.units.map((u) => u.lessons.map((x) => x.id)) }));
+/** This site's course, in that shape. Unit tests aside: a unit is done when its lessons are. */
+export const COURSE_SHAPE: CourseShape = OUTLINE.map((l) => ({ id: l.id, units: l.units.map((u) => u.lessons.filter((x) => !x.test).map((x) => x.id)) }));
 
 /** Longest run of consecutive YYYY-MM-DD days in a list. */
 function longestRun(days: string[]): number {

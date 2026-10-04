@@ -263,16 +263,18 @@ public struct Course: Sendable {
     /// is done. Same as the web's `nextLesson`. The vocabulary track has its
     /// own (`nextWords`).
     public func next(done: Set<String>, startingAt start: String? = nil) -> LessonPlace? {
+        // A unit test is never "next": it's there for whoever wants to skip.
+        let open = { (p: LessonPlace) in !done.contains(p.lesson.id) && !p.lesson.isTest }
         let from = start.flatMap { id in grammarLessons.firstIndex { $0.lesson.id == id } } ?? 0
-        return grammarLessons[from...].first { !done.contains($0.lesson.id) } ?? grammarLessons.first { !done.contains($0.lesson.id) }
+        return grammarLessons[from...].first(where: open) ?? grammarLessons.first(where: open)
     }
 
-    /// The lesson after this one in its own track.
+    /// The lesson after this one in its own track, unit tests aside.
     public func after(_ id: String) -> LessonPlace? {
         guard let place = place(id) else { return nil }
         let track = place.level.isVocabulary ? vocabLessons : grammarLessons
-        guard let i = track.firstIndex(where: { $0.lesson.id == id }), i + 1 < track.count else { return nil }
-        return track[i + 1]
+        guard let i = track.firstIndex(where: { $0.lesson.id == id }) else { return nil }
+        return track[(i + 1)...].first { !$0.lesson.isTest }
     }
 
     /// A unit's lessons as `Path` reads them.
@@ -291,9 +293,12 @@ public struct Course: Sendable {
         return Path.nextWords(vocabPath, done: doneMap, intervals: vocab.mapValues(\.interval), knownUnits: knownUnits).flatMap { place($0.id) }
     }
 
+    /// Share of a unit's lessons done. A unit test is a way past the
+    /// lessons, not one of them.
     public static func unitProgress(_ unit: CurriculumUnit, done: Set<String>) -> Double {
-        guard !unit.lessons.isEmpty else { return 0 }
-        return Double(unit.lessons.filter { done.contains($0.id) }.count) / Double(unit.lessons.count)
+        let lessons = unit.lessons.filter { !$0.isTest }
+        guard !lessons.isEmpty else { return 0 }
+        return Double(lessons.filter { done.contains($0.id) }.count) / Double(lessons.count)
     }
 }
 
