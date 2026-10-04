@@ -18,7 +18,9 @@ Do these in order. Each one heads off a specific, common rejection.
    promises reports about names are dealt with within a day: remove the student from the classroom (Teach
    page or the app), or edit their display name in Supabase › Table Editor › `profiles`.
 3. **Add the redirect URL.** Supabase › Authentication › URL Configuration › Redirect URLs: add
-   `lectio://auth-callback`, so the sign-up confirmation email opens the app.
+   `lectio://auth-callback`. The sign-up confirmation email then opens the app and signs the new
+   account straight in (an expired link says so). Without it, the link lands on the website instead,
+   and the reviewer has to come back and sign in by hand.
 4. **Make demo accounts for the reviewer** (Guideline 2.1: reviewers must be able to reach every
    feature). On the website:
    - create a **teacher** account, e.g. `lectio.review.teacher@<a domain you control>`, and a classroom

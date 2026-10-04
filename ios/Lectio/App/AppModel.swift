@@ -67,6 +67,9 @@ final class AppModel {
     }
     /// The first-run screens (Features/Onboarding), over everything.
     var showOnboarding = false
+    /// What a sign-up confirmation link did when it opened the app, shown
+    /// once as an alert (`completeEmailLink`).
+    var authNotice: String? = nil
     var selectedTab: AppTab = .today {
         didSet { if oldValue != selectedTab { studySectionChanged() } }
     }

@@ -441,4 +441,6 @@ finishing a lesson counts toward the streak and daily goal.
   trademark notice is in Settings › About, the Acknowledgements, and every study page's footer (5.2.1). The
   privacy policy covers third parties, retention, support messages, children and AI consent. Version 1.0.0.
   `ios/APP_STORE.md` is now the full submission guide: the owner's checklist, metadata without "AP" in the name
-  or keywords, App Privacy and age-rating answers, and review notes to paste.
+  or keywords, App Privacy and age-rating answers, and review notes to paste. The sign-up confirmation link
+  now signs the new account in when it opens the app (LectioCore `AuthCallback`, tested), and says so plainly
+  when the link has expired, rather than opening the app to nothing.

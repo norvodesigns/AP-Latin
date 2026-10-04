@@ -58,6 +58,14 @@ public actor AuthManager {
         return session
     }
 
+    /// Signs in with the refresh token an email link carried
+    /// (`AuthCallback`): one refresh turns it into a full session.
+    public func signIn(refreshToken: String) async throws -> AuthSession {
+        let session = try await api.refresh(refreshToken)
+        setSession(session)
+        return session
+    }
+
     public func signUp(email: String, password: String, displayName: String, role: String,
                        redirectTo: URL?) async throws -> SupabaseAPI.SignUpResult {
         let result = try await api.signUp(email: Self.normalize(email), password: password,

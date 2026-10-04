@@ -58,6 +58,31 @@ extension AppModel {
         return .signedIn
     }
 
+    /// The sign-up confirmation link, opened on this device: it carries a
+    /// session, so the student is signed in without typing the password
+    /// again. Otherwise, says why not and where to sign in.
+    func completeEmailLink(_ callback: AuthCallback) async {
+        if account != nil {
+            authNotice = "Your email is confirmed."
+            return
+        }
+        switch callback {
+        case .session(let refreshToken):
+            do {
+                let session = try await auth.signIn(refreshToken: refreshToken)
+                account = Account(userId: session.userId, email: session.email, profile: nil)
+                await loadProfile(backfillFrom: session)
+                await reconcile()
+                startPullLoop()
+                authNotice = "Your email is confirmed and you’re signed in. Your progress now syncs with the website."
+            } catch {
+                authNotice = "Your email is confirmed. Sign in with your email and password in Settings › Account."
+            }
+        case .failed(let reason):
+            authNotice = "\(reason). If you’ve already confirmed your email, sign in with your password in Settings › Account."
+        }
+    }
+
     /// Signs out. This device's progress stays, as on the web — and stays
     /// marked as the previous account's, so a *different* account signing in
     /// next replaces it rather than merging someone else's history in.

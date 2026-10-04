@@ -50,9 +50,21 @@ struct RootView: View {
                         .id(place.id)
                 }
                 .onOpenURL { url in
+                    // The sign-up confirmation email returns here.
+                    if let callback = AuthCallback(url: url) {
+                        Task { await model.completeEmailLink(callback) }
+                        return
+                    }
                     // lectio://vocab, lectio://read, … (the widget), and
                     // lectio://read/<passage-id> to open a passage.
                     open(host: url.host(), path: url.lastPathComponent, in: library)
+                }
+                .alert("Account", isPresented: Binding(
+                    get: { model.authNotice != nil }, set: { if !$0 { model.authNotice = nil } }
+                )) {
+                    Button("OK", role: .cancel) {}
+                } message: {
+                    Text(model.authNotice ?? "")
                 }
                 // Siri and the Shortcuts app (Shortcuts.swift) leave a route here.
                 .onChange(of: ShortcutRouter.shared.pending, initial: true) { _, route in

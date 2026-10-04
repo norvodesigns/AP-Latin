@@ -3,7 +3,7 @@ import LectioCore
 
 /// Sample progress for screenshots and for TestFlight testers: applied when
 /// the app is launched with `-seedDemo YES` (the CI screenshot job does
-/// this), or from Settings > Preview, and only on a device with no progress
+/// this), or from Settings > Developer in a Debug build, and only on a device with no progress
 /// of its own.
 extension AppModel {
     func seedDemoIfRequested() {

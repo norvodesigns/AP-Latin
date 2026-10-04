@@ -69,7 +69,7 @@ private struct SignInForm: View {
 
             if checkEmail {
                 Section {
-                    Label("Check your email for a confirmation link. Once you've followed it, sign in here.",
+                    Label("Check your email for a confirmation link. Open it on this device and you'll be signed in; if you open it somewhere else, come back and sign in here.",
                           systemImage: "envelope.badge")
                 }
             }
