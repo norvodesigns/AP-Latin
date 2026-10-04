@@ -5,6 +5,7 @@ import { getSupabaseServer, getCurrentProfile } from '@/lib/supabase/server';
 import { Page, PageHeader, Section, SourceNote } from '@/components/ui';
 import { Leaderboard } from '@/components/Leaderboard';
 import AssignmentManager from './AssignmentManager';
+import RemoveStudents from './RemoveStudents';
 import { toggleArchived } from './actions';
 
 export const metadata: Metadata = { title: 'Classroom' };
@@ -57,6 +58,10 @@ export default async function TeachClassroomPage({
 
       <Section title="Roster" className="mb-12">
         <Leaderboard rows={leaderboard ?? []} />
+        <RemoveStudents
+          classroomId={id}
+          students={(leaderboard ?? []).map((r) => ({ id: r.student_id, name: r.display_name }))}
+        />
       </Section>
 
       <form action={toggleArchived.bind(null, id, !classroom.archived)}>

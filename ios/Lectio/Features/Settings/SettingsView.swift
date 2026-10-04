@@ -11,13 +11,14 @@ struct SettingsView: View {
     @State private var reminderOn = UserDefaults.standard.bool(forKey: "reminderEnabled")
     /// Read at launch by LectioChrome, so a change applies on the next open.
     @AppStorage("legacyChrome") private var classicLook = false
+    @AppStorage(AIConsent.key) private var aiAllowed = false
     @State private var confirmClear = false
 
     var body: some View {
         @Bindable var model = model
         SectionStack {
             Form {
-                Section("Appearance") {
+                Section {
                     Picker("Appearance", selection: $model.appearance) {
                         ForEach(AppModel.Appearance.allCases) { Text($0.label).tag($0) }
                     }
@@ -27,6 +28,15 @@ struct SettingsView: View {
                         Text("Standard").tag(1.0)
                         Text("Larger").tag(1.2)
                         Text("Largest").tag(1.45)
+                    }
+                    if #available(iOS 26.0, *) {
+                        Toggle("Classic look", isOn: $classicLook)
+                    }
+                } header: {
+                    Text("Appearance")
+                } footer: {
+                    if #available(iOS 26.0, *) {
+                        Text("Classic look swaps Liquid Glass for solid bars and buttons. It takes effect the next time you open Lectio.")
                     }
                 }
 
@@ -47,10 +57,26 @@ struct SettingsView: View {
                         Label("Export a backup", systemImage: "square.and.arrow.up")
                     }
                     Button("Restore from a backup…", systemImage: "square.and.arrow.down") { importing = true }
+                    // Only while signed out, so an empty device can never
+                    // sync over an account.
+                    if model.account == nil {
+                        Button("Clear all progress on this device", systemImage: "trash", role: .destructive) { confirmClear = true }
+                    }
                 } header: {
                     Text("Your data")
                 } footer: {
                     Text("The same file the website's Settings page exports and imports, so a backup moves between the two either way.")
+                }
+
+                Section {
+                    Toggle("Allow AI features", isOn: $aiAllowed)
+                    Link(destination: AppConfig.web("privacy")) {
+                        Label("How AI features use your text", systemImage: "hand.raised")
+                    }
+                } header: {
+                    Text("AI features")
+                } footer: {
+                    Text("AI grading, the line tutor and sight-passage selection send the Latin and what you wrote or asked to an AI provider (Google Gemini, or Groq as a backup). Nothing is sent until you press an AI button. With AI off, every feature still has its self-graded path.")
                 }
 
                 Section {
@@ -97,24 +123,20 @@ struct SettingsView: View {
                     Text("Time counts while a study section is open on screen, the same way the website counts it. The reminder says how many cards are due.")
                 }
 
-                // For TestFlight: compare the two looks, and fill an empty
-                // device with sample progress so the screens have something
-                // to show. Sample progress is only offered while signed out,
-                // so it can never sync into an account.
-                Section {
-                    Toggle("Classic look", isOn: $classicLook)
-                    if model.account == nil {
+                #if DEBUG
+                // Debug builds only (never TestFlight or the App Store): fill
+                // an empty device with sample progress, so every screen has
+                // something to show. Offered only while signed out, so it can
+                // never sync into an account; left out of the screenshots.
+                if model.account == nil, !UserDefaults.standard.bool(forKey: "seedDemo") {
+                    Section("Developer") {
                         Button("Load sample progress", systemImage: "tray.and.arrow.down") { model.loadSampleProgress() }
                             .disabled(!model.progress.vocab.isEmpty)
-                        Button("Clear all progress on this device", systemImage: "trash", role: .destructive) { confirmClear = true }
                     }
-                } header: {
-                    Text("Preview")
-                } footer: {
-                    Text("Classic look is what iOS 17 and 18 get: no Liquid Glass and a classic tab bar. Restart the app to apply it. Sample progress fills an empty device so every screen has something to show; it is offered only while signed out.")
                 }
+                #endif
 
-                Section("About") {
+                Section {
                     LabeledContent("Version", value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "–")
                     if let library {
                         LabeledContent("Content", value: String(library.manifest.contentHash.prefix(12)))
@@ -133,6 +155,10 @@ struct SettingsView: View {
                     } label: {
                         Label("Acknowledgements", systemImage: "text.book.closed")
                     }
+                } header: {
+                    Text("About")
+                } footer: {
+                    Text(AppConfig.trademarkNotice)
                 }
             }
             .readableColumn()
@@ -199,8 +225,11 @@ private struct LicensesView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                Text("Latin texts are from The Latin Library and are in the public domain. The Course and Exam Description material follows the College Board's published 2025 framework.")
+                Text("Latin texts are from The Latin Library and are in the public domain. The course follows the College Board's published AP® Latin Course and Exam Description (2025), and the vocabulary track teaches the words on its vocabulary list; the definitions, notes, questions and lessons are Lectio's own.")
                     .font(.prose(.callout))
+                Text(AppConfig.trademarkNotice)
+                    .font(.prose(.footnote))
+                    .foregroundStyle(Palette.inkMuted)
                 ForEach(["EBGaramond-OFL", "Italianno-OFL"], id: \.self) { name in
                     if let url = Bundle.main.url(forResource: name, withExtension: "txt"),
                        let text = try? String(contentsOf: url, encoding: .utf8) {

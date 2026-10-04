@@ -180,33 +180,6 @@ struct FlowLayout: Layout {
     }
 }
 
-/// A section the app doesn't have yet: says so plainly and offers the web
-/// version, which already has it.
-struct ComingSoonView: View {
-    let title: String
-    let systemImage: String
-    let webPath: String
-    let blurb: String
-
-    var body: some View {
-        NavigationStack {
-            ContentUnavailableView {
-                Label(title, systemImage: systemImage)
-            } description: {
-                Text(blurb + "\n\nIt's coming to the app soon, and it's already on the web.")
-                    .font(.prose(.callout))
-            } actions: {
-                Link(destination: AppConfig.web(webPath)) {
-                    Label("Open on the web", systemImage: "safari")
-                }
-                .glassButton(prominent: true)
-            }
-            .navigationTitle(title)
-            .pageBackground()
-        }
-    }
-}
-
 /* ------------------------------------------------------------------ */
 /* Section stacks                                                      */
 /* ------------------------------------------------------------------ */

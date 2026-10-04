@@ -435,6 +435,11 @@ export function CedLink({
   );
 }
 
+/** The College Board's own wording, wherever its trademark is named (the
+ *  app shows the same line in Settings › About). */
+export const TRADEMARK_NOTICE =
+  'AP® is a trademark registered by the College Board, which is not affiliated with, and does not endorse, this product.';
+
 /**
  * The standing footer citation. Every study section carries one, so a student
  * is never more than a glance from the document the exam is actually built on.
@@ -493,6 +498,9 @@ export function SourceNote({
           Exam &amp; past FRQs
         </a>
       </div>
+      <p className="slab-sm mt-4" style={{ margin: '1rem 0 0', color: 'var(--fg-faint)', textTransform: 'none' }}>
+        {TRADEMARK_NOTICE}
+      </p>
     </footer>
   );
 }

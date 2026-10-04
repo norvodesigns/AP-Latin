@@ -1,11 +1,25 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Page, PageHeader, Section } from '@/components/ui';
+import SupportForm from './SupportForm';
 
 export const metadata: Metadata = { title: 'Support' };
 
-/** The support page the App Store listing links to. */
-export default function SupportPage() {
+type Search = Record<string, string | string[] | undefined>;
+
+const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? '';
+
+/**
+ * The support page the App Store listing links to. The app opens it filled
+ * in: `?report=<name>&classroom=<id>&from=ios` for a name reported from a
+ * classroom leaderboard, `?topic=…&from=ios` otherwise.
+ */
+export default async function SupportPage({ searchParams }: { searchParams: Promise<Search> }) {
+  const params = await searchParams;
+  const reported = one(params.report).slice(0, 80);
+  const classroom = one(params.classroom).slice(0, 80);
+  const topic = reported ? 'report' : one(params.topic);
+  const platform = one(params.from) === 'ios' ? 'ios' : 'web';
   return (
     <Page>
       <PageHeader
@@ -20,9 +34,19 @@ export default function SupportPage() {
       >
         <Section title="Getting in touch" className="mb-10">
           <p>
-            Found a mistake in the Latin, a wrong answer key, or a bug? Report it on the project&rsquo;s{' '}
-            <a href="https://github.com/norvodesigns/AP-Latin/issues">issue tracker</a>. Include the
-            passage or question, and what you expected to see.
+            Questions, a mistake in the Latin or an answer key, a bug, or a name on a classroom
+            leaderboard that shouldn&rsquo;t be there: send a message here. Every message is read, and
+            reports about names are dealt with within a day.
+          </p>
+          <SupportForm
+            topic={topic}
+            message={reported ? `Reporting the name “${reported}” on a classroom leaderboard. ` : ''}
+            context={reported ? `reported name: ${reported}; classroom: ${classroom}` : ''}
+            platform={platform}
+          />
+          <p className="mt-6">
+            If you use GitHub, you can also open an issue on the project&rsquo;s{' '}
+            <a href="https://github.com/norvodesigns/AP-Latin/issues">issue tracker</a>.
           </p>
         </Section>
 
@@ -46,8 +70,19 @@ export default function SupportPage() {
             enter the six-character code your teacher gives you.
           </p>
           <p>
-            <strong>How do I delete my account?</strong> Settings on the website, or Account in the app.
-            See the <Link href="/privacy">privacy page</Link> for exactly what that removes.
+            <strong>How do I delete my account?</strong> Settings on the website, or Settings › Account in
+            the app. See the <Link href="/privacy">privacy page</Link> for exactly what that removes.
+          </p>
+          <p>
+            <strong>Someone on my classroom leaderboard has an offensive name.</strong> In the app, swipe
+            the name (or touch and hold it) and choose Report; on the website, use the form above. Teachers
+            can remove a student from the roster on the classroom&rsquo;s Teach page or in the app, and
+            students can leave a classroom at any time.
+          </p>
+          <p>
+            <strong>Can I turn the AI features off?</strong> Yes. In the app, Settings › AI features. They
+            only run when you press an AI button, and each one has a self-graded path that works without
+            it.
           </p>
         </Section>
       </div>

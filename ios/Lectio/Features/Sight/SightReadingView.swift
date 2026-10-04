@@ -30,6 +30,7 @@ struct SightReadingView: View {
     @State private var generating = false
     @State private var generateError: String?
     @State private var generated: SightItem?
+    @State private var aiRequest: AIRequest?
 
     var body: some View {
         SectionStack {
@@ -67,6 +68,7 @@ struct SightReadingView: View {
             .navigationDestination(for: SightItem.self) { SightAttemptView(item: $0) }
             .navigationDestination(item: $generated) { SightAttemptView(item: $0) }
             .task { await model.checkAI() }
+            .aiConsent($aiRequest)
         }
     }
 
@@ -89,7 +91,7 @@ struct SightReadingView: View {
                 }
                 .pickerStyle(.segmented)
                 Button {
-                    Task { await generate() }
+                    aiRequest = AIConsent.ask { Task { await generate() } }
                 } label: {
                     HStack {
                         if generating { ProgressView() }

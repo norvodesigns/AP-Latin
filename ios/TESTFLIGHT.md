@@ -98,19 +98,22 @@ skips), and screenshots both looks. What it can't prove is signing, and how thin
 - **iOS 17 and 18** gets the backup: the same screens with a material look instead of glass, a classic
   tab bar on iPhone (Vocab carries a badge for cards due) and a sidebar list on iPad.
 
-To judge the backup without an old device, turn on **Settings > Preview > Classic look** and relaunch.
-**Load sample progress** (same section, offered only while signed out) fills an empty device with a few
-weeks of study so Today, Laurels and the weekly recap have something to show; **Clear all progress**
-undoes it. Sample progress never reaches an account.
+To judge the backup without an old device, turn on **Settings > Appearance > Classic look** and
+relaunch. That switch is a normal setting, so it stays in the App Store build.
+
+TestFlight builds are the same binary the App Store gets, so there is no testers-only section any more
+(App Review rejects test tools left in a release). **Load sample progress** now lives only in Debug
+builds (run from Xcode, or the simulator with `-seedDemo YES`); **Settings > Your data > Clear all
+progress on this device** (signed out only) is an ordinary setting.
 
 ## What to Test (paste into TestFlight)
 
 > This is the first look at the Lectio app for iPhone, iPad and Apple Watch, for judging how it looks
 > and feels. Please don't worry about the Latin content yet.
 >
-> First: Settings > Preview > Load sample progress, so the screens have something to show (skip it if
-> you'd rather start fresh). Then try, on iPhone and iPad, in light and dark, and once at your largest
-> text size (Settings > Accessibility > Display & Text Size > Larger Text):
+> Do a lesson or two and a few flashcards first, so the screens have something to show. Then try, on
+> iPhone and iPad, in light and dark, and once at your largest text size (Settings > Accessibility >
+> Display & Text Size > Larger Text):
 >
 > 1. The first-run screens (delete and reinstall to see them again).
 > 2. Today (scroll through every panel), then each tab, then Browse (the search tab), which lists every
@@ -125,8 +128,8 @@ undoes it. Sample progress never reaches an account.
 >
 > What to tell me: anything cut off, overlapping, too small, too faint, slow, or that just looks off,
 > and anything confusing about where to tap. A screenshot sent from TestFlight (take a screenshot, then
-> tap Share Beta Feedback) is perfect. Also try Settings > Preview > Classic look and tell me which look
-> you prefer.
+> tap Share Beta Feedback) is perfect. Also try Settings > Appearance > Classic look and tell me which
+> look you prefer.
 
 ## Known gaps, so they don't surprise you
 
@@ -134,7 +137,8 @@ undoes it. Sample progress never reaches an account.
   practice-exam section) and the watch complications may look different from the simulator.
 - Notifications ask for permission the first time a reminder is switched on.
 - AI features (the tutor, grading) need the website's AI to be configured; if it isn't, the buttons
-  are hidden and everything falls back to self-grading.
+  are hidden and everything falls back to self-grading. The first AI button asks permission to send
+  your text to the AI provider; Settings > AI features turns it back off.
 - Signing in needs the sign-up email link to return to the app: add `lectio://auth-callback` to
   Supabase > Authentication > URL Configuration > Redirect URLs.
 - Teachers assigning *course* time needs `supabase/migrations/0004_course_section.sql` applied and

@@ -67,3 +67,17 @@ export async function toggleArchived(classroomId: string, archived: boolean) {
   revalidatePath(`/teach/${classroomId}`);
   revalidatePath('/teach');
 }
+
+/** Takes a student off the roster. RLS ("members: student leaves self",
+ *  which also lets the classroom's teacher delete) is the ownership check.
+ *  The student's account and history are untouched; they can rejoin only
+ *  with the code. */
+export async function removeStudent(classroomId: string, studentId: string) {
+  const supabase = await getSupabaseServer();
+  if (!supabase) return;
+
+  await supabase.from('classroom_members').delete().eq('classroom_id', classroomId).eq('student_id', studentId);
+
+  revalidatePath(`/teach/${classroomId}`);
+  revalidatePath(`/classroom/${classroomId}`);
+}

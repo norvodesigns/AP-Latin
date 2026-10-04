@@ -16,7 +16,10 @@ nonisolated enum AppConfig {
     /// URL scheme in project.yml, and as a redirect URL in Supabase).
     static let authCallbackURL = URL(string: "lectio://auth-callback")!
 
-    /// A web section's URL, for the "open on the web" fallback on sections the
-    /// app doesn't have yet.
+    /// A page on the website (the privacy policy, support, teaching tools).
     static func web(_ path: String) -> URL { webBaseURL.appending(path: path) }
+
+    /// The College Board's own wording, wherever its trademark is named.
+    static let trademarkNotice =
+        "AP® is a trademark registered by the College Board, which is not affiliated with, and does not endorse, this product."
 }

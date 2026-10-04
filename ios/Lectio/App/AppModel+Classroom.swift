@@ -67,6 +67,17 @@ extension AppModel {
         ], accessToken: token)
     }
 
+    /// A teacher takes a student off the roster, as the website's Teach page
+    /// does. RLS lets only the classroom's teacher delete someone else's
+    /// membership; the student's account and history are untouched.
+    func removeStudent(_ studentId: String, from classroomId: String) async throws {
+        let token = try await auth.accessToken()
+        try await auth.api.delete("classroom_members", query: [
+            URLQueryItem(name: "classroom_id", value: "eq.\(classroomId)"),
+            URLQueryItem(name: "student_id", value: "eq.\(studentId)"),
+        ], accessToken: token)
+    }
+
     func classroomDetail(_ id: String) async throws -> ClassroomDetail {
         let token = try await auth.accessToken()
         async let assignmentRows = auth.api.select("assignments", query: [

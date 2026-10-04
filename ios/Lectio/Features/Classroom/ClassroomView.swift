@@ -124,11 +124,13 @@ struct ClassroomView: View {
 struct ClassroomDetailView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     let classroom: AppModel.Classroom
 
     @State private var detail: AppModel.ClassroomDetail?
     @State private var error: String?
     @State private var confirmLeave = false
+    @State private var removing: AppModel.LeaderRow?
 
     var body: some View {
         let me = model.account?.userId ?? ""
@@ -165,11 +167,17 @@ struct ClassroomDetailView: View {
                                 }
                             }
                         }
+                        .swipeActions {
+                            if row.id != me { rowActions(row, isTeacher: isTeacher) }
+                        }
+                        .contextMenu {
+                            if row.id != me { rowActions(row, isTeacher: isTeacher) }
+                        }
                     }
                 } header: {
                     Text("Leaderboard").rubricLabel()
                 } footer: {
-                    Text("Ranked by time studied. Accuracy is shown but not ranked on — a handful of perfect answers shouldn't outrank hundreds at 90%.")
+                    Text("Ranked by time studied. Accuracy is shown but not ranked on — a handful of perfect answers shouldn't outrank hundreds at 90%. \(isTeacher ? "Swipe a student to remove them, or to report their name." : "Swipe a name to report it.")")
                 }
             } else if let error {
                 Text(error).foregroundStyle(Palette.incorrect)
@@ -189,6 +197,22 @@ struct ClassroomDetailView: View {
         .navigationTitle(classroom.name)
         .task { await load() }
         .refreshable { await load() }
+        .confirmationDialog("Remove \(removing?.name ?? "this student")?", isPresented: Binding(
+            get: { removing != nil }, set: { if !$0 { removing = nil } }
+        ), titleVisibility: .visible, presenting: removing) { row in
+            Button("Remove from \(classroom.name)", role: .destructive) {
+                Task {
+                    do {
+                        try await model.removeStudent(row.id, from: classroom.id)
+                        await load()
+                    } catch {
+                        self.error = (error as? SupabaseError)?.message ?? "Couldn't remove \(row.name)."
+                    }
+                }
+            }
+        } message: { _ in
+            Text("Their account and history stay. They can rejoin only with the classroom code.")
+        }
         .confirmationDialog("Leave \(classroom.name)?", isPresented: $confirmLeave, titleVisibility: .visible) {
             Button("Leave", role: .destructive) {
                 Task {
@@ -197,6 +221,28 @@ struct ClassroomDetailView: View {
                 }
             }
         }
+    }
+
+    /// Report a name (anyone), or remove a student (the teacher).
+    @ViewBuilder
+    private func rowActions(_ row: AppModel.LeaderRow, isTeacher: Bool) -> some View {
+        if isTeacher {
+            // No destructive role: in a swipe that hides the row at once,
+            // before the confirmation.
+            Button("Remove", systemImage: "person.badge.minus") { removing = row }
+                .tint(Palette.incorrect)
+        }
+        Button("Report name", systemImage: "flag") { openURL(reportURL(row)) }
+            .tint(Palette.gilt)
+    }
+
+    /// The support form, filled in with the name and the classroom.
+    private func reportURL(_ row: AppModel.LeaderRow) -> URL {
+        AppConfig.web("support").appending(queryItems: [
+            URLQueryItem(name: "report", value: row.name),
+            URLQueryItem(name: "classroom", value: classroom.id),
+            URLQueryItem(name: "from", value: "ios"),
+        ])
     }
 
     private func load() async {

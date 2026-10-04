@@ -1,6 +1,6 @@
 {
   "name": "lectio-ios",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "EAS Build wrapper for the native SwiftUI app: eas-cli needs an Expo-style project to build and submit it. No React Native or JavaScript ships in the app.",
   "scripts": {

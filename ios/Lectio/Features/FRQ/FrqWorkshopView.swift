@@ -72,6 +72,7 @@ struct FrqWorkspaceView: View {
     @State private var grading = false
     @State private var gradeError: String?
     @State private var feedback: JSONValue?
+    @State private var aiRequest: AIRequest?
 
     private var isProject: Bool { prompt.type == "project-prose" || prompt.type == "project-poetry" }
     private var wantedGenre: String { prompt.type == "project-poetry" ? "poetry" : "prose" }
@@ -137,6 +138,7 @@ struct FrqWorkspaceView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { timerToolbar }
         .task { await model.checkAI() }
+        .aiConsent($aiRequest)
     }
 
     /* -------------------------------------------------------------- */
@@ -214,7 +216,7 @@ struct FrqWorkspaceView: View {
             let combined = prompt.subquestions.map { "\($0.label.isEmpty ? "" : "\($0.label). ")\(answers[$0.id] ?? "")" }
                 .joined(separator: "\n\n").trimmingCharacters(in: .whitespacesAndNewlines)
             Button {
-                Task { await grade(combined: combined, project: project) }
+                aiRequest = AIConsent.ask { Task { await grade(combined: combined, project: project) } }
             } label: {
                 HStack {
                     if grading { ProgressView() }

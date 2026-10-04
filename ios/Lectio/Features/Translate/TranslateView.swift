@@ -84,6 +84,7 @@ struct TranslationDrillView: View {
     @State private var grading = false
     @State private var gradeError: String?
     @State private var saved = false
+    @State private var aiRequest: AIRequest?
     @FocusState private var editing: Bool
 
     private var score: Double { drill.segments.reduce(0) { $0 + (scores[$1.id]?.points ?? 0) } }
@@ -141,6 +142,7 @@ struct TranslationDrillView: View {
         .navigationTitle(drill.citation)
         .navigationBarTitleDisplayMode(.inline)
         .task { await model.checkAI() }
+        .aiConsent($aiRequest, onDecline: reveal)
         .onAppear { model.update { $0.markStudied() } }
     }
 
@@ -150,7 +152,11 @@ struct TranslationDrillView: View {
         let empty = text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         return VStack(alignment: .leading, spacing: 10) {
             Button {
-                Task { await grade() }
+                if model.aiAvailable == true {
+                    aiRequest = AIConsent.ask { Task { await grade() } }
+                } else {
+                    reveal()
+                }
             } label: {
                 HStack {
                     if grading { ProgressView().tint(.white) }

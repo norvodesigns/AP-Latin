@@ -115,6 +115,21 @@ export type UserProgress = {
   updated_at: string;
 };
 
+/** What the support form sends (0006_support_messages.sql). Write-only:
+ *  no policy lets anyone read a message back through the API. */
+export const SUPPORT_TOPICS = ['question', 'mistake', 'bug', 'account', 'report', 'other'] as const;
+export type SupportTopic = (typeof SUPPORT_TOPICS)[number];
+
+export type SupportMessage = {
+  id: string;
+  created_at: string;
+  topic: SupportTopic;
+  message: string;
+  reply_to: string | null;
+  context: string | null;
+  platform: 'web' | 'ios' | null;
+};
+
 export interface Database {
   public: {
     Tables: {
@@ -166,6 +181,12 @@ export interface Database {
         // (and — under RLS — is not trusted) to state whose row this is.
         Insert: Omit<UserProgress, 'user_id' | 'updated_at'> & { updated_at?: string };
         Update: Partial<Pick<UserProgress, 'data' | 'updated_at'>>;
+        Relationships: [];
+      };
+      support_messages: {
+        Row: SupportMessage;
+        Insert: Omit<SupportMessage, 'id' | 'created_at'>;
+        Update: never;
         Relationships: [];
       };
     };

@@ -431,3 +431,14 @@ finishing a lesson counts toward the streak and daily goal.
   out of Review. Verified like any lesson; mirrored in LectioCore (next, after, unitProgress, laurels, review).
   Laurels became Earned / Under way / Still ahead panels; Today's Pick up shows five rows at most; each
   vocabulary unit shows its words in the deck and known.
+- 2026-10-04: App Store readiness, aimed at approval on the first submission. The testers' Preview section is
+  gone from release builds (sample progress is Debug-only; Classic look is a normal Appearance setting on iOS
+  26; clearing progress moved to Your data). Every AI feature asks permission before its first request and can
+  be turned off in Settings › AI features (guideline 5.1.2(i)). Classroom leaderboards gained Report name
+  (opens the support form filled in) and, for teachers, Remove, in the app and on the web's Teach page
+  (guideline 1.2). The support page has a contact form backed by a write-only `support_messages` table
+  (`supabase/migrations/0006_support_messages.sql`) instead of only a GitHub link (1.5). The College Board
+  trademark notice is in Settings › About, the Acknowledgements, and every study page's footer (5.2.1). The
+  privacy policy covers third parties, retention, support messages, children and AI consent. Version 1.0.0.
+  `ios/APP_STORE.md` is now the full submission guide: the owner's checklist, metadata without "AP" in the name
+  or keywords, App Privacy and age-rating answers, and review notes to paste.

@@ -16,6 +16,7 @@ struct AskAboutLineSheet: View {
     @State private var error: String?
     @State private var task: Task<Void, Never>?
     @FocusState private var focused: Bool
+    @State private var aiRequest: AIRequest?
 
     private static let suggestions = [
         "Parse every word in this line.",
@@ -89,6 +90,7 @@ struct AskAboutLineSheet: View {
         }
         .presentationDetents([.medium, .large])
         .task { await model.checkAI() }
+        .aiConsent($aiRequest)
         .onDisappear { task?.cancel() }
     }
 
@@ -122,6 +124,10 @@ struct AskAboutLineSheet: View {
         let q = q.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !q.isEmpty, !streaming else { return }
         focused = false
+        aiRequest = AIConsent.ask { send(q) }
+    }
+
+    private func send(_ q: String) {
         question = ""
         answer = ""
         error = nil

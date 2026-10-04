@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Page, PageHeader, Section } from '@/components/ui';
+import { Page, PageHeader, Section, TRADEMARK_NOTICE } from '@/components/ui';
 
 export const metadata: Metadata = { title: 'Privacy' };
 
@@ -51,12 +51,19 @@ export default function PrivacyPage() {
 
         <Section title="AI features" className="mb-10">
           <p>
-            AI grading, the line tutor and sight-passage generation are optional and only run when you
-            ask for them. When you do, the Latin passage and the text you wrote are sent from our server
-            to an AI provider (Google Gemini, or Groq as a fallback) to produce the feedback. On free
-            tiers these providers may use submitted text to improve their models, so don&rsquo;t put
-            anything personal in a translation or essay you send for grading. Nothing is sent unless you
-            press the button.
+            AI grading, the line tutor and sight-passage selection are optional and only run when you
+            ask for them. When you do, the Latin passage and the text you wrote or asked (a translation,
+            an answer, an essay or a question) are sent from our server to an AI provider (Google Gemini,
+            or Groq as a fallback) to produce the feedback. Your name, email address and progress are
+            not sent. On free tiers these providers may keep submitted text and use it to improve their
+            models, so don&rsquo;t put anything personal in a translation or essay you send for grading.
+            Lectio itself does not store the text you send; the feedback is kept only in your own
+            progress.
+          </p>
+          <p>
+            The app asks for your permission before the first AI request, and you can withdraw it at any
+            time in Settings › AI features. Without it, every feature still works through its self-graded
+            path.
           </p>
         </Section>
 
@@ -65,6 +72,42 @@ export default function PrivacyPage() {
             The website uses Vercel Web Analytics to count page views. It uses no cookies and does not
             identify you. The iPhone and iPad app includes no analytics, advertising or tracking of any
             kind, and does not track you across other apps or websites.
+          </p>
+        </Section>
+
+        <Section title="Who else handles your data" className="mb-10">
+          <p>
+            Lectio has no advertisers and sells nothing. The only other companies involved are the ones
+            that run it: Supabase (accounts and synced progress), Vercel (the website and its server,
+            including page-view counts), and, only when you use an AI feature, Google or Groq (see
+            above). Each processes data only to provide its service to Lectio, under its own privacy
+            terms, which protect it at least as well as this policy.
+          </p>
+        </Section>
+
+        <Section title="Support messages" className="mb-10">
+          <p>
+            If you write to us through the <Link href="/support">support page</Link> (or report a name
+            from a classroom leaderboard), we keep your message and, if you give one, the email address
+            to reply to. They aren&rsquo;t linked to your account, and we delete them once the matter is
+            dealt with.
+          </p>
+        </Section>
+
+        <Section title="How long we keep it" className="mb-10">
+          <p>
+            Account data and synced progress are kept until you delete your account, and are then
+            deleted at once. Classroom study statistics are kept while you belong to the classroom, and
+            go with your account. AI requests are not stored by Lectio.
+          </p>
+        </Section>
+
+        <Section title="Children" className="mb-10">
+          <p>
+            Lectio is made for high-school and college students. Accounts are not meant for children
+            under 13; if you are under 13, use Lectio without an account, which keeps everything on your
+            device. If you believe a child under 13 has created an account, tell us on the support page
+            and we will delete it.
           </p>
         </Section>
 
@@ -78,10 +121,13 @@ export default function PrivacyPage() {
           </p>
         </Section>
 
-        <Section title="Questions" className="mb-10">
+        <Section title="Questions and changes" className="mb-10">
           <p>
-            See the <Link href="/support">support page</Link> for how to get in touch.
+            Write to us through the <Link href="/support">support page</Link>. If this policy changes,
+            the new version is posted here with a new date.
           </p>
+          <p>Last updated 4 October 2026.</p>
+          <p style={{ fontSize: '0.9375rem', color: 'var(--fg-muted)' }}>{TRADEMARK_NOTICE}</p>
         </Section>
       </Prose>
     </Page>
