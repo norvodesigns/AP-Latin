@@ -442,5 +442,6 @@ finishing a lesson counts toward the streak and daily goal.
   privacy policy covers third parties, retention, support messages, children and AI consent. Version 1.0.0.
   `ios/APP_STORE.md` is now the full submission guide: the owner's checklist, metadata without "AP" in the name
   or keywords, App Privacy and age-rating answers, and review notes to paste. The sign-up confirmation link
-  now signs the new account in when it opens the app (LectioCore `AuthCallback`, tested), and says so plainly
-  when the link has expired, rather than opening the app to nothing.
+  now leads back into the app: the website's "Email confirmed" page offers Open Lectio, which lands on Account
+  with "Your email is confirmed"; a Supabase-style link carrying a session signs the account straight in, and
+  an expired one says so (LectioCore `AuthCallback`, tested).

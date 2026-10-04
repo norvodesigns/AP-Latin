@@ -30,6 +30,13 @@ export default function EmailConfirmedPage() {
             Back to studying
           </Link>
         </div>
+        <p
+          className="measure mt-7"
+          style={{ margin: '1.75rem 0 0', fontFamily: 'var(--font-latin)', fontSize: '1rem', color: 'var(--fg-muted)' }}
+        >
+          Signed up in the iPhone or iPad app? <a href="lectio://auth-callback?confirmed=1">Open Lectio</a>{' '}
+          and sign in there with the same email and password.
+        </p>
       </Panel>
     </Page>
   );

@@ -139,8 +139,9 @@ progress on this device** (signed out only) is an ordinary setting.
 - AI features (the tutor, grading) need the website's AI to be configured; if it isn't, the buttons
   are hidden and everything falls back to self-grading. The first AI button asks permission to send
   your text to the AI provider; Settings > AI features turns it back off.
-- The sign-up email link signs you straight in when it opens the app, once `lectio://auth-callback`
-  is in Supabase > Authentication > URL Configuration > Redirect URLs.
+- The sign-up email link confirms the address on the website, whose page has an **Open Lectio** link
+  back to the app's sign-in. Add `lectio://auth-callback` to Supabase > Authentication > URL
+  Configuration > Redirect URLs as well.
 - Teachers assigning *course* time needs `supabase/migrations/0004_course_section.sql` applied and
   `learn` added to `ASSIGNABLE_SECTIONS`; nothing else depends on it.
 

@@ -76,10 +76,15 @@ extension AppModel {
                 startPullLoop()
                 authNotice = "Your email is confirmed and you’re signed in. Your progress now syncs with the website."
             } catch {
-                authNotice = "Your email is confirmed. Sign in with your email and password in Settings › Account."
+                selectedTab = .settings
+                authNotice = "Your email is confirmed. Sign in with your email and password under Account."
             }
+        case .confirmed:
+            selectedTab = .settings
+            authNotice = "Your email is confirmed. Sign in with your email and password under Account."
         case .failed(let reason):
-            authNotice = "\(reason). If you’ve already confirmed your email, sign in with your password in Settings › Account."
+            selectedTab = .settings
+            authNotice = "\(reason). If you’ve already confirmed your email, sign in with your password under Account."
         }
     }
 

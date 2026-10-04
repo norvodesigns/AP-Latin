@@ -1,14 +1,18 @@
 import Foundation
 
-/// What a Supabase email link hands back when it opens the app: the sign-up
-/// confirmation redirects to lectio://auth-callback with the new session in
-/// the fragment (`#access_token=…&refresh_token=…&type=signup`), or with
+/// What a sign-up confirmation link hands back when it opens the app. With
+/// Supabase's own link, lectio://auth-callback carries the new session in
+/// the fragment (`#access_token=…&refresh_token=…&type=signup`), or
 /// `#error=…&error_description=…` when the link has expired or was already
-/// used. Nil for any other URL.
+/// used. Lectio's email points at the website instead, which confirms the
+/// address and offers lectio://auth-callback?confirmed=1. Nil for any other
+/// URL.
 public enum AuthCallback: Equatable, Sendable {
     /// The link worked; the refresh token gets a full session (and the user).
     case session(refreshToken: String)
-    /// The link didn't, and Supabase said why.
+    /// The website confirmed the address; the student signs in here.
+    case confirmed
+    /// The link didn't work, and Supabase said why.
     case failed(String)
 
     public init?(url: URL) {
@@ -25,6 +29,8 @@ public enum AuthCallback: Equatable, Sendable {
         }
         if let token = params["refresh_token"], !token.isEmpty {
             self = .session(refreshToken: token)
+        } else if params["confirmed"] == "1" {
+            self = .confirmed
         } else if let message = params["error_description"] ?? params["error"], !message.isEmpty {
             self = .failed(message)
         } else {

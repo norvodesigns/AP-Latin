@@ -19,6 +19,10 @@ import Testing
         #expect(AuthCallback(url: url) == .failed("Something broke"))
     }
 
+    @Test func theWebsiteSaysTheAddressIsConfirmed() throws {
+        #expect(AuthCallback(url: try #require(URL(string: "lectio://auth-callback?confirmed=1"))) == .confirmed)
+    }
+
     @Test func otherLinksAreNotCallbacks() throws {
         #expect(AuthCallback(url: try #require(URL(string: "lectio://vocab"))) == nil)
         #expect(AuthCallback(url: try #require(URL(string: "https://lectio.norvodesigns.com/auth-callback#refresh_token=x"))) == nil)
