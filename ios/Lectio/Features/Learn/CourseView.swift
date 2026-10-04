@@ -420,6 +420,16 @@ private struct UnitPanel: View {
                 .tint(progress >= 1 ? Palette.correct : Palette.rubric)
                 .accessibilityHidden(true)
 
+            if test != nil {
+                // A vocabulary unit: how many of its words are in the deck,
+                // and how many are held fast.
+                let ids = unit.lessons.flatMap(\.vocabIds)
+                let inDeck = ids.filter { model.vocab[$0] != nil }.count
+                let known = ids.filter { (model.vocab[$0]?.interval ?? 0) >= Path.knownInterval }.count
+                Text("\(ids.count) words · \(inDeck) in your deck · \(known) known")
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(Palette.inkMuted)
+            }
             if let test { TestRow(test: test, unit: unit) }
 
             if expanded {
