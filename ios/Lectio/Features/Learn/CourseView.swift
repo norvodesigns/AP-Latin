@@ -432,7 +432,10 @@ private struct UnitPanel: View {
                     .font(.caption.monospacedDigit())
                     .foregroundStyle(Palette.inkMuted)
             }
-            if let test { TestRow(test: test, unit: unit) }
+            // A finished unit doesn't need its test, unless it was taken.
+            if let test, progress < 1 || model.progress.lessons[test.id] != nil {
+                TestRow(test: test, unit: unit)
+            }
 
             if expanded {
                 Text(rich: unit.blurb)
