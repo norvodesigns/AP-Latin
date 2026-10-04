@@ -114,6 +114,10 @@ private struct PathPanel: View {
                 Hairline(color: Palette.hair)
                 PathRow(track: .vocabulary, place: model.nextVocabLesson,
                         empty: "You know every word on the AP list. Your flashcards keep them fresh.")
+                if let shaky = model.shakyLesson {
+                    Hairline(color: Palette.hair)
+                    RetryRow(place: shaky, best: model.progress.lessons[shaky.lesson.id]?.best ?? 0)
+                }
             }
             Button { checking = true } label: {
                 Label(model.progress.learner == nil ? "Find my level" : "Check my level again", systemImage: "scope")
@@ -190,6 +194,45 @@ private struct PathRow: View {
     }
 }
 
+/// A lesson that went badly, offered again: a second try usually goes much
+/// better, and it's where the grammar or the words haven't settled yet.
+private struct RetryRow: View {
+    @Environment(AppModel.self) private var model
+    let place: LessonPlace
+    let best: Double
+
+    var body: some View {
+        Button { model.openLesson(place.lesson.id) } label: {
+            HStack(spacing: 14) {
+                Image(systemName: "arrow.counterclockwise")
+                    .font(.title3)
+                    .foregroundStyle(Palette.gilt)
+                    .frame(width: 44, height: 44)
+                    .background(Palette.gilt.opacity(0.14), in: .circle)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Worth another go").quietLabel()
+                    Text(rich: place.lesson.title)
+                        .font(.system(.headline, design: .serif))
+                        .foregroundStyle(Palette.ink)
+                    Text("Best \(Int((best * 100).rounded()))% · a second try usually goes much better")
+                        .font(.subheadline)
+                        .foregroundStyle(Palette.inkMuted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 8)
+                Image(systemName: "play.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(Palette.gilt)
+                    .accessibilityHidden(true)
+            }
+            .padding(.vertical, 10)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint("Opens the lesson again")
+    }
+}
+
 /// The next lesson, large, with its button. Leads Today for a student in the course.
 struct ContinueCard: View {
     @Environment(AppModel.self) private var model
@@ -233,41 +276,38 @@ struct ContinueCard: View {
     }
 }
 
-/// Ways to practise what the course has taught: Review (ten exercises from
-/// finished lessons, Course.review) when there is something to review, and
-/// the sentence builder (SentenceBuilder). The web's course page has the same rows.
+/// Ways to practise what the course has taught, side by side: Review (ten
+/// exercises from finished lessons, weighted toward the hardest;
+/// Course.review), once there is something to review, and the sentence
+/// builder (SentenceBuilder). The web's course page has the same two.
 private struct PracticeRows: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            if model.canReview {
-                row(title: "Review", detail: "Ten exercises from lessons you have finished, weighted toward the ones you found hardest.",
-                    button: "Review · about 6 min", systemImage: "arrow.triangle.2.circlepath") { model.openReview() }
-                Hairline(color: Palette.hair)
+        VStack(alignment: .leading, spacing: 12) {
+            Text(model.canReview
+                 ? "Review mixes ten exercises from lessons you’ve finished, more from the ones you found hard. The sentence builder has you rebuild eight sentences from tiles."
+                 : "The sentence builder has you rebuild eight sentences from the course, from tiles. Review joins it once you’ve finished a lesson or two.")
+                .font(.prose(.callout))
+                .foregroundStyle(Palette.ink2)
+                .fixedSize(horizontal: false, vertical: true)
+            FigureRow(spacing: 10) {
+                if model.canReview {
+                    button("Review · 6 min", "arrow.triangle.2.circlepath") { model.openReview() }
+                }
+                button("Build · 5 min", "square.stack.3d.up") { model.openSentences() }
             }
-            row(title: "Sentence builder", detail: "Eight sentences from the course, built from tiles: the Latin from its English, or the English from its Latin.",
-                button: "Build · about 5 min", systemImage: "square.stack.3d.up") { model.openSentences() }
         }
     }
 
-    private func row(title: String, detail: String, button: String, systemImage: String, action: @escaping () -> Void) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(title).font(.system(.headline, design: .serif)).foregroundStyle(Palette.ink)
-                Text(detail)
-                    .font(.prose(.callout))
-                    .foregroundStyle(Palette.ink2)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Button(action: action) {
-                Label(button, systemImage: systemImage)
-                    .font(.subheadline.weight(.semibold))
-                    .padding(.vertical, 2)
-            }
-            .glassButton()
+    private func button(_ title: String, _ systemImage: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Label(title, systemImage: systemImage)
+                .font(.subheadline.weight(.semibold))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 2)
         }
-        .padding(.vertical, 10)
+        .glassButton()
     }
 }
 

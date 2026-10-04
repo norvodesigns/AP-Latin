@@ -75,6 +75,18 @@ import Testing
         }
     }
 
+    @Test func shakyLessonMatchesTheWebApp() throws {
+        for c in try #require(try Paths.fixture("path.json")["shakyCases"]?.arrayValue) {
+            let ids = (c["ids"]?.arrayValue ?? []).compactMap(\.stringValue)
+            var records: [String: LessonProgress] = [:]
+            for (id, r) in c["records"]?.objectValue ?? JSONObject() {
+                records[id] = LessonProgress(completedAt: "", lastAt: r["lastAt"]?.stringValue ?? "",
+                                             best: r["best"]?.doubleValue ?? 0, attempts: r["attempts"]?.intValue ?? 0)
+            }
+            #expect(Path.shakyLesson(ids, records: records) == c["expected"]?.stringValue)
+        }
+    }
+
     @Test func aPassedTestCountsTheUnitAndSpreadsItsWords() throws {
         let now = try #require(ISO8601DateFormatter().date(from: "2026-10-15T12:00:00Z"))
         var doc = ProgressDocument.blank(now: now)

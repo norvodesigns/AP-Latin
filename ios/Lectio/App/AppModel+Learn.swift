@@ -21,6 +21,15 @@ extension AppModel {
         content?.course.nextWords(done: courseDone, vocab: vocab, knownUnits: knownVocabUnits)
     }
 
+    /// The lesson most worth another go (Path.shakyLesson): the most recent
+    /// one tried with a best under 60%. Unit tests aside: they're retaken
+    /// from their unit.
+    var shakyLesson: LessonPlace? {
+        guard let course = content?.course else { return nil }
+        let ids = course.lessons.filter { !$0.lesson.isTest }.map(\.lesson.id)
+        return Path.shakyLesson(ids, records: progress.lessons).flatMap { course.place($0) }
+    }
+
     /// Grammar lessons finished, and how many there are.
     var grammarProgress: (done: Int, total: Int) {
         let lessons = content?.course.grammarLessons ?? []

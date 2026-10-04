@@ -96,6 +96,26 @@ public enum Path {
         VocabCard(id: id, ef: 2.5, interval: 10, repetitions: 2, due: addDays(today, 1 + index % knownSpreadDays), lapses: 0, reviews: 0)
     }
 
+    /// Below this best score, a lesson is worth another go.
+    public static let shakyBest = 0.6
+
+    /// The lesson most worth another go (the web's `shakyLesson`): of the
+    /// lessons actually tried (a passed unit test counts lessons with no
+    /// attempts of their own; those don't count) whose best score is under
+    /// `shakyBest`, the one tried most recently, the later in `ids` on a tie.
+    public static func shakyLesson(_ ids: [String], records: [String: LessonProgress]) -> String? {
+        var pick: String?
+        var at = ""
+        for id in ids {
+            guard let r = records[id], r.attempts >= 1, r.best < shakyBest else { continue }
+            if r.lastAt >= at {
+                pick = id
+                at = r.lastAt
+            }
+        }
+        return pick
+    }
+
     /// The level check's vocabulary questions, answered: the units whose
     /// two words were both known, in the order they were first asked.
     public static func knownVocabUnits(_ answers: [Placement.Answer]) -> [String] {

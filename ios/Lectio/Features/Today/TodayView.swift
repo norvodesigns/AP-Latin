@@ -298,6 +298,13 @@ private struct PickUpPanel: View {
                             detail: "\(lesson.level.title) \(lesson.unit.n).\(lesson.number) · \(RichText.plain(lesson.lesson.title))",
                             systemImage: "graduationcap", action: .lesson(lesson.id)))
         }
+        // A lesson that went badly, offered again.
+        if let shaky = model.shakyLesson {
+            let best = Int(((model.progress.lessons[shaky.lesson.id]?.best ?? 0) * 100).rounded())
+            out.append(Item(id: "retry", title: "Worth another go",
+                            detail: "\(RichText.plain(shaky.lesson.title)) · best \(best)%",
+                            systemImage: "arrow.counterclockwise", action: .lesson(shaky.lesson.id)))
+        }
         // The vocabulary track: the next words, or a unit test the level
         // check thinks will skip a unit.
         if let words = model.nextVocabLesson {
@@ -437,6 +444,21 @@ private struct VocabularyPanel: View {
                     Figure(value: "\(forecast.mature)", caption: "mature")
                 }
                 ForecastBars(week: forecast.week)
+            }
+            // How much of the AP list is held fast (a mature card).
+            let list = model.wordsKnown
+            if list.total > 0 {
+                VStack(alignment: .leading, spacing: 6) {
+                    LabelRow {
+                        Text("The AP word list").font(.subheadline)
+                    } trailing: {
+                        Text("\(list.known) of \(list.total) known").font(.caption.monospacedDigit()).foregroundStyle(Palette.inkMuted)
+                    }
+                    ProgressView(value: Double(list.known), total: Double(list.total))
+                        .tint(Palette.woad)
+                        .accessibilityLabel("AP word list")
+                        .accessibilityValue("\(list.known) of \(list.total) words known")
+                }
             }
             Button {
                 model.selectedTab = .vocab

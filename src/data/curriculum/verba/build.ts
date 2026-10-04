@@ -124,19 +124,37 @@ function slots(seed: string, size = 4): () => number {
 
 const posRank = (a: VocabEntry, b: VocabEntry) => (a.pos === b.pos ? 0 : 1);
 
-/** Up to `n` other words from `pool` to stand beside `word` as wrong
- *  answers: the same part of speech where there are enough, and none whose
- *  `key` (its tile text) matches the right answer's or one another's. */
+const FILLER = new Set(['to', 'the', 'a', 'an', 'of', 'in', 'on', 'at', 'by', 'for', 'with', 'from', 'and', 'or', 'be', 'as',
+  'is', 'it', 'up', 'out', 'off', 'into', 'upon', 'one', 'something', 'someone', 'esp', 'abl',
+  'acc', 'gen', 'dat', 'pl', 'w']);
+
+/** The words of a definition that carry its meaning. */
+function senseWords(definition: string): Set<string> {
+  return new Set(definition.toLowerCase().replace(/[^a-z ]/g, ' ').split(/\s+/).filter((w) => w.length > 1 && !FILLER.has(w)));
+}
+
+/**
+ * Up to `n` other words from `pool` to stand beside `word` as wrong answers:
+ * the same part of speech where there are enough, none whose `key` (its tile
+ * text) matches the right answer's or one another's, and none whose meaning
+ * shares a word with the right one's (so "but" never sits beside *autem*,
+ * "but, on the other hand"), unless the pool runs out of others.
+ */
 function distractors(word: VocabEntry, pool: VocabEntry[], n: number, key: (v: VocabEntry) => string, random: () => number): VocabEntry[] {
-  const taken = new Set([key(word).toLowerCase()]);
+  const sense = senseWords(word.definition);
+  const overlaps = (v: VocabEntry) => [...senseWords(v.definition)].some((w) => sense.has(w));
   const candidates = shuffle(pool.filter((v) => v.id !== word.id), random).sort((a, b) => posRank(word, a) - posRank(word, b));
+  const taken = new Set([key(word).toLowerCase()]);
   const out: VocabEntry[] = [];
-  for (const v of candidates) {
-    const k = key(v).toLowerCase();
-    if (taken.has(k)) continue;
-    taken.add(k);
-    out.push(v);
-    if (out.length === n) break;
+  for (const pass of [false, true]) {
+    for (const v of candidates) {
+      if (out.length === n) break;
+      if (out.includes(v) || (!pass && overlaps(v))) continue;
+      const k = key(v).toLowerCase();
+      if (taken.has(k)) continue;
+      taken.add(k);
+      out.push(v);
+    }
   }
   return out;
 }
@@ -260,8 +278,8 @@ function lesson(id: string, words: VocabEntry[], unitWords: VocabEntry[]): Lesso
   const heads = words.map((w) => plain(w.headword));
   return {
     id,
-    title: `${heads[0]} to ${heads[heads.length - 1]}`,
-    summary: `${spell(words.length)} words: ${heads.slice(0, 4).join(', ')}…`,
+    title: `*${heads[0]}* to *${heads[heads.length - 1]}*`,
+    summary: `${spell(words.length)} words: ${heads.slice(0, 4).map((h) => `*${h}*`).join(', ')}…`,
     minutes: 8,
     objectives: [
       `Know ${spell(words.length).toLowerCase()} words of the AP list, from *${heads[0]}* to *${heads[heads.length - 1]}*`,

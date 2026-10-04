@@ -10,7 +10,7 @@ import {
   outlinePlace,
   unitProgress,
 } from '@/data/curriculum/outline';
-import { nextWords, type PathLesson } from '@/lib/path';
+import { nextWords, shakyLesson, type PathLesson } from '@/lib/path';
 
 /** The vocabulary track as `nextWords` reads it. */
 const VOCAB_PATH: PathLesson[] = VOCAB_LESSONS.map((p) => ({
@@ -38,6 +38,9 @@ export default function CourseMap() {
   // level check found known starts with its test (src/lib/path.ts).
   const wordsNextId = nextWords(VOCAB_PATH, lessons, vocab, learner?.knownVocabUnits ?? [])?.id;
   const wordsNext = wordsNextId ? outlinePlace(wordsNextId) : undefined;
+  // The most recent lesson that went badly (under 60%), offered again.
+  const shakyId = shakyLesson(ALL_LESSONS.filter((p) => !p.lesson.test).map((p) => p.lesson.id), lessons);
+  const shaky = shakyId ? outlinePlace(shakyId) : undefined;
   const doneCount = ALL_LESSONS.filter((p) => lessons[p.lesson.id]).length;
   // Review draws on finished lessons' self-contained exercises (src/lib/review.ts).
   const reviewable = ALL_LESSONS.some((p) => lessons[p.lesson.id] && p.lesson.reviewable);
@@ -58,7 +61,7 @@ export default function CourseMap() {
                 {next.level.title} · Unit {next.unit.n} · Lesson {next.unit.lessons.indexOf(next.lesson) + 1}
               </div>
               <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.5rem', lineHeight: 1.2 }}>
-                {next.lesson.title}
+                <Rich text={next.lesson.title} />
               </div>
               <p className="measure mt-1.5" style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem', color: 'var(--ink2)', margin: 0 }}>
                 <Rich text={next.lesson.summary} />
@@ -78,7 +81,7 @@ export default function CourseMap() {
                 {wordsNext.level.title} · {wordsNext.unit.title}
               </div>
               <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.5rem', lineHeight: 1.2 }}>
-                {wordsNext.lesson.title}
+                <Rich text={wordsNext.lesson.title} />
               </div>
               <p className="measure mt-1.5" style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem', color: 'var(--ink2)', margin: 0 }}>
                 <Rich text={wordsNext.lesson.summary} />
@@ -89,6 +92,15 @@ export default function CourseMap() {
             </Link>
           </div>
         </CalledOut>
+      )}
+      {shaky && (
+        <div className="mb-12 flex flex-wrap items-baseline justify-between gap-4">
+          <p className="measure" style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem', color: 'var(--ink2)', margin: 0 }}>
+            <span className="slab-sm" style={{ color: 'var(--fg-muted)' }}>Worth another go · </span>
+            <Rich text={shaky.lesson.title} />, best {Math.round((lessons[shaky.lesson.id]?.best ?? 0) * 100)}%. A second try usually goes much better.
+          </p>
+          <Link href={`/learn/${shaky.lesson.id}`} className="btn">Try it again</Link>
+        </div>
       )}
       <div className="mb-12 border-y" style={{ borderColor: 'var(--rule)' }}>
         {reviewable && (
@@ -161,7 +173,7 @@ export default function CourseMap() {
                             {done ? '✓' : i + 1}
                           </span>
                           <span className="min-w-0 flex-1">
-                            <span style={{ fontFamily: 'var(--font-serif)', fontSize: '1.125rem' }}>{lesson.title}</span>
+                            <span style={{ fontFamily: 'var(--font-serif)', fontSize: '1.125rem' }}><Rich text={lesson.title} /></span>
                             <span className="block" style={{ fontFamily: 'var(--font-latin)', fontSize: '0.975rem', color: 'var(--fg-muted)' }}>
                               <Rich text={lesson.summary} />
                             </span>

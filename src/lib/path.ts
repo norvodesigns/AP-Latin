@@ -148,3 +148,33 @@ export function pathLessons(unit: {
     test: Boolean(l.test),
   }));
 }
+
+/** Below this best score, a lesson is worth another go. */
+export const SHAKY_BEST = 0.6;
+
+/** The part of a lesson record `shakyLesson` reads. */
+export interface PathRecord {
+  best: number;
+  attempts: number;
+  lastAt: string;
+}
+
+/**
+ * The lesson most worth another go: of the lessons actually tried (a unit
+ * test's pass counts lessons with no attempts of their own; those don't
+ * count) whose best score is under SHAKY_BEST, the one tried most recently,
+ * the later in `ids` on a tie. Null when there is none.
+ */
+export function shakyLesson(ids: string[], records: Record<string, PathRecord | undefined>): string | null {
+  let pick: string | null = null;
+  let at = '';
+  for (const id of ids) {
+    const r = records[id];
+    if (!r || r.attempts < 1 || r.best >= SHAKY_BEST) continue;
+    if (r.lastAt >= at) {
+      pick = id;
+      at = r.lastAt;
+    }
+  }
+  return pick;
+}

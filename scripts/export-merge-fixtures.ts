@@ -31,7 +31,7 @@ import { nearMiss, otherForms, sentenceWords } from '../src/lib/sentences';
 import { ALL_LESSONS } from '../src/data/curriculum';
 import { COURSE_SHAPE, LAUREL_SPECS, laurels, nextLaurel } from '../src/lib/laurels';
 import { weeklyRecap } from '../src/lib/recap';
-import { addDays, knownCard, knownVocabUnits, lessonKnown, nextWords, testOut, KNOWN_INTERVAL, type PathLesson } from '../src/lib/path';
+import { addDays, knownCard, knownVocabUnits, lessonKnown, nextWords, shakyLesson, testOut, KNOWN_INTERVAL, type PathLesson } from '../src/lib/path';
 import type { VocabEntry } from '../src/data/types';
 
 /** Every "now" the real code sees while this script runs. (The imports above
@@ -494,7 +494,16 @@ function pathFixture() {
     [{ unit: 'v-1', right: true }, { unit: 'v-1', right: true }, { unit: 'v-2', right: true }, { unit: 'v-2', right: false }],
     [{ unit: 'v-2', right: true }, { unit: 'v-1', right: false }, { unit: 'v-2', right: true }],
   ].map((answers) => ({ answers, expected: knownVocabUnits(answers) }));
-  return { knownInterval: known, lessons, nextCases, knownCases, testOutCases, dayCases, cardCases, probeCases };
+  const rec = (best: number, attempts: number, lastAt: string) => ({ best, attempts, lastAt });
+  const ids = ['g-1', 'g-2', 'g-3', 'g-4'];
+  const shakyCases = [
+    { records: {} },
+    { records: { 'g-1': rec(1, 1, '2026-10-01T10:00:00.000Z'), 'g-2': rec(0.9, 2, '2026-10-02T10:00:00.000Z') } },
+    { records: { 'g-1': rec(0.5, 1, '2026-10-01T10:00:00.000Z'), 'g-2': rec(0.4, 1, '2026-10-03T10:00:00.000Z'), 'g-3': rec(0.95, 1, '2026-10-04T10:00:00.000Z') } },
+    { records: { 'g-1': rec(0.5, 1, '2026-10-03T10:00:00.000Z'), 'g-3': rec(0.59, 1, '2026-10-03T10:00:00.000Z') } },
+    { records: { 'g-2': rec(0.3, 0, '2026-10-05T10:00:00.000Z'), 'g-4': rec(0.6, 3, '2026-10-05T10:00:00.000Z') } },
+  ].map((c) => ({ ...c, ids, expected: shakyLesson(ids, c.records) }));
+  return { knownInterval: known, lessons, nextCases, knownCases, testOutCases, dayCases, cardCases, probeCases, shakyCases };
 }
 
 /* ------------------------------------------------------------------ */

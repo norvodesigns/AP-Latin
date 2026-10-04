@@ -1458,8 +1458,8 @@ export const OUTLINE: OutlineLevel[] = [
         "lessons": [
           {
             "id": "verba-1-1",
-            "title": "a to addo",
-            "summary": "Twelve words: a, abeo, absum, accedo…",
+            "title": "*a* to *addo*",
+            "summary": "Twelve words: *a*, *abeo*, *absum*, *accedo*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -1479,8 +1479,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-1-2",
-            "title": "adeo to aequus",
-            "summary": "Twelve words: adeo, adhuc, adsum, adsurgo…",
+            "title": "*adeo* to *aequus*",
+            "summary": "Twelve words: *adeo*, *adhuc*, *adsum*, *adsurgo*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -1500,8 +1500,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-1-3",
-            "title": "aestas to alienus",
-            "summary": "Twelve words: aestas, aetas, aether, affirmo…",
+            "title": "*aestas* to *alienus*",
+            "summary": "Twelve words: *aestas*, *aetas*, *aether*, *affirmo*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -1521,8 +1521,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-1-4",
-            "title": "aliqui to amo",
-            "summary": "Twelve words: aliqui, aliquis, alius, alter…",
+            "title": "*aliqui* to *amo*",
+            "summary": "Twelve words: *aliqui*, *aliquis*, *alius*, *alter*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -1542,8 +1542,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-1-5",
-            "title": "amor to antiquus",
-            "summary": "Twelve words: amor, amplector, an, ancilla…",
+            "title": "*amor* to *antiquus*",
+            "summary": "Twelve words: *amor*, *amplector*, *an*, *ancilla*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -1563,8 +1563,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-1-6",
-            "title": "anxius to arcus",
-            "summary": "Twelve words: anxius, aperio, appareo, appello…",
+            "title": "*anxius* to *arcus*",
+            "summary": "Twelve words: *anxius*, *aperio*, *appareo*, *appello*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -1584,8 +1584,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-1-7",
-            "title": "ardens to ater",
-            "summary": "Twelve words: ardens, ardeo, area, arena…",
+            "title": "*ardens* to *ater*",
+            "summary": "Twelve words: *ardens*, *ardeo*, *area*, *arena*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -1605,8 +1605,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-1-8",
-            "title": "Athenae to aureus",
-            "summary": "Twelve words: Athenae, athleta, atque, atrium…",
+            "title": "*Athenae* to *aureus*",
+            "summary": "Twelve words: *Athenae*, *athleta*, *atque*, *atrium*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -1626,8 +1626,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-1-9",
-            "title": "auris to bibo",
-            "summary": "Twelve words: auris, aurum, aut, autem…",
+            "title": "*auris* to *bibo*",
+            "summary": "Twelve words: *auris*, *aurum*, *aut*, *autem*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -1647,8 +1647,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-1-10",
-            "title": "bonus to cano",
-            "summary": "Twelve words: bonus, brevis, cado, caedes…",
+            "title": "*bonus* to *cano*",
+            "summary": "Twelve words: *bonus*, *brevis*, *cado*, *caedes*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -1668,8 +1668,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-1-11",
-            "title": "capillus to causa",
-            "summary": "Twelve words: capillus, capio, caput, carmen…",
+            "title": "*capillus* to *causa*",
+            "summary": "Twelve words: *capillus*, *capio*, *caput*, *carmen*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -1689,8 +1689,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-1-12",
-            "title": "caveo to ceterus",
-            "summary": "Eleven words: caveo, cedo, celebro, celer…",
+            "title": "*caveo* to *ceterus*",
+            "summary": "Eleven words: *caveo*, *cedo*, *celebro*, *celer*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -1709,8 +1709,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-1-13",
-            "title": "cibus to classis",
-            "summary": "Eleven words: cibus, cingo, cinis, circum…",
+            "title": "*cibus* to *classis*",
+            "summary": "Eleven words: *cibus*, *cingo*, *cinis*, *circum*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -1729,8 +1729,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-1-14",
-            "title": "Claudia to committo",
-            "summary": "Eleven words: Claudia, claudo, cliens, clipeus…",
+            "title": "*Claudia* to *committo*",
+            "summary": "Eleven words: *Claudia*, *claudo*, *cliens*, *clipeus*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -1749,8 +1749,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-1-15",
-            "title": "commodus to consul",
-            "summary": "Eleven words: commodus, commoveo, comparo, compono…",
+            "title": "*commodus* to *consul*",
+            "summary": "Eleven words: *commodus*, *commoveo*, *comparo*, *compono*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -1769,8 +1769,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-1-16",
-            "title": "consulo to corpus",
-            "summary": "Eleven words: consulo, consumo, contendo, contingo…",
+            "title": "*consulo* to *corpus*",
+            "summary": "Eleven words: *consulo*, *consumo*, *contendo*, *contingo*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -1789,8 +1789,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-1-17",
-            "title": "corripio to cunctor",
-            "summary": "Eleven words: corripio, cotidie, cras, credo…",
+            "title": "*corripio* to *cunctor*",
+            "summary": "Eleven words: *corripio*, *cotidie*, *cras*, *credo*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -1809,8 +1809,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-1-18",
-            "title": "cunctus to custos",
-            "summary": "Eleven words: cunctus, cupiditas, cupio, cur…",
+            "title": "*cunctus* to *custos*",
+            "summary": "Eleven words: *cunctus*, *cupiditas*, *cupio*, *cur*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -1846,8 +1846,8 @@ export const OUTLINE: OutlineLevel[] = [
         "lessons": [
           {
             "id": "verba-2-1",
-            "title": "Danai to denique",
-            "summary": "Twelve words: Danai, de, dea, debeo…",
+            "title": "*Danai* to *denique*",
+            "summary": "Twelve words: *Danai*, *de*, *dea*, *debeo*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -1867,8 +1867,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-2-2",
-            "title": "densus to Dido",
-            "summary": "Twelve words: densus, descendo, desero, desum…",
+            "title": "*densus* to *Dido*",
+            "summary": "Twelve words: *densus*, *descendo*, *desero*, *desum*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -1888,8 +1888,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-2-3",
-            "title": "dies to diva",
-            "summary": "Twelve words: dies, difficilis, digitus, dignus…",
+            "title": "*dies* to *diva*",
+            "summary": "Twelve words: *dies*, *difficilis*, *digitus*, *dignus*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -1909,8 +1909,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-2-4",
-            "title": "dives to dubius",
-            "summary": "Twelve words: dives, divus, do, doceo…",
+            "title": "*dives* to *dubius*",
+            "summary": "Twelve words: *dives*, *divus*, *do*, *doceo*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -1930,8 +1930,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-2-5",
-            "title": "duco to enim",
-            "summary": "Twelve words: duco, dulcis, dum, duo…",
+            "title": "*duco* to *enim*",
+            "summary": "Twelve words: *duco*, *dulcis*, *dum*, *duo*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -1951,8 +1951,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-2-6",
-            "title": "eo to excipio",
-            "summary": "Twelve words: eo, epistula, eques, equidem…",
+            "title": "*eo* to *excipio*",
+            "summary": "Twelve words: *eo*, *epistula*, *eques*, *equidem*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -1972,8 +1972,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-2-7",
-            "title": "excito to fabula",
-            "summary": "Twelve words: excito, exemplum, exerceo, exercitus…",
+            "title": "*excito* to *fabula*",
+            "summary": "Twelve words: *excito*, *exemplum*, *exerceo*, *exercitus*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -1993,8 +1993,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-2-8",
-            "title": "facies to fero",
-            "summary": "Eleven words: facies, facilis, facio, fama…",
+            "title": "*facies* to *fero*",
+            "summary": "Eleven words: *facies*, *facilis*, *facio*, *fama*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2013,8 +2013,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-2-9",
-            "title": "ferox to fio",
-            "summary": "Eleven words: ferox, ferrum, ferus, festino…",
+            "title": "*ferox* to *fio*",
+            "summary": "Eleven words: *ferox*, *ferrum*, *ferus*, *festino*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2033,8 +2033,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-2-10",
-            "title": "flamma to fortasse",
-            "summary": "Eleven words: flamma, flecto, fleo, flos…",
+            "title": "*flamma* to *fortasse*",
+            "summary": "Eleven words: *flamma*, *flecto*, *fleo*, *flos*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2053,8 +2053,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-2-11",
-            "title": "forte to futurus",
-            "summary": "Eleven words: forte, fortis, fortuna, forum…",
+            "title": "*forte* to *futurus*",
+            "summary": "Eleven words: *forte*, *fortis*, *fortuna*, *forum*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2090,8 +2090,8 @@ export const OUTLINE: OutlineLevel[] = [
         "lessons": [
           {
             "id": "verba-3-1",
-            "title": "Gaius to gradus",
-            "summary": "Twelve words: Gaius, gaudeo, gaudium, geminus…",
+            "title": "*Gaius* to *gradus*",
+            "summary": "Twelve words: *Gaius*, *gaudeo*, *gaudium*, *geminus*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2111,8 +2111,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-3-2",
-            "title": "gratia to herba",
-            "summary": "Twelve words: gratia, gratus, gravis, habeo…",
+            "title": "*gratia* to *herba*",
+            "summary": "Twelve words: *gratia*, *gratus*, *gravis*, *habeo*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2132,8 +2132,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-3-3",
-            "title": "heri to horreo",
-            "summary": "Twelve words: heri, hic, hic, hiems…",
+            "title": "*heri* to *horreo*",
+            "summary": "Twelve words: *heri*, *hic*, *hic*, *hiems*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2153,8 +2153,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-3-4",
-            "title": "hortus to ibi",
-            "summary": "Twelve words: hortus, hospes, hostis, huc…",
+            "title": "*hortus* to *ibi*",
+            "summary": "Twelve words: *hortus*, *hospes*, *hostis*, *huc*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2174,8 +2174,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-3-5",
-            "title": "idem to imperium",
-            "summary": "Twelve words: idem, igitur, ignavus, ignis…",
+            "title": "*idem* to *imperium*",
+            "summary": "Twelve words: *idem*, *igitur*, *ignavus*, *ignis*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2195,8 +2195,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-3-6",
-            "title": "impetus to induo",
-            "summary": "Eleven words: impetus, implico, impono, in…",
+            "title": "*impetus* to *induo*",
+            "summary": "Eleven words: *impetus*, *implico*, *impono*, *in*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2215,8 +2215,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-3-7",
-            "title": "infans to inspicio",
-            "summary": "Eleven words: infans, infelix, inferus, ingenium…",
+            "title": "*infans* to *inspicio*",
+            "summary": "Eleven words: *infans*, *infelix*, *inferus*, *ingenium*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2235,8 +2235,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-3-8",
-            "title": "insula to intro",
-            "summary": "Eleven words: insula, intellego, intendo, intentus…",
+            "title": "*insula* to *intro*",
+            "summary": "Eleven words: *insula*, *intellego*, *intendo*, *intentus*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2255,8 +2255,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-3-9",
-            "title": "invenio to iter",
-            "summary": "Eleven words: invenio, invitus, ipse, ira…",
+            "title": "*invenio* to *iter*",
+            "summary": "Eleven words: *invenio*, *invitus*, *ipse*, *ira*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2275,8 +2275,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-3-10",
-            "title": "iterum to iuxta",
-            "summary": "Eleven words: iterum, iubeo, iudex, iugum…",
+            "title": "*iterum* to *iuxta*",
+            "summary": "Eleven words: *iterum*, *iubeo*, *iudex*, *iugum*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2312,8 +2312,8 @@ export const OUTLINE: OutlineLevel[] = [
         "lessons": [
           {
             "id": "verba-4-1",
-            "title": "labor to laudo",
-            "summary": "Twelve words: labor, laboro, lacrima, lacrimo…",
+            "title": "*labor* to *laudo*",
+            "summary": "Twelve words: *labor*, *laboro*, *lacrima*, *lacrimo*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2333,8 +2333,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-4-2",
-            "title": "laus to liberi",
-            "summary": "Twelve words: laus, lavo, lectus, legatus…",
+            "title": "*laus* to *liberi*",
+            "summary": "Twelve words: *laus*, *lavo*, *lectus*, *legatus*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2354,8 +2354,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-4-3",
-            "title": "libero to longe",
-            "summary": "Twelve words: libero, liberta, libertas, libertus…",
+            "title": "*libero* to *longe*",
+            "summary": "Twelve words: *libero*, *liberta*, *libertas*, *libertus*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2375,8 +2375,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-4-4",
-            "title": "longus to magister",
-            "summary": "Twelve words: longus, loquor, Lucilius, ludo…",
+            "title": "*longus* to *magister*",
+            "summary": "Twelve words: *longus*, *loquor*, *Lucilius*, *ludo*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2396,8 +2396,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-4-5",
-            "title": "magnus to medicus",
-            "summary": "Twelve words: magnus, malo, malum, malus…",
+            "title": "*magnus* to *medicus*",
+            "summary": "Twelve words: *magnus*, *malo*, *malum*, *malus*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2417,8 +2417,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-4-6",
-            "title": "medium to metuo",
-            "summary": "Twelve words: medium, medius, membrum, memini…",
+            "title": "*medium* to *metuo*",
+            "summary": "Twelve words: *medium*, *medius*, *membrum*, *memini*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2438,8 +2438,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-4-7",
-            "title": "metus to modus",
-            "summary": "Twelve words: metus, meus, miles, mille…",
+            "title": "*metus* to *modus*",
+            "summary": "Twelve words: *metus*, *meus*, *miles*, *mille*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2459,8 +2459,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-4-8",
-            "title": "moenia to mox",
-            "summary": "Twelve words: moenia, mollis, moneo, mons…",
+            "title": "*moenia* to *mox*",
+            "summary": "Twelve words: *moenia*, *mollis*, *moneo*, *mons*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2480,8 +2480,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-4-9",
-            "title": "mulier to narro",
-            "summary": "Eleven words: mulier, multitudo, multum, multus…",
+            "title": "*mulier* to *narro*",
+            "summary": "Eleven words: *mulier*, *multitudo*, *multum*, *multus*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2500,8 +2500,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-4-10",
-            "title": "nascor to neglego",
-            "summary": "Eleven words: nascor, natura, natus, nauta…",
+            "title": "*nascor* to *neglego*",
+            "summary": "Eleven words: *nascor*, *natura*, *natus*, *nauta*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2520,8 +2520,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-4-11",
-            "title": "nego to nolo",
-            "summary": "Eleven words: nego, negotium, nemo, nemus…",
+            "title": "*nego* to *nolo*",
+            "summary": "Eleven words: *nego*, *negotium*, *nemo*, *nemus*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2540,8 +2540,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-4-12",
-            "title": "nomen to nubes",
-            "summary": "Eleven words: nomen, non, nondum, nonne…",
+            "title": "*nomen* to *nubes*",
+            "summary": "Eleven words: *nomen*, *non*, *nondum*, *nonne*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2560,8 +2560,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-4-13",
-            "title": "nubila to nympha",
-            "summary": "Eleven words: nubila, nullus, num, numen…",
+            "title": "*nubila* to *nympha*",
+            "summary": "Eleven words: *nubila*, *nullus*, *num*, *numen*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2597,8 +2597,8 @@ export const OUTLINE: OutlineLevel[] = [
         "lessons": [
           {
             "id": "verba-5-1",
-            "title": "o to oppidum",
-            "summary": "Twelve words: o, ob, obscurus, occido…",
+            "title": "*o* to *oppidum*",
+            "summary": "Twelve words: *o*, *ob*, *obscurus*, *occido*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2618,8 +2618,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-5-2",
-            "title": "ops to otium",
-            "summary": "Twelve words: ops, opto, opus, ora…",
+            "title": "*ops* to *otium*",
+            "summary": "Twelve words: *ops*, *opto*, *opus*, *ora*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2639,8 +2639,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-5-3",
-            "title": "paene to parvus",
-            "summary": "Twelve words: paene, Pallas, palma, panis…",
+            "title": "*paene* to *parvus*",
+            "summary": "Twelve words: *paene*, *Pallas*, *palma*, *panis*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2660,8 +2660,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-5-4",
-            "title": "pater to pello",
-            "summary": "Twelve words: pater, patior, patria, patrona…",
+            "title": "*pater* to *pello*",
+            "summary": "Twelve words: *pater*, *patior*, *patria*, *patrona*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2681,8 +2681,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-5-5",
-            "title": "pendeo to pharetra",
-            "summary": "Eleven words: pendeo, per, perdo, pereo…",
+            "title": "*pendeo* to *pharetra*",
+            "summary": "Eleven words: *pendeo*, *per*, *perdo*, *pereo*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2701,8 +2701,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-5-6",
-            "title": "pictura to pono",
-            "summary": "Eleven words: pictura, placeo, plaudo, plenus…",
+            "title": "*pictura* to *pono*",
+            "summary": "Eleven words: *pictura*, *placeo*, *plaudo*, *plenus*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2721,8 +2721,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-5-7",
-            "title": "pons to postquam",
-            "summary": "Eleven words: pons, populus, Porcius, porta…",
+            "title": "*pons* to *postquam*",
+            "summary": "Eleven words: *pons*, *populus*, *Porcius*, *porta*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2741,8 +2741,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-5-8",
-            "title": "potens to prior",
-            "summary": "Eleven words: potens, potestas, praemium, praesidium…",
+            "title": "*potens* to *prior*",
+            "summary": "Eleven words: *potens*, *potestas*, *praemium*, *praesidium*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2761,8 +2761,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-5-9",
-            "title": "prius to prosum",
-            "summary": "Eleven words: prius, priusquam, pro, procul…",
+            "title": "*prius* to *prosum*",
+            "summary": "Eleven words: *prius*, *priusquam*, *pro*, *procul*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2781,8 +2781,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-5-10",
-            "title": "provincia to pumex",
-            "summary": "Eleven words: provincia, proximus, prudens, prudentia…",
+            "title": "*provincia* to *pumex*",
+            "summary": "Eleven words: *provincia*, *proximus*, *prudens*, *prudentia*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2801,8 +2801,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-5-11",
-            "title": "punio to quasi",
-            "summary": "Eleven words: punio, puto, qua, quaero…",
+            "title": "*punio* to *quasi*",
+            "summary": "Eleven words: *punio*, *puto*, *qua*, *quaero*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2821,8 +2821,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-5-12",
-            "title": "quater to quis",
-            "summary": "Eleven words: quater, qui, quia, quicumque…",
+            "title": "*quater* to *quis*",
+            "summary": "Eleven words: *quater*, *qui*, *quia*, *quicumque*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2841,8 +2841,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-5-13",
-            "title": "quisquam to quotus",
-            "summary": "Eleven words: quisquam, quisque, quisquis, quo…",
+            "title": "*quisquam* to *quotus*",
+            "summary": "Eleven words: *quisquam*, *quisque*, *quisquis*, *quo*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2878,8 +2878,8 @@ export const OUTLINE: OutlineLevel[] = [
         "lessons": [
           {
             "id": "verba-6-1",
-            "title": "rapio to reliquus",
-            "summary": "Twelve words: rapio, ratio, recipio, recito…",
+            "title": "*rapio* to *reliquus*",
+            "summary": "Twelve words: *rapio*, *ratio*, *recipio*, *recito*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2899,8 +2899,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-6-2",
-            "title": "requiro to rursus",
-            "summary": "Twelve words: requiro, res, resideo, respicio…",
+            "title": "*requiro* to *rursus*",
+            "summary": "Twelve words: *requiro*, *res*, *resideo*, *respicio*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2920,8 +2920,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-6-3",
-            "title": "rusticus to sapiens",
-            "summary": "Twelve words: rusticus, sacer, sacrificium, saeculum…",
+            "title": "*rusticus* to *sapiens*",
+            "summary": "Twelve words: *rusticus*, *sacer*, *sacrificium*, *saeculum*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2941,8 +2941,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-6-4",
-            "title": "sapientia to sedes",
-            "summary": "Twelve words: sapientia, satis, saxum, scelestus…",
+            "title": "*sapientia* to *sedes*",
+            "summary": "Twelve words: *sapientia*, *satis*, *saxum*, *scelestus*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2962,8 +2962,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-6-5",
-            "title": "sella to servus",
-            "summary": "Twelve words: sella, semper, senator, senatus…",
+            "title": "*sella* to *servus*",
+            "summary": "Twelve words: *sella*, *semper*, *senator*, *senatus*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -2983,8 +2983,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-6-6",
-            "title": "severus to sinus",
-            "summary": "Twelve words: severus, si, sic, sidus…",
+            "title": "*severus* to *sinus*",
+            "summary": "Twelve words: *severus*, *si*, *sic*, *sidus*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -3004,8 +3004,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-6-7",
-            "title": "sive to sordidus",
-            "summary": "Twelve words: sive, socius, sol, soleo…",
+            "title": "*sive* to *sordidus*",
+            "summary": "Twelve words: *sive*, *socius*, *sol*, *soleo*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -3025,8 +3025,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-6-8",
-            "title": "soror to statua",
-            "summary": "Twelve words: soror, sors, spatium, spectaculum…",
+            "title": "*soror* to *statua*",
+            "summary": "Twelve words: *soror*, *sors*, *spatium*, *spectaculum*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -3046,8 +3046,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-6-9",
-            "title": "sterno to sum",
-            "summary": "Twelve words: sterno, stilus, sto, stola…",
+            "title": "*sterno* to *sum*",
+            "summary": "Twelve words: *sterno*, *stilus*, *sto*, *stola*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -3067,8 +3067,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-6-10",
-            "title": "summus to suus",
-            "summary": "Eleven words: summus, sumo, super, superbus…",
+            "title": "*summus* to *suus*",
+            "summary": "Eleven words: *summus*, *sumo*, *super*, *superbus*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -3104,8 +3104,8 @@ export const OUTLINE: OutlineLevel[] = [
         "lessons": [
           {
             "id": "verba-7-1",
-            "title": "taberna to tantum modo",
-            "summary": "Twelve words: taberna, tabula, taceo, tacitus…",
+            "title": "*taberna* to *tantum modo*",
+            "summary": "Twelve words: *taberna*, *tabula*, *taceo*, *tacitus*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -3125,8 +3125,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-7-2",
-            "title": "tantus to tenebrae",
-            "summary": "Twelve words: tantus, tardus, tectum, tego…",
+            "title": "*tantus* to *tenebrae*",
+            "summary": "Twelve words: *tantus*, *tardus*, *tectum*, *tego*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -3146,8 +3146,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-7-3",
-            "title": "teneo to timor",
-            "summary": "Eleven words: teneo, tener, tergum, terra…",
+            "title": "*teneo* to *timor*",
+            "summary": "Eleven words: *teneo*, *tener*, *tergum*, *terra*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -3166,8 +3166,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-7-4",
-            "title": "toga to tremor",
-            "summary": "Eleven words: toga, tollo, torqueo, tot…",
+            "title": "*toga* to *tremor*",
+            "summary": "Eleven words: *toga*, *tollo*, *torqueo*, *tot*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -3186,8 +3186,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-7-5",
-            "title": "tristis to tutus",
-            "summary": "Eleven words: tristis, Troia, Troianus, tu…",
+            "title": "*tristis* to *tutus*",
+            "summary": "Eleven words: *tristis*, *Troia*, *Troianus*, *tu*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -3206,8 +3206,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-7-6",
-            "title": "tuus to unus",
-            "summary": "Eleven words: tuus, ubi, ubique, ullus…",
+            "title": "*tuus* to *unus*",
+            "summary": "Eleven words: *tuus*, *ubi*, *ubique*, *ullus*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -3226,8 +3226,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-7-7",
-            "title": "urbs to vehemens",
-            "summary": "Eleven words: urbs, usus, uterque, utor…",
+            "title": "*urbs* to *vehemens*",
+            "summary": "Eleven words: *urbs*, *usus*, *uterque*, *utor*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -3246,8 +3246,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-7-8",
-            "title": "vel to vester",
-            "summary": "Eleven words: vel, velut, vendo, venio…",
+            "title": "*vel* to *vester*",
+            "summary": "Eleven words: *vel*, *velut*, *vendo*, *venio*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -3266,8 +3266,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-7-9",
-            "title": "vestigium to vinculum",
-            "summary": "Eleven words: vestigium, vestis, vetus, vexo…",
+            "title": "*vestigium* to *vinculum*",
+            "summary": "Eleven words: *vestigium*, *vestis*, *vetus*, *vexo*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -3286,8 +3286,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-7-10",
-            "title": "vinum to vivus",
-            "summary": "Eleven words: vinum, vir, virgo, virtus…",
+            "title": "*vinum* to *vivus*",
+            "summary": "Eleven words: *vinum*, *vir*, *virgo*, *virtus*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [
@@ -3306,8 +3306,8 @@ export const OUTLINE: OutlineLevel[] = [
           },
           {
             "id": "verba-7-11",
-            "title": "vix to vultus",
-            "summary": "Eleven words: vix, voco, volo, voluptas…",
+            "title": "*vix* to *vultus*",
+            "summary": "Eleven words: *vix*, *voco*, *volo*, *voluptas*…",
             "minutes": 8,
             "reviewable": true,
             "vocabIds": [

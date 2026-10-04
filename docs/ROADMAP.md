@@ -412,3 +412,8 @@ finishing a lesson counts toward the streak and daily goal.
   marks. Today's Pick up has the next words; onboarding ends with the vocabulary check. On the web, the course
   map shows the next words and a passed unit test counts the unit. New laurel: *Omnia verba*. New app icon
   (the owner's Icon Composer design, flattened for the asset catalog; master in `ios/Brand/Lectio-icon.png`).
+- 2026-10-04: Refinements. Vocabulary questions no longer offer a wrong answer that shares a meaning with the
+  right one (41 of 718 did, e.g. "but" beside *autem*); lesson titles set their Latin in italic. Adaptive
+  retry: the most recent lesson tried with a best under 60% is offered again ("Worth another go") in Your
+  path, on Today and on the web's course map (`shakyLesson`, ported and fixture-checked). The Course tab's
+  Practise panel is two buttons side by side; Today's Vocabulary panel shows how much of the AP list is known.

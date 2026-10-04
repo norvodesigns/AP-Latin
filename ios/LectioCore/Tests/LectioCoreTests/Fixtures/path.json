@@ -390,5 +390,106 @@
     "v-2"
    ]
   }
+ ],
+ "shakyCases": [
+  {
+   "records": {},
+   "ids": [
+    "g-1",
+    "g-2",
+    "g-3",
+    "g-4"
+   ],
+   "expected": null
+  },
+  {
+   "records": {
+    "g-1": {
+     "best": 1,
+     "attempts": 1,
+     "lastAt": "2026-10-01T10:00:00.000Z"
+    },
+    "g-2": {
+     "best": 0.9,
+     "attempts": 2,
+     "lastAt": "2026-10-02T10:00:00.000Z"
+    }
+   },
+   "ids": [
+    "g-1",
+    "g-2",
+    "g-3",
+    "g-4"
+   ],
+   "expected": null
+  },
+  {
+   "records": {
+    "g-1": {
+     "best": 0.5,
+     "attempts": 1,
+     "lastAt": "2026-10-01T10:00:00.000Z"
+    },
+    "g-2": {
+     "best": 0.4,
+     "attempts": 1,
+     "lastAt": "2026-10-03T10:00:00.000Z"
+    },
+    "g-3": {
+     "best": 0.95,
+     "attempts": 1,
+     "lastAt": "2026-10-04T10:00:00.000Z"
+    }
+   },
+   "ids": [
+    "g-1",
+    "g-2",
+    "g-3",
+    "g-4"
+   ],
+   "expected": "g-2"
+  },
+  {
+   "records": {
+    "g-1": {
+     "best": 0.5,
+     "attempts": 1,
+     "lastAt": "2026-10-03T10:00:00.000Z"
+    },
+    "g-3": {
+     "best": 0.59,
+     "attempts": 1,
+     "lastAt": "2026-10-03T10:00:00.000Z"
+    }
+   },
+   "ids": [
+    "g-1",
+    "g-2",
+    "g-3",
+    "g-4"
+   ],
+   "expected": "g-3"
+  },
+  {
+   "records": {
+    "g-2": {
+     "best": 0.3,
+     "attempts": 0,
+     "lastAt": "2026-10-05T10:00:00.000Z"
+    },
+    "g-4": {
+     "best": 0.6,
+     "attempts": 3,
+     "lastAt": "2026-10-05T10:00:00.000Z"
+    }
+   },
+   "ids": [
+    "g-1",
+    "g-2",
+    "g-3",
+    "g-4"
+   ],
+   "expected": null
+  }
  ]
 }
