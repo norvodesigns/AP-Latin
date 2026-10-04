@@ -19,6 +19,7 @@ import type { ChoiceStep, CurriculumUnit, Lesson, LessonStep, LessonWord, MatchS
 import type { VocabEntry } from '../../types.ts';
 import { coreVocabulary } from '../../vocabulary.ts';
 import { UNIT_TEST_PASS } from '../../../lib/path.ts';
+import { DERIVATIVES } from './derivatives.generated.ts';
 
 /** The letters of each unit, in order. The list has no J, K, X, Y or Z. */
 export const VERBA_UNITS: Array<{ n: number; letters: string; title: string }> = [
@@ -166,7 +167,11 @@ function place(answer: string, wrong: string[], slot: number): { options: string
   return { options, answer: at };
 }
 
-const explainWord = (v: VocabEntry) => `*${plain(v.headword)}* (${plain(v.lemma)}): ${plain(v.definition)}.`;
+/** "English: poet, poetry", for the words the grammar lessons give derivatives. */
+const english = (v: VocabEntry) => (DERIVATIVES[v.id]?.length ? `English: ${DERIVATIVES[v.id].join(', ')}` : null);
+
+const explainWord = (v: VocabEntry) =>
+  `*${plain(v.headword)}* (${plain(v.lemma)}): ${plain(v.definition)}.${english(v) ? ` ${english(v)}.` : ''}`;
 
 /** "What does it mean?", the Latin above and four meanings below. */
 function meaningOf(word: VocabEntry, pool: VocabEntry[], random: () => number, slot: number): ChoiceStep {
@@ -238,14 +243,19 @@ function typeIt(word: VocabEntry): TypeStep {
 /* Lessons                                                             */
 /* ------------------------------------------------------------------ */
 
-const lessonWord = (v: VocabEntry): LessonWord => ({ latin: plain(v.lemma), english: plain(v.definition), vocabId: v.id });
+const lessonWord = (v: VocabEntry): LessonWord => ({
+  latin: plain(v.lemma),
+  english: plain(v.definition),
+  vocabId: v.id,
+  ...(DERIVATIVES[v.id]?.length ? { derivatives: DERIVATIVES[v.id] } : {}),
+});
 
 function teach(title: string, body: string, words: VocabEntry[]): LessonStep {
   return {
     kind: 'teach',
     title,
     body: [body],
-    examples: words.map((v) => ({ la: plain(v.lemma), en: plain(v.definition), note: v.pos })),
+    examples: words.map((v) => ({ la: plain(v.lemma), en: plain(v.definition), note: [v.pos, english(v)].filter(Boolean).join(' · ') })),
   };
 }
 
