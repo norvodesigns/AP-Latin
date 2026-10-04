@@ -66,6 +66,15 @@ struct VocabView: View {
                 .listRowBackground(Color.clear)
             }
 
+            if library.course.vocabLevel != nil {
+                Section {
+                    VerbaRow()
+                        .listRowBackground(Color.clear)
+                } header: {
+                    Text("Learn the AP list by letter").rubricLabel()
+                }
+            }
+
             Section {
                 Picker("Direction", selection: $direction) {
                     ForEach(VocabDirection.allCases) { Text($0.rawValue).tag($0) }
@@ -140,6 +149,60 @@ struct VocabView: View {
             $0.headword.range(of: q, options: [.caseInsensitive, .diacriticInsensitive]) != nil
                 || $0.definition.range(of: q, options: .caseInsensitive) != nil
         }
+    }
+}
+
+/// The vocabulary track (Verba) from the Vocab tab: the next lesson, how
+/// much of the list is known, and the way to every unit on the Course tab.
+private struct VerbaRow: View {
+    @Environment(AppModel.self) private var model
+    @AppStorage("courseTrack") private var courseTrack: CourseTrack = .grammar
+
+    var body: some View {
+        let list = model.wordsKnown
+        VStack(alignment: .leading, spacing: 12) {
+            if let next = model.nextVocabLesson {
+                Button { model.openLesson(next.lesson.id) } label: {
+                    HStack(spacing: 14) {
+                        Image(systemName: next.lesson.isTest ? "checkmark.seal" : "character.book.closed")
+                            .font(.title3)
+                            .foregroundStyle(Palette.woad)
+                            .frame(width: 44, height: 44)
+                            .background(Palette.woad.opacity(0.14), in: .circle)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(next.lesson.isTest ? "Unit test" : "Next words").quietLabel()
+                            Text(rich: next.lesson.title)
+                                .font(.system(.headline, design: .serif))
+                                .foregroundStyle(Palette.ink)
+                            Text("\(next.unit.title) · \(next.lesson.isTest ? "pass to skip the unit" : "\(next.lesson.words.count) words") · \(next.lesson.minutes) min")
+                                .font(.subheadline)
+                                .foregroundStyle(Palette.inkMuted)
+                        }
+                        Spacer(minLength: 8)
+                        Image(systemName: "play.circle.fill").font(.title2).foregroundStyle(Palette.rubric)
+                            .accessibilityHidden(true)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+            VStack(alignment: .leading, spacing: 6) {
+                Text("\(list.known) of \(list.total) words known").font(.caption.monospacedDigit()).foregroundStyle(Palette.inkMuted)
+                ProgressView(value: Double(list.known), total: Double(max(1, list.total))).tint(Palette.woad)
+            }
+            .accessibilityElement(children: .combine)
+            Button {
+                courseTrack = .vocabulary
+                model.selectedTab = .learn
+            } label: {
+                Label("All seven units", systemImage: "list.bullet.rectangle")
+                    .font(.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 2)
+            }
+            .glassButton()
+        }
+        .padding(.vertical, 4)
     }
 }
 

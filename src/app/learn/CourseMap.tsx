@@ -50,7 +50,7 @@ export default function CourseMap() {
       <PageHeader
         eyebrow="The course"
         title="Latin, from the first word"
-        lede="Short lessons in order, each one teaching a little and asking a lot. The words you learn join your flashcards, and the path leads to the AP syllabus."
+        lede="Grammar in short lessons, in order, and the AP word list by letter beside it, adapted to what you already know. The words you learn join your flashcards, and the path leads to the AP syllabus."
       />
 
       {next && (
@@ -93,6 +93,10 @@ export default function CourseMap() {
           </div>
         </CalledOut>
       )}
+      <p className="mb-10" style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem', color: 'var(--ink2)' }}>
+        Not sure where to start, or ready to skip ahead?{' '}
+        <Link href="/learn/level" className="link-rule">Find my level</Link>: a short check of grammar and vocabulary.
+      </p>
       {shaky && (
         <div className="mb-12 flex flex-wrap items-baseline justify-between gap-4">
           <p className="measure" style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem', color: 'var(--ink2)', margin: 0 }}>
