@@ -333,7 +333,8 @@ private struct PickUpPanel: View {
             out.append(Item(id: "quiz", title: "Quiz Engine", detail: "AP-style multiple choice, every question explained",
                             systemImage: "checklist", action: .tab(.quiz)))
         }
-        return out
+        // Five at most: Today is for the next step, and the rest is a tap away.
+        return Array(out.prefix(5))
     }
 
     var body: some View {

@@ -9,25 +9,42 @@ struct LaurelsView: View {
 
     var body: some View {
         let list = library.map { Laurels.all(model.progress, course: $0.course) } ?? []
-        let earned = list.filter(\.earned).count
+        let earned = list.filter(\.earned)
+        // The ones under way, closest to done first.
+        let going = list.filter { !$0.earned && $0.have > 0 }
+            .sorted { Double($0.have) / Double($0.target) > Double($1.have) / Double($1.target) }
+        let ahead = list.filter { !$0.earned && $0.have == 0 }
         ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                Text("\(earned) of \(list.count) earned. They come from what you do anywhere in Lectio, on any device you sign in on.")
+            VStack(alignment: .leading, spacing: 14) {
+                Text("\(earned.count) of \(list.count) earned. They come from what you do anywhere in Lectio, on any device you sign in on.")
                     .font(.prose(.body))
                     .foregroundStyle(Palette.inkMuted)
-                    .padding(.bottom, 16)
-                ForEach(list) { laurel in
-                    Hairline(color: Palette.rule)
-                    LaurelRow(laurel: laurel).padding(.vertical, 12)
-                }
+                    .padding(.top, 4)
+                group("Earned", earned)
+                group("Under way", going)
+                group("Still ahead", ahead)
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 40)
             .frame(maxWidth: 720, alignment: .leading)
             .frame(maxWidth: .infinity)
         }
-        .pageBackground()
+        .ambientBackground()
         .navigationTitle("Laurels")
+    }
+
+    @ViewBuilder
+    private func group(_ title: String, _ laurels: [Laurel]) -> some View {
+        if !laurels.isEmpty {
+            GlassPanel(title: title, trailing: "\(laurels.count)") {
+                VStack(spacing: 0) {
+                    ForEach(Array(laurels.enumerated()), id: \.element.id) { i, laurel in
+                        if i > 0 { Hairline(color: Palette.hair) }
+                        LaurelRow(laurel: laurel).padding(.vertical, 10)
+                    }
+                }
+            }
+        }
     }
 }
 
