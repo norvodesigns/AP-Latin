@@ -445,3 +445,10 @@ finishing a lesson counts toward the streak and daily goal.
   now leads back into the app: the website's "Email confirmed" page offers Open Lectio, which lands on Account
   with "Your email is confirmed"; a Supabase-style link carrying a session signs the account straight in, and
   an expired one says so (LectioCore `AuthCallback`, tested).
+- 2026-10-05: Forgot password. The website's sign-in has "Forgot password?" (`/forgot-password`: one answer
+  whether or not the address has an account, five requests an hour from one network address); the email's link goes
+  through `/auth/confirm` (now also handling `type=recovery`, and Supabase's `?code=` links) to "Choose a new
+  password" (`/reset-password`), which offers Open Lectio afterwards. The app's sign-in links to the same
+  page, and answers Open Lectio with "Your password is changed" on Account. `next` redirects after sign-in
+  now refuse `//host` and `/\host` (`src/lib/safePath.ts`). The owner points Supabase's Reset password
+  template at `/auth/confirm?…&type=recovery` (README, step 6).

@@ -5,13 +5,16 @@ import Foundation
 /// the fragment (`#access_token=…&refresh_token=…&type=signup`), or
 /// `#error=…&error_description=…` when the link has expired or was already
 /// used. Lectio's email points at the website instead, which confirms the
-/// address and offers lectio://auth-callback?confirmed=1. Nil for any other
-/// URL.
+/// address and offers lectio://auth-callback?confirmed=1; its password reset
+/// page offers lectio://auth-callback?reset=1 once the new password is saved.
+/// Nil for any other URL.
 public enum AuthCallback: Equatable, Sendable {
     /// The link worked; the refresh token gets a full session (and the user).
     case session(refreshToken: String)
     /// The website confirmed the address; the student signs in here.
     case confirmed
+    /// The website saved a new password; the student signs in with it here.
+    case passwordReset
     /// The link didn't work, and Supabase said why.
     case failed(String)
 
@@ -31,6 +34,8 @@ public enum AuthCallback: Equatable, Sendable {
             self = .session(refreshToken: token)
         } else if params["confirmed"] == "1" {
             self = .confirmed
+        } else if params["reset"] == "1" {
+            self = .passwordReset
         } else if let message = params["error_description"] ?? params["error"], !message.isEmpty {
             self = .failed(message)
         } else {

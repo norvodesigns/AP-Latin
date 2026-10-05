@@ -23,6 +23,10 @@ import Testing
         #expect(AuthCallback(url: try #require(URL(string: "lectio://auth-callback?confirmed=1"))) == .confirmed)
     }
 
+    @Test func theWebsiteSaysThePasswordIsChanged() throws {
+        #expect(AuthCallback(url: try #require(URL(string: "lectio://auth-callback?reset=1"))) == .passwordReset)
+    }
+
     @Test func otherLinksAreNotCallbacks() throws {
         #expect(AuthCallback(url: try #require(URL(string: "lectio://vocab"))) == nil)
         #expect(AuthCallback(url: try #require(URL(string: "https://lectio.norvodesigns.com/auth-callback#refresh_token=x"))) == nil)

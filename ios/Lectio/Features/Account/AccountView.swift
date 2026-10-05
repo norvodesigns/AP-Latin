@@ -122,6 +122,16 @@ private struct SignInForm: View {
                 .disabled(working)
                 .listRowBackground(Color.clear)
             }
+
+            // The reset happens on the website (its email link opens there),
+            // which sends the student back here to sign in.
+            if mode == .signIn {
+                Section {
+                    Link(destination: AppConfig.web("forgot-password")) {
+                        Label("Forgot your password?", systemImage: "key")
+                    }
+                }
+            }
         }
         .onChange(of: mode) { error = nil }
     }

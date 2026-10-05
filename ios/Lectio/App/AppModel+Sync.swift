@@ -58,16 +58,17 @@ extension AppModel {
         return .signedIn
     }
 
-    /// The sign-up confirmation link, opened on this device: it carries a
-    /// session, so the student is signed in without typing the password
-    /// again. Otherwise, says why not and where to sign in.
+    /// A link back from an account email, opened on this device. A link
+    /// carrying a session signs the student in without typing the password;
+    /// the website's "confirmed" and "password changed" pages just say so
+    /// and point to Account. Anything else says why not.
     func completeEmailLink(_ callback: AuthCallback) async {
-        if account != nil {
-            authNotice = "Your email is confirmed."
-            return
-        }
         switch callback {
         case .session(let refreshToken):
+            guard account == nil else {
+                authNotice = "Your email is confirmed."
+                return
+            }
             do {
                 let session = try await auth.signIn(refreshToken: refreshToken)
                 account = Account(userId: session.userId, email: session.email, profile: nil)
@@ -80,9 +81,21 @@ extension AppModel {
                 authNotice = "Your email is confirmed. Sign in with your email and password under Account."
             }
         case .confirmed:
+            guard account == nil else {
+                authNotice = "Your email is confirmed."
+                return
+            }
             selectedTab = .settings
             authNotice = "Your email is confirmed. Sign in with your email and password under Account."
+        case .passwordReset:
+            guard account == nil else {
+                authNotice = "Your password is changed. You’re still signed in here."
+                return
+            }
+            selectedTab = .settings
+            authNotice = "Your password is changed. Sign in with the new one under Account."
         case .failed(let reason):
+            guard account == nil else { return }
             selectedTab = .settings
             authNotice = "\(reason). If you’ve already confirmed your email, sign in with your password under Account."
         }

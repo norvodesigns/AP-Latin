@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
+import Link from 'next/link';
 import { signIn, type AuthResult } from '../actions';
 import { Panel } from '@/components/ui';
 
@@ -26,9 +27,17 @@ export default function LoginForm({ next }: { next: string }) {
           />
         </label>
 
-        <label>
-          <span className="slab-sm mb-2 block">Password</span>
+        <div>
+          <div className="mb-2 flex items-baseline justify-between gap-4">
+            <label htmlFor="login-password" className="slab-sm">
+              Password
+            </label>
+            <Link href="/forgot-password" className="link-rule" style={{ color: 'var(--accent)', fontSize: '0.9375rem' }}>
+              Forgot password?
+            </Link>
+          </div>
           <input
+            id="login-password"
             className="input"
             type="password"
             name="password"
@@ -37,7 +46,7 @@ export default function LoginForm({ next }: { next: string }) {
             minLength={8}
             maxLength={200}
           />
-        </label>
+        </div>
 
         {state.error && (
           <p

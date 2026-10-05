@@ -232,13 +232,21 @@ never signs in.
 1. Create a project at the [Supabase dashboard](https://supabase.com/dashboard).
 2. **Project Settings → API** and copy the Project URL and anon public key.
 3. **SQL Editor → New query**, and run every file in `supabase/migrations/` **in filename order**
-   (0001 through 0005 — each depends on tables or functions the one before it created).
+   (0001 through 0006 — each depends on tables or functions the one before it created).
 4. Add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` to `.env.local`, and to Vercel
    the same way as the AI keys above (Environment Variables, then redeploy). Both are safe to expose
    to the browser — see the comment above them in `.env.example` for why.
 5. Check Supabase's email confirmation setting matches what you want: **Authentication → Providers →
    Email**. On by default, meaning a new account cannot sign in until it clicks a confirmation
    email — worth turning off for a classroom where that friction buys nothing.
+6. **Authentication → Emails → Templates**: point both account emails at the site's own
+   `/auth/confirm`, so the link works from any browser and lands on a page Lectio owns.
+   - **Confirm signup**: `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup`
+   - **Reset password**: `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery`
+
+   Signup then lands on "Email confirmed", and a reset on "Choose a new password" (`/forgot-password`
+   sends the email). Supabase's built-in email sender allows only a few emails an hour for the whole
+   project; for a real class, add your own SMTP under **Authentication → Emails → SMTP Settings**.
 
 ### How it works
 

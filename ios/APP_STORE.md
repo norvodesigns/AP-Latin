@@ -23,7 +23,15 @@ Do these in order. Each one heads off a specific, common rejection.
    it with "Your email is confirmed" and takes them to Account to sign in. (If the template ever goes
    back to Supabase's own `{{ .ConfirmationURL }}`, the app signs the account straight in from the
    link instead.) Try it once with a throwaway address on your phone.
-4. **Make demo accounts for the reviewer** (Guideline 2.1: reviewers must be able to reach every
+4. **Point the password-reset email at the website.** Supabase › Authentication › Emails ›
+   Templates › **Reset password**: make the link
+   `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery` (the same shape as your
+   Confirm signup link, with `type=recovery`). "Forgot your password?" in the app's sign-in opens
+   lectio.norvodesigns.com/forgot-password; the email's link leads to "Choose a new password", then
+   back to the app with **Open Lectio**. Try it once. Supabase's built-in sender allows only a few emails
+   an hour for the whole project, so if many students will sign up at once, add your own SMTP
+   (Authentication › Emails › SMTP Settings).
+5. **Make demo accounts for the reviewer** (Guideline 2.1: reviewers must be able to reach every
    feature). On the website:
    - create a **teacher** account, e.g. `lectio.review.teacher@<a domain you control>`, and a classroom
      called "Review Class";
@@ -32,15 +40,16 @@ Do these in order. Each one heads off a specific, common rejection.
    - in the app, signed in as the student, study a few minutes (a lesson, some flashcards) so the
      leaderboard and assignments have something to show; add one assignment as the teacher.
    Put both logins in App Review Information (below). Don't use your personal email.
-5. **Make sure AI works on the live site.** The Vercel project needs its Gemini (and/or Groq) key. If
+6. **Make sure AI works on the live site.** The Vercel project needs its Gemini (and/or Groq) key. If
    AI is off, the AI buttons simply don't appear, which is fine, but the review notes below describe
    them, so check one grading request works first.
-6. **Run the release build once from TestFlight** (the same binary App Review gets) and check: the
-   first run, sign-up and sign-in, an AI grade (it should ask permission first), Settings › Account ›
-   Delete account on a throwaway account, and the Privacy and Support links in Settings › About.
-7. **Fill in App Store Connect** from the sections below: App Information, the 1.0 version page,
+7. **Run the release build once from TestFlight** (the same binary App Review gets) and check: the
+   first run, sign-up and sign-in, a password reset, an AI grade (it should ask permission first),
+   Settings › Account › Delete account on a throwaway account, and the Privacy and Support links in
+   Settings › About.
+8. **Fill in App Store Connect** from the sections below: App Information, the 1.0 version page,
    App Privacy, Age Rating, App Review Information, Pricing (Free) and Availability.
-8. **Content rights** (App Information): answer **Yes**, the app contains third-party content, and
+9. **Content rights** (App Information): answer **Yes**, the app contains third-party content, and
    **Yes**, you have the rights: the Latin texts are public domain, and the vocabulary list is the
    words of the College Board's published course framework with Lectio's own definitions.
 
