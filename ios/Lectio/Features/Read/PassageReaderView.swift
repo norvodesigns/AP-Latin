@@ -1,5 +1,6 @@
 import LectioCore
 import SwiftUI
+import TipKit
 
 /// A word the reader tapped, for the glossary sheet.
 nonisolated struct WordSelection: Identifiable, Hashable, Sendable {
@@ -57,6 +58,7 @@ struct PassageReaderView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     header
+                    TipView(GlossTip()).lectioTipStyle().padding(.bottom, 16)
                     if let salutation = passage.salutation {
                         Text(salutation)
                             .font(.latinItalic(18, relativeTo: .callout, scale: model.latinScale))
@@ -231,6 +233,7 @@ struct PassageReaderView: View {
     /* -------------------------------------------------------------- */
 
     private func tapped(line: PassageLine, index: Int) {
+        GlossTip().invalidate(reason: .actionPerformed)
         if var current = span {
             if current.lineN == line.n {
                 // Extending the highlight to take in the tapped word.

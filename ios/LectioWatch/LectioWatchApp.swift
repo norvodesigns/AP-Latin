@@ -31,13 +31,28 @@ final class WatchStore {
     @ObservationIgnored private var link: WatchLink?
 
     init() {
-        if let data = UserDefaults.standard.data(forKey: "deck"), let saved = try? JSONDecoder().decode(WatchDeck.self, from: data) {
+        if UserDefaults.standard.bool(forKey: "seedDemo") {
+            // Screenshots (`-seedDemo YES`): a morning's cards, no phone needed.
+            receive(Self.sampleDeck)
+        } else if let data = UserDefaults.standard.data(forKey: "deck"), let saved = try? JSONDecoder().decode(WatchDeck.self, from: data) {
             receive(saved)
         }
         link = WatchLink { [weak self] deck in
             Task { @MainActor in self?.receive(deck) }
         }
     }
+
+    /// What the screenshots show: a few AP words, a streak, the exam ahead.
+    static let sampleDeck = WatchDeck(
+        cards: [
+            .init(id: "amor", headword: "amor", lemma: "amor, amōris", pos: "noun, m.", definition: "love"),
+            .init(id: "arma", headword: "arma", lemma: "arma, armōrum", pos: "noun, n. pl.", definition: "arms, weapons"),
+            .init(id: "urbs", headword: "urbs", lemma: "urbs, urbis", pos: "noun, f.", definition: "city"),
+            .init(id: "fātum", headword: "fātum", lemma: "fātum, fātī", pos: "noun, n.", definition: "fate, destiny"),
+            .init(id: "pius", headword: "pius", lemma: "pius, pia, pium", pos: "adjective", definition: "dutiful, devoted"),
+        ],
+        dueCount: 12, streak: 5, daysUntilExam: 214
+    )
 
     /// Cards missed this session. The phone reschedules a miss for tomorrow
     /// and drops it from the next deck it sends, but it still comes back once
@@ -108,6 +123,8 @@ nonisolated final class WatchLink: NSObject, WCSessionDelegate, @unchecked Senda
 
 struct WatchHome: View {
     @Environment(WatchStore.self) private var store
+    /// `-watchScreen review` opens straight on a card (screenshots).
+    @State private var reviewing = UserDefaults.standard.string(forKey: "watchScreen") == "review"
 
     var body: some View {
         NavigationStack {
@@ -139,6 +156,7 @@ struct WatchHome: View {
                 }
             }
             .navigationTitle("Lectio")
+            .navigationDestination(isPresented: $reviewing) { WatchReviewView() }
         }
     }
 }

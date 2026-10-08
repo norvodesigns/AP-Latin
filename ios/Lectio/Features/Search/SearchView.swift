@@ -1,5 +1,6 @@
 import LectioCore
 import SwiftUI
+import TipKit
 import UIKit
 
 /// Browse and search in one place. Empty, it's the whole menu as one list
@@ -56,6 +57,7 @@ struct SearchView: View {
     private var browse: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 10) {
+                TipView(BrowseTip()).lectioTipStyle().padding(.bottom, 4)
                 ForEach(SectionGroup.allCases) { group in
                     Text(group.title)
                         .rubricLabel()

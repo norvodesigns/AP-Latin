@@ -452,3 +452,13 @@ finishing a lesson counts toward the streak and daily goal.
   page, and answers Open Lectio with "Your password is changed" on Account. `next` redirects after sign-in
   now refuse `//host` and `/\host` (`src/lib/safePath.ts`). The owner points Supabase's Reset password
   template at `/auth/confirm?…&type=recovery` (README, step 6).
+- 2026-10-08: A new first run for the app. A welcome (the icon's L on glass between two laurels), a three-page
+  tour with live pictures of the real screens (the course, a glossed line of the Aeneid, a flashcard), then the
+  setup: where you're starting (four cards, chosen then confirmed), the level check as one flow (the grammar,
+  then the AP words, then "Here's your path" with each vocabulary part to test out of), a daily goal, a
+  reminder (with a preview of the notification before the system asks), an account (a free one, or not
+  now), and "You're all set": the plan those answers make and a button into the first lesson. A progress
+  bar, Back and Skip throughout; every step works with Reduce Motion and Dynamic Type. In the app, TipKit
+  tips the first time a student reaches Today, a passage and Browse; Settings › Take the tour again. CI
+  screenshots every step of the first run, and the Apple Watch app (a sample deck), which App Store Connect
+  requires.

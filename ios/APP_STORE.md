@@ -220,9 +220,21 @@ the 13" iPad Pro (2064 × 2752), in light and dark. They're taken with sample pr
 requires; it scales them for smaller devices.
 
 Suggested order: Today, the Aeneid passage, the Course, Vocab, Scansion, Quiz. Use the plain ones,
-not `-classic-` or `-bigtext-`. Every screenshot must show the app itself; no marketing text over
-them is needed for approval. The watch needs its own screenshots (from the watch simulator in Xcode)
-only if you want it on the listing.
+not `-classic-`, `-bigtext-` or `-onboarding-` (those are for checking the design). Every screenshot
+must show the app itself; no marketing text over them is needed for approval.
+
+**Apple Watch screenshots are required too**, because the build includes a watch app: App Store
+Connect shows an Apple Watch section on the version page and won't submit without at least one. The
+same artifact has `watch-home.png` and `watch-review.png`, from the Series 11 (46 mm) simulator
+(416 × 496, an accepted size), showing a sample deck. Upload both.
+
+## Accessibility Nutrition Labels (optional)
+
+App Store Connect › your app › Accessibility lets you declare which accessibility features Lectio
+supports on each device. It's voluntary and not part of review, but whatever you declare must be true.
+Safe to declare now: **Dark Interface**, **Larger Text** (every screen follows Dynamic Type; CI
+screenshots the largest sizes) and **Reduced Motion** (the first run and the course respect it).
+Declare **VoiceOver** only after you've walked through the main tasks with it on a device.
 
 ## What's already handled in the app
 

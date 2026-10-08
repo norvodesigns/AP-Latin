@@ -13,6 +13,7 @@ struct SettingsView: View {
     @AppStorage("legacyChrome") private var classicLook = false
     @AppStorage(AIConsent.key) private var aiAllowed = false
     @State private var confirmClear = false
+    @State private var showTour = false
 
     var body: some View {
         @Bindable var model = model
@@ -155,6 +156,7 @@ struct SettingsView: View {
                     } label: {
                         Label("Acknowledgements", systemImage: "text.book.closed")
                     }
+                    Button("Take the tour again", systemImage: "rectangle.stack") { showTour = true }
                 } header: {
                     Text("About")
                 } footer: {
@@ -164,6 +166,7 @@ struct SettingsView: View {
             .readableColumn()
             .pageBackground()
             .navigationTitle("Settings")
+            .sheet(isPresented: $showTour) { TourSheet() }
             .fileImporter(isPresented: $importing, allowedContentTypes: [.json]) { result in
                 handleImport(result)
             }

@@ -138,7 +138,7 @@ jobs:
           path: ios/*.log
 
   screenshots:
-    name: Screenshots (iPhone + iPad, light + dark)
+    name: Screenshots (iPhone + iPad + Apple Watch, light + dark)
     if: github.event_name != 'pull_request'
     needs: [app]
     runs-on: macos-26
@@ -214,12 +214,18 @@ jobs:
                 done
                 xcrun simctl ui "$udid" content_size large || true
               fi
-              # The first run, a step at a time.
-              for step in welcome track placement goal; do
+              # The first run, a step at a time, and each page of its tour.
+              for step in welcome tour track check grammar path goal reminder account ready; do
                 xcrun simctl terminate "$udid" com.norvodesigns.lectio || true
                 xcrun simctl launch "$udid" com.norvodesigns.lectio -showOnboarding YES -onboardingStep "$step"
                 sleep 8
                 xcrun simctl io "$udid" screenshot "shots/$label-$mode-onboarding-$step.png"
+              done
+              for page in 1 2; do
+                xcrun simctl terminate "$udid" com.norvodesigns.lectio || true
+                xcrun simctl launch "$udid" com.norvodesigns.lectio -showOnboarding YES -onboardingStep tour -onboardingTourPage "$page"
+                sleep 8
+                xcrun simctl io "$udid" screenshot "shots/$label-$mode-onboarding-tour-$page.png"
               done
             done
             # The look older systems get (-legacyChrome YES): no glass, a
@@ -236,6 +242,43 @@ jobs:
           shoot "$(pick 'iPhone 17 Pro Max' 'Pro Max' 'iPhone')" iphone
           shoot "$(pick '13-inch' 'iPad Pro' 'iPad')" ipad
           ls -la shots
+      # App Store Connect asks for Apple Watch screenshots too, because the
+      # app ships a watch app. The watch shows a sample deck (-seedDemo YES)
+      # rather than waiting for a paired iPhone.
+      - name: Build the watch app for the simulator
+        working-directory: ios
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          xcodebuild build -project Lectio.xcodeproj -scheme LectioWatch \
+            -destination 'generic/platform=watchOS Simulator' -derivedDataPath build CODE_SIGNING_ALLOWED=NO \
+            | grep -E 'error|BUILD (SUCCEEDED|FAILED)' || true
+          test -d build/Build/Products/Debug-watchsimulator/Lectio.app
+      - name: Capture Apple Watch
+        working-directory: ios
+        continue-on-error: true
+        run: |
+          udid=$(xcrun simctl list devices available -j | python3 -c "
+          import json, sys
+          devices = [d for runtime, ds in json.load(sys.stdin)['devices'].items() if 'watchOS' in runtime for d in ds]
+          for want in ('Series 11 (46mm)', 'Ultra 3', 'Series 10 (46mm)', 'Apple Watch'):
+              for d in devices:
+                  if want in d['name']:
+                      print(d['udid']); sys.exit()
+          ")
+          [ -n "$udid" ] || { echo "No watch simulator available"; exit 0; }
+          xcrun simctl boot "$udid" || true
+          xcrun simctl bootstatus "$udid" -b
+          xcrun simctl status_bar "$udid" override --time 9:41 || true
+          xcrun simctl install "$udid" build/Build/Products/Debug-watchsimulator/Lectio.app
+          for screen in home review; do
+            xcrun simctl terminate "$udid" com.norvodesigns.lectio.watchkitapp || true
+            xcrun simctl launch "$udid" com.norvodesigns.lectio.watchkitapp -seedDemo YES -watchScreen "$screen"
+            sleep 10
+            xcrun simctl io "$udid" screenshot "shots/watch-$screen.png"
+          done
+          xcrun simctl shutdown "$udid" || true
+          ls -la shots/watch-*
       - uses: actions/upload-artifact@v4
         with:
           name: screenshots

@@ -1,5 +1,6 @@
 import LectioCore
 import SwiftUI
+import TipKit
 
 /// The dashboard, as a stack of Liquid Glass panels, each one thing: how long
 /// until the exam and how today's going, where to pick up, the Sententia, a
@@ -18,6 +19,7 @@ struct TodayView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 14) {
                         header
+                        TipView(TodayTip()).lectioTipStyle()
                         if model.courseFirstOnToday, let next = model.nextCourseLesson {
                             GlassPanel {
                                 ContinueCard(place: next, first: model.courseDone.isEmpty, framed: false)

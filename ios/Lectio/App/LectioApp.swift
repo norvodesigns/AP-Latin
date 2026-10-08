@@ -6,6 +6,10 @@ struct LectioApp: App {
     @State private var model = AppModel()
     @Environment(\.scenePhase) private var scenePhase
 
+    init() {
+        LectioTips.configure()
+    }
+
     var body: some Scene {
         WindowGroup {
             RootView()

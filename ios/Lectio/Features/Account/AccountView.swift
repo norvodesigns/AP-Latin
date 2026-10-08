@@ -6,13 +6,16 @@ import SwiftUI
 /// the two.
 struct AccountView: View {
     @Environment(AppModel.self) private var model
+    /// Opens on "Create account" rather than "Sign in" (the first run's
+    /// "Create a free account").
+    var startsWithSignUp = false
 
     var body: some View {
         Group {
             if let account = model.account {
                 SignedInView(account: account)
             } else {
-                SignInForm()
+                SignInForm(startsWithSignUp: startsWithSignUp)
             }
         }
         .readableColumn()
@@ -35,7 +38,7 @@ private struct SignInForm: View {
         var id: String { rawValue }
     }
 
-    @State private var mode: Mode = .signIn
+    @State private var mode: Mode
     @State private var email = ""
     @State private var password = ""
     @State private var displayName = ""
@@ -46,6 +49,10 @@ private struct SignInForm: View {
     @FocusState private var focused: Field?
 
     nonisolated enum Field: Hashable, Sendable { case name, email, password }
+
+    init(startsWithSignUp: Bool = false) {
+        _mode = State(initialValue: startsWithSignUp ? .signUp : .signIn)
+    }
 
     var body: some View {
         Form {

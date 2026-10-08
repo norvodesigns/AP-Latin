@@ -22,9 +22,9 @@ extension AppModel {
     }
 
     /// Records what the student chose (nil when they skipped) and takes them
-    /// to the right first screen: a beginner into their first lesson, an AP
-    /// student to Today, a teacher to Classroom.
-    func finishOnboarding(_ profile: LearnerProfile?, minutes: Int? = nil) {
+    /// to the right first screen: the course (into the first lesson when
+    /// `openStart`), Today for an AP student, Classroom for a teacher.
+    func finishOnboarding(_ profile: LearnerProfile?, minutes: Int? = nil, openStart: Bool = false) {
         UserDefaults.standard.set(true, forKey: Self.onboardedKey)
         if let profile {
             update { doc in
@@ -40,7 +40,7 @@ extension AppModel {
             switch profile.track {
             case .new, .some:
                 selectedTab = .learn
-                if profile.track == .new, let start = profile.startLessonId { openLesson(start) }
+                if openStart, let start = profile.startLessonId { openLesson(start) }
             case .ap:
                 selectedTab = .today
             case .teacher:

@@ -115,7 +115,10 @@ progress on this device** (signed out only) is an ordinary setting.
 > iPhone and iPad, in light and dark, and once at your largest text size (Settings > Accessibility >
 > Display & Text Size > Larger Text):
 >
-> 1. The first-run screens (delete and reinstall to see them again).
+> 1. The first run (delete and reinstall to see it again): the welcome, the three-page tour, each
+>    answer to "Where are you starting?" (the level check is behind "I know some Latin"), and the plan
+>    at the end. Then the first-visit tips on Today, a passage and Browse. Settings > Take the tour
+>    again replays the tour.
 > 2. Today (scroll through every panel), then each tab, then Browse (the search tab), which lists every
 >    section of the app, with Jump to on Today as the quick way to the same places.
 > 3. The Course: try Find my level, then a lesson on each track (Grammar and Vocabulary), and a unit test
