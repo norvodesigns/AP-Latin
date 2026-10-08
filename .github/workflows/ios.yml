@@ -271,10 +271,15 @@ jobs:
           xcrun simctl bootstatus "$udid" -b
           xcrun simctl status_bar "$udid" override --time 9:41 || true
           xcrun simctl install "$udid" build/Build/Products/Debug-watchsimulator/Lectio.app
+          # A first launch to warm up, unrecorded.
+          xcrun simctl launch "$udid" com.norvodesigns.lectio.watchkitapp -seedDemo YES || true
+          sleep 20
           for screen in home review; do
             xcrun simctl terminate "$udid" com.norvodesigns.lectio.watchkitapp || true
             xcrun simctl launch "$udid" com.norvodesigns.lectio.watchkitapp -seedDemo YES -watchScreen "$screen"
-            sleep 10
+            # The watch simulator is slow to finish launching: wait past the
+            # icon animation, or the screenshot is of that.
+            sleep 25
             xcrun simctl io "$udid" screenshot "shots/watch-$screen.png"
           done
           xcrun simctl shutdown "$udid" || true

@@ -246,7 +246,7 @@ struct OnboardingView: View {
             GlassPanel {
                 if grammarToo {
                     checkPart("text.book.closed", Palette.rubric, "Grammar",
-                              "Up to \(placement.count) questions, easiest first. It stops as soon as it finds your level.")
+                              "Short questions, easiest first. It stops as soon as it finds your level.")
                     Hairline(color: Palette.hair)
                 }
                 checkPart("character.book.closed", Palette.woad, "Vocabulary",

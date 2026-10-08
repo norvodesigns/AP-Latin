@@ -11,6 +11,7 @@ The cursive **L** from Lectio's wordmark (Italianno, SIL OFL 1.1; the font is in
 | `Lectio-L-black.png` | Same, black. For monochrome layers. |
 | `Lectio-laurel.svg` | An optional second layer: a laurel wreath (two sprigs, a gap at the top) as 48 filled paths, black, on a 1024 square. Laurels are Lectio's achievements. |
 | `Lectio-L-rubric-tight.png` | The L alone, cropped to its ink with a small margin (1443 x 1482), for placing freely. |
+| `AppStore-header-3840x1646.png`, `AppStore-header-1544x2950.png` | The App Store header art, landscape and portrait: the L on a disc of parchment between gilt laurels, over the opening of the Aeneid set faintly in EB Garamond with a rubricated A. Opaque, no text over the art. |
 
 The current app icon (`ios/Lectio/Resources/Assets.xcassets/AppIcon.appiconset`) is this L, rubric on parchment
 (`#F6F1E6`) with a dark twin (coral on `#17140F`).

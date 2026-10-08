@@ -137,7 +137,11 @@ struct ChoiceCard: View {
                     .frame(width: 46, height: 46)
                     .background(tint.opacity(0.14), in: .circle)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(title).font(.system(.headline, design: .serif)).foregroundStyle(Palette.ink)
+                    Text(title)
+                        .font(.system(.headline, design: .serif))
+                        .foregroundStyle(Palette.ink)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
                     Text(detail)
                         .font(.prose(.subheadline))
                         .foregroundStyle(Palette.inkMuted)
@@ -265,19 +269,21 @@ private struct TourPage<Picture: View>: View {
     @ViewBuilder var picture: Picture
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 28) {
-                picture
-                    .frame(maxWidth: 380)
-                    .padding(.top, 8)
-                OnboardingHeading(eyebrow: eyebrow, title: title, detail: detail)
+        GeometryReader { proxy in
+            ScrollView {
+                VStack(spacing: 28) {
+                    picture
+                        .frame(maxWidth: 380)
+                        .padding(.top, 8)
+                    OnboardingHeading(eyebrow: eyebrow, title: title, detail: detail)
+                }
+                .padding(.horizontal, 24)
+                .padding(.vertical, 12)
+                .frame(maxWidth: 560)
+                .frame(maxWidth: .infinity, minHeight: proxy.size.height)
             }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 12)
-            .frame(maxWidth: 560)
-            .frame(maxWidth: .infinity)
+            .scrollBounceBehavior(.basedOnSize)
         }
-        .scrollBounceBehavior(.basedOnSize)
     }
 }
 
@@ -306,7 +312,8 @@ private struct CoursePreview: View {
                         Text(title)
                             .font(.system(.subheadline, design: .serif).weight(i == 2 ? .semibold : .regular))
                             .foregroundStyle(Palette.ink)
-                            .lineLimit(1)
+                            .lineLimit(2)
+                            .fixedSize(horizontal: false, vertical: true)
                         if i == 2 {
                             ProgressView(value: filled || reduceMotion ? 0.4 : 0.05)
                                 .tint(Palette.rubric)

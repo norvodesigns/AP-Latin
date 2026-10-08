@@ -57,7 +57,7 @@ Do these in order. Each one heads off a specific, common rejection.
 
 | Field | Value |
 | --- | --- |
-| Name (30) | **Lectio** if it's free. It probably isn't: a Danish school app already uses it. Then **Lectio: Latin Reader & Drills** (29). Keep "AP" out of the name: a trademark in the name is a common 5.2.1 rejection, while describing what exam the app prepares for, in the subtitle and description, is fine. |
+| Name (30) | **Lectio: Latin App** (what the record uses). Keep "AP" out of the name: a trademark in the name is a common 5.2.1 rejection, while saying which exam the app prepares for, in the subtitle and description, is fine. |
 | Subtitle (30) | **Vergil & Pliny for AP® Latin** (28) |
 | Bundle ID | com.norvodesigns.lectio |
 | SKU | lectio-ios |
@@ -66,65 +66,68 @@ Do these in order. Each one heads off a specific, common rejection.
 | Privacy Policy URL | https://lectio.norvodesigns.com/privacy |
 | Support URL | https://lectio.norvodesigns.com/support |
 | Marketing URL | https://lectio.norvodesigns.com |
-| Copyright | © 2026 Norvo Designs |
-| Version | 1.0.0 (already set in the build) |
+| Copyright | 2026 Norvo Designs (Apple's format: the year, then the owner) |
+| Version | **1.0.0**, exactly as the build has it. The version page's Build section only offers builds whose version matches this field, so "1.0" won't find a 1.0.0 build. |
+| Routing App Coverage File | Leave empty (for navigation apps only). |
 | Price | Free, no in-app purchases |
 
 ## Promotional text (170)
 
-Every passage of Vergil and Pliny on the AP® Latin syllabus, with a tap-any-word glossary,
-spaced-repetition vocabulary, a step-by-step course and full practice exams.
+Start where you are: a quick check finds your level, then short lessons take you from your first Latin word to Vergil, Pliny and the AP® Latin exam.
+
+(148 characters.)
 
 ## Description
 
-Lectio is a complete study environment for Latin students preparing for the AP® Latin exam, built
-around Vergil's Aeneid and Pliny's Letters as the 2025 Course and Exam Description sets them.
+Lectio takes you from your first Latin word to the AP® Latin exam: short lessons that find your level, every passage of Vergil and Pliny with each word glossed, and flashcards that come back just before you forget.
 
-LEARN
-• A course from first declensions to the AP texts, with a short level check that finds where you
-  should start.
-• A vocabulary track that works through the AP® Latin vocabulary list letter by letter, with a test
-  at the end of each unit that lets you skip what you already know.
+START WHERE YOU ARE
+• A quick level check places you in the course, so you skip what you already know.
+• A step-by-step course from the first declension to the Aeneid, in short lessons with instant feedback.
+• A vocabulary track that works through the AP® Latin word list letter by letter, with a test for each part that lets you skip the words you already know.
 
-READ
-• Every required passage, and more, with a glossary on every word.
-• Highlight in four manuscript pigments, add notes, flag hard lines, and read cold with the glossary
-  off.
-• Ask the line tutor about any line: a parse, a construction, the scansion.
+READ THE REAL TEXTS
+• Every required passage of Vergil's Aeneid and Pliny's Letters, and more, with a glossary on every word.
+• Highlight in four manuscript colors, add notes, flag hard lines, and read cold with the glossary off, the way the exam gives you the Latin.
+• Ask about any line: a parse, a construction, the scansion.
 
-DRILL
-• Spaced-repetition flashcards: Latin → English, English → Latin, or in context from the readings.
-  Words you look up while reading join your deck automatically.
-• A Quiz Engine in the exam's style. Filter by author, passage, unit, skill or question type; every
-  answer is explained, and misses go to a review queue.
-• Literal translation drills scored in the exam's own segments, self-scored or graded by AI.
-• Timed sight reading from the authors the exam draws on.
-• A Scansion Lab covering 6,500 lines of the Aeneid, checking every quantity, foot and elision.
+REMEMBER WHAT YOU LEARN
+• Spaced-repetition flashcards: each word returns just before you'd forget it.
+• Words you look up while reading join your deck automatically.
+• A timed speed round, English derivatives, and a new line of Latin every day.
+• Review on Apple Watch, and see what's due at a glance with Home Screen and Lock Screen widgets.
 
-PREPARE
-• An FRQ Workshop for all five free-response types, with rubric rows.
-• Full practice exams: 52 questions in 65 minutes, then five free responses in 115.
-• A study plan counted back from exam day, with daily goals and streaks.
+PREPARE FOR EXAM DAY
+• A quiz engine in the exam's style. Filter by author, passage, skill or question type; every answer is explained, and misses come back for review.
+• Literal translation drills scored in the exam's own segments.
+• Timed sight reading, a Scansion Lab with 6,500 lines of the Aeneid, and a workshop for all five free-response question types.
+• Full-length practice exams, and a study plan counted back from exam day.
 
-TOGETHER
-• Sign in to sync with lectio.norvodesigns.com, so study on your laptop and your phone counts as one.
-• Join your teacher's classroom with a code to see assignments and the leaderboard.
+STUDY TOGETHER
+• Sign in to sync with the Lectio website, so study on your laptop and your phone counts as one.
+• Join your teacher's classroom with a code to see assignments and the class leaderboard.
 
-Plus Home Screen and Lock Screen widgets, a daily reminder, and flashcards on Apple Watch.
+No account is needed to study, and there are no ads, no tracking and no purchases. AI feedback is optional, asks before it sends anything, and is always labeled. Every Latin text comes from a public-domain edition.
 
-No account is needed, and there are no ads, no tracking and no purchases. AI features are optional,
-ask before sending anything, and are always labelled. Every Latin text is from a public-domain
-edition.
+AP® is a trademark registered by the College Board, which is not affiliated with, and does not endorse, this product.
 
-AP® is a trademark registered by the College Board, which is not affiliated with, and does not
-endorse, this product.
+(2228 of 4,000 characters.)
 
 ## Keywords (100)
 
-`latin,vergil,aeneid,pliny,scansion,vocabulary,flashcards,translation,classics,grammar,hexameter,exam`
+`aeneid,virgil,classics,vocabulary,flashcards,grammar,translation,scansion,declension,exam,prep,roman`
 
-That's exactly 100 characters. Words already in the name or subtitle are indexed anyway, and
-trademarked terms in keywords are a 2.3.7 rejection, so "AP" stays out.
+That's exactly 100 characters. The words already in the name and subtitle (Lectio, Latin,
+Vergil, Pliny, AP) are indexed anyway, and trademarked terms in keywords are a 2.3.7 rejection, so
+"AP" stays out.
+
+## Header image
+
+`ios/Brand/AppStore-header-3840x1646.png` (landscape) and `ios/Brand/AppStore-header-1544x2950.png`
+(portrait), whichever size the form asks for: the icon's L on a disc between laurels, over the
+opening of the Aeneid set faintly as a manuscript page, in the app's parchment and pigments. No
+words over the art, since the App Store sets the app's name over it; the middle third holds
+everything that matters, so a crop still works.
 
 ## What's New (1.0)
 
