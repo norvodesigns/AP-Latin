@@ -138,6 +138,10 @@ class ContentLibrary(source: ContentSource) {
          * deploy) is refused rather than half-decoded.
          */
         const val supportedSchemaVersion = 1
+
+        /** Just the Sententia of the day lines, for a background task (the daily reminder) that has no use for the rest. */
+        fun loadSententiae(source: ContentSource): List<Sententia> =
+            if (source.exists("daily.json")) LectioJson.decodeFromString(DailyFile.serializer(), source.readText("daily.json")).sententiae else emptyList()
     }
 }
 
