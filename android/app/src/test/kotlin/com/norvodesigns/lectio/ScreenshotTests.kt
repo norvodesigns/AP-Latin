@@ -25,6 +25,17 @@ import com.norvodesigns.lectio.core.ScansionCorpus
 import com.norvodesigns.lectio.core.ScansionWork
 import java.io.File
 import com.norvodesigns.lectio.features.search.SearchScreen
+import com.norvodesigns.lectio.features.onboarding.OnboardingScreen
+import com.norvodesigns.lectio.features.onboarding.Step
+import com.norvodesigns.lectio.features.settings.SettingsScreen
+import com.norvodesigns.lectio.features.plan.PlanScreen
+import com.norvodesigns.lectio.features.classroom.ClassroomScreen
+import com.norvodesigns.lectio.features.exam.ExamScreen
+import com.norvodesigns.lectio.features.frq.FrqScreen
+import com.norvodesigns.lectio.features.forge.ForgeScreen
+import com.norvodesigns.lectio.features.reference.GrammarScreen
+import com.norvodesigns.lectio.features.reference.DevicesScreen
+import com.norvodesigns.lectio.features.reference.ContextScreen
 import com.norvodesigns.lectio.features.translate.TranslateScreen
 import com.norvodesigns.lectio.features.sight.SightScreen
 import com.norvodesigns.lectio.features.vocab.FlashcardSession
@@ -111,4 +122,19 @@ class ScreenshotTests {
 
     @Test fun scansionLineMarked() = shoot("scansion-marked") { LineScansion(scannedLine(false, false), Tool.Quantity, 0) {} }
     @Test fun scansionLineChecked() = shoot("scansion-checked") { LineScansion(scannedLine(true, true), Tool.Quantity, 0) {} }
+
+    @Test fun onboardWelcome() = shoot("onboard-welcome") { OnboardingScreen(it, Step.Welcome) }
+    @Test fun onboardTrack() = shoot("onboard-track") { OnboardingScreen(it, Step.Track) }
+    @Test fun onboardGoal() = shoot("onboard-goal") { OnboardingScreen(it, Step.Goal) }
+    @Test fun onboardReminder() = shoot("onboard-reminder") { OnboardingScreen(it, Step.Reminder) }
+    @Test fun onboardReady() = shoot("onboard-ready") { OnboardingScreen(it, Step.Ready) }
+    @Test fun settings() = shoot("settings") { SettingsScreen(it) }
+    @Test fun plan() = shoot("plan") { PlanScreen(it) }
+    @Test fun classroom() = shoot("classroom") { ClassroomScreen(it) }
+    @Test fun exam() = shoot("exam") { ExamScreen(it) }
+    @Test fun frq() = shoot("frq") { FrqScreen(it) }
+    @Test fun forge() = shoot("forge") { ForgeScreen(it) }
+    @Test fun grammar() = shoot("grammar") { GrammarScreen(it) }
+    @Test fun devices() = shoot("devices") { DevicesScreen(it) }
+    @Test fun context() = shoot("context") { ContextScreen(it) }
 }

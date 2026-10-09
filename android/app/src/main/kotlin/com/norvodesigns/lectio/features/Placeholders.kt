@@ -21,4 +21,3 @@ fun ComingSoon(title: String) {
     }
 }
 
-@Composable fun OnboardingScreen(model: AppModel) = ComingSoon("Welcome")

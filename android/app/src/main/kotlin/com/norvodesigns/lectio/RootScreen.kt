@@ -59,7 +59,8 @@ import com.norvodesigns.lectio.features.forge.ForgeRoundScreen
 import com.norvodesigns.lectio.features.forge.ForgeScreen
 import com.norvodesigns.lectio.features.frq.FrqScreen
 import com.norvodesigns.lectio.features.reference.GrammarScreen
-import com.norvodesigns.lectio.features.OnboardingScreen
+import com.norvodesigns.lectio.features.onboarding.OnboardingScreen
+import com.norvodesigns.lectio.features.onboarding.TourSheet
 import com.norvodesigns.lectio.features.plan.PlanScreen
 import com.norvodesigns.lectio.features.quiz.QuizScreen
 import com.norvodesigns.lectio.features.quiz.QuizSessionScreen
@@ -153,6 +154,11 @@ private fun Shell(model: AppModel) {
         }
         AnimatedVisibility(model.speedRoundOpen, enter = slideInVertically(tween(300)) { it / 6 } + fadeIn(tween(250)), exit = fadeOut(tween(200))) {
             SpeedRoundScreen(model) { model.speedRoundOpen = false }
+        }
+
+        // The tour on its own, from Settings.
+        AnimatedVisibility(model.showTour, enter = slideInVertically(tween(300)) { it / 6 } + fadeIn(tween(250)), exit = fadeOut(tween(200))) {
+            TourSheet(model) { model.showTour = false }
         }
 
         // The first run: where the student is starting, and a goal.
