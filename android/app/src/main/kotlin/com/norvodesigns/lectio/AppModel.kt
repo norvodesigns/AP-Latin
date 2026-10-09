@@ -113,6 +113,12 @@ class AppModel(val app: Application) {
     /** The passage open in the Reading Room, so a link can open one. */
     var readPassageId: String? by mutableStateOf(null)
 
+    /** A flashcard session shown over the app. */
+    var vocabSession: com.norvodesigns.lectio.features.vocab.VocabSession? by mutableStateOf(null)
+
+    /** Whether the speed round is open over the app. */
+    var speedRoundOpen by mutableStateOf(false)
+
     /** A quiz session shown over the app (from the reader's practice menu, or a review of missed questions). */
     var quizSession: com.norvodesigns.lectio.features.quiz.QuizSessionRequest? by mutableStateOf(null)
 

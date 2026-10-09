@@ -14,6 +14,19 @@ import androidx.compose.material.icons.automirrored.outlined.LibraryBooks
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.automirrored.outlined.Send
 import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.outlined.UnfoldMore
+import androidx.compose.material.icons.outlined.RemoveCircleOutline
+import androidx.compose.material.icons.outlined.AddCircleOutline
+import androidx.compose.material.icons.outlined.NotificationsActive
+import androidx.compose.material.icons.outlined.NotificationsOff
+import androidx.compose.material.icons.outlined.CloudUpload
+import androidx.compose.material.icons.outlined.Eco
+import androidx.compose.material.icons.outlined.Pause
+import androidx.compose.material.icons.outlined.People
+import androidx.compose.material.icons.outlined.ManageAccounts
+import androidx.compose.material.icons.outlined.WorkspacePremium
+import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.PlayArrow
@@ -179,6 +192,20 @@ object Symbols {
         "paperplane" -> Icons.AutoMirrored.Outlined.Send
         "server.rack" -> Icons.Outlined.Dns
         "flag.slash" -> Icons.Outlined.Flag
+        "chevron.up.chevron.down" -> Icons.Outlined.UnfoldMore
+        "minus.circle" -> Icons.Outlined.RemoveCircleOutline
+        "plus.circle" -> Icons.Outlined.AddCircleOutline
+        "arrow.uturn.backward.circle" -> Icons.AutoMirrored.Outlined.Undo
+        "bell.badge" -> Icons.Outlined.NotificationsActive
+        "bell.slash" -> Icons.Outlined.NotificationsOff
+        "checkmark.seal.fill" -> Icons.Filled.Verified
+        "flag.fill" -> Icons.Filled.Flag
+        "icloud.and.arrow.up" -> Icons.Outlined.CloudUpload
+        "leaf" -> Icons.Outlined.Eco
+        "pause" -> Icons.Outlined.Pause
+        "person.2" -> Icons.Outlined.People
+        "person.2.badge.gearshape" -> Icons.Outlined.ManageAccounts
+        "seal", "seal.fill" -> Icons.Outlined.WorkspacePremium
         else -> Icons.Outlined.Book
     }
 }

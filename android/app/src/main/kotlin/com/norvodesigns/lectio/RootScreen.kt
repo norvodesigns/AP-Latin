@@ -59,13 +59,16 @@ import com.norvodesigns.lectio.features.FrqScreen
 import com.norvodesigns.lectio.features.GrammarScreen
 import com.norvodesigns.lectio.features.OnboardingScreen
 import com.norvodesigns.lectio.features.PlanScreen
-import com.norvodesigns.lectio.features.QuizScreen
+import com.norvodesigns.lectio.features.quiz.QuizScreen
+import com.norvodesigns.lectio.features.quiz.QuizSessionScreen
 import com.norvodesigns.lectio.features.read.ReadScreen
 import com.norvodesigns.lectio.features.ScansionScreen
 import com.norvodesigns.lectio.features.SettingsScreen
 import com.norvodesigns.lectio.features.SightScreen
 import com.norvodesigns.lectio.features.TranslateScreen
-import com.norvodesigns.lectio.features.VocabScreen
+import com.norvodesigns.lectio.features.vocab.FlashcardSession
+import com.norvodesigns.lectio.features.vocab.SpeedRoundScreen
+import com.norvodesigns.lectio.features.vocab.VocabScreen
 import com.norvodesigns.lectio.features.laurels.LaurelsScreen
 import com.norvodesigns.lectio.features.learn.CourseScreen
 import com.norvodesigns.lectio.features.learn.LessonScreen
@@ -131,6 +134,17 @@ private fun Shell(model: AppModel) {
         ) {
             val place = model.activeLesson
             if (place != null) androidx.compose.runtime.key(place.id) { LessonScreen(model, place) }
+        }
+
+        // Flashcard sessions, the speed round and quiz sessions cover the whole app, tab bar included.
+        AnimatedVisibility(model.vocabSession != null, enter = slideInVertically(tween(300)) { it / 6 } + fadeIn(tween(250)), exit = fadeOut(tween(200))) {
+            model.vocabSession?.let { session -> FlashcardSession(model, session) { model.vocabSession = null } }
+        }
+        AnimatedVisibility(model.quizSession != null, enter = slideInVertically(tween(300)) { it / 6 } + fadeIn(tween(250)), exit = fadeOut(tween(200))) {
+            model.quizSession?.let { session -> QuizSessionScreen(model, session) { model.quizSession = null } }
+        }
+        AnimatedVisibility(model.speedRoundOpen, enter = slideInVertically(tween(300)) { it / 6 } + fadeIn(tween(250)), exit = fadeOut(tween(200))) {
+            SpeedRoundScreen(model) { model.speedRoundOpen = false }
         }
 
         // The first run: where the student is starting, and a goal.

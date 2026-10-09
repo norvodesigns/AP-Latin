@@ -14,7 +14,15 @@ import com.norvodesigns.lectio.features.learn.LessonScreen
 import com.norvodesigns.lectio.features.learn.LevelCheckScreen
 import com.norvodesigns.lectio.features.read.PassageReader
 import com.norvodesigns.lectio.features.read.ReadScreen
+import com.norvodesigns.lectio.features.quiz.QuizScreen
+import com.norvodesigns.lectio.features.quiz.QuizSessionRequest
+import com.norvodesigns.lectio.features.quiz.QuizSessionScreen
 import com.norvodesigns.lectio.features.search.SearchScreen
+import com.norvodesigns.lectio.features.vocab.FlashcardSession
+import com.norvodesigns.lectio.features.vocab.SpeedRoundScreen
+import com.norvodesigns.lectio.features.vocab.VocabDirection
+import com.norvodesigns.lectio.features.vocab.VocabScreen
+import com.norvodesigns.lectio.features.vocab.VocabSession
 import com.norvodesigns.lectio.features.today.TodayScreen
 import com.norvodesigns.lectio.ui.theme.Appearance
 import com.norvodesigns.lectio.ui.theme.LectioTheme
@@ -66,4 +74,9 @@ class ScreenshotTests {
     @Test fun readIndex() = shoot("read-index") { ReadScreen(it) }
     @Test fun reader() = shoot("reader") { m -> PassageReader(m, m.content!!.passages.first { it.isPoetry }) }
     @Test fun readerDark() = shoot("reader-dark", dark = true) { m -> PassageReader(m, m.content!!.passages.first { !it.isPoetry }) }
+    @Test fun vocab() = shoot("vocab") { VocabScreen(it) }
+    @Test fun flashcard() = shoot("flashcard") { m -> FlashcardSession(m, VocabSession(m.vocab.keys.take(5).toList(), VocabDirection.LaEn)) {} }
+    @Test fun speedReady() = shoot("speed-ready") { SpeedRoundScreen(it) {} }
+    @Test fun quiz() = shoot("quiz") { QuizScreen(it) }
+    @Test fun quizQuestion() = shoot("quiz-question") { m -> QuizSessionScreen(m, QuizSessionRequest(m.content!!.questions.filter { it.passageId != null }.take(3), false)) {} }
 }
