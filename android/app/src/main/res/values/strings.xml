@@ -5,4 +5,16 @@
     <string name="channel_exam_description">The countdown for a timed practice-exam section, while it runs.</string>
     <string name="channel_reminders">Daily reminder</string>
     <string name="channel_reminders_description">A line of Latin each day, at the time you choose.</string>
+    <string name="widget_today_name">Lectio</string>
+    <string name="widget_today_description">Days to the exam, cards due, and your streak.</string>
+    <string name="widget_sententia_name">Sententia of the day</string>
+    <string name="widget_sententia_description">One famous line of Latin a day.</string>
+    <string name="widget_next_lesson_name">Next lesson</string>
+    <string name="widget_next_lesson_description">Where you are in the course, one tap from carrying on.</string>
+    <string name="shortcut_sententia_short">Sententia</string>
+    <string name="shortcut_sententia_long">Today’s Sententia</string>
+    <string name="shortcut_course_short">Continue</string>
+    <string name="shortcut_course_long">Continue the Course</string>
+    <string name="shortcut_cards_short">Review cards</string>
+    <string name="shortcut_cards_long">Review Vocabulary</string>
 </resources>

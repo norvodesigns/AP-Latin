@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Long-press the launcher icon: the same three routes the iOS app offers to Siri and Shortcuts. -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="sententia"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_quote"
+        android:shortcutShortLabel="@string/shortcut_sententia_short"
+        android:shortcutLongLabel="@string/shortcut_sententia_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="lectio://learn/daily"
+            android:targetClass="com.norvodesigns.lectio.MainActivity"
+            android:targetPackage="com.norvodesigns.lectio" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="course"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_course"
+        android:shortcutShortLabel="@string/shortcut_course_short"
+        android:shortcutLongLabel="@string/shortcut_course_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="lectio://learn/next"
+            android:targetClass="com.norvodesigns.lectio.MainActivity"
+            android:targetPackage="com.norvodesigns.lectio" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="cards"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_cards"
+        android:shortcutShortLabel="@string/shortcut_cards_short"
+        android:shortcutLongLabel="@string/shortcut_cards_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="lectio://vocab"
+            android:targetClass="com.norvodesigns.lectio.MainActivity"
+            android:targetPackage="com.norvodesigns.lectio" />
+    </shortcut>
+</shortcuts>

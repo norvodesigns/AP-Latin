@@ -51,7 +51,7 @@ object Reminders {
 
     /** Replaces every pending reminder with [items]; with none (reminders off), just clears them. */
     fun reschedule(context: Context, items: List<ReminderItem>) {
-        val work = WorkManager.getInstance(context)
+        val work = runCatching { WorkManager.getInstance(context) }.getOrNull() ?: return
         work.cancelAllWorkByTag(TAG)
         ensureChannel(context)
         val now = System.currentTimeMillis()
