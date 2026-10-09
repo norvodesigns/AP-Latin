@@ -462,3 +462,17 @@ finishing a lesson counts toward the streak and daily goal.
   tips the first time a student reaches Today, a passage and Browse; Settings › Take the tour again. CI
   screenshots every step of the first run, and the Apple Watch app (a sample deck), which App Store Connect
   requires.
+- 2026-10-09: The Android app. `android/` is a Kotlin and Jetpack Compose port of the iPhone app with the
+  same features and the same look without the glass (slips of parchment with a hairline edge): `core/` is a
+  pure-Kotlin port of LectioCore held to the same parity fixtures (merge, SM-2, streaks, the adaptive path,
+  scansion grading, Supabase sync), `app/` has every section, `wear/` a Wear OS flashcards app with a
+  complication. Android's own parts: Glance widgets (Lectio, Next lesson, Sententia), launcher shortcuts, a
+  daily reminder quoting the day's line (WorkManager), an ongoing countdown notification for the timed exam
+  (in place of the Live Activity), Android backup of the progress file, a tablet layout. 150 JVM tests,
+  including taps through the first run, a quiz, flashcards, the reader, Forms Forge and the exam, and a walk
+  over every section in the real shell; the screens are rendered to PNGs on the JVM, which is also where the
+  Play listing's screenshots come from. `.github/workflows/android.yml` tests, lints and builds the bundles on
+  every change and, on request, signs and uploads to Google Play; `scripts/android-keystore.sh` makes the
+  upload key; `android/PLAY_STORE.md` holds the listing, the Data safety and content-rating answers and the
+  owner's checklist. The website's privacy policy and support page now cover the Android app too.
+

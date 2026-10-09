@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The same for Android 11 and earlier: the progress file and the preferences, nothing else. -->
+<full-backup-content>
+    <include domain="file" path="progress.json" />
+    <include domain="sharedpref" path="lectio.xml" />
+</full-backup-content>

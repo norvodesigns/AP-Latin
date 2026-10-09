@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Progress and the sign-in session stay on the device; signing in restores progress from the account. -->
+<!--
+  What Android's own backup and phone-to-phone transfer carry: the progress file and the
+  preferences, so a new phone starts where the old one left off. The sign-in session (a key
+  that lives in the old phone's hardware keystore) and the downloaded course content (it
+  re-downloads) stay out; a restored app asks to sign in again.
+-->
 <data-extraction-rules>
     <cloud-backup>
-        <exclude domain="root" />
-        <exclude domain="file" />
-        <exclude domain="database" />
-        <exclude domain="sharedpref" />
-        <exclude domain="external" />
+        <include domain="file" path="progress.json" />
+        <include domain="sharedpref" path="lectio.xml" />
     </cloud-backup>
     <device-transfer>
-        <exclude domain="sharedpref" path="lectio_secure.xml" />
+        <include domain="file" path="progress.json" />
+        <include domain="sharedpref" path="lectio.xml" />
     </device-transfer>
 </data-extraction-rules>

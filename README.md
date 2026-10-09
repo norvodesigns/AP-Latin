@@ -8,9 +8,10 @@ Deployed at **lectio.norvodesigns.com**.
 Next.js (App Router) · TypeScript · Tailwind v4 · Zustand · Vercel AI SDK.
 
 There is also a native **iPhone and iPad app** (SwiftUI, Liquid Glass), built from the same content
-and syncing the same progress. See **[ios/README.md](./ios/README.md)**. If you edit anything
-under `src/data`, run `npm run export:content` so the app's copy of the course stays current (CI
-checks).
+and syncing the same progress. See **[ios/README.md](./ios/README.md)**. An **Android app** (Kotlin,
+Jetpack Compose, with a Wear OS watch app) does the same on Google Play. See
+**[android/README.md](./android/README.md)**. If you edit anything under `src/data`, run
+`npm run export:content` so the apps' copy of the course stays current (CI checks).
 
 ---
 
