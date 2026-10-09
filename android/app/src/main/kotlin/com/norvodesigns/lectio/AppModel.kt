@@ -25,6 +25,7 @@ import com.norvodesigns.lectio.core.Profile
 import com.norvodesigns.lectio.core.ProgressDocument
 import com.norvodesigns.lectio.core.Sententia
 import com.norvodesigns.lectio.core.SentenceBuilder
+import com.norvodesigns.lectio.core.Streaks
 import com.norvodesigns.lectio.core.StudyDates
 import com.norvodesigns.lectio.core.SupabaseAPI
 import com.norvodesigns.lectio.core.SupabaseError
@@ -41,6 +42,7 @@ import com.norvodesigns.lectio.data.ContentStore
 import com.norvodesigns.lectio.data.OkHttpTransport
 import com.norvodesigns.lectio.data.Prefs
 import com.norvodesigns.lectio.data.SecureSessionStorage
+import com.norvodesigns.lectio.notifications.ReminderItem
 import com.norvodesigns.lectio.notifications.Reminders
 import com.norvodesigns.lectio.ui.components.Rich
 import com.norvodesigns.lectio.ui.theme.Appearance
@@ -1072,8 +1074,42 @@ class AppModel(val app: Application) {
         get() = prefs.int("reminderMinutes", 16 * 60)
         set(value) = prefs.put("reminderMinutes", value)
 
-    /** (Re)schedules the reminder; the notification itself works out the day's numbers when it fires (see [Reminders]). */
-    fun rescheduleReminder() = Reminders.reschedule(app, reminderEnabled, reminderMinutes)
+    /**
+     * Replaces the pending reminders with ones that know the numbers: cards due
+     * (as of now, so the count is exact for the first and a floor after) and that
+     * day's Sententia.
+     */
+    fun rescheduleReminder() {
+        if (!reminderEnabled) {
+            Reminders.reschedule(app, emptyList())
+            return
+        }
+        val zone = java.time.ZoneId.systemDefault()
+        val now = java.time.ZonedDateTime.now(zone)
+        val streak = Streaks.current(progress.studyDays)
+        val lines = content?.sententiae ?: emptyList()
+        val items = (0 until Reminders.DAYS).mapNotNull { n ->
+            val fire = now.toLocalDate().plusDays(n.toLong()).atTime(reminderMinutes / 60, reminderMinutes % 60).atZone(zone)
+            if (!fire.isAfter(now)) return@mapNotNull null
+            val dueBy = StudyDates.today(fire.toInstant())
+            val due = vocab.values.count { it.due <= dueBy }
+            val line = Daily.sententia(Daily.localDay(fire.toInstant(), zone), lines)
+            val body = listOfNotNull(
+                line?.let { "Today’s line: ${it.latin}" },
+                if (due > 0) "$due vocabulary card${if (due == 1) "" else "s"} due." else null,
+                if (n == 0 && streak > 0) "Keep your $streak-day streak going." else null,
+                if (line == null && due == 0) "${progress.studyPlan.minutesPerDay} minutes today keeps the plan on track." else null,
+            ).joinToString(" ")
+            ReminderItem(n, fire.toInstant().toEpochMilli(), "Time for Latin", body)
+        }
+        Reminders.reschedule(app, items)
+    }
+
+    /** Turns the daily reminder on or off. Turning it on needs the notification permission, which the screen asks for first. */
+    fun setReminder(enabled: Boolean) {
+        reminderEnabled = enabled
+        rescheduleReminder()
+    }
 
     /* ------------------------------------------------------------------ */
     /* Sample progress, for screenshots                                       */

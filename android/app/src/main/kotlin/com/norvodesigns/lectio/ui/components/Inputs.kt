@@ -136,3 +136,10 @@ fun LectioTextField(
         },
     )
 }
+
+/** The text of a bundled raw resource (a licence file), or null if there isn't one by that name. */
+fun R_raw_text(context: android.content.Context, name: String): String? {
+    val id = context.resources.getIdentifier(name, "raw", context.packageName)
+    if (id == 0) return null
+    return runCatching { context.resources.openRawResource(id).use { it.readBytes().toString(Charsets.UTF_8) } }.getOrNull()
+}

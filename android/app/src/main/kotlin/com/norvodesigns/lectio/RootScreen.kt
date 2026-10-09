@@ -50,7 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.norvodesigns.lectio.core.SpacedRepetition
 import com.norvodesigns.lectio.core.StudyDates
-import com.norvodesigns.lectio.features.ClassroomScreen
+import com.norvodesigns.lectio.features.classroom.ClassroomScreen
 import com.norvodesigns.lectio.features.reference.ContextScreen
 import com.norvodesigns.lectio.features.reference.DevicesScreen
 import com.norvodesigns.lectio.features.exam.ExamScreen
@@ -60,12 +60,12 @@ import com.norvodesigns.lectio.features.forge.ForgeScreen
 import com.norvodesigns.lectio.features.frq.FrqScreen
 import com.norvodesigns.lectio.features.reference.GrammarScreen
 import com.norvodesigns.lectio.features.OnboardingScreen
-import com.norvodesigns.lectio.features.PlanScreen
+import com.norvodesigns.lectio.features.plan.PlanScreen
 import com.norvodesigns.lectio.features.quiz.QuizScreen
 import com.norvodesigns.lectio.features.quiz.QuizSessionScreen
 import com.norvodesigns.lectio.features.read.ReadScreen
 import com.norvodesigns.lectio.features.scansion.ScansionScreen
-import com.norvodesigns.lectio.features.SettingsScreen
+import com.norvodesigns.lectio.features.settings.SettingsScreen
 import com.norvodesigns.lectio.features.sight.SightScreen
 import com.norvodesigns.lectio.features.translate.TranslateScreen
 import com.norvodesigns.lectio.features.vocab.FlashcardSession
