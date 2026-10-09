@@ -756,3 +756,14 @@ class SupabaseTests {
         assertNull(AuthCallback.parse("lectio://learn/daily"))
     }
 }
+
+class WatchDeckTests {
+    @kotlin.test.Test
+    fun aDeckAndAReviewSurviveTheirJson() {
+        val deck = WatchDeck(listOf(WatchDeck.Card("amor", "amor", "amor, amōris", "noun, m.", "love")), 12, 5, 214, sentAt = 1_790_000_000_000)
+        kotlin.test.assertEquals(deck, WatchDeck.fromJson(deck.toJson()))
+        val review = WatchReview("amor", 4, at = 1_790_000_000_500)
+        kotlin.test.assertEquals(review, WatchReview.fromJson(review.toJson()))
+        kotlin.test.assertNull(WatchDeck.fromJson("not json"))
+    }
+}

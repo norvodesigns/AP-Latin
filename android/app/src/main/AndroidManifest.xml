@@ -73,5 +73,14 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_next_lesson_info" />
         </receiver>
+
+        <!-- Grades made on the Wear OS watch arrive here; a watch that connects is sent today's cards. -->
+        <service
+            android:name=".watch.ReviewListenerService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.BIND_LISTENER" />
+            </intent-filter>
+        </service>
     </application>
 </manifest>

@@ -42,6 +42,10 @@ on:
         type: choice
         options: [draft, completed, inProgress, halted]
         default: draft
+      wear:
+        description: Also upload the Wear OS watch app (set up its form factor in the Play Console first)
+        type: boolean
+        default: false
 
 env:
   GRADLE_OPTS: -Dorg.gradle.daemon=false
@@ -84,11 +88,11 @@ jobs:
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37.0" "platforms;android-36" > /dev/null
       - name: Unit tests, screen walk-throughs and screenshots
-        run: ./gradlew :app:testDebugUnitTest --no-daemon
+        run: ./gradlew :app:testDebugUnitTest :wear:testDebugUnitTest --no-daemon
       - name: Lint
-        run: ./gradlew :app:lintDebug --no-daemon
-      - name: Build the debug APK and the release bundle (unsigned)
-        run: ./gradlew :app:assembleDebug :app:bundleRelease --no-daemon
+        run: ./gradlew :app:lintDebug :wear:lintDebug --no-daemon
+      - name: Build the debug APK and the release bundles (unsigned)
+        run: ./gradlew :app:assembleDebug :app:bundleRelease :wear:bundleRelease --no-daemon
       - name: Check what the bundle contains
         run: |
           AAB=app/build/outputs/bundle/release/app-release.aab
@@ -96,6 +100,9 @@ jobs:
           unzip -l "$AAB" | grep -q 'base/assets/content/manifest.json' || { echo "::error::course content missing from the bundle"; exit 1; }
           unzip -l "$AAB" | grep -q 'base/assets/scansion/index.json' || { echo "::error::scansion corpus missing from the bundle"; exit 1; }
           ls -lh "$AAB"
+          WEAR=wear/build/outputs/bundle/release/wear-release.aab
+          test -f "$WEAR" || { echo "::error::no Wear OS bundle"; exit 1; }
+          ls -lh "$WEAR"
       - name: Upload reports
         if: failure()
         uses: actions/upload-artifact@v4
@@ -103,6 +110,7 @@ jobs:
           name: android-reports
           path: |
             android/app/build/reports
+            android/wear/build/reports
             android/core/build/reports
 
   screenshots:
@@ -125,11 +133,19 @@ jobs:
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37.0" "platforms;android-36" > /dev/null
       - name: Render
-        run: ./gradlew :app:recordRoborazziDebug --no-daemon
+        run: ./gradlew :app:recordRoborazziDebug :wear:recordRoborazziDebug --no-daemon
+      # Every screen, light and dark, for looking at the design.
       - uses: actions/upload-artifact@v4
         with:
           name: android-screenshots
           path: android/app/build/outputs/roborazzi/*.png
+      # What the Play Console listing asks for: a phone and two tablet sizes, and the watch.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: play-store-screenshots
+          path: |
+            android/app/build/outputs/play
+            android/wear/build/outputs/play
 
   release:
     name: Sign and upload to Google Play
@@ -173,18 +189,21 @@ jobs:
       - name: Build the signed bundle
         working-directory: android
         # Play wants a versionCode that only goes up: the run number, offset past anything uploaded by hand.
-        run: ./gradlew :app:bundleRelease --no-daemon -Plectio.versionCode=$((1000 + GITHUB_RUN_NUMBER))
+        run: ./gradlew :app:bundleRelease :wear:bundleRelease --no-daemon -Plectio.versionCode=$((1000 + GITHUB_RUN_NUMBER))
       - name: Check the signature
         run: |
-          AAB=android/app/build/outputs/bundle/release/app-release.aab
-          jarsigner -verify "$AAB" | head -3
-          keytool -printcert -jarfile "$AAB" | grep -E 'SHA-256|Owner'
+          for AAB in android/app/build/outputs/bundle/release/app-release.aab android/wear/build/outputs/bundle/release/wear-release.aab; do
+            jarsigner -verify "$AAB" | head -1
+            keytool -printcert -jarfile "$AAB" | grep -E 'SHA256|Owner'
+          done
       - uses: actions/upload-artifact@v4
         with:
-          name: lectio-release-bundle
+          name: lectio-release-bundles
           path: |
             android/app/build/outputs/bundle/release/app-release.aab
             android/app/build/outputs/mapping/release/mapping.txt
+            android/wear/build/outputs/bundle/release/wear-release.aab
+            android/wear/build/outputs/mapping/release/mapping.txt
       - name: Upload to Google Play
         uses: r0adkll/upload-google-play@v1
         with:
@@ -194,4 +213,15 @@ jobs:
           mappingFile: android/app/build/outputs/mapping/release/mapping.txt
           whatsNewDirectory: android/play/whatsnew
           track: ${{ inputs.track }}
+          status: ${{ inputs.status }}
+      - name: Upload the Wear OS app to Google Play
+        if: inputs.wear
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.norvodesigns.lectio
+          releaseFiles: android/wear/build/outputs/bundle/release/wear-release.aab
+          mappingFile: android/wear/build/outputs/mapping/release/mapping.txt
+          whatsNewDirectory: android/play/whatsnew
+          track: wear:${{ inputs.track }}
           status: ${{ inputs.status }}

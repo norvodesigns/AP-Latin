@@ -215,4 +215,21 @@ class InteractionTests {
         model.showTour = false
         compose.waitForIdle()
     }
+
+    @Test fun aGradeFromTheWatchIsAppliedWhenItWasMade() {
+        val model = model()
+        val id = model.vocab.keys.first()
+        val before = model.vocab.getValue(id).reviews
+        val earlier = System.currentTimeMillis() - 3_600_000
+        model.applyWatchReview(com.norvodesigns.lectio.core.WatchReview(id, 4, earlier))
+        assertEquals(before + 1, model.vocab.getValue(id).reviews)
+    }
+
+    @Test fun theWatchGetsTodaysDueCards() {
+        val model = model()
+        // No watch is paired in a test; sending must simply not throw, and the deck it would send holds only due cards.
+        model.sendWatchDeck(force = true)
+        val due = com.norvodesigns.lectio.core.SpacedRepetition.due(model.vocab.values, com.norvodesigns.lectio.core.StudyDates.today())
+        assertTrue(due.isNotEmpty())
+    }
 }

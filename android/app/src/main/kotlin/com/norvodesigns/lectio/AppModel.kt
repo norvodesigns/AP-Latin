@@ -25,7 +25,10 @@ import com.norvodesigns.lectio.core.Profile
 import com.norvodesigns.lectio.core.ProgressDocument
 import com.norvodesigns.lectio.core.Sententia
 import com.norvodesigns.lectio.core.SentenceBuilder
+import com.norvodesigns.lectio.core.SpacedRepetition
 import com.norvodesigns.lectio.core.Streaks
+import com.norvodesigns.lectio.core.WatchDeck
+import com.norvodesigns.lectio.core.WatchReview
 import com.norvodesigns.lectio.core.StudyDates
 import com.norvodesigns.lectio.core.SupabaseAPI
 import com.norvodesigns.lectio.core.SupabaseError
@@ -46,6 +49,7 @@ import com.norvodesigns.lectio.notifications.ReminderItem
 import com.norvodesigns.lectio.notifications.Reminders
 import com.norvodesigns.lectio.ui.components.Rich
 import com.norvodesigns.lectio.ui.theme.Appearance
+import com.norvodesigns.lectio.watch.WatchBridge
 import com.norvodesigns.lectio.widgets.WidgetBridge
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -1048,9 +1052,39 @@ class AppModel(val app: Application) {
                 WidgetSnapshot.NextLesson(it.lesson.id, "${it.level.title} ${it.unit.n}.${it.number}", Rich.plain(it.lesson.title))
             },
         )
+        sendWatchDeck()
         if (snapshot == lastWidgetSnapshot) return
         lastWidgetSnapshot = snapshot
         WidgetBridge.publish(app, snapshot)
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* The watch                                                              */
+    /* ------------------------------------------------------------------ */
+
+    private var lastWatchDeck: WatchDeck? = null
+
+    /** A grade from the wrist, applied as of when it was made. */
+    fun applyWatchReview(review: WatchReview) {
+        val at = Instant.ofEpochMilli(review.at)
+        update {
+            it.reviewVocab(review.cardId, review.quality, at)
+            it.markStudied(at)
+        }
+    }
+
+    /** Sends the current due cards to a paired watch when they've changed. */
+    fun sendWatchDeck(force: Boolean = false) {
+        val library = content ?: return
+        val due = SpacedRepetition.due(vocab.values, StudyDates.today())
+        val cards = due.take(WatchDeck.MAX_CARDS).mapNotNull { card ->
+            library.vocab(card.id)?.let { WatchDeck.Card(it.id, it.headword, it.lemma, it.pos, it.definition) }
+        }
+        val deck = WatchDeck(cards, due.size, Streaks.current(progress.studyDays), Streaks.daysUntilExam(library.meta.examDate))
+        val previous = lastWatchDeck
+        if (!force && previous != null && previous.copy(sentAt = deck.sentAt) == deck) return
+        lastWatchDeck = deck
+        WatchBridge.send(app, deck)
     }
 
     /** The Sententia for today and the next six days, for the widget. */

@@ -139,6 +139,7 @@ dependencies {
     implementation(libs.androidx.glance.appwidget)
     implementation(libs.androidx.glance.material3)
     implementation(libs.androidx.browser)
+    implementation(libs.play.services.wearable)
     implementation(libs.okhttp)
 
     debugImplementation(libs.androidx.compose.ui.test.manifest)

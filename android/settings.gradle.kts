@@ -17,3 +17,4 @@ dependencyResolutionManagement {
 rootProject.name = "Lectio"
 include(":core")
 include(":app")
+include(":wear")
