@@ -21,9 +21,6 @@ fun ComingSoon(title: String) {
     }
 }
 
-@Composable fun TranslateScreen(model: AppModel) = ComingSoon("Translate")
-@Composable fun SightScreen(model: AppModel) = ComingSoon("Sight Reading")
-@Composable fun ScansionScreen(model: AppModel) = ComingSoon("Scansion Lab")
 @Composable fun ForgeScreen(model: AppModel) = ComingSoon("Forms Forge")
 @Composable fun GrammarScreen(model: AppModel) = ComingSoon("Grammar & Syntax")
 @Composable fun DevicesScreen(model: AppModel) = ComingSoon("Literary Devices")

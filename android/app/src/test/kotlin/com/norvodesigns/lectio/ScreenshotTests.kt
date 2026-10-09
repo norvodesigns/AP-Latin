@@ -17,7 +17,16 @@ import com.norvodesigns.lectio.features.read.ReadScreen
 import com.norvodesigns.lectio.features.quiz.QuizScreen
 import com.norvodesigns.lectio.features.quiz.QuizSessionRequest
 import com.norvodesigns.lectio.features.quiz.QuizSessionScreen
+import com.norvodesigns.lectio.features.scansion.LineScansion
+import com.norvodesigns.lectio.features.scansion.ScansionScreen
+import com.norvodesigns.lectio.features.scansion.Tool
+import com.norvodesigns.lectio.core.DirectorySource
+import com.norvodesigns.lectio.core.ScansionCorpus
+import com.norvodesigns.lectio.core.ScansionWork
+import java.io.File
 import com.norvodesigns.lectio.features.search.SearchScreen
+import com.norvodesigns.lectio.features.translate.TranslateScreen
+import com.norvodesigns.lectio.features.sight.SightScreen
 import com.norvodesigns.lectio.features.vocab.FlashcardSession
 import com.norvodesigns.lectio.features.vocab.SpeedRoundScreen
 import com.norvodesigns.lectio.features.vocab.VocabDirection
@@ -55,11 +64,16 @@ class ScreenshotTests {
         return model
     }
 
-    private fun shoot(name: String, dark: Boolean = false, content: @Composable (AppModel) -> Unit) {
+    private fun shoot(name: String, dark: Boolean = false, settleMillis: Long = 0, content: @Composable (AppModel) -> Unit) {
         val model = model()
         model.appearance = if (dark) Appearance.Dark else Appearance.Light
         compose.setContent { LectioTheme(model.appearance) { content(model) } }
         compose.waitForIdle()
+        if (settleMillis > 0) {
+            // Work on other dispatchers (the scansion corpus loads from disk) finishes outside the compose clock.
+            val until = System.currentTimeMillis() + settleMillis
+            while (System.currentTimeMillis() < until) { Thread.sleep(100); compose.mainClock.advanceTimeBy(100); compose.waitForIdle() }
+        }
         compose.onRoot().captureRoboImage("build/outputs/roborazzi/$name.png")
     }
 
@@ -79,4 +93,22 @@ class ScreenshotTests {
     @Test fun speedReady() = shoot("speed-ready") { SpeedRoundScreen(it) {} }
     @Test fun quiz() = shoot("quiz") { QuizScreen(it) }
     @Test fun quizQuestion() = shoot("quiz-question") { m -> QuizSessionScreen(m, QuizSessionRequest(m.content!!.questions.filter { it.passageId != null }.take(3), false)) {} }
+    @Test fun scansion() = shoot("scansion", settleMillis = 4000) { ScansionScreen(it) }
+    @Test fun translate() = shoot("translate") { TranslateScreen(it) }
+    @Test fun sight() = shoot("sight") { SightScreen(it) }
+
+    private fun scannedLine(checked: Boolean, wrongSome: Boolean): ScansionWork {
+        val corpus = ScansionCorpus(DirectorySource(File("../../public/scansion")))
+        val line = corpus.loadBook(1).first { l -> l.syllables.any { it.isElided } }
+        val work = ScansionWork(line, null)
+        for ((i, s) in line.syllables.withIndex()) if (!s.isElided) work.setMark(i, if (wrongSome && i == 3) (if (s.quantity == "long") "short" else "long") else s.quantity)
+        if (line.syllables.any { it.isElided }) for (i in work.elidableIndices) if (line.syllables[i].isElided) work.toggleElision(i)
+        val metrical = work.metricalIndices
+        for (d in work.correctDivisions) work.toggleDivision(metrical[d])
+        if (checked) work.markChecked()
+        return work
+    }
+
+    @Test fun scansionLineMarked() = shoot("scansion-marked") { LineScansion(scannedLine(false, false), Tool.Quantity, 0) {} }
+    @Test fun scansionLineChecked() = shoot("scansion-checked") { LineScansion(scannedLine(true, true), Tool.Quantity, 0) {} }
 }

@@ -77,6 +77,16 @@ import com.norvodesigns.lectio.ui.theme.LectioColors
 import com.norvodesigns.lectio.ui.theme.LectioText
 import kotlinx.coroutines.launch
 
+/**
+ * A passage opened over the screen that linked to it ("read in context"), with a
+ * back button that returns there.
+ */
+@Composable
+fun ReaderPage(model: AppModel, passage: Passage, onBack: () -> Unit) {
+    androidx.activity.compose.BackHandler(onBack = onBack)
+    com.norvodesigns.lectio.ui.components.ProvidePushedBack(onBack) { PassageReader(model, passage) }
+}
+
 /** A word the reader tapped, for the glossary. */
 data class WordSelection(val passageId: String, val lineN: Int, val tokenIndex: Int, val token: Token)
 

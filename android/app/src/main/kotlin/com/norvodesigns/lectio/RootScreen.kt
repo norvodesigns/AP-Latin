@@ -62,10 +62,10 @@ import com.norvodesigns.lectio.features.PlanScreen
 import com.norvodesigns.lectio.features.quiz.QuizScreen
 import com.norvodesigns.lectio.features.quiz.QuizSessionScreen
 import com.norvodesigns.lectio.features.read.ReadScreen
-import com.norvodesigns.lectio.features.ScansionScreen
+import com.norvodesigns.lectio.features.scansion.ScansionScreen
 import com.norvodesigns.lectio.features.SettingsScreen
-import com.norvodesigns.lectio.features.SightScreen
-import com.norvodesigns.lectio.features.TranslateScreen
+import com.norvodesigns.lectio.features.sight.SightScreen
+import com.norvodesigns.lectio.features.translate.TranslateScreen
 import com.norvodesigns.lectio.features.vocab.FlashcardSession
 import com.norvodesigns.lectio.features.vocab.SpeedRoundScreen
 import com.norvodesigns.lectio.features.vocab.VocabScreen

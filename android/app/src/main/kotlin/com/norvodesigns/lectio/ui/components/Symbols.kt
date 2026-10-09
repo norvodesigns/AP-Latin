@@ -75,6 +75,7 @@ import androidx.compose.material.icons.outlined.PanTool
 import androidx.compose.material.icons.outlined.PersonRemove
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.RadioButtonChecked
+import androidx.compose.material.icons.outlined.RadioButtonUnchecked
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Replay
 import androidx.compose.material.icons.outlined.Route
@@ -192,6 +193,7 @@ object Symbols {
         "paperplane" -> Icons.AutoMirrored.Outlined.Send
         "server.rack" -> Icons.Outlined.Dns
         "flag.slash" -> Icons.Outlined.Flag
+        "circle" -> Icons.Outlined.RadioButtonUnchecked
         "chevron.up.chevron.down" -> Icons.Outlined.UnfoldMore
         "minus.circle" -> Icons.Outlined.RemoveCircleOutline
         "plus.circle" -> Icons.Outlined.AddCircleOutline
