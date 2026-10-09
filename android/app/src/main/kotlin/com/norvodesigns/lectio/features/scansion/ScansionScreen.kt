@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -39,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -504,7 +504,11 @@ private fun Syllable(work: ScansionWork, tool: Tool, i: Int, place: Place, wide:
             if (place.isFoot && place.startsGroup) {
                 Text(
                     (work.footName(place.group) ?: " ").uppercase(),
-                    Modifier.wrapContentWidth(Alignment.Start, unbounded = true).padding(start = lead),
+                    // Drawn from the foot's first syllable but taking no room of its own, so a long name never pushes the syllables apart.
+                    Modifier.padding(start = lead).layout { measurable, _ ->
+                        val placeable = measurable.measure(androidx.compose.ui.unit.Constraints())
+                        layout(0, placeable.height) { placeable.place(0, 0) }
+                    },
                     style = LectioText.caption2.copy(fontWeight = FontWeight.Medium, letterSpacing = 1.sp), color = c.inkMuted, softWrap = false,
                 )
             }
