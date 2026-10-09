@@ -7,3 +7,8 @@
 -dontwarn org.conscrypt.**
 -dontwarn org.bouncycastle.**
 -dontwarn org.openjsse.**
+
+# The course and progress models are decoded from JSON by generated serializers and by name. They are a small
+# part of the app; keeping them whole costs nothing and rules out a class of release-only failures.
+-keep class com.norvodesigns.lectio.core.** { *; }
+-keepclassmembers class com.norvodesigns.lectio.** { *** Companion; }

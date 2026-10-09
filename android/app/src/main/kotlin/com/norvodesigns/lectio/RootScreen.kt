@@ -15,7 +15,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -124,7 +127,8 @@ private fun ContentFailed(message: String) {
 @Composable
 private fun Shell(model: AppModel) {
     val wide = LocalConfiguration.current.screenWidthDp >= 720
-    Box(Modifier.fillMaxSize()) {
+    // Everything, overlays included, lifts above the on-screen keyboard rather than sitting behind it.
+    Box(Modifier.fillMaxSize().imePadding()) {
         CompositionLocalProvider(LocalWide provides wide) {
             if (wide) WideShell(model) else PhoneShell(model)
         }
@@ -220,7 +224,8 @@ private fun PhoneShell(model: AppModel) {
                 }
             }
         }
-        NavigationBar(containerColor = c.slip, contentColor = c.ink, tonalElevation = 0.dp) {
+        // The bar steps aside while the keyboard is up, so it doesn't take room from the field being typed in.
+        if (!WindowInsets.isImeVisible) NavigationBar(containerColor = c.slip, contentColor = c.ink, tonalElevation = 0.dp) {
             specs.forEach { spec ->
                 NavigationBarItem(
                     selected = (if (pushed) AppTab.Today else selected) == spec.tab,
