@@ -116,6 +116,9 @@ class AppModel(val app: Application) {
     /** A flashcard session shown over the app. */
     var vocabSession: com.norvodesigns.lectio.features.vocab.VocabSession? by mutableStateOf(null)
 
+    /** A practice-exam sitting shown over the app. */
+    var examPaper: com.norvodesigns.lectio.features.exam.ExamPaper? by mutableStateOf(null)
+
     /** A Forms Forge round shown over the app. */
     var forgeRound: com.norvodesigns.lectio.features.forge.ForgeRound? by mutableStateOf(null)
 

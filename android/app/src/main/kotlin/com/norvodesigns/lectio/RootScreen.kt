@@ -53,10 +53,11 @@ import com.norvodesigns.lectio.core.StudyDates
 import com.norvodesigns.lectio.features.ClassroomScreen
 import com.norvodesigns.lectio.features.reference.ContextScreen
 import com.norvodesigns.lectio.features.reference.DevicesScreen
-import com.norvodesigns.lectio.features.ExamScreen
+import com.norvodesigns.lectio.features.exam.ExamScreen
+import com.norvodesigns.lectio.features.exam.ExamSession
 import com.norvodesigns.lectio.features.forge.ForgeRoundScreen
 import com.norvodesigns.lectio.features.forge.ForgeScreen
-import com.norvodesigns.lectio.features.FrqScreen
+import com.norvodesigns.lectio.features.frq.FrqScreen
 import com.norvodesigns.lectio.features.reference.GrammarScreen
 import com.norvodesigns.lectio.features.OnboardingScreen
 import com.norvodesigns.lectio.features.PlanScreen
@@ -146,6 +147,9 @@ private fun Shell(model: AppModel) {
         }
         AnimatedVisibility(model.forgeRound != null, enter = slideInVertically(tween(300)) { it / 6 } + fadeIn(tween(250)), exit = fadeOut(tween(200))) {
             model.forgeRound?.let { round -> ForgeRoundScreen(model, round) { model.forgeRound = null } }
+        }
+        AnimatedVisibility(model.examPaper != null, enter = slideInVertically(tween(300)) { it / 6 } + fadeIn(tween(250)), exit = fadeOut(tween(200))) {
+            model.examPaper?.let { paper -> ExamSession(model, paper) { model.examPaper = null } }
         }
         AnimatedVisibility(model.speedRoundOpen, enter = slideInVertically(tween(300)) { it / 6 } + fadeIn(tween(250)), exit = fadeOut(tween(200))) {
             SpeedRoundScreen(model) { model.speedRoundOpen = false }

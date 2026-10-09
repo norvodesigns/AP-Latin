@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Lectio</string>
+    <string name="channel_exam">Practice exam timer</string>
+    <string name="channel_exam_description">The countdown for a timed practice-exam section, while it runs.</string>
+    <string name="channel_reminders">Daily reminder</string>
+    <string name="channel_reminders_description">A line of Latin each day, at the time you choose.</string>
 </resources>
