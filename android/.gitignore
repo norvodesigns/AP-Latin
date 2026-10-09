@@ -1,0 +1,15 @@
+# Gradle / Android Studio
+.gradle/
+build/
+local.properties
+.idea/
+*.iml
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Signing material never goes in the repo
+*.jks
+*.keystore
+keystore.properties
+play-service-account*.json

@@ -2,8 +2,8 @@
 # Vercel's "Ignored Build Step" (vercel.json › ignoreCommand).
 # Exit 0 skips the deploy, exit 1 builds it.
 #
-# Commits that only touch the iOS app don't redeploy the website, except
-# changes to ios/Content, which the website serves at /content/v1. Anything
+# Commits that only touch the iOS or Android app don't redeploy the website,
+# except changes to ios/Content, which the website serves at /content/v1. Anything
 # this script can't decide (say, the last deployed commit isn't in Vercel's
 # shallow clone) builds, because building is always safe.
 
@@ -14,9 +14,9 @@ if ! git cat-file -e "$base^{commit}" 2>/dev/null; then
   exit 1
 fi
 
-if git diff --quiet "$base" HEAD -- . ':(exclude)ios' ':(exclude).github/workflows/ios.yml' ':(exclude).github/workflows/testflight.yml' &&
+if git diff --quiet "$base" HEAD -- . ':(exclude)ios' ':(exclude)android' ':(exclude).github/workflows/ios.yml' ':(exclude).github/workflows/testflight.yml' ':(exclude).github/workflows/android.yml' &&
   git diff --quiet "$base" HEAD -- ios/Content; then
-  echo "Only the iOS app changed since $base; skipping the website build."
+  echo "Only a native app changed since $base; skipping the website build."
   exit 0
 fi
 
