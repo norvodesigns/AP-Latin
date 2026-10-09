@@ -37,6 +37,7 @@ import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.CloudDone
 import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Dns
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.EditNote
@@ -175,6 +176,9 @@ object Symbols {
         "arrow.left" -> Icons.AutoMirrored.Outlined.ArrowBack
         "textformat" -> Icons.Outlined.TextFields
         "refresh" -> Icons.Outlined.Refresh
+        "paperplane" -> Icons.AutoMirrored.Outlined.Send
+        "server.rack" -> Icons.Outlined.Dns
+        "flag.slash" -> Icons.Outlined.Flag
         else -> Icons.Outlined.Book
     }
 }

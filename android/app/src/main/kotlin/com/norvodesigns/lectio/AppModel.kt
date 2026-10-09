@@ -113,6 +113,12 @@ class AppModel(val app: Application) {
     /** The passage open in the Reading Room, so a link can open one. */
     var readPassageId: String? by mutableStateOf(null)
 
+    /** A quiz session shown over the app (from the reader's practice menu, or a review of missed questions). */
+    var quizSession: com.norvodesigns.lectio.features.quiz.QuizSessionRequest? by mutableStateOf(null)
+
+    /** The passage the Scansion Lab should start on, set by the reader's "Scan this passage". */
+    var scansionStartPassageId: String? by mutableStateOf(null)
+
     /** The course lesson open over everything else, if any. */
     private var activeLessonState: LessonPlace? by mutableStateOf(null)
     var activeLesson: LessonPlace?

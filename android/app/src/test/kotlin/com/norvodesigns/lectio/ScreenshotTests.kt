@@ -12,6 +12,8 @@ import com.norvodesigns.lectio.features.laurels.LaurelsScreen
 import com.norvodesigns.lectio.features.learn.CourseScreen
 import com.norvodesigns.lectio.features.learn.LessonScreen
 import com.norvodesigns.lectio.features.learn.LevelCheckScreen
+import com.norvodesigns.lectio.features.read.PassageReader
+import com.norvodesigns.lectio.features.read.ReadScreen
 import com.norvodesigns.lectio.features.search.SearchScreen
 import com.norvodesigns.lectio.features.today.TodayScreen
 import com.norvodesigns.lectio.ui.theme.Appearance
@@ -61,4 +63,7 @@ class ScreenshotTests {
     @Test fun levelCheck() = shoot("level-check") { LevelCheckScreen(it) {} }
     @Test fun lessonIntro() = shoot("lesson-intro") { m -> LessonScreen(m, m.content!!.course.place("prima-1-1")!!) }
     @Test fun sententiaIntro() = shoot("sententia") { m -> LessonScreen(m, Daily.lesson(m.todaysSententia!!, m.dailyDay)) }
+    @Test fun readIndex() = shoot("read-index") { ReadScreen(it) }
+    @Test fun reader() = shoot("reader") { m -> PassageReader(m, m.content!!.passages.first { it.isPoetry }) }
+    @Test fun readerDark() = shoot("reader-dark", dark = true) { m -> PassageReader(m, m.content!!.passages.first { !it.isPoetry }) }
 }

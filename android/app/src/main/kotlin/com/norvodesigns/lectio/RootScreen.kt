@@ -60,7 +60,7 @@ import com.norvodesigns.lectio.features.GrammarScreen
 import com.norvodesigns.lectio.features.OnboardingScreen
 import com.norvodesigns.lectio.features.PlanScreen
 import com.norvodesigns.lectio.features.QuizScreen
-import com.norvodesigns.lectio.features.ReadScreen
+import com.norvodesigns.lectio.features.read.ReadScreen
 import com.norvodesigns.lectio.features.ScansionScreen
 import com.norvodesigns.lectio.features.SettingsScreen
 import com.norvodesigns.lectio.features.SightScreen
