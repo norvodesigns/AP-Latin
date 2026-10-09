@@ -109,11 +109,13 @@ fun FlashcardSession(model: AppModel, session: VocabSession, onClose: () -> Unit
                                 (slideInHorizontally { it / 2 } + fadeIn()) togetherWith (slideOutHorizontally { -it / 2 } + fadeOut())
                             },
                             label = "card",
-                        ) { _ ->
-                            CardFace(
-                                entry, session.direction, contextLine(model, session, entry), library?.derivatives?.get(entry.id) ?: emptyList(), flipped,
-                                onFlip = { flipped = !flipped },
-                            )
+                        ) { target ->
+                            androidx.compose.runtime.key(target) {
+                                CardFace(
+                                    entry, session.direction, contextLine(model, session, entry), library?.derivatives?.get(entry.id) ?: emptyList(), flipped,
+                                    onFlip = { flipped = !flipped },
+                                )
+                            }
                         }
                     }
                     Controls(flipped, { flipped = true }, { grade(id, 0) }, { grade(id, 4) })

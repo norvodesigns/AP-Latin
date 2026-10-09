@@ -284,7 +284,7 @@ private fun ReadingPreview() {
             }
         }
         Column(
-            Modifier.padding(top = 14.dp).alpha(reveal).offset(y = (10 * (1 - reveal)).dp).fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(c.parchment).padding(14.dp),
+            Modifier.padding(top = 14.dp).alpha(reveal).offset { androidx.compose.ui.unit.IntOffset(0, (10 * (1 - reveal) * density).toInt()) }.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(c.parchment).padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Text(

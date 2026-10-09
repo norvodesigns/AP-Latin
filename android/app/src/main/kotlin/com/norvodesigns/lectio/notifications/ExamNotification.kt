@@ -31,7 +31,6 @@ object ExamNotification {
     private var total = 0
 
     fun ensureChannel(context: Context) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val manager = context.getSystemService(NotificationManager::class.java)
         if (manager.getNotificationChannel(CHANNEL) != null) return
         manager.createNotificationChannel(

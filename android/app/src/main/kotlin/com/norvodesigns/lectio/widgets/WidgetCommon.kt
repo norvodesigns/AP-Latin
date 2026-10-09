@@ -2,7 +2,7 @@ package com.norvodesigns.lectio.widgets
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
+import androidx.core.net.toUri
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -43,7 +43,7 @@ internal fun label(color: ColorProvider = WidgetPalette.rubric) = TextStyle(colo
 
 /** Opens the app on a lectio:// link: the same ones the iOS widgets use. */
 internal fun open(context: Context, link: String): Action =
-    actionStartActivity(Intent(Intent.ACTION_VIEW, Uri.parse(link), context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP))
+    actionStartActivity(Intent(Intent.ACTION_VIEW, link.toUri(), context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP))
 
 internal fun GlanceModifier.card(): GlanceModifier = this.fillMaxSize().background(WidgetPalette.parchment).padding(14.dp)
 

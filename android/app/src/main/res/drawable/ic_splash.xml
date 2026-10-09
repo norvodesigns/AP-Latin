@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The L in rubric on parchment, for the system splash (drawn inside its circular mask, so it is kept small). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="VectorRaster"
     android:width="288dp"
     android:height="288dp"
     android:viewportWidth="1024"

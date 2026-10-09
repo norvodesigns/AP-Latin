@@ -83,8 +83,8 @@ fun <T> StudyDeck(
             AnimatedContent(
                 queue[cursor] + cursor,
                 transitionSpec = { (slideInHorizontally { it / 2 } + fadeIn()) togetherWith fadeOut() }, label = "deck",
-            ) { _ ->
-                Surface(
+            ) { target ->
+                androidx.compose.runtime.key(target) { Surface(
                     Modifier.fillMaxWidth().heightIn(min = 260.dp).clickable(role = Role.Button, onClickLabel = if (shown) null else "Turn the card over") { shown = !shown },
                     shape = RoundedCornerShape(22.dp), color = c.slip, border = BorderStroke(0.5.dp, c.rule), shadowElevation = 4.dp,
                 ) {
@@ -92,6 +92,7 @@ fun <T> StudyDeck(
                         if (shown) back(item) else Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { front(item) }
                     }
                 }
+            }
             }
             if (shown) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp)) {

@@ -351,7 +351,7 @@ private fun ForecastBars(week: List<Int>) {
             ) {
                 Text("$n", style = LectioText.caption2.copy(fontFeatureSettings = "tnum"), color = c.inkMuted)
                 Box(Modifier.fillMaxWidth().height(maxOf(3f, 52f * n / peak).dp).clip(RoundedCornerShape(3.dp)).background(if (i == 0) c.rubric else c.ruleStrong))
-                val label = if (i == 0) "Today" else DayOfWeek.of(((today.value - 1 + i) % 7) + 1).getDisplayName(TextStyle.SHORT, Locale.getDefault())
+                val label = if (i == 0) "Today" else DayOfWeek.of(((today.value - 1 + i) % 7) + 1).getDisplayName(TextStyle.SHORT, androidx.compose.ui.platform.LocalConfiguration.current.locales[0])
                 Text(label, style = LectioText.caption2, color = c.inkFaint, maxLines = 1)
             }
         }

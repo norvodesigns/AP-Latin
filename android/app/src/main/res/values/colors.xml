@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="parchment">#F6F1E6</color>
-    <color name="rubric">#9D2F24</color>
+    <!-- The launcher icon keeps the same parchment in both modes: the L is rubric red on it. -->
+    <color name="ic_launcher_background">#F6F1E6</color>
 </resources>

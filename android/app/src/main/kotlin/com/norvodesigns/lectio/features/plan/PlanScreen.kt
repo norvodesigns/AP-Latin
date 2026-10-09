@@ -93,6 +93,7 @@ private fun phases(days: Int): List<Phase> {
 fun PlanScreen(model: AppModel) {
     val library = model.content ?: return
     val c = Lectio.colors
+    val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]
     val days = Streaks.daysUntilExam(library.meta.examDate)
     val phases = phases(days)
     val current = phases.firstOrNull { days <= it.from && days > it.to } ?: phases.last()
@@ -173,8 +174,8 @@ fun PlanScreen(model: AppModel) {
                             // Sunday is day 0; java.time counts Monday as 1.
                             val dow = java.time.DayOfWeek.of(if (d == 0) 7 else d)
                             Chip(
-                                dow.getDisplayName(TextStyle.NARROW, Locale.getDefault()), on,
-                                Modifier.semantics { contentDescription = dow.getDisplayName(TextStyle.FULL, Locale.getDefault()) + if (on) ", on" else ", off" },
+                                dow.getDisplayName(TextStyle.NARROW, locale), on,
+                                Modifier.semantics { contentDescription = dow.getDisplayName(TextStyle.FULL, locale) + if (on) ", on" else ", off" },
                             ) {
                                 val next = if (on) plan.activeDays - d else plan.activeDays + d
                                 model.update { it.setStudyPlan(activeDays = next.sorted()) }

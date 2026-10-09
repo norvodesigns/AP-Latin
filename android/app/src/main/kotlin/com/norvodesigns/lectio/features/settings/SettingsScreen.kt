@@ -37,7 +37,8 @@ import com.norvodesigns.lectio.ui.components.Hairline
 import com.norvodesigns.lectio.ui.components.MenuPicker
 import com.norvodesigns.lectio.ui.components.PageScaffold
 import com.norvodesigns.lectio.ui.components.Panel
-import com.norvodesigns.lectio.ui.components.R_raw_text
+import com.norvodesigns.lectio.ui.components.rawText
+import com.norvodesigns.lectio.R
 import com.norvodesigns.lectio.ui.components.ScreenColumn
 import com.norvodesigns.lectio.ui.components.Segmented
 import com.norvodesigns.lectio.ui.components.StepperRow
@@ -255,8 +256,8 @@ private fun LicensesScreen(onBack: () -> Unit) {
                 style = LectioText.prose(LectioText.callout), color = c.ink,
             )
             Text(AppConfig.trademarkNotice, style = LectioText.prose(LectioText.footnote), color = c.inkMuted)
-            for ((title, resource) in listOf("EBGaramond" to "ebgaramond_ofl", "Italianno" to "italianno_ofl")) {
-                val text = remember(resource) { R_raw_text(context, resource) }
+            for ((title, resource) in listOf("EBGaramond" to R.raw.ebgaramond_ofl, "Italianno" to R.raw.italianno_ofl)) {
+                val text = remember(resource) { rawText(context, resource) }
                 if (text != null) {
                     com.norvodesigns.lectio.ui.components.RubricLabel(title)
                     Text(text, style = LectioText.caption.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace), color = c.ink2)

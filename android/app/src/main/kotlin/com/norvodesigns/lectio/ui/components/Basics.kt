@@ -42,6 +42,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -63,13 +64,13 @@ fun Hairline(modifier: Modifier = Modifier, color: Color = Lectio.colors.rule) {
 /** Small, uppercase, widely tracked rubric-red label: the web's section headings, which stay quiet so the Latin is always the largest thing. */
 @Composable
 fun RubricLabel(text: String, modifier: Modifier = Modifier, color: Color = Lectio.colors.rubric) {
-    Text(text.uppercase(Locale.getDefault()), modifier, color = color, style = LectioText.rubricLabel)
+    Text(text.uppercase(LocalConfiguration.current.locales[0]), modifier, color = color, style = LectioText.rubricLabel)
 }
 
 /** The same treatment in ink, for secondary labels. */
 @Composable
 fun QuietLabel(text: String, modifier: Modifier = Modifier, color: Color = Lectio.colors.inkMuted) {
-    Text(text.uppercase(Locale.getDefault()), modifier, color = color, style = LectioText.quietLabel)
+    Text(text.uppercase(LocalConfiguration.current.locales[0]), modifier, color = color, style = LectioText.quietLabel)
 }
 
 /** A figure with a quiet caption under it, set in the serif: the dashboard's countdown and streak numbers. */

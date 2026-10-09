@@ -1,0 +1,197 @@
+name: Android
+
+# Builds and tests the Android app (android/), and, when asked, uploads a signed
+# build to Google Play. Like the iOS workflow, this is the proof that the code
+# builds: nothing in android/ is written on a machine with a phone attached.
+#
+# Manual runs (Actions -> Android -> Run workflow) can publish to Google Play.
+# That needs five repository secrets, set up once (see android/PLAY_STORE.md):
+#   ANDROID_KEYSTORE_BASE64    the upload keystore, base64 (scripts/android-keystore.sh makes both)
+#   ANDROID_KEYSTORE_PASSWORD  its store password
+#   ANDROID_KEY_ALIAS          the key's alias
+#   ANDROID_KEY_PASSWORD       the key's password
+#   PLAY_SERVICE_ACCOUNT_JSON  the Play Console API service account's JSON key
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'android/**'
+      - 'ios/Content/**'
+      - 'public/scansion/**'
+      - '.github/workflows/android.yml'
+  pull_request:
+    paths:
+      - 'android/**'
+      - 'ios/Content/**'
+      - 'public/scansion/**'
+      - '.github/workflows/android.yml'
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Build a signed release and upload it to Google Play
+        type: boolean
+        default: false
+      track:
+        description: Play track to upload to
+        type: choice
+        options: [internal, alpha, beta, production]
+        default: internal
+      status:
+        description: Release status (a new app can only take drafts until its first review)
+        type: choice
+        options: [draft, completed, inProgress, halted]
+        default: draft
+
+env:
+  GRADLE_OPTS: -Dorg.gradle.daemon=false
+
+jobs:
+  core:
+    name: Core tests (the Kotlin port of LectioCore)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Test
+        run: ./gradlew :core:test --no-daemon
+
+  app:
+    name: App (unit tests, screens, lint, release bundle)
+    runs-on: ubuntu-latest
+    concurrency:
+      group: android-app-${{ github.ref }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Android SDK
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37.0" "platforms;android-36" > /dev/null
+      - name: Unit tests, screen walk-throughs and screenshots
+        run: ./gradlew :app:testDebugUnitTest --no-daemon
+      - name: Lint
+        run: ./gradlew :app:lintDebug --no-daemon
+      - name: Build the debug APK and the release bundle (unsigned)
+        run: ./gradlew :app:assembleDebug :app:bundleRelease --no-daemon
+      - name: Check what the bundle contains
+        run: |
+          AAB=app/build/outputs/bundle/release/app-release.aab
+          test -f "$AAB" || { echo "::error::no release bundle"; exit 1; }
+          unzip -l "$AAB" | grep -q 'base/assets/content/manifest.json' || { echo "::error::course content missing from the bundle"; exit 1; }
+          unzip -l "$AAB" | grep -q 'base/assets/scansion/index.json' || { echo "::error::scansion corpus missing from the bundle"; exit 1; }
+          ls -lh "$AAB"
+      - name: Upload reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-reports
+          path: |
+            android/app/build/reports
+            android/core/build/reports
+
+  screenshots:
+    name: Screenshots (the real screens, light and dark)
+    if: github.event_name != 'pull_request'
+    needs: [app]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Android SDK
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37.0" "platforms;android-36" > /dev/null
+      - name: Render
+        run: ./gradlew :app:recordRoborazziDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-screenshots
+          path: android/app/build/outputs/roborazzi/*.png
+
+  release:
+    name: Sign and upload to Google Play
+    if: github.event_name == 'workflow_dispatch' && inputs.publish
+    needs: [core, app]
+    runs-on: ubuntu-latest
+    concurrency:
+      group: android-release
+      cancel-in-progress: false
+    env:
+      LECTIO_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      LECTIO_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      LECTIO_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+    steps:
+      - name: Require the signing and publishing secrets
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          missing=0
+          for name in KEYSTORE SERVICE_ACCOUNT LECTIO_KEYSTORE_PASSWORD LECTIO_KEY_ALIAS LECTIO_KEY_PASSWORD; do
+            if [ -z "${!name}" ]; then echo "::error::the secret for $name is not set. See android/PLAY_STORE.md"; missing=1; fi
+          done
+          exit $missing
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Android SDK
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37.0" "platforms;android-36" > /dev/null
+      - name: Upload keystore
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          echo "$KEYSTORE" | base64 --decode > "$RUNNER_TEMP/upload.jks"
+          echo "LECTIO_KEYSTORE=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
+      - name: Build the signed bundle
+        working-directory: android
+        # Play wants a versionCode that only goes up: the run number, offset past anything uploaded by hand.
+        run: ./gradlew :app:bundleRelease --no-daemon -Plectio.versionCode=$((1000 + GITHUB_RUN_NUMBER))
+      - name: Check the signature
+        run: |
+          AAB=android/app/build/outputs/bundle/release/app-release.aab
+          jarsigner -verify "$AAB" | head -3
+          keytool -printcert -jarfile "$AAB" | grep -E 'SHA-256|Owner'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lectio-release-bundle
+          path: |
+            android/app/build/outputs/bundle/release/app-release.aab
+            android/app/build/outputs/mapping/release/mapping.txt
+      - name: Upload to Google Play
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.norvodesigns.lectio
+          releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
+          mappingFile: android/app/build/outputs/mapping/release/mapping.txt
+          whatsNewDirectory: android/play/whatsnew
+          track: ${{ inputs.track }}
+          status: ${{ inputs.status }}
