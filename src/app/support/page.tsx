@@ -10,22 +10,28 @@ type Search = Record<string, string | string[] | undefined>;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? '';
 
 /**
- * The support page the App Store listing links to. The app opens it filled
- * in: `?report=<name>&classroom=<id>&from=ios` for a name reported from a
- * classroom leaderboard, `?topic=…&from=ios` otherwise.
+ * The support page the App Store and Google Play listings link to. The apps
+ * open it filled in: `?report=<name>&classroom=<id>&from=ios` (or `android`)
+ * for a name reported from a classroom leaderboard, `?topic=…&from=ios`
+ * otherwise.
  */
 export default async function SupportPage({ searchParams }: { searchParams: Promise<Search> }) {
   const params = await searchParams;
   const reported = one(params.report).slice(0, 80);
   const classroom = one(params.classroom).slice(0, 80);
   const topic = reported ? 'report' : one(params.topic);
-  const platform = one(params.from) === 'ios' ? 'ios' : 'web';
+  const from = one(params.from);
+  const platform = from === 'ios' ? 'ios' : 'web';
+  // The messages table only tells web from iOS; the Android app says so in the message's context.
+  const context = [reported ? `reported name: ${reported}; classroom: ${classroom}` : '', from === 'android' ? 'sent from the Android app' : '']
+    .filter(Boolean)
+    .join('; ');
   return (
     <Page>
       <PageHeader
         eyebrow="Lectio · website and app"
         title="Support"
-        lede="Help with Lectio on the web, iPhone and iPad."
+        lede="Help with Lectio on the web, iPhone, iPad and Android."
       />
 
       <div
@@ -41,7 +47,7 @@ export default async function SupportPage({ searchParams }: { searchParams: Prom
           <SupportForm
             topic={topic}
             message={reported ? `Reporting the name “${reported}” on a classroom leaderboard. ` : ''}
-            context={reported ? `reported name: ${reported}; classroom: ${classroom}` : ''}
+            context={context}
             platform={platform}
           />
           <p className="mt-6">
@@ -74,8 +80,8 @@ export default async function SupportPage({ searchParams }: { searchParams: Prom
             the app. See the <Link href="/privacy">privacy page</Link> for exactly what that removes.
           </p>
           <p>
-            <strong>Someone on my classroom leaderboard has an offensive name.</strong> In the app, swipe
-            the name (or touch and hold it) and choose Report; on the website, use the form above. Teachers
+            <strong>Someone on my classroom leaderboard has an offensive name.</strong> In the app, open the
+            name&rsquo;s actions (swipe it on iPhone, or touch &ldquo;⋯&rdquo; on Android) and choose Report; on the website, use the form above. Teachers
             can remove a student from the roster on the classroom&rsquo;s Teach page or in the app, and
             students can leave a classroom at any time.
           </p>

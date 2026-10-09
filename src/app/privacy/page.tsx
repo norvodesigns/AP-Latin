@@ -5,10 +5,11 @@ import { Page, PageHeader, Section, TRADEMARK_NOTICE } from '@/components/ui';
 export const metadata: Metadata = { title: 'Privacy' };
 
 /**
- * The privacy policy for the website and the iPhone/iPad app — one page for
- * both, because they share an account system and the same study data. The
- * App Store requires a public URL for this; every statement here describes
- * what the code actually does (see README.md › Data and privacy).
+ * The privacy policy for the website and the iPhone, iPad and Android apps —
+ * one page for all of them, because they share an account system and the same
+ * study data. The App Store and Google Play require a public URL for this;
+ * every statement here describes what the code actually does (see README.md ›
+ * Data and privacy).
  */
 export default function PrivacyPage() {
   return (
@@ -25,7 +26,7 @@ export default function PrivacyPage() {
             Lectio works fully without signing in. Your progress — reading notes and highlights, your
             vocabulary deck, quiz, translation, scansion and exam history, your study plan and streak —
             is stored on your own device: in your browser&rsquo;s local storage on the website, and in
-            the app&rsquo;s own storage on iPhone and iPad. None of it is sent to us.
+            the app&rsquo;s own storage on iPhone, iPad and Android. None of it is sent to us.
           </p>
         </Section>
 
@@ -70,8 +71,8 @@ export default function PrivacyPage() {
         <Section title="Analytics and tracking" className="mb-10">
           <p>
             The website uses Vercel Web Analytics to count page views. It uses no cookies and does not
-            identify you. The iPhone and iPad app includes no analytics, advertising or tracking of any
-            kind, and does not track you across other apps or websites.
+            identify you. The iPhone, iPad and Android apps include no analytics, advertising or tracking of any
+            kind, and do not track you across other apps or websites.
           </p>
         </Section>
 
@@ -126,7 +127,7 @@ export default function PrivacyPage() {
             Write to us through the <Link href="/support">support page</Link>. If this policy changes,
             the new version is posted here with a new date.
           </p>
-          <p>Last updated 4 October 2026.</p>
+          <p>Last updated 9 October 2026.</p>
           <p style={{ fontSize: '0.9375rem', color: 'var(--fg-muted)' }}>{TRADEMARK_NOTICE}</p>
         </Section>
       </Prose>
