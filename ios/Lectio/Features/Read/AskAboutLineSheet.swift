@@ -37,13 +37,14 @@ struct AskAboutLineSheet: View {
                     if model.aiAvailable == false {
                         notice("No AI provider is configured on the server, so the tutor is off. The dictionary entries below come from the offline vocabulary list.")
                     }
-                    if let error { notice(error) }
+                    if let error { notice(error).accessibilityIdentifier("tutor-error") }
 
                     if !answer.isEmpty || streaming {
                         Text(answer + (streaming ? " ▍" : ""))
                             .font(.prose())
                             .foregroundStyle(Palette.ink)
                             .textSelection(.enabled)
+                            .accessibilityIdentifier(streaming ? "tutor-streaming" : "tutor-answer")
                             .animation(.default, value: answer)
                     } else if model.aiAvailable != false {
                         FlowLayout(lineSpacing: 8) {
@@ -149,6 +150,10 @@ struct AskAboutLineSheet: View {
                         first = false
                     }
                     answer += chunk
+                }
+                if answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    answer = ""
+                    error = "The tutor didn't send an answer. Try again in a moment."
                 }
             } catch let failure as AIClient.Failure {
                 error = failure.message

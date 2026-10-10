@@ -1,0 +1,39 @@
+# The app's project plus its UI tests, for CI only:
+#
+#     xcodegen generate --spec project-uitests.yml
+#
+# project.yml (what EAS builds for TestFlight and the App Store) stays as it
+# is: every target in it must be one EAS signs, and a test bundle isn't.
+include:
+  - project.yml
+
+targets:
+  LectioUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: LectioUITests
+    dependencies:
+      - target: Lectio
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.norvodesigns.lectio.uitests
+        TEST_TARGET_NAME: Lectio
+        GENERATE_INFOPLIST_FILE: "YES"
+        CODE_SIGN_STYLE: Automatic
+        # XCTest's own classes aren't main-actor isolated; the tests mark
+        # themselves @MainActor instead.
+        SWIFT_VERSION: "5.0"
+        SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
+
+schemes:
+  LectioUITests:
+    build:
+      targets:
+        Lectio: all
+        LectioUITests: [test]
+    test:
+      config: Debug
+      targets:
+        - LectioUITests

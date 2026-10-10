@@ -147,10 +147,13 @@ final class AppModel {
     /* Content                                                          */
     /* -------------------------------------------------------------- */
 
-    /// Asks the server once whether AI is configured.
+    /// Asks the server whether AI is configured. A yes is kept for the
+    /// session; a no, or no answer at all (offline, a slow network), is asked
+    /// again the next time a screen needs it, so one failed check can't
+    /// switch AI off until the app is restarted.
     func checkAI() async {
-        guard aiAvailable == nil else { return }
-        aiAvailable = await ai.isConfigured()
+        guard aiAvailable != true else { return }
+        if let configured = await ai.isConfigured() { aiAvailable = configured }
     }
 
     func loadContent() async {

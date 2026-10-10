@@ -18,14 +18,18 @@ nonisolated struct AIClient: Sendable {
         let retryAfterSeconds: Int?
     }
 
-    /// Whether any AI provider is configured on the server. Every AI surface
-    /// checks this first so it can show its self-graded path immediately
-    /// instead of a button that fails.
-    func isConfigured() async -> Bool {
-        guard let (data, _) = try? await URLSession.shared.data(from: route("status")),
-              let json = try? JSONValue.parse(data)
-        else { return false }
-        return json["configured"]?.boolValue ?? false
+    /// Whether any AI provider is configured on the server, or nil when the
+    /// server couldn't be asked. Every AI surface checks this first so it can
+    /// show its self-graded path immediately instead of a button that fails.
+    func isConfigured() async -> Bool? {
+        var request = URLRequest(url: route("status"))
+        request.timeoutInterval = 15
+        guard let (data, response) = try? await URLSession.shared.data(for: request),
+              (response as? HTTPURLResponse)?.statusCode == 200,
+              let json = try? JSONValue.parse(data),
+              let configured = json["configured"]?.boolValue
+        else { return nil }
+        return configured
     }
 
     /// POSTs to a JSON route (grading, sight generation) and returns its JSON.

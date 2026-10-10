@@ -51,6 +51,8 @@ struct PassageReaderView: View {
     @State private var quiz: QuizSession?
     /// Pushes the Scansion Lab, set to this passage.
     @State private var scanning = false
+    /// Counts highlights started, for the haptic that says one has.
+    @State private var holds = 0
 
     var body: some View {
         let state = model.progress.passage(passage.id)
@@ -109,7 +111,7 @@ struct PassageReaderView: View {
                     current: existingAnnotation(for: span, in: state),
                     onColor: { applyColor($0) },
                     onNote: { openNote(for: span, state: state) },
-                    onAsk: { askLine = passage.lines.first { $0.n == span.lineN } },
+                    onAsk: { ask(lineN: span.lineN, closingSheet: false) },
                     onRemove: removeSpanAnnotation,
                     onDone: { withAnimation(.spring(duration: 0.3)) { self.span = nil } }
                 )
@@ -117,7 +119,10 @@ struct PassageReaderView: View {
             }
         }
         .animation(.spring(duration: 0.35), value: span)
-        .sheet(item: $selection) { GlossarySheet(selection: $0) }
+        .sensoryFeedback(.impact(weight: .medium), trigger: holds)
+        .sheet(item: $selection) { sel in
+            GlossarySheet(selection: sel) { ask(lineN: sel.lineN, closingSheet: true) }
+        }
         .sheet(item: $noteTarget) { NoteEditor(target: $0, passageId: passage.id) }
         .sheet(item: $askLine) { AskAboutLineSheet(passage: passage, line: $0) }
         .sheet(isPresented: $showNotes) {
@@ -261,6 +266,22 @@ struct PassageReaderView: View {
     private func held(line: PassageLine, index: Int) {
         selection = nil
         span = SpanSelection(lineN: line.n, start: index, end: index)
+        holds += 1
+    }
+
+    /// Opens the line tutor. From the glossary sheet, that sheet goes first:
+    /// one sheet can't open while another is still closing.
+    private func ask(lineN: Int, closingSheet: Bool) {
+        let line = passage.lines.first { $0.n == lineN }
+        guard closingSheet else {
+            askLine = line
+            return
+        }
+        selection = nil
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(450))
+            askLine = line
+        }
     }
 
     private func spanText(_ s: SpanSelection) -> String {
@@ -324,18 +345,27 @@ private struct LineRow: View {
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 12) {
-            // Verse is numbered every fifth line, as printed; prose sections always.
-            Button {
-                model.update { $0.toggleFlaggedLine(passage.id, line: line.n) }
+            // Verse is numbered every fifth line, as printed; prose sections
+            // always. Tap the number to flag the line; hold it for the line's
+            // menu. (Not a context menu on the whole row: that would take
+            // over touch-and-hold on a word, which starts a highlight.)
+            Menu {
+                Button("Ask about line \(line.n)", systemImage: "sparkles", action: onAsk)
+                Button(flagged ? "Unflag line \(line.n)" : "Flag line \(line.n) as hard",
+                       systemImage: flagged ? "flag.slash" : "flag", action: toggleFlag)
             } label: {
                 Text(showNumber || flagged ? "\(line.n)" : " ")
                     .font(.caption.monospacedDigit())
                     .foregroundStyle(flagged ? Palette.rubric : Palette.inkFaint)
                     .frame(width: 30, alignment: .trailing)
+                    .contentShape(Rectangle())
+            } primaryAction: {
+                toggleFlag()
             }
-            .buttonStyle(.plain)
+            .menuIndicator(.hidden)
+            .accessibilityIdentifier("line-\(line.n)")
             .accessibilityLabel(flagged ? "Line \(line.n), flagged as hard" : "Line \(line.n)")
-            .accessibilityHint("Double-tap to \(flagged ? "unflag" : "flag") this line")
+            .accessibilityHint("Double-tap to \(flagged ? "unflag" : "flag") this line. Touch and hold to ask about it.")
 
             FlowLayout(lineSpacing: 2) {
                 ForEach(chunks, id: \.lowerBound) { chunk in
@@ -349,13 +379,10 @@ private struct LineRow: View {
             .foregroundStyle(Palette.ink)
         }
         .padding(.vertical, passage.isPoetry ? 3 : 8)
-        .contextMenu {
-            Button("Ask about line \(line.n)", systemImage: "sparkles", action: onAsk)
-            Button(flagged ? "Unflag line \(line.n)" : "Flag line \(line.n) as hard",
-                   systemImage: flagged ? "flag.slash" : "flag") {
-                model.update { $0.toggleFlaggedLine(passage.id, line: line.n) }
-            }
-        }
+    }
+
+    private func toggleFlag() {
+        model.update { $0.toggleFlaggedLine(passage.id, line: line.n) }
     }
 
     @ViewBuilder
@@ -374,8 +401,9 @@ private struct LineRow: View {
                 .foregroundStyle(Palette.ink)
                 .contentShape(Rectangle())
                 .onTapGesture { onTap(i) }
-                .onLongPressGesture(minimumDuration: 0.35) { onHold(i) }
+                .onLongPressGesture(minimumDuration: 0.35, maximumDistance: 14) { onHold(i) }
                 .accessibilityAddTraits(.isButton)
+                .accessibilityIdentifier("word-\(line.n)-\(token.text)")
                 .accessibilityHint(glossaryEnabled ? "Shows the gloss. Touch and hold to highlight." : "Touch and hold to highlight.")
         } else {
             text
@@ -460,11 +488,14 @@ private struct SpanToolbar: View {
 
                 HStack(spacing: 4) {
                     Button("Note", systemImage: "square.and.pencil", action: onNote)
+                        .accessibilityIdentifier("highlight-note")
                     Button("Ask", systemImage: "sparkles", action: onAsk)
+                        .accessibilityIdentifier("highlight-ask")
                     if current != nil {
                         Button("Remove", systemImage: "trash", role: .destructive, action: onRemove)
                     }
                     Button("Done", systemImage: "xmark", action: onDone)
+                        .accessibilityIdentifier("highlight-done")
                 }
                 .labelStyle(.iconOnly)
                 .glassButton()

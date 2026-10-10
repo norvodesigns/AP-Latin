@@ -6,13 +6,28 @@ import SwiftUI
 struct GlossarySheet: View {
     @Environment(\.library) private var library
     let selection: WordSelection
+    /// Opens the line tutor on this word's line.
+    var onAsk: (() -> Void)? = nil
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                Text(selection.token.text)
-                    .font(.latin(34, relativeTo: .largeTitle))
-                    .foregroundStyle(Palette.ink)
+                HStack(alignment: .firstTextBaseline) {
+                    Text(selection.token.text)
+                        .font(.latin(34, relativeTo: .largeTitle))
+                        .foregroundStyle(Palette.ink)
+                    Spacer(minLength: 8)
+                    if let onAsk {
+                        Button(action: onAsk) {
+                            Label("Ask", systemImage: "sparkles")
+                                .font(.subheadline.weight(.semibold))
+                        }
+                        .glassButton()
+                        .tint(Palette.rubric)
+                        .accessibilityLabel("Ask about this line")
+                        .accessibilityIdentifier("gloss-ask")
+                    }
+                }
 
                 if entries.isEmpty {
                     Text("Not on the vocabulary lists. The exam would gloss a word like this in the margin.")
@@ -24,6 +39,10 @@ struct GlossarySheet: View {
                         EntryView(entry: item.entry, exact: item.gloss.isExact)
                     }
                 }
+
+                Text("Touch and hold a word to highlight it or add a note. Ask brings in the tutor on this line.")
+                    .font(.footnote)
+                    .foregroundStyle(Palette.inkFaint)
             }
             .padding(.horizontal, 24)
             .padding(.top, 28)
