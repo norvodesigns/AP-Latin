@@ -31,7 +31,10 @@ Do these in order. Each one heads off a specific, common rejection.
    back to the app with **Open Lectio**. Try it once. Supabase's built-in sender allows only a few emails
    an hour for the whole project, so if many students will sign up at once, add your own SMTP
    (Authentication › Emails › SMTP Settings).
-5. **Make demo accounts for the reviewer** (Guideline 2.1: reviewers must be able to reach every
+5. **Demo accounts for the reviewer: done.** A teacher and a student account exist on the live
+   project, with "Review Class" (two assignments) and the student in it. Their logins went to the
+   owner directly and are deliberately not in this public repo; they go in App Review Information.
+   To make them again: **make demo accounts for the reviewer** (Guideline 2.1: reviewers must be able to reach every
    feature). On the website:
    - create a **teacher** account, e.g. `lectio.review.teacher@<a domain you control>`, and a classroom
      called "Review Class";
@@ -147,7 +150,8 @@ classrooms.
 > Teacher: <email> / <password>; it teaches that classroom. Sign in at Settings › Account.
 >
 > Account deletion: Settings › Account › Delete account. It deletes the account and its data on the
-> server immediately.
+> server immediately. To try it, please create a new account (Settings › Account › Create account;
+> no email confirmation is needed), so the demo accounts above stay in place for the next review.
 >
 > AI features: Translate ("Grade with AI"), the FRQ Workshop ("Grade … with AI"), Sight Reading
 > ("Generate"), and the Reading Room's line tutor (touch and hold a line › Ask about line). The first
