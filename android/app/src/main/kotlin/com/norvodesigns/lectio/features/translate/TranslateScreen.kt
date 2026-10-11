@@ -50,7 +50,8 @@ import com.norvodesigns.lectio.core.TranslationDrill
 import com.norvodesigns.lectio.core.TranslationSegment
 import com.norvodesigns.lectio.core.jobj
 import com.norvodesigns.lectio.data.AIClient
-import com.norvodesigns.lectio.features.read.ReaderPage
+import com.norvodesigns.lectio.features.read.PassageStackReader
+import com.norvodesigns.lectio.features.read.rememberPassageStack
 import com.norvodesigns.lectio.recordTranslation
 import com.norvodesigns.lectio.ui.components.AIConsentHost
 import com.norvodesigns.lectio.ui.components.ButtonLabel
@@ -66,6 +67,8 @@ import com.norvodesigns.lectio.ui.components.RuledBlock
 import com.norvodesigns.lectio.ui.components.ScreenColumn
 import com.norvodesigns.lectio.ui.components.TextAction
 import com.norvodesigns.lectio.ui.components.rememberAIGate
+import com.norvodesigns.lectio.ui.components.discardDraft
+import com.norvodesigns.lectio.ui.components.rememberDraft
 import com.norvodesigns.lectio.ui.theme.Lectio
 import com.norvodesigns.lectio.ui.theme.LectioText
 import com.norvodesigns.lectio.util.clean
@@ -86,8 +89,12 @@ fun TranslateScreen(model: AppModel) {
     var selected by rememberSaveable { mutableStateOf<String?>(null) }
     val drill = selected?.let { id -> library.translationDrills.firstOrNull { it.id == id } }
     if (drill != null) {
-        androidx.activity.compose.BackHandler { selected = null }
-        TranslationDrillScreen(model, drill) { selected = null }
+        val close = {
+            model.discardDraft(TranslateDraft.key(drill.id))
+            selected = null
+        }
+        androidx.activity.compose.BackHandler(onBack = close)
+        TranslationDrillScreen(model, drill, close)
         return
     }
     PageScaffold("Translate") { padding ->
@@ -127,22 +134,39 @@ enum class Verdict(val wire: String, val label: String, val points: Double) {
 /** The AI grader's reading of one segment (translationGradeSchema). */
 private data class AISegment(val verdict: Verdict, val studentRendering: String, val reason: String, val correctedLiteral: String)
 
+/** One drill as the student is working it: kept on the model, so a visit to another tab finds it graded as it was left. */
+private class TranslateDraft {
+    var text by mutableStateOf("")
+    var revealed by mutableStateOf(false)
+    val scores = mutableStateMapOf<String, Verdict>()
+    val aiSegments = mutableStateMapOf<String, AISegment>()
+    var aiCorrected by mutableStateOf<String?>(null)
+    var aiAdvice by mutableStateOf<String?>(null)
+    var grading by mutableStateOf(false)
+    var gradeError by mutableStateOf<String?>(null)
+    var saved by mutableStateOf(false)
+
+    companion object {
+        fun key(drillId: String) = "translate:$drillId"
+    }
+}
+
 @Composable
 private fun TranslationDrillScreen(model: AppModel, drill: TranslationDrill, onBack: () -> Unit) {
     val c = Lectio.colors
     val library = model.content
-    val scope = rememberCoroutineScope()
     val gate = rememberAIGate(model)
-    var text by rememberSaveable(drill.id) { mutableStateOf("") }
-    var revealed by rememberSaveable(drill.id) { mutableStateOf(false) }
-    val scores = remember(drill.id) { mutableStateMapOf<String, Verdict>() }
-    val aiSegments = remember(drill.id) { mutableStateMapOf<String, AISegment>() }
-    var aiCorrected by remember(drill.id) { mutableStateOf<String?>(null) }
-    var aiAdvice by remember(drill.id) { mutableStateOf<String?>(null) }
-    var grading by remember { mutableStateOf(false) }
-    var gradeError by remember { mutableStateOf<String?>(null) }
-    var saved by remember(drill.id) { mutableStateOf(false) }
-    var reading by remember { mutableStateOf<String?>(null) }
+    val draft = rememberDraft(model, TranslateDraft.key(drill.id)) { TranslateDraft() }
+    var text by draft::text
+    var revealed by draft::revealed
+    val scores = draft.scores
+    val aiSegments = draft.aiSegments
+    var aiCorrected by draft::aiCorrected
+    var aiAdvice by draft::aiAdvice
+    var grading by draft::grading
+    var gradeError by draft::gradeError
+    var saved by draft::saved
+    val reading = rememberPassageStack()
     val haptics = LocalHapticFeedback.current
     val score = drill.segments.sumOf { scores[it.id]?.points ?: 0.0 }
 
@@ -151,9 +175,8 @@ private fun TranslationDrillScreen(model: AppModel, drill: TranslationDrill, onB
         model.update { it.markStudied() }
     }
 
-    val passage = reading?.let { library?.passage(it) }
-    if (passage != null) {
-        ReaderPage(model, passage) { reading = null }
+    if (reading.top != null) {
+        PassageStackReader(model, reading)
         return
     }
 
@@ -163,7 +186,7 @@ private fun TranslationDrillScreen(model: AppModel, drill: TranslationDrill, onB
         if (model.aiAvailable != true) return reveal()
         grading = true
         gradeError = null
-        scope.launch {
+        model.scope.launch {
             try {
                 val result = model.ai.post("grade-translation", jobj("drillId" to drill.id, "translation" to text))
                 model.update { it.recordAiCall("grade-translation") }
@@ -204,7 +227,7 @@ private fun TranslationDrillScreen(model: AppModel, drill: TranslationDrill, onB
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 RubricLabel("FRQ 2 · ${drill.segments.size} segments · 15 minutes on the exam")
                 library?.passage(drill.passageId)?.let { p ->
-                    TextAction("${p.title} — read in context →", Modifier.padding(start = 0.dp)) { reading = p.id }
+                    TextAction("${p.title} — read in context →", Modifier.padding(start = 0.dp)) { reading.push(p.id) }
                 }
             }
             RuledBlock {
@@ -214,7 +237,7 @@ private fun TranslationDrillScreen(model: AppModel, drill: TranslationDrill, onB
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 RubricLabel("Your translation")
                 LectioTextField(
-                    text, { if (it.length <= 4000) text = it }, placeholder = "", minLines = 7, maxLines = 14, enabled = !revealed,
+                    text, { text = it.take(4000) }, placeholder = "", minLines = 7, maxLines = 14, enabled = !revealed,
                     textStyle = LectioText.prose(LectioText.body),
                 )
                 Text("Account for every Latin word. Keep the tenses, cases and constructions the Latin actually uses.", style = LectioText.footnote, color = c.inkFaint)

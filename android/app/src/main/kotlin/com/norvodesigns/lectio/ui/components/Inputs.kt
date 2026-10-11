@@ -33,6 +33,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.TextStyle
@@ -109,20 +110,38 @@ fun LectioTextField(
     onDone: (() -> Unit)? = null,
     password: Boolean = false,
     keyboardType: androidx.compose.ui.text.input.KeyboardType = androidx.compose.ui.text.input.KeyboardType.Text,
+    /** What a password manager or autofill service should take this field for (the iOS textContentType). */
+    contentType: androidx.compose.ui.autofill.ContentType? = null,
+    /** Drawn at the end of the field, e.g. a clear button. */
+    trailing: (@Composable () -> Unit)? = null,
 ) {
     val c = Lectio.colors
     var focused by remember { mutableStateOf(false) }
     val requester = remember { FocusRequester() }
+    val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
+    val keyboard = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
     androidx.compose.runtime.LaunchedEffect(autoFocus) { if (autoFocus) runCatching { requester.requestFocus() } }
     BasicTextField(
         value, onValueChange,
-        modifier.fillMaxWidth().focusRequester(requester).onFocusChanged { focused = it.isFocused },
+        modifier.fillMaxWidth().focusRequester(requester).onFocusChanged { focused = it.isFocused }
+            .then(if (contentType != null) Modifier.semantics { this.contentType = contentType } else Modifier),
         enabled = enabled, singleLine = singleLine, minLines = minLines, maxLines = maxLines,
         textStyle = textStyle.copy(color = c.ink),
         cursorBrush = SolidColor(c.rubric),
         visualTransformation = if (password) androidx.compose.ui.text.input.PasswordVisualTransformation() else androidx.compose.ui.text.input.VisualTransformation.None,
         keyboardOptions = KeyboardOptions(capitalization = capitalization, autoCorrectEnabled = autoCorrect, imeAction = imeAction, keyboardType = if (password) androidx.compose.ui.text.input.KeyboardType.Password else keyboardType),
-        keyboardActions = KeyboardActions(onDone = { onDone?.invoke() }, onGo = { onDone?.invoke() }, onSend = { onDone?.invoke() }),
+        // With no handler the key does what it does by default (Done puts the keyboard away). Search runs the handler, if any,
+        // and puts the keyboard away so the results can be seen, as the iOS search field does.
+        keyboardActions = KeyboardActions(
+            onDone = { if (onDone != null) onDone() else defaultKeyboardAction(ImeAction.Done) },
+            onGo = { if (onDone != null) onDone() else defaultKeyboardAction(ImeAction.Go) },
+            onSend = { if (onDone != null) onDone() else defaultKeyboardAction(ImeAction.Send) },
+            onSearch = {
+                onDone?.invoke()
+                focusManager.clearFocus()
+                keyboard?.hide()
+            },
+        ),
         decorationBox = { inner ->
             Box(
                 Modifier.fillMaxWidth().heightIn(min = 48.dp)
@@ -130,8 +149,18 @@ fun LectioTextField(
                     .padding(horizontal = 14.dp, vertical = 10.dp),
                 contentAlignment = Alignment.CenterStart,
             ) {
-                if (value.isEmpty() && placeholder.isNotEmpty()) Text(placeholder, style = textStyle, color = c.inkFaint)
-                inner()
+                if (trailing == null) {
+                    if (value.isEmpty() && placeholder.isNotEmpty()) Text(placeholder, style = textStyle, color = c.inkFaint)
+                    inner()
+                } else {
+                    androidx.compose.foundation.layout.Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                            if (value.isEmpty() && placeholder.isNotEmpty()) Text(placeholder, style = textStyle, color = c.inkFaint)
+                            inner()
+                        }
+                        trailing()
+                    }
+                }
             }
         },
     )

@@ -31,7 +31,8 @@ import androidx.compose.ui.unit.sp
 import com.norvodesigns.lectio.AppModel
 import com.norvodesigns.lectio.core.DeviceCard
 import com.norvodesigns.lectio.core.GrammarExample
-import com.norvodesigns.lectio.features.read.ReaderPage
+import com.norvodesigns.lectio.features.read.PassageStackReader
+import com.norvodesigns.lectio.features.read.rememberPassageStack
 import com.norvodesigns.lectio.ui.components.ButtonLabel
 import com.norvodesigns.lectio.ui.components.Hairline
 import com.norvodesigns.lectio.ui.components.LectioButton
@@ -57,20 +58,19 @@ fun DevicesScreen(model: AppModel) {
     val library = model.content ?: return
     val c = Lectio.colors
     var mode by remember { mutableStateOf(DevicesMode.Reference) }
-    var reading by remember { mutableStateOf<String?>(null) }
-    val passage = reading?.let { library.passage(it) }
-    if (passage != null) {
-        ReaderPage(model, passage) { reading = null }
+    val reading = rememberPassageStack()
+    if (reading.top != null) {
+        PassageStackReader(model, reading)
         return
     }
     PageScaffold("Literary Devices") { padding ->
         ScreenColumn(Modifier.padding(padding), maxWidth = 760.dp, spacing = 20.dp) {
             Segmented(DevicesMode.entries.map { it to it.label }, mode, { mode = it })
             when (mode) {
-                DevicesMode.Reference -> for (d in library.deviceCards) DeviceEntry(model, d) { reading = it }
+                DevicesMode.Reference -> for (d in library.deviceCards) DeviceEntry(model, d) { reading.push(it) }
                 DevicesMode.Study -> StudyDeck(model, library.deviceCards, { it.id }, "device", front = { d ->
                     Text(d.name, style = LectioText.prose(LectioText.title), color = c.ink, textAlign = TextAlign.Center)
-                }, back = { d -> DeviceBack(model, d, true) { reading = it } })
+                }, back = { d -> DeviceBack(model, d, true) { reading.push(it) } })
                 DevicesMode.Drill -> SpotTheDevice(model, library.deviceCards)
             }
         }

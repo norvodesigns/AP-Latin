@@ -6,6 +6,11 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.hasScrollToKeyAction
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.performScrollToKey
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.onAllNodesWithText
@@ -30,6 +35,7 @@ import com.norvodesigns.lectio.ui.theme.LectioTheme
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -232,4 +238,98 @@ class InteractionTests {
         val due = com.norvodesigns.lectio.core.SpacedRepetition.due(model.vocab.values, com.norvodesigns.lectio.core.StudyDates.today())
         assertTrue(due.isNotEmpty())
     }
+
+    /* Navigation: what iOS does with a NavigationStack per tab. */
+
+    private fun shell(model: AppModel, tab: AppTab) {
+        model.appearance = Appearance.Light
+        compose.setContent { LectioRoot(model) }
+        compose.waitForIdle()
+        model.selectedTab = tab
+        compose.waitForIdle()
+    }
+
+    private fun back() {
+        compose.onAllNodesWithContentDescription("Back").onFirst().performClick()
+        compose.waitForIdle()
+    }
+
+    @Test fun aPassageFromSearchOpensOverTheResultsAndBackReturnsToThem() {
+        val model = model()
+        val passage = model.content!!.passages.first { it.required }
+        shell(model, AppTab.Search)
+        compose.onAllNodes(hasSetTextAction()).onFirst().performTextInput(passage.citation)
+        compose.waitForIdle()
+        tap(passage.title)
+        // Pushed over Search: the tab doesn't change.
+        assertEquals(AppTab.Search, model.selectedTab)
+        assertEquals(PushedPage.Reader(passage.id), model.pushedPage)
+        back()
+        assertNull(model.pushedPage)
+        assertEquals(AppTab.Search, model.selectedTab)
+        // The results are still there, query and all.
+        see(passage.title)
+    }
+
+    @Test fun aGrammarTopicFromSearchReturnsToTheResults() {
+        val model = model()
+        val topic = model.content!!.grammarTopics.first()
+        shell(model, AppTab.Search)
+        model.openGrammarTopic(topic.id)
+        compose.waitForIdle()
+        see(topic.summary)
+        back()
+        assertNull(model.pushedPage)
+        assertEquals(AppTab.Search, model.selectedTab)
+    }
+
+    @Test fun nextPushesAPassageAndBackReturnsToTheOneBefore() {
+        val model = model()
+        val passages = model.content!!.passages
+        model.readStack.reset(passages[0].id)
+        shell(model, AppTab.Read)
+        compose.onAllNodes(hasScrollToKeyAction()).onFirst().performScrollToKey("footer")
+        compose.waitForIdle()
+        tap("Next →")
+        assertEquals(passages[1].id, model.readStack.top)
+        assertEquals(2, model.readStack.depth)
+        back()
+        assertEquals(passages[0].id, model.readStack.top)
+        back()
+        assertNull(model.readStack.top)
+    }
+
+    @Test fun leavingATabForgetsWhereItsBackLed() {
+        val model = model()
+        shell(model, AppTab.Search)
+        model.openSection(AppTab.Plan, from = AppTab.Search)
+        assertEquals(AppTab.Search, model.backTarget)
+        model.selectedTab = AppTab.Translate
+        assertNull(model.backTarget)
+    }
+
+    @Test fun aTranslationInProgressSurvivesATabSwitch() {
+        val model = model()
+        val drill = model.content!!.translationDrills.first()
+        shell(model, AppTab.Translate)
+        tap(drill.citation)
+        compose.onAllNodes(hasSetTextAction()).onFirst().performTextInput("arma virumque cano")
+        compose.waitForIdle()
+        model.selectedTab = AppTab.Today
+        compose.waitForIdle()
+        model.selectedTab = AppTab.Translate
+        compose.waitForIdle()
+        see("arma virumque cano")
+    }
+
+    @Test fun theLevelCheckCoversTheApp() {
+        val model = model()
+        shell(model, AppTab.Learn)
+        model.levelCheckOpen = true
+        compose.waitForIdle()
+        see("Find my level")
+        model.levelCheckOpen = false
+        compose.waitForIdle()
+    }
 }
+

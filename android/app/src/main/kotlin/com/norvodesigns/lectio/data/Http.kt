@@ -3,7 +3,9 @@ package com.norvodesigns.lectio.data
 import com.norvodesigns.lectio.core.HttpRequest
 import com.norvodesigns.lectio.core.HttpResponse
 import com.norvodesigns.lectio.core.HttpTransport
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.MediaType.Companion.toMediaType
@@ -43,13 +45,12 @@ suspend fun Call.await(): Response = suspendCancellableCoroutine { cont ->
 
 /** [HttpTransport] over OkHttp, for the Supabase calls. */
 class OkHttpTransport(private val client: OkHttpClient = Http.client) : HttpTransport {
-    override suspend fun execute(request: HttpRequest): HttpResponse {
+    // The body is read on the IO pool: `await` resumes on the caller's dispatcher, often the main thread, where a socket read is not allowed.
+    override suspend fun execute(request: HttpRequest): HttpResponse = withContext(Dispatchers.IO) {
         val builder = okhttp3.Request.Builder().url(request.url)
         request.headers.forEach { (k, v) -> builder.header(k, v) }
         val body = request.body?.toRequestBody(Http.json)
         builder.method(request.method, body ?: if (request.method == "POST" || request.method == "PUT") ByteArray(0).toRequestBody(null) else null)
-        client.newCall(builder.build()).await().use { response ->
-            return HttpResponse(response.code, response.body.bytes())
-        }
+        client.newCall(builder.build()).await().use { response -> HttpResponse(response.code, response.body.bytes()) }
     }
 }

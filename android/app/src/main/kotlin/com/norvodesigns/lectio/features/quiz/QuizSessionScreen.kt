@@ -1,5 +1,13 @@
 package com.norvodesigns.lectio.features.quiz
 
+import androidx.compose.foundation.background
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.input.pointer.pointerInput
+import com.norvodesigns.lectio.features.read.LocalReaderPractice
+import com.norvodesigns.lectio.features.read.PassageStack
+import com.norvodesigns.lectio.features.read.PassageStackReader
+import com.norvodesigns.lectio.features.read.ReaderPractice
+import com.norvodesigns.lectio.features.scansion.ScansionScreen
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -53,7 +61,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.norvodesigns.lectio.AppModel
 import com.norvodesigns.lectio.core.Question
-import com.norvodesigns.lectio.features.read.PassageReader
 import com.norvodesigns.lectio.recordQuiz
 import com.norvodesigns.lectio.ui.components.ButtonLabel
 import com.norvodesigns.lectio.ui.components.CoverScaffold
@@ -77,7 +84,9 @@ fun QuizSessionScreen(model: AppModel, session: QuizSessionRequest, onClose: () 
     var chosen by remember(session) { mutableStateOf<String?>(null) }
     val results = remember(session) { mutableStateListOf<Boolean>() }
     var startedAt by remember(session) { mutableLongStateOf(System.currentTimeMillis()) }
-    var reading by remember(session) { mutableStateOf<String?>(null) }
+    val reading = remember(session) { PassageStack() }
+    var nested by remember(session) { mutableStateOf<QuizSessionRequest?>(null) }
+    var scanning by remember(session) { mutableStateOf(false) }
     val haptics = LocalHapticFeedback.current
     val finished = index >= session.questions.size
 
@@ -99,11 +108,26 @@ fun QuizSessionScreen(model: AppModel, session: QuizSessionRequest, onClose: () 
         startedAt = System.currentTimeMillis()
     }
 
-    val passage = reading?.let { model.content?.passage(it) }
-    if (passage != null) {
-        // "Read in full" opens the passage over the set, with its own back.
-        androidx.activity.compose.BackHandler { reading = null }
-        ProvidePushedBack({ reading = null }) { PassageReader(model, passage) }
+    if (reading.top != null) {
+        // "Read in full" opens the passage over the set, with its own back. Its Practice menu opens inside the set
+        // (a quiz on the passage, or the Scansion Lab), so the set in progress isn't replaced, as iOS pushes them on the set's stack.
+        val practice = remember(session) {
+            ReaderPractice(
+                quiz = { nested = it },
+                scan = { p ->
+                    model.scansionStartPassageId = p.id
+                    scanning = true
+                },
+            )
+        }
+        Box(Modifier.fillMaxSize().background(Lectio.colors.parchment).pointerInput(Unit) {}) {
+            CompositionLocalProvider(LocalReaderPractice provides practice) { PassageStackReader(model, reading) }
+            if (scanning) Box(Modifier.fillMaxSize().background(Lectio.colors.parchment).pointerInput(Unit) {}) {
+                androidx.activity.compose.BackHandler { scanning = false }
+                ProvidePushedBack({ scanning = false }) { ScansionScreen(model) }
+            }
+            nested?.let { QuizSessionScreen(model, it) { nested = null } }
+        }
         return
     }
 
@@ -113,7 +137,7 @@ fun QuizSessionScreen(model: AppModel, session: QuizSessionRequest, onClose: () 
                 index, transitionSpec = { (slideInHorizontally { it / 3 } + fadeIn()) togetherWith fadeOut() }, label = "question",
             ) { i ->
                 if (i < session.questions.size) {
-                    QuestionPage(model, session.questions[i], i + 1, session.questions.size, if (i == index) chosen else null, ::choose, ::next) { reading = it }
+                    QuestionPage(model, session.questions[i], i + 1, session.questions.size, if (i == index) chosen else null, ::choose, ::next) { reading.push(it) }
                 } else {
                     ResultsPage(session, results, onClose)
                 }

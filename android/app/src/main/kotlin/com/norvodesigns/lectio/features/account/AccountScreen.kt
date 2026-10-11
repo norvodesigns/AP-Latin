@@ -20,6 +20,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.ContentType
+import androidx.compose.ui.platform.LocalAutofillManager
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -78,6 +80,8 @@ private fun SignIn(model: AppModel, startsWithSignUp: Boolean, modifier: Modifie
     var error by remember { mutableStateOf<String?>(null) }
     var checkEmail by remember { mutableStateOf(false) }
 
+    val autofill = LocalAutofillManager.current
+
     fun submit() {
         error = null
         AuthManager.validate(email, password)?.let { error = it; return }
@@ -91,10 +95,15 @@ private fun SignIn(model: AppModel, startsWithSignUp: Boolean, modifier: Modifie
             try {
                 if (!signUp) {
                     model.signIn(email, password)
-                } else if (model.signUp(email, password, name, role) == AppModel.SignUpOutcome.CheckEmail) {
-                    checkEmail = true
-                    signUp = false
-                    password = ""
+                    autofill?.commit()
+                } else {
+                    val outcome = model.signUp(email, password, name, role)
+                    autofill?.commit()
+                    if (outcome == AppModel.SignUpOutcome.CheckEmail) {
+                        checkEmail = true
+                        signUp = false
+                        password = ""
+                    }
                 }
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
@@ -125,16 +134,19 @@ private fun SignIn(model: AppModel, startsWithSignUp: Boolean, modifier: Modifie
         }
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             if (signUp) {
-                LectioTextField(displayName, { displayName = it }, placeholder = "Your name", singleLine = true, textStyle = LectioText.prose(LectioText.body), capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Next)
+                LectioTextField(displayName, { displayName = it }, placeholder = "Your name", singleLine = true, textStyle = LectioText.prose(LectioText.body), capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Next, contentType = ContentType.PersonFullName)
                 MenuPicker("I’m a", listOf("student" to "Student", "teacher" to "Teacher"), role, { role = it })
             }
             LectioTextField(
                 email, { email = it }, placeholder = "Email", singleLine = true, textStyle = LectioText.prose(LectioText.body),
                 capitalization = KeyboardCapitalization.None, autoCorrect = false, keyboardType = KeyboardType.Email, imeAction = ImeAction.Next,
+                contentType = ContentType.EmailAddress,
             )
             LectioTextField(
                 password, { password = it }, placeholder = "Password", singleLine = true, textStyle = LectioText.prose(LectioText.body),
                 password = true, capitalization = KeyboardCapitalization.None, autoCorrect = false, imeAction = ImeAction.Go, onDone = ::submit,
+                // A password manager offers the saved login, or a strong new password on sign-up, and offers to save it afterwards.
+                contentType = if (signUp) ContentType.NewPassword else ContentType.Password,
             )
             Text(
                 error ?: if (signUp) "At least 8 characters. Teachers can create classrooms on the website; students join them with a code." else "",
@@ -175,7 +187,7 @@ private fun SignedIn(model: AppModel, account: Account, modifier: Modifier) {
                 Text("Status", Modifier.weight(1f), style = LectioText.prose(LectioText.body), color = c.ink)
                 SyncStatusLabel(model.syncStatus)
             }
-            TextAction("Sync now", icon = "arrow.triangle.2.circlepath", enabled = model.syncStatus != SyncStatus.Syncing) { scope.launch { model.reconcile() } }
+            TextAction("Sync now", icon = "arrow.triangle.2.circlepath", enabled = model.syncStatus != SyncStatus.Syncing) { model.scope.launch { model.reconcile() } }
             Text(
                 "Your progress is saved on this device first and synced to your account in the background, so it works offline and catches up when you’re back online.",
                 style = LectioText.footnote, color = c.inkMuted,

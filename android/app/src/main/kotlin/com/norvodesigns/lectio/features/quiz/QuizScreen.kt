@@ -13,6 +13,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,6 +49,16 @@ data class QuizFilters(
     val types: Set<String> = emptySet(),
     val count: Int = 10,
 ) {
+    companion object {
+        val Saver = listSaver<QuizFilters, Any?>(
+            save = { listOf(it.author.name, it.passageId, it.unit, it.skill, ArrayList(it.types), it.count) },
+            restore = {
+                @Suppress("UNCHECKED_CAST")
+                QuizFilters(QuizAuthor.valueOf(it[0] as String), it[1] as String?, it[2] as String?, it[3] as String?, (it[4] as List<String>).toSet(), it[5] as Int)
+            },
+        )
+    }
+
     fun matches(q: Question, passage: (String) -> Passage?): Boolean {
         if (q.type !in types) return false
         if (skill != null && q.skillCategory != skill) return false
@@ -70,7 +82,8 @@ data class QuizFilters(
 fun QuizScreen(model: AppModel) {
     val library = model.content ?: return
     val c = Lectio.colors
-    var filters by remember { mutableStateOf(QuizFilters(types = library.meta.questionTypeLabels.keys)) }
+    // Saved with the tab, so the set being built survives a visit to another tab.
+    var filters by rememberSaveable(stateSaver = QuizFilters.Saver) { mutableStateOf(QuizFilters(types = library.meta.questionTypeLabels.keys)) }
 
     // A weak spot on Today opens the Quiz narrowed to that question type.
     LaunchedEffect(model.quizPresetType) {

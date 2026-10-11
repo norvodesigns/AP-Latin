@@ -31,7 +31,8 @@ import com.norvodesigns.lectio.AppModel
 import com.norvodesigns.lectio.core.GrammarChart
 import com.norvodesigns.lectio.core.GrammarExample
 import com.norvodesigns.lectio.core.GrammarTopic
-import com.norvodesigns.lectio.features.read.ReaderPage
+import com.norvodesigns.lectio.features.read.PassageStackReader
+import com.norvodesigns.lectio.features.read.rememberPassageStack
 import com.norvodesigns.lectio.ui.components.Hairline
 import com.norvodesigns.lectio.ui.components.PageScaffold
 import com.norvodesigns.lectio.ui.components.QuietLabel
@@ -53,11 +54,12 @@ fun GrammarScreen(model: AppModel) {
     val library = model.content ?: return
     val c = Lectio.colors
     var studying by remember { mutableStateOf(false) }
-    // A search result opens its topic directly.
-    val topic = model.grammarTopicId?.let { id -> library.grammarTopics.firstOrNull { it.id == id } }
+    // A topic is pushed over the list; leaving Grammar drops it, as leaving the section pops iOS's stack. (A search result pushes its topic over the results instead: AppModel.openGrammarTopic.)
+    var topicId by remember { mutableStateOf<String?>(null) }
+    val topic = topicId?.let { id -> library.grammarTopics.firstOrNull { it.id == id } }
     if (topic != null) {
-        androidx.activity.compose.BackHandler { model.grammarTopicId = null }
-        GrammarTopicScreen(model, topic) { model.grammarTopicId = null }
+        androidx.activity.compose.BackHandler { topicId = null }
+        GrammarTopicScreen(model, topic) { topicId = null }
         return
     }
 
@@ -71,7 +73,7 @@ fun GrammarScreen(model: AppModel) {
                 item(key = "h-$id") { RubricLabel(title, Modifier.widthIn(max = 720.dp).fillMaxWidth().padding(top = 16.dp, bottom = 4.dp)) }
                 items(topics, key = { it.id }) { t ->
                     Column(Modifier.widthIn(max = 720.dp).fillMaxWidth()) {
-                        Column(Modifier.fillMaxWidth().clickable(role = Role.Button) { model.grammarTopicId = t.id }.padding(vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Column(Modifier.fillMaxWidth().clickable(role = Role.Button) { topicId = t.id }.padding(vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                             Text(t.name, style = LectioText.headline, color = c.ink)
                             Text(t.summary, style = LectioText.prose(LectioText.subheadline), color = c.inkMuted, maxLines = 2)
                         }
@@ -99,10 +101,9 @@ fun GrammarScreen(model: AppModel) {
 @Composable
 fun GrammarTopicScreen(model: AppModel, topic: GrammarTopic, onBack: () -> Unit) {
     val c = Lectio.colors
-    var reading by remember { mutableStateOf<String?>(null) }
-    val passage = reading?.let { model.content?.passage(it) }
-    if (passage != null) {
-        ReaderPage(model, passage) { reading = null }
+    val reading = rememberPassageStack()
+    if (reading.top != null) {
+        PassageStackReader(model, reading)
         return
     }
     PageScaffold(topic.name, onBack = onBack) { padding ->
@@ -114,7 +115,7 @@ fun GrammarTopicScreen(model: AppModel, topic: GrammarTopic, onBack: () -> Unit)
             if (topic.examples.isNotEmpty()) Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 RubricLabel("From the readings")
                 for (ex in topic.examples) {
-                    ExampleView(model, ex) { reading = it }
+                    ExampleView(model, ex) { reading.push(it) }
                     Hairline(color = c.hair)
                 }
             }

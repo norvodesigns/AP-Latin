@@ -131,7 +131,7 @@ class StoreScreenshots {
     @Test fun tablet7Vocab() = shell(Device.Tablet7, "04-vocab", AppTab.Vocab)
 
     @Test fun tablet10Today() = shell(Device.Tablet10, "01-today", AppTab.Today)
-    @Test fun tablet10Reader() = shell(Device.Tablet10, "02-reader", AppTab.Read) { it.readPassageId = "aen-1-1-33" }
+    @Test fun tablet10Reader() = shell(Device.Tablet10, "02-reader", AppTab.Read) { it.readStack.reset("aen-1-1-33") }
     @Test fun tablet10Course() = shell(Device.Tablet10, "03-course", AppTab.Learn)
     @Test fun tablet10Vocab() = shell(Device.Tablet10, "04-vocab", AppTab.Vocab)
 }

@@ -51,6 +51,7 @@ import com.norvodesigns.lectio.ui.components.Rich
 import com.norvodesigns.lectio.ui.theme.Appearance
 import com.norvodesigns.lectio.watch.WatchBridge
 import com.norvodesigns.lectio.widgets.WidgetBridge
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -59,6 +60,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.time.Instant
@@ -116,8 +118,15 @@ class AppModel(val app: Application) {
     /** Set by a dashboard "Drill it" link; the Quiz Engine narrows to it. */
     var quizPresetType: String? by mutableStateOf(null)
 
-    /** The passage open in the Reading Room, so a link can open one. */
-    var readPassageId: String? by mutableStateOf(null)
+    /** The passages open in the Reading Room, one over another (Previous and Next push), so a link can open one. */
+    val readStack = com.norvodesigns.lectio.features.read.PassageStack()
+
+    /**
+     * A page pushed over the current tab by a link in it (a search result, Today's
+     * "Continue reading"), the way iOS pushes onto that tab's NavigationStack: the
+     * tab stays selected and as it was underneath, and Back returns to it.
+     */
+    var pushedPage: PushedPage? by mutableStateOf(null)
 
     /** A flashcard session shown over the app. */
     var vocabSession: com.norvodesigns.lectio.features.vocab.VocabSession? by mutableStateOf(null)
@@ -128,6 +137,9 @@ class AppModel(val app: Application) {
     /** A Forms Forge round shown over the app. */
     var forgeRound: com.norvodesigns.lectio.features.forge.ForgeRound? by mutableStateOf(null)
 
+    /** Whether "Find my level" is open over the app (a full-screen cover, as on iOS). */
+    var levelCheckOpen by mutableStateOf(false)
+
     /** Whether the speed round is open over the app. */
     var speedRoundOpen by mutableStateOf(false)
 
@@ -136,6 +148,14 @@ class AppModel(val app: Application) {
 
     /** The passage the Scansion Lab should start on, set by the reader's "Scan this passage". */
     var scansionStartPassageId: String? by mutableStateOf(null)
+
+    /**
+     * Work a screen keeps while the student is away on another tab (a drill half
+     * graded, a timed attempt), as iOS's TabView keeps each tab's views alive.
+     * Kept for the life of the process; a screen removes its entry when the work
+     * is finished or abandoned. See ui/components/Drafts.kt.
+     */
+    val screenDrafts = HashMap<String, Any>()
 
     /** The course lesson open over everything else, if any. */
     private var activeLessonState: LessonPlace? by mutableStateOf(null)
@@ -159,6 +179,9 @@ class AppModel(val app: Application) {
         set(value) {
             if (selectedTabState != value) {
                 selectedTabState = value
+                // Leaving a tab drops whatever was pushed over it and where its Back led, as iOS resets the stack.
+                backTarget = null
+                pushedPage = null
                 studySectionChanged()
             }
         }
@@ -194,6 +217,7 @@ class AppModel(val app: Application) {
             prefs.put("syncBookkeeping", LectioJson.encodeToString(SyncBookkeeping.serializer(), value))
         }
     private var pushJob: Job? = null
+    private var pushPending = false
     private var pullLoop: Job? = null
 
     /** Set while a sync write replaces [progress], so it isn't pushed straight back. */
@@ -235,13 +259,20 @@ class AppModel(val app: Application) {
         aiAvailable = ai.isConfigured()
     }
 
-    suspend fun loadContent() {
+    /** Held while the content decodes: the screen and a background service (the watch) may both ask for it at once, and it should decode once. */
+    private val contentLoading = kotlinx.coroutines.sync.Mutex()
+
+    suspend fun loadContent() = contentLoading.withLock { loadContentLocked() }
+
+    private suspend fun loadContentLocked() {
         if (contentState !is ContentState.Loading) return
         try {
             val (library, source) = withContext(Dispatchers.Default) {
                 val active = contentStore.activeSource()
                 try {
                     ContentLibrary(active) to active
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     if (active === contentStore.bundled) throw e
                     // A download that no longer decodes: back to the bundle.
@@ -263,9 +294,19 @@ class AppModel(val app: Application) {
                 pendingLink = null
                 handleLink(it)
             }
+        } catch (e: CancellationException) {
+            // The screen went away mid-decode (Back on the launch screen): not a failure, and the next launch tries again.
+            throw e
         } catch (e: Exception) {
             contentState = ContentState.Failed(e.message ?: e.toString())
         }
+    }
+
+    /** "Try again" on the failure screen. */
+    fun retryContent() {
+        if (contentState !is ContentState.Failed) return
+        contentState = ContentState.Loading
+        scope.launch { loadContent() }
     }
 
     /** Picks up content the website has that this copy doesn't (a new lesson, a corrected gloss) at most every few hours. See [ContentStore]. */
@@ -518,22 +559,32 @@ class AppModel(val app: Application) {
         try {
             val token = auth.accessToken()
             // A failed pull aborts: treating "couldn't reach the server" as "no cloud row" would push this device's copy over the real one.
-            val cloud = auth.api.pullProgress(token)
-            val plan = CloudSync.reconcile(userId, progress, bookkeeping, cloud)
+            val cloud = withContext(Dispatchers.IO) { auth.api.pullProgress(token) }
+            val local = progress
+            val marks = bookkeeping
+            val plan = withContext(Dispatchers.Default) { CloudSync.reconcile(userId, local, marks, cloud) }
             applySynced(plan.local)
             var syncedAt = plan.fallbackSyncedAt
             plan.push?.let { push -> upload(push, token)?.let { syncedAt = it } }
             bookkeeping = SyncBookkeeping(userId, syncedAt)
             syncStatus = SyncStatus.Synced(Instant.now())
+        } catch (e: CancellationException) {
+            syncCancelled()
+            throw e
         } catch (e: Exception) {
             handleSyncError(e)
         }
+    }
+
+    private fun syncCancelled() {
+        if (syncStatus == SyncStatus.Syncing) syncStatus = SyncStatus.Idle
     }
 
     /** Debounced push after a local edit, only once reconcile has confirmed the local data belongs to this account. */
     fun schedulePush() {
         val userId = account?.userId ?: return
         if (bookkeeping.lastSyncedUserId != userId) return
+        pushPending = true
         pushJob?.cancel()
         pushJob = scope.launch {
             delay(PUSH_DEBOUNCE_MS)
@@ -542,13 +593,14 @@ class AppModel(val app: Application) {
     }
 
     fun pushNowIfPending() {
-        if (pushJob == null) return
+        if (!pushPending) return
         pushJob?.cancel()
         pushJob = scope.launch { pushNow() }
     }
 
     private suspend fun pushNow() {
-        pushJob = null
+        // A flag rather than the job: the job starts inline on Main.immediate, so it can't reliably clear itself.
+        pushPending = false
         val userId = account?.userId ?: return
         if (bookkeeping.lastSyncedUserId != userId) return
         try {
@@ -561,6 +613,9 @@ class AppModel(val app: Application) {
             } else {
                 syncStatus = SyncStatus.Offline("Couldn't reach the server — your progress is saved on this device.")
             }
+        } catch (e: CancellationException) {
+            syncCancelled()
+            throw e
         } catch (e: Exception) {
             handleSyncError(e)
         }
@@ -570,8 +625,10 @@ class AppModel(val app: Application) {
     private suspend fun upload(document: ProgressDocument, token: String): String? {
         val updatedAt = StudyDates.isoTimestamp(Instant.now())
         return try {
-            auth.api.pushProgress(document.raw, updatedAt, token)
+            withContext(Dispatchers.IO) { auth.api.pushProgress(document.raw, updatedAt, token) }
             updatedAt
+        } catch (e: CancellationException) {
+            throw e
         } catch (_: Exception) {
             null
         }
@@ -582,8 +639,10 @@ class AppModel(val app: Application) {
         if (bookkeeping.lastSyncedUserId != userId) return
         try {
             val token = auth.accessToken()
-            val cloud = auth.api.pullProgress(token) ?: return
-            val merged = CloudSync.mergePulled(userId, progress, bookkeeping, cloud)
+            val cloud = withContext(Dispatchers.IO) { auth.api.pullProgress(token) } ?: return
+            val local = progress
+            val marks = bookkeeping
+            val merged = withContext(Dispatchers.Default) { CloudSync.mergePulled(userId, local, marks, cloud) }
             if (merged == null) {
                 syncStatus = SyncStatus.Synced(Instant.now())
                 return
@@ -593,6 +652,9 @@ class AppModel(val app: Application) {
             syncStatus = SyncStatus.Synced(Instant.now())
             // Local held something the cloud didn't: send the union back.
             if (merged.raw != ProgressDocument(cloud.data).raw) schedulePush()
+        } catch (e: CancellationException) {
+            syncCancelled()
+            throw e
         } catch (e: Exception) {
             handleSyncError(e)
         }
@@ -1038,9 +1100,10 @@ class AppModel(val app: Application) {
 
     /** Writes what the widgets need and asks them to redraw. Cheap: a list of due dates and recent study days. */
     fun refreshWidgets() {
-        val library = content
+        // Without the content (a background start, before it has loaded) the snapshot would lose today's line and the next lesson: keep the last one.
+        val library = content ?: return
         val snapshot = WidgetSnapshot(
-            examDate = library?.meta?.examDate ?: "2027-05-14",
+            examDate = library.meta.examDate,
             dueDates = vocab.values.map { it.due },
             studyDays = progress.studyDays.sorted().takeLast(60),
             goalMinutes = progress.studyPlan.minutesPerDay,
@@ -1193,21 +1256,18 @@ class AppModel(val app: Application) {
         }
     }
 
-    /** The grammar topic open in Grammar & Syntax (from a search result), if any. */
-    var grammarTopicId: String? by mutableStateOf(null)
-
     /** Where Back goes from a section that isn't a tab: the screen it was opened from (Browse), else Today. */
     var backTarget: AppTab? by mutableStateOf(null)
 
     /** Opens a section, remembering where Back should return to. */
     fun openSection(tab: AppTab, from: AppTab? = null) {
-        backTarget = from
         selectedTab = tab
+        backTarget = from
     }
 
+    /** A grammar topic from a search result, pushed over the results so Back returns to them. */
     fun openGrammarTopic(id: String) {
-        grammarTopicId = id
-        openSection(AppTab.Grammar, from = AppTab.Search)
+        pushedPage = PushedPage.GrammarTopic(id)
     }
 
     /* Deep links */
@@ -1239,7 +1299,7 @@ class AppModel(val app: Application) {
         val library = content ?: return
         val tab = AppTab.fromHost(host) ?: return
         selectedTab = tab
-        if (tab == AppTab.Read && path.isNotEmpty()) library.passage(path)?.let { readPassageId = it.id }
+        if (tab == AppTab.Read && path.isNotEmpty()) library.passage(path)?.let { readStack.reset(it.id) }
         // lectio://learn/<lesson-id> opens that lesson; learn/daily the Sententia of the day, learn/review a review, learn/next the next lesson of the course.
         if (tab == AppTab.Learn && path.isNotEmpty()) {
             when (path) {
@@ -1253,10 +1313,22 @@ class AppModel(val app: Application) {
         }
     }
 
-    /** Opens a passage in the Reading Room. */
+    /** Opens a passage over the current tab (from Today or a search result); Back returns to the tab as it was. */
     fun openPassage(passage: Passage) {
-        readPassageId = passage.id
-        selectedTab = AppTab.Read
+        if (selectedTab == AppTab.Read) readStack.push(passage.id) else pushedPage = PushedPage.Reader(passage.id)
+    }
+
+    /* First-visit tips (ui/components/Tips.kt) */
+
+    private val retiredTips = androidx.compose.runtime.mutableStateMapOf<String, Boolean>()
+
+    /** Whether a tip has been dismissed, or retired by the student doing what it explains. Observable, so a tip on screen goes as soon as it's retired. */
+    fun tipRetired(key: String): Boolean = retiredTips[key] ?: prefs.bool(key)
+
+    fun retireTip(key: String) {
+        if (tipRetired(key)) return
+        prefs.put(key, true)
+        retiredTips[key] = true
     }
 
     fun destroy() {
@@ -1269,4 +1341,10 @@ class AppModel(val app: Application) {
         const val STUDY_FLUSH_SECONDS = 30.0
         private const val ONBOARDED_KEY = "onboarded"
     }
+}
+
+/** A page pushed over a tab by a link in it (see [AppModel.pushedPage]). */
+sealed interface PushedPage {
+    data class Reader(val passageId: String) : PushedPage
+    data class GrammarTopic(val id: String) : PushedPage
 }

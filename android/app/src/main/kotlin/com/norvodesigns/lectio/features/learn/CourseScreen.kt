@@ -72,7 +72,6 @@ fun CourseScreen(model: AppModel) {
     val c = Lectio.colors
     val library = model.content
     var track by remember { mutableStateOf(CourseTrack.entries.firstOrNull { it.name == model.prefs.string("courseTrack") } ?: CourseTrack.Grammar) }
-    var checking by remember { mutableStateOf(false) }
     val done = model.courseDone
 
     PageScaffold("Course") { padding ->
@@ -85,7 +84,7 @@ fun CourseScreen(model: AppModel) {
                 )
             }
 
-            PathPanel(model) { checking = true }
+            PathPanel(model) { model.levelCheckOpen = true }
 
             if (library?.course?.grammarLessons?.isNotEmpty() == true) {
                 Panel(title = "Practise") { PracticeRows(model) }
@@ -130,7 +129,6 @@ fun CourseScreen(model: AppModel) {
             }
         }
     }
-    if (checking) LevelCheckScreen(model, onClose = { checking = false })
 }
 
 /* ------------------------------------------------------------------ */

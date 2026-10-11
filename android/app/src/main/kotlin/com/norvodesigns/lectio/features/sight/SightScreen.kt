@@ -58,6 +58,7 @@ import com.norvodesigns.lectio.ui.components.ScreenColumn
 import com.norvodesigns.lectio.ui.components.Segmented
 import com.norvodesigns.lectio.ui.components.Symbol
 import com.norvodesigns.lectio.ui.components.rememberAIGate
+import com.norvodesigns.lectio.ui.components.rememberDraft
 import com.norvodesigns.lectio.ui.theme.Lectio
 import com.norvodesigns.lectio.ui.theme.LectioText
 import com.norvodesigns.lectio.util.wordCount
@@ -75,14 +76,15 @@ data class SightItem(
 fun SightScreen(model: AppModel) {
     val library = model.content ?: return
     val c = Lectio.colors
-    val scope = rememberCoroutineScope()
     val gate = rememberAIGate(model)
-    var author by remember { mutableStateOf("Nepos") }
-    var genre by remember { mutableStateOf("prose") }
-    var variant by remember { mutableIntStateOf(0) }
-    var generating by remember { mutableStateOf(false) }
-    var generateError by remember { mutableStateOf<String?>(null) }
-    var open by remember { mutableStateOf<SightItem?>(null) }
+    // Kept on the model, so a visit to another tab finds the passage open, the answers chosen and the clock still running.
+    val draft = rememberDraft(model, SightDraft.KEY) { SightDraft() }
+    var author by draft::author
+    var genre by draft::genre
+    var variant by draft::variant
+    var generating by draft::generating
+    var generateError by draft::generateError
+    var open by draft::open
 
     LaunchedEffect(Unit) { model.checkAI() }
 
@@ -94,7 +96,7 @@ fun SightScreen(model: AppModel) {
     fun generate() {
         generating = true
         generateError = null
-        scope.launch {
+        model.scope.launch {
             try {
                 val g = model.ai.post("generate-sight", jobj("author" to author, "genre" to genre, "variant" to variant, "questionCount" to 4))
                 model.update { it.recordAiCall("generate-sight") }
@@ -128,8 +130,12 @@ fun SightScreen(model: AppModel) {
 
     val current = open
     if (current != null) {
-        androidx.activity.compose.BackHandler { open = null }
-        SightAttempt(model, current) { open = null }
+        val close = {
+            open = null
+            draft.attempt = SightAttemptState()
+        }
+        androidx.activity.compose.BackHandler(onBack = close)
+        SightAttempt(model, current, draft.attempt, close)
         return
     }
 
@@ -180,15 +186,38 @@ fun SightScreen(model: AppModel) {
     AIConsentHost(gate)
 }
 
+/** The Sight Reading screen's state, kept while the student is on another tab. */
+private class SightDraft {
+    var author by mutableStateOf("Nepos")
+    var genre by mutableStateOf("prose")
+    var variant by mutableIntStateOf(0)
+    var generating by mutableStateOf(false)
+    var generateError by mutableStateOf<String?>(null)
+    var open by mutableStateOf<SightItem?>(null)
+    var attempt = SightAttemptState()
+
+    companion object {
+        const val KEY = "sight"
+    }
+}
+
+/** One attempt at the open passage: the clock and the answers. */
+private class SightAttemptState {
+    var startedAt by mutableLongStateOf(0L)
+    var finishedAt by mutableLongStateOf(0L)
+    val answers = mutableStateMapOf<String, String>()
+    var showSummary by mutableStateOf(false)
+}
+
 /** Read cold against the clock, answer, then check. */
 @Composable
-private fun SightAttempt(model: AppModel, item: SightItem, onBack: () -> Unit) {
+private fun SightAttempt(model: AppModel, item: SightItem, attempt: SightAttemptState, onBack: () -> Unit) {
     val c = Lectio.colors
-    var startedAt by remember(item.id) { mutableLongStateOf(0L) }
-    var finishedAt by remember(item.id) { mutableLongStateOf(0L) }
+    var startedAt by attempt::startedAt
+    var finishedAt by attempt::finishedAt
     var now by remember(item.id) { mutableLongStateOf(System.currentTimeMillis()) }
-    val answers = remember(item.id) { mutableStateMapOf<String, String>() }
-    var showSummary by remember(item.id) { mutableStateOf(false) }
+    val answers = attempt.answers
+    var showSummary by attempt::showSummary
     val submitted = finishedAt != 0L
 
     LaunchedEffect(startedAt, submitted) {

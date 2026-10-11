@@ -6,12 +6,15 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 
 class LectioApplication : Application() {
-    lateinit var model: AppModel
-        private set
+    /**
+     * Made on first use rather than in onCreate: the process also starts for a
+     * widget update, a scheduled job or the watch, and reading the progress
+     * file and the Keystore-sealed session needn't hold up those.
+     */
+    val model: AppModel by lazy { AppModel(this) }
 
     override fun onCreate() {
         super.onCreate()
-        model = AppModel(this)
         com.norvodesigns.lectio.notifications.ExamNotification.ensureChannel(this)
         com.norvodesigns.lectio.notifications.Reminders.ensureChannel(this)
         com.norvodesigns.lectio.widgets.WidgetRefreshWorker.schedule(this)

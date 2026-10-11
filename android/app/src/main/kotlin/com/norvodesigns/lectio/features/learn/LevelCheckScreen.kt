@@ -26,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.SpanStyle
@@ -117,7 +118,8 @@ fun LevelCheckScreen(model: AppModel, onClose: () -> Unit) {
     val vocabQuestions = library?.course?.vocabPlacement ?: emptyList()
     BackHandler(onBack = onClose)
 
-    Box(Modifier.fillMaxSize().background(c.parchment)) {
+    // A full-screen cover: it swallows touches so nothing underneath (the tab bar included) can be reached while it's open.
+    Box(Modifier.fillMaxSize().background(c.parchment).pointerInput(Unit) {}) {
         ProvidePushedBack(onClose) {
             PageScaffold("Find my level") { padding ->
                 Box(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()), contentAlignment = Alignment.TopCenter) {

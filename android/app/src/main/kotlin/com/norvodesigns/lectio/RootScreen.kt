@@ -16,6 +16,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.isImeVisible
@@ -44,6 +50,7 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -62,6 +69,9 @@ import com.norvodesigns.lectio.features.forge.ForgeRoundScreen
 import com.norvodesigns.lectio.features.forge.ForgeScreen
 import com.norvodesigns.lectio.features.frq.FrqScreen
 import com.norvodesigns.lectio.features.reference.GrammarScreen
+import com.norvodesigns.lectio.features.reference.GrammarTopicScreen
+import com.norvodesigns.lectio.features.read.PassageStack
+import com.norvodesigns.lectio.features.read.PassageStackReader
 import com.norvodesigns.lectio.features.onboarding.OnboardingScreen
 import com.norvodesigns.lectio.features.onboarding.TourSheet
 import com.norvodesigns.lectio.features.plan.PlanScreen
@@ -78,6 +88,7 @@ import com.norvodesigns.lectio.features.vocab.VocabScreen
 import com.norvodesigns.lectio.features.laurels.LaurelsScreen
 import com.norvodesigns.lectio.features.learn.CourseScreen
 import com.norvodesigns.lectio.features.learn.LessonScreen
+import com.norvodesigns.lectio.features.learn.LevelCheckScreen
 import com.norvodesigns.lectio.features.search.SearchScreen
 import com.norvodesigns.lectio.features.today.TodayScreen
 import com.norvodesigns.lectio.ui.components.LocalWide
@@ -97,7 +108,7 @@ fun LectioRoot(model: AppModel) {
         Box(Modifier.fillMaxSize().background(c.parchment)) {
             when (val state = model.contentState) {
                 ContentState.Loading -> LaunchScreen()
-                is ContentState.Failed -> ContentFailed(state.message)
+                is ContentState.Failed -> ContentFailed(state.message) { model.retryContent() }
                 is ContentState.Ready -> Shell(model)
             }
         }
@@ -115,12 +126,13 @@ private fun LaunchScreen() {
 }
 
 @Composable
-private fun ContentFailed(message: String) {
+private fun ContentFailed(message: String, onRetry: () -> Unit) {
     val c = Lectio.colors
     Column(Modifier.fillMaxSize().padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         Symbol("exclamationmark.triangle", tint = c.rubric, size = 44.dp)
         Text("Couldn't open the course", style = LectioText.prose(LectioText.title2), color = c.ink, modifier = Modifier.padding(top = 12.dp))
         Text(message, style = LectioText.subheadline, color = c.inkMuted, modifier = Modifier.padding(top = 8.dp))
+        TextButton(onRetry, Modifier.padding(top = 16.dp)) { Text("Try again", style = LectioText.headline, color = c.rubric) }
     }
 }
 
@@ -155,6 +167,9 @@ private fun Shell(model: AppModel) {
         }
         AnimatedVisibility(model.examPaper != null, enter = slideInVertically(tween(300)) { it / 6 } + fadeIn(tween(250)), exit = fadeOut(tween(200))) {
             model.examPaper?.let { paper -> ExamSession(model, paper) { model.examPaper = null } }
+        }
+        AnimatedVisibility(model.levelCheckOpen, enter = slideInVertically(tween(300)) { it / 6 } + fadeIn(tween(250)), exit = fadeOut(tween(200))) {
+            LevelCheckScreen(model) { model.levelCheckOpen = false }
         }
         AnimatedVisibility(model.speedRoundOpen, enter = slideInVertically(tween(300)) { it / 6 } + fadeIn(tween(250)), exit = fadeOut(tween(200))) {
             SpeedRoundScreen(model) { model.speedRoundOpen = false }
@@ -211,28 +226,26 @@ private fun PhoneShell(model: AppModel) {
     val due = SpacedRepetition.due(model.vocab.values, StudyDates.today()).size
 
     BackHandler(enabled = pushed || selected != AppTab.Today) {
-        val target = model.backTarget
-        model.backTarget = null
-        model.selectedTab = if (pushed) (target ?: AppTab.Today) else AppTab.Today
+        model.selectedTab = if (pushed) (model.backTarget ?: AppTab.Today) else AppTab.Today
     }
 
+    // The bar steps aside while the keyboard is up, so it doesn't take room from the field being typed in.
+    val barShown = !WindowInsets.isImeVisible
     Column(Modifier.fillMaxSize()) {
-        Box(Modifier.weight(1f).fillMaxWidth()) {
+        // With the bar shown, the bar keeps clear of the system navigation itself, so the page above it mustn't pad for it again.
+        Box(Modifier.weight(1f).fillMaxWidth().then(if (barShown) Modifier.consumeWindowInsets(WindowInsets.navigationBars) else Modifier)) {
             holder.SaveableStateProvider(selected.route) {
-                ProvidePushedBack(if (pushed) ({ model.selectedTab = model.backTarget.also { model.backTarget = null } ?: AppTab.Today }) else null) {
+                ProvidePushedBack(if (pushed) ({ model.selectedTab = model.backTarget ?: AppTab.Today }) else null) {
                     TabContent(model, selected)
                 }
             }
+            PushedPageOverTab(model)
         }
-        // The bar steps aside while the keyboard is up, so it doesn't take room from the field being typed in.
-        if (!WindowInsets.isImeVisible) NavigationBar(containerColor = c.slip, contentColor = c.ink, tonalElevation = 0.dp) {
+        if (barShown) NavigationBar(containerColor = c.slip, contentColor = c.ink, tonalElevation = 0.dp) {
             specs.forEach { spec ->
                 NavigationBarItem(
                     selected = (if (pushed) AppTab.Today else selected) == spec.tab,
-                    onClick = {
-                        model.backTarget = null
-                        model.selectedTab = spec.tab
-                    },
+                    onClick = { model.selectedTab = spec.tab },
                     icon = {
                         if (spec.tab == AppTab.Vocab && due > 0) {
                             BadgedBox(badge = { Badge(containerColor = c.rubric, contentColor = c.onRubric) { Text(if (due > 99) "99+" else "$due") } }) { Symbol(spec.symbol) }
@@ -310,15 +323,17 @@ private fun WideShell(model: AppModel) {
     val selected = model.selectedTab
     val holder = rememberSaveableStateHolder()
     val due = SpacedRepetition.due(model.vocab.values, StudyDates.today()).size
-    BackHandler(enabled = selected != AppTab.Today) { model.selectedTab = AppTab.Today }
+    val target = model.backTarget
+    BackHandler(enabled = selected != AppTab.Today) { model.selectedTab = target ?: AppTab.Today }
     Row(Modifier.fillMaxSize()) {
-        Column(Modifier.width(264.dp).fillMaxHeight().background(c.sunk).statusBarsPadding()) {
+        // The sidebar keeps clear of the status bar, a cutout, and three-button navigation or a taskbar at the side or bottom.
+        Column(Modifier.width(264.dp).fillMaxHeight().background(c.sunk).windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Start + WindowInsetsSides.Vertical))) {
             Text("Lectio", style = LectioText.wordmark(48.sp), color = c.rubric, modifier = Modifier.padding(start = 24.dp, top = 12.dp, bottom = 8.dp))
             LazyColumn(Modifier.weight(1f), contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 4.dp)) {
                 sidebarGroups.forEach { (title, rows) ->
                     if (title != null) {
                         item(key = "t-$title") {
-                            Text(title.uppercase(), style = LectioText.rubricLabel, color = c.rubric, modifier = Modifier.padding(start = 12.dp, top = 18.dp, bottom = 6.dp))
+                            Text(title.uppercase(java.util.Locale.ENGLISH), style = LectioText.rubricLabel, color = c.rubric, modifier = Modifier.padding(start = 12.dp, top = 18.dp, bottom = 6.dp))
                         }
                     }
                     items(rows.size, key = { rows[it].tab.route }) { i ->
@@ -338,8 +353,40 @@ private fun WideShell(model: AppModel) {
                 }
             }
         }
-        Box(Modifier.weight(1f).fillMaxHeight()) {
-            holder.SaveableStateProvider(selected.route) { ProvidePushedBack(null) { TabContent(model, selected) } }
+        Box(Modifier.weight(1f).fillMaxHeight().consumeWindowInsets(WindowInsets.safeDrawing.only(WindowInsetsSides.Start))) {
+            holder.SaveableStateProvider(selected.route) {
+                ProvidePushedBack(target?.let { t -> { model.selectedTab = t } }) { TabContent(model, selected) }
+            }
+            PushedPageOverTab(model)
+        }
+    }
+}
+
+/**
+ * A page pushed over the current tab by a link in it (a search result, Today's
+ * "Continue reading"). The tab stays composed underneath, so Back returns to it
+ * exactly as it was: the query typed, the place scrolled to.
+ */
+@Composable
+private fun PushedPageOverTab(model: AppModel) {
+    val page = model.pushedPage ?: return
+    val c = Lectio.colors
+    val close = { model.pushedPage = null }
+    Box(Modifier.fillMaxSize().background(c.parchment).pointerInput(Unit) {}) {
+        when (page) {
+            is PushedPage.Reader -> {
+                val stack = androidx.compose.runtime.remember(page) { PassageStack(listOf(page.passageId)) }
+                PassageStackReader(model, stack, onClose = close)
+            }
+            is PushedPage.GrammarTopic -> {
+                val topic = model.content?.grammarTopics?.firstOrNull { it.id == page.id }
+                if (topic == null) {
+                    LaunchedEffect(page) { close() }
+                } else {
+                    BackHandler(onBack = close)
+                    GrammarTopicScreen(model, topic, onBack = close)
+                }
+            }
         }
     }
 }

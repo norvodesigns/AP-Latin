@@ -37,6 +37,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.SpanStyle
@@ -157,7 +158,8 @@ fun LessonScreen(model: AppModel, place: LessonPlace) {
 
     BackHandler { close() }
 
-    Box(Modifier.fillMaxSize().background(c.parchment)) {
+    // A full-screen cover: it swallows touches, so nothing underneath (the tab bar, the page's buttons) can be reached while it's open.
+    Box(Modifier.fillMaxSize().background(c.parchment).pointerInput(Unit) {}) {
         Column(Modifier.fillMaxSize().statusBarsPadding()) {
             // The bar: close, and the progress through the steps.
             Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {

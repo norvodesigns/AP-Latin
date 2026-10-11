@@ -11,11 +11,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -32,9 +28,10 @@ import com.norvodesigns.lectio.ui.theme.LectioText
 @Composable
 fun FirstVisitTip(key: String, title: String, message: String, symbol: String, modifier: Modifier = Modifier) {
     val c = Lectio.colors
-    val model = (LocalContext.current.applicationContext as? LectioApplication)?.model
-    var visible by remember { mutableStateOf(model != null && !model.prefs.bool(key) && !model.prefs.bool("seedDemo") && !model.prefs.bool("showOnboarding")) }
-    if (!visible || model == null) return
+    val model = (LocalContext.current.applicationContext as? LectioApplication)?.model ?: return
+    // Decided once per visit (so a tip doesn't pop in mid-screen), but gone as soon as it's retired, by its X or by doing what it explains.
+    val eligible = remember { !model.prefs.bool("seedDemo") && !model.prefs.bool("showOnboarding") }
+    if (!eligible || model.tipRetired(key)) return
     Surface(
         modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp), color = c.slip, border = BorderStroke(0.75.dp, c.rule),
     ) {
@@ -44,10 +41,7 @@ fun FirstVisitTip(key: String, title: String, message: String, symbol: String, m
                 Text(title, style = LectioText.prose(LectioText.headline), color = c.ink)
                 Text(message, style = LectioText.subheadline, color = c.ink2)
             }
-            IconButton(onClick = {
-                model.prefs.put(key, true)
-                visible = false
-            }) { Symbol("xmark", tint = c.inkMuted, size = 18.dp, contentDescription = "Dismiss tip") }
+            IconButton(onClick = { model.retireTip(key) }) { Symbol("xmark", tint = c.inkMuted, size = 18.dp, contentDescription = "Dismiss tip") }
         }
     }
 }

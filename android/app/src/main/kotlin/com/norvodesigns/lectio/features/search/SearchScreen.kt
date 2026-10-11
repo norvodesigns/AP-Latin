@@ -22,6 +22,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,7 +63,34 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 
-private fun fold(s: String): String = Normalizer.normalize(s, Normalizer.Form.NFD).replace(Regex("\\p{M}+"), "").lowercase()
+private val marks = Regex("\\p{M}+")
+
+private fun fold(s: String): String = Normalizer.normalize(s, Normalizer.Form.NFD).replace(marks, "").lowercase()
+
+/** Everything search looks through, folded once per library rather than once per keystroke. */
+private class SearchIndex(library: ContentLibrary?) {
+    class Folded<T>(val item: T, val keys: List<String>)
+
+    val passages = library?.passages?.map { Folded(it, listOf(fold(it.citation), fold(it.title))) } ?: emptyList()
+    val words = library?.let { lib -> (lib.coreVocabulary + lib.supplementaryVocabulary).map { Folded(it, listOf(fold(it.headword), fold(it.definition))) } } ?: emptyList()
+    val topics = library?.grammarTopics?.map { Folded(it, listOf(fold(it.name))) } ?: emptyList()
+    val sections = SectionEntry.all.map { Folded(it, listOf(fold(it.title), fold(it.blurb))) }
+}
+
+private class SearchResults(val sections: List<SectionEntry>, val passages: List<Passage>, val words: List<VocabEntry>, val topics: List<GrammarTopic>) {
+    val isEmpty get() = sections.isEmpty() && passages.isEmpty() && words.isEmpty() && topics.isEmpty()
+}
+
+private fun search(index: SearchIndex, query: String, visible: (SectionEntry) -> Boolean): SearchResults {
+    val q = fold(query)
+    val sections = index.sections.filter { visible(it.item) && it.keys.any { k -> k.contains(q) } }.map { it.item }
+    val passages = index.passages.filter { it.keys.any { k -> k.contains(q) } }.take(8).map { it.item }
+    val byHead = index.words.filter { it.keys[0].contains(q) }
+    val byDefinition = if (query.length >= 3) index.words.filter { !it.keys[0].contains(q) && it.keys[1].contains(q) } else emptyList()
+    val words = (byHead + byDefinition).take(20).map { it.item }
+    val topics = index.topics.filter { it.keys[0].contains(q) }.take(8).map { it.item }
+    return SearchResults(sections, passages, words, topics)
+}
 
 /**
  * Browse and search in one place. Empty, it's the whole menu as one list
@@ -72,9 +102,11 @@ private fun fold(s: String): String = Normalizer.normalize(s, Normalizer.Form.NF
 fun SearchScreen(model: AppModel) {
     val c = Lectio.colors
     val library = model.content
-    var query by remember { mutableStateOf("") }
+    // Saved with the tab, so a result opened and backed out of returns to the same results.
+    var query by rememberSaveable { mutableStateOf("") }
     var selectedEntry by remember { mutableStateOf<VocabEntry?>(null) }
     val trimmed = query.trim()
+    val index = remember(library) { SearchIndex(library) }
 
     fun visible(entry: SectionEntry): Boolean = entry.tab != null || model.todaysSententia != null
 
@@ -90,6 +122,11 @@ fun SearchScreen(model: AppModel) {
                     LectioTextField(
                         query, { query = it }, Modifier.weight(1f), placeholder = "Sections, arma, Aeneid 4, ablative…",
                         textStyle = LectioText.body, singleLine = true, capitalization = KeyboardCapitalization.None, autoCorrect = false, imeAction = ImeAction.Search,
+                        trailing = if (query.isEmpty()) null else ({
+                            androidx.compose.material3.IconButton({ query = "" }, Modifier.size(32.dp)) {
+                                Symbol("xmark.circle.fill", tint = c.inkFaint, size = 20.dp, contentDescription = "Clear search")
+                            }
+                        }),
                     )
                 }
             }
@@ -109,7 +146,8 @@ fun SearchScreen(model: AppModel) {
                     }
                 }
             } else {
-                Results(model, library, trimmed, ::visible, ::open) { selectedEntry = it }
+                val results = remember(index, trimmed, model.todaysSententia != null) { search(index, trimmed, ::visible) }
+                Results(model, trimmed, results, ::open) { selectedEntry = it }
             }
         }
     }
@@ -122,23 +160,14 @@ fun SearchScreen(model: AppModel) {
 }
 
 @Composable
-private fun Results(
-    model: AppModel, library: ContentLibrary?, query: String, visible: (SectionEntry) -> Boolean, open: (SectionEntry) -> Unit, onWord: (VocabEntry) -> Unit,
-) {
+private fun Results(model: AppModel, query: String, results: SearchResults, open: (SectionEntry) -> Unit, onWord: (VocabEntry) -> Unit) {
     val c = Lectio.colors
-    val q = fold(query)
-    fun matches(text: String) = fold(text).contains(q)
-    val sections = SectionEntry.all.filter { visible(it) && (matches(it.title) || matches(it.blurb)) }
-    val passages: List<Passage> = library?.passages?.filter { matches(it.citation) || matches(it.title) }?.take(8) ?: emptyList()
-    val words: List<VocabEntry> = library?.let { lib ->
-        val all = lib.coreVocabulary + lib.supplementaryVocabulary
-        val byHead = all.filter { matches(it.headword) }
-        val byDefinition = if (query.length >= 3) all.filter { !matches(it.headword) && matches(it.definition) } else emptyList()
-        (byHead + byDefinition).take(20)
-    } ?: emptyList()
-    val topics: List<GrammarTopic> = library?.grammarTopics?.filter { matches(it.name) }?.take(8) ?: emptyList()
+    val sections = results.sections
+    val passages = results.passages
+    val words = results.words
+    val topics = results.topics
 
-    if (sections.isEmpty() && passages.isEmpty() && words.isEmpty() && topics.isEmpty()) {
+    if (results.isEmpty) {
         Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.TopCenter) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Symbol("magnifyingglass", tint = c.inkFaint, size = 44.dp)
@@ -248,6 +277,7 @@ private fun SectionCard(model: AppModel, entry: SectionEntry, onClick: () -> Uni
 private fun WordSheet(model: AppModel, entry: VocabEntry) {
     val c = Lectio.colors
     val card = model.vocab[entry.id]
+    val haptics = LocalHapticFeedback.current
     Column(Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(entry.lemma, style = LectioText.latinItalic(28.sp), color = c.ink)
         QuietLabel(entry.pos)
@@ -260,7 +290,10 @@ private fun WordSheet(model: AppModel, entry: VocabEntry) {
                 Text(if (days == 0) "In your deck, due today" else "In your deck, due in $days day${if (days == 1) "" else "s"}", style = LectioText.subheadline, color = c.inkMuted)
             }
         } else {
-            LectioButton({ model.update { it.seedVocab(listOf(entry.id)) } }, Modifier.fillMaxWidth(), prominent = true) { ButtonLabel("Add to my vocabulary deck", "plus") }
+            LectioButton({
+                haptics.performHapticFeedback(HapticFeedbackType.Confirm)
+                model.update { it.seedVocab(listOf(entry.id)) }
+            }, Modifier.fillMaxWidth(), prominent = true) { ButtonLabel("Add to my vocabulary deck", "plus") }
         }
     }
 }

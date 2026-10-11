@@ -23,13 +23,16 @@ object Lectio {
         @Composable @ReadOnlyComposable get() = LocalLectioColors.current
 }
 
+/** Whether this appearance is dark, given whether the system is. */
+fun Appearance.isDark(systemDark: Boolean): Boolean = when (this) {
+    Appearance.System -> systemDark
+    Appearance.Light -> false
+    Appearance.Dark -> true
+}
+
 @Composable
 fun LectioTheme(appearance: Appearance = Appearance.System, content: @Composable () -> Unit) {
-    val dark = when (appearance) {
-        Appearance.System -> isSystemInDarkTheme()
-        Appearance.Light -> false
-        Appearance.Dark -> true
-    }
+    val dark = appearance.isDark(isSystemInDarkTheme())
     val colors = if (dark) LectioColors.Dark else LectioColors.Light
     CompositionLocalProvider(LocalLectioColors provides colors) {
         MaterialTheme(colorScheme = colors.toMaterial(), typography = materialTypography(), content = content)

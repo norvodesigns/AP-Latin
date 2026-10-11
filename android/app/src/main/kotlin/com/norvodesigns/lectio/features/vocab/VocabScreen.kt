@@ -17,6 +17,8 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -75,11 +77,12 @@ private fun fold(s: String) = Normalizer.normalize(s, Normalizer.Form.NFD).repla
 fun VocabScreen(model: AppModel) {
     val library = model.content ?: return
     val c = Lectio.colors
-    var direction by remember { mutableStateOf(VocabDirection.LaEn) }
-    var unit by remember { mutableStateOf<String?>(null) }
-    var passageId by remember { mutableStateOf<String?>(null) }
-    var newBatch by remember { mutableStateOf(20) }
-    var search by remember { mutableStateOf("") }
+    // Saved with the tab, so the choices are still set after a visit to another tab (iOS keeps the tab's view alive).
+    var direction by rememberSaveable(stateSaver = Saver<VocabDirection, String>({ it.name }, { VocabDirection.valueOf(it) })) { mutableStateOf(VocabDirection.LaEn) }
+    var unit by rememberSaveable { mutableStateOf<String?>(null) }
+    var passageId by rememberSaveable { mutableStateOf<String?>(null) }
+    var newBatch by rememberSaveable { mutableStateOf(20) }
+    var search by rememberSaveable { mutableStateOf("") }
 
     val scope = remember(library, unit, passageId) { scoped(library, unit, passageId) }
     val scopeIds = remember(scope) { scope.mapTo(HashSet()) { it.id } }

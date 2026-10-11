@@ -1,6 +1,5 @@
 package com.norvodesigns.lectio.features.read
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -20,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,7 +32,6 @@ import com.norvodesigns.lectio.AppModel
 import com.norvodesigns.lectio.core.Passage
 import com.norvodesigns.lectio.ui.components.Hairline
 import com.norvodesigns.lectio.ui.components.PageScaffold
-import com.norvodesigns.lectio.ui.components.ProvidePushedBack
 import com.norvodesigns.lectio.ui.components.QuietLabel
 import com.norvodesigns.lectio.ui.components.RubricLabel
 import com.norvodesigns.lectio.ui.components.Symbol
@@ -44,22 +45,20 @@ import com.norvodesigns.lectio.ui.theme.LectioText
  */
 @Composable
 fun ReadScreen(model: AppModel) {
-    val passage = model.readPassageId?.let { model.content?.passage(it) }
-    if (passage != null) {
-        BackHandler { model.readPassageId = null }
-        androidx.compose.runtime.key(passage.id) {
-            ProvidePushedBack({ model.readPassageId = null }) { PassageReader(model, passage) }
-        }
+    // Held here, above the reader, so the index keeps its filter and place while a passage is open (iOS keeps the index alive under the pushed reader).
+    var showSupplementary by rememberSaveable { mutableStateOf(true) }
+    val listState = rememberLazyListState()
+    if (model.readStack.top != null) {
+        PassageStackReader(model, model.readStack)
     } else {
-        ReadIndex(model)
+        ReadIndex(model, showSupplementary, { showSupplementary = it }, listState)
     }
 }
 
 @Composable
-private fun ReadIndex(model: AppModel) {
+private fun ReadIndex(model: AppModel, showSupplementary: Boolean, setShowSupplementary: (Boolean) -> Unit, listState: LazyListState) {
     val c = Lectio.colors
     val library = model.content
-    var showSupplementary by remember { mutableStateOf(true) }
     var menu by remember { mutableStateOf(false) }
     PageScaffold(
         "Reading Room", ambient = false,
@@ -70,7 +69,7 @@ private fun ReadIndex(model: AppModel) {
                     DropdownMenuItem(
                         text = { Text(if (showSupplementary) "Hide supplementary passages" else "Show supplementary passages") },
                         onClick = {
-                            showSupplementary = !showSupplementary
+                            setShowSupplementary(!showSupplementary)
                             menu = false
                         },
                     )
@@ -79,7 +78,7 @@ private fun ReadIndex(model: AppModel) {
         },
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.TopCenter) {
-            LazyColumn(Modifier.widthIn(max = 760.dp).fillMaxWidth(), contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 24.dp)) {
+            LazyColumn(Modifier.widthIn(max = 760.dp).fillMaxWidth(), listState, contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 24.dp)) {
                 if (library != null) for (group in library.passagesByUnit) {
                     val passages = group.passages.filter { showSupplementary || it.required }
                         .sortedWith(compareBy({ if (it.required) 0 else 1 }, { it.citation }))
@@ -105,7 +104,7 @@ private fun PassageRow(model: AppModel, passage: Passage) {
     val state = remember(model.progress, passage.id) { model.progress.passage(passage.id) }
     Column {
         Row(
-            Modifier.fillMaxWidth().clickable(role = Role.Button) { model.readPassageId = passage.id }.padding(horizontal = 20.dp, vertical = 10.dp),
+            Modifier.fillMaxWidth().clickable(role = Role.Button) { model.readStack.reset(passage.id) }.padding(horizontal = 20.dp, vertical = 10.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {

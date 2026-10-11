@@ -46,6 +46,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -284,7 +285,8 @@ fun OnboardingScreen(model: AppModel, launchStep: Step = Step.Welcome) {
     }
     BackHandler(enabled = flow.showAccount || flow.canGoBack) { if (flow.showAccount) flow.showAccount = false else flow.back() }
 
-    Box(Modifier.fillMaxSize().ambient()) {
+    // Over the whole app, swallowing touches so nothing underneath can be reached.
+    Box(Modifier.fillMaxSize().ambient().pointerInput(Unit) {}) {
         Column(Modifier.fillMaxSize()) {
             TopBar(flow)
             Box(Modifier.weight(1f).fillMaxWidth()) {

@@ -77,16 +77,6 @@ import com.norvodesigns.lectio.ui.theme.LectioColors
 import com.norvodesigns.lectio.ui.theme.LectioText
 import kotlinx.coroutines.launch
 
-/**
- * A passage opened over the screen that linked to it ("read in context"), with a
- * back button that returns there.
- */
-@Composable
-fun ReaderPage(model: AppModel, passage: Passage, onBack: () -> Unit) {
-    androidx.activity.compose.BackHandler(onBack = onBack)
-    com.norvodesigns.lectio.ui.components.ProvidePushedBack(onBack) { PassageReader(model, passage) }
-}
-
 /** A word the reader tapped, for the glossary. */
 data class WordSelection(val passageId: String, val lineN: Int, val tokenIndex: Int, val token: Token)
 
@@ -121,7 +111,7 @@ internal fun fillFor(c: LectioColors, color: String): Color = when (color) {
  * or ask the tutor about the line from the bar that appears.
  */
 @Composable
-fun PassageReader(model: AppModel, passage: Passage) {
+fun PassageReader(model: AppModel, passage: Passage, onNavigate: (Passage) -> Unit = {}) {
     val c = Lectio.colors
     val library = model.content
     val state = remember(model.progress, passage.id) { model.progress.passage(passage.id) }
@@ -137,6 +127,7 @@ fun PassageReader(model: AppModel, passage: Passage) {
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     val wide = LocalConfiguration.current.screenWidthDp >= 600
     val haptics = LocalHapticFeedback.current
+    val practice = LocalReaderPractice.current
 
     LaunchedEffect(passage.id) {
         model.update { it.markOpened(passage.id) }
@@ -149,6 +140,7 @@ fun PassageReader(model: AppModel, passage: Passage) {
     fun existing(s: SpanSelection): Annotation? = state.annotations.firstOrNull { it.lineN == s.lineN && it.startTok == s.start && it.endTok == s.end }
 
     fun tapped(line: PassageLine, index: Int) {
+        model.retireTip("tip.gloss")
         val current = span
         if (current != null) {
             if (current.lineN == line.n) {
@@ -206,7 +198,8 @@ fun PassageReader(model: AppModel, passage: Passage) {
                             leadingIcon = { Symbol("checklist", size = 20.dp) },
                             onClick = {
                                 practiceMenu = false
-                                model.quizSession = QuizSessionRequest(questions.shuffled(), isReview = false)
+                                val request = QuizSessionRequest(questions.shuffled(), isReview = false)
+                                if (practice != null) practice.quiz(request) else model.quizSession = request
                             },
                         )
                         if (scannable) DropdownMenuItem(
@@ -214,8 +207,13 @@ fun PassageReader(model: AppModel, passage: Passage) {
                             leadingIcon = { Symbol("waveform.path", size = 20.dp) },
                             onClick = {
                                 practiceMenu = false
-                                model.scansionStartPassageId = passage.id
-                                model.openSection(AppTab.Scansion, from = AppTab.Read)
+                                if (practice != null) {
+                                    practice.scan(passage)
+                                } else {
+                                    // The lab opens as a page, and Back returns to the screen this passage was read from.
+                                    model.scansionStartPassageId = passage.id
+                                    model.openSection(AppTab.Scansion, from = model.selectedTab)
+                                }
                             },
                         )
                     }
@@ -275,7 +273,7 @@ fun PassageReader(model: AppModel, passage: Passage) {
                         )
                     }
                 }
-                item(key = "footer") { Box(Modifier.widthIn(max = 760.dp).fillMaxWidth()) { Footer(model, passage) } }
+                item(key = "footer") { Box(Modifier.widthIn(max = 760.dp).fillMaxWidth()) { Footer(model, passage, onNavigate) } }
             }
 
             // Floating over the page: the gloss, or the highlight bar.
@@ -329,7 +327,7 @@ private fun Header(passage: Passage) {
 }
 
 @Composable
-private fun Footer(model: AppModel, passage: Passage) {
+private fun Footer(model: AppModel, passage: Passage, onNavigate: (Passage) -> Unit) {
     val c = Lectio.colors
     val all = model.content?.passages ?: emptyList()
     val i = all.indexOfFirst { it.id == passage.id }
@@ -339,11 +337,11 @@ private fun Footer(model: AppModel, passage: Passage) {
         Text("Tap a word for its gloss. Touch and hold to highlight, add a note, or ask about the line.", style = LectioText.footnote, color = c.inkFaint)
         Hairline()
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            if (prev != null) Column(Modifier.clickable(role = Role.Button) { model.readPassageId = prev.id }.padding(vertical = 6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            if (prev != null) Column(Modifier.clickable(role = Role.Button) { onNavigate(prev) }.padding(vertical = 6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 QuietLabel("← Previous")
                 Text(prev.citation, style = LectioText.latin(17.sp), color = c.ink)
             } else Box(Modifier.size(1.dp))
-            if (next != null) Column(Modifier.clickable(role = Role.Button) { model.readPassageId = next.id }.padding(vertical = 6.dp), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            if (next != null) Column(Modifier.clickable(role = Role.Button) { onNavigate(next) }.padding(vertical = 6.dp), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 QuietLabel("Next →")
                 Text(next.citation, style = LectioText.latin(17.sp), color = c.ink)
             }
