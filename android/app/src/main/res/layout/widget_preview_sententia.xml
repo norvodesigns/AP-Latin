@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- What the widget picker shows for this widget (Android 12+): the widget as it looks, with sample figures. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="HardcodedText"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/parchment"
+    android:orientation="vertical"
+    android:padding="14dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="SENTENTIA"
+        android:textColor="@color/widget_rubric"
+        android:textSize="9sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:fontFamily="serif"
+        android:maxLines="5"
+        android:text="Arma virumque canō, Trōiae quī prīmus ab ōrīs"
+        android:textColor="@color/widget_ink"
+        android:textSize="17sp"
+        android:textStyle="italic" />
+</LinearLayout>

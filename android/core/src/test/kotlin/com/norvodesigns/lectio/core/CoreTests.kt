@@ -767,3 +767,34 @@ class WatchDeckTests {
         kotlin.test.assertNull(WatchDeck.fromJson("not json"))
     }
 }
+
+class WatchGlanceTests {
+    private val zone = java.time.ZoneId.of("America/New_York")
+    private fun at(text: String) = java.time.ZonedDateTime.parse(text).toInstant()
+
+    @kotlin.test.Test
+    fun aGlanceIsStaleOnlyOnALaterDay() {
+        val glance = WatchGlance(7, 3, 200, at("2026-10-09T23:30:00-04:00").toEpochMilli())
+        kotlin.test.assertFalse(glance.isStale(at("2026-10-09T23:59:00-04:00"), zone))
+        // Past midnight, yesterday's count would mislead.
+        kotlin.test.assertTrue(glance.isStale(at("2026-10-10T00:01:00-04:00"), zone))
+    }
+
+    @kotlin.test.Test
+    fun theCountdownRunsOnFromTheDayTheDeckWasSent() {
+        val glance = WatchGlance(7, 3, 200, at("2026-10-09T09:00:00-04:00").toEpochMilli())
+        kotlin.test.assertEquals(200, glance.daysUntilExam(at("2026-10-09T22:00:00-04:00"), zone))
+        kotlin.test.assertEquals(197, glance.daysUntilExam(at("2026-10-12T08:00:00-04:00"), zone))
+        // Never below zero, and a clock set back doesn't add days.
+        kotlin.test.assertEquals(0, glance.copy(daysUntilExam = 1).daysUntilExam(at("2026-10-20T08:00:00-04:00"), zone))
+        kotlin.test.assertEquals(200, glance.daysUntilExam(at("2026-10-01T08:00:00-04:00"), zone))
+    }
+
+    @kotlin.test.Test
+    fun aGlanceSurvivesItsJson() {
+        val glance = WatchGlance(7, 3, 200, 1_790_000_000_000)
+        kotlin.test.assertEquals(glance, WatchGlance.fromJson(glance.toJson()))
+        kotlin.test.assertNull(WatchGlance.fromJson("{}"))
+    }
+}
+

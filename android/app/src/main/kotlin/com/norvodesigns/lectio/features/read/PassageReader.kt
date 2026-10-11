@@ -270,6 +270,7 @@ fun PassageReader(model: AppModel, passage: Passage, onNavigate: (Passage) -> Un
                             scaleBoost = if (wide) 1.2 else 1.0,
                             onTap = { tapped(line, it) }, onHold = { held(line, it) },
                             onNote = { a -> noteTarget = NoteTarget(SpanSelection(a.lineN, a.startTok, a.endTok), a.text, a.id, a.note) },
+                            onAsk = { askLine = line },
                         )
                     }
                 }
@@ -279,7 +280,12 @@ fun PassageReader(model: AppModel, passage: Passage, onNavigate: (Passage) -> Un
             // Floating over the page: the gloss, or the highlight bar.
             Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().navigationBarsPadding(), horizontalAlignment = Alignment.CenterHorizontally) {
                 AnimatedVisibility(selection != null && span == null, enter = slideInVertically { it } + fadeIn(), exit = slideOutVertically { it } + fadeOut()) {
-                    selection?.let { GlossPanel(model, it) { selection = null } }
+                    selection?.let { sel ->
+                        GlossPanel(model, sel, onAsk = {
+                            selection = null
+                            askLine = passage.lines.firstOrNull { it.n == sel.lineN }
+                        }) { selection = null }
+                    }
                 }
                 AnimatedVisibility(span != null, enter = slideInVertically { it } + fadeIn(), exit = slideOutVertically { it } + fadeOut()) {
                     span?.let { s ->
@@ -357,9 +363,12 @@ private fun Footer(model: AppModel, passage: Passage, onNavigate: (Passage) -> U
 @Composable
 private fun LineRow(
     model: AppModel, passage: Passage, line: PassageLine, annotations: List<Annotation>, flagged: Boolean, glossed: Int?, span: SpanSelection?,
-    scaleBoost: Double, onTap: (Int) -> Unit, onHold: (Int) -> Unit, onNote: (Annotation) -> Unit,
+    scaleBoost: Double, onTap: (Int) -> Unit, onHold: (Int) -> Unit, onNote: (Annotation) -> Unit, onAsk: () -> Unit,
 ) {
     val c = Lectio.colors
+    val haptics = LocalHapticFeedback.current
+    var menu by remember { mutableStateOf(false) }
+    val toggleFlag = { model.update { it.toggleFlaggedLine(passage.id, line.n) } }
     val glossaryEnabled = model.progress.glossaryEnabled
     // Verse is numbered every fifth line, as printed; prose sections always.
     val showNumber = !passage.isPoetry || line.n % 5 == 0 || line.n == passage.lines.firstOrNull()?.n
@@ -374,12 +383,44 @@ private fun LineRow(
     val style = LectioText.latin(if (passage.isPoetry) 22.sp else 21.sp, model.latinScale * scaleBoost)
 
     Row(Modifier.fillMaxWidth().padding(vertical = if (passage.isPoetry) 3.dp else 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
-        Text(
-            if (showNumber || flagged) "${line.n}" else " ",
-            Modifier.width(30.dp).clickable(role = Role.Button) { model.update { it.toggleFlaggedLine(passage.id, line.n) } }.padding(top = 6.dp)
-                .semantics { contentDescription = if (flagged) "Line ${line.n}, flagged as hard" else "Line ${line.n}" },
-            style = LectioText.caption.copy(fontFeatureSettings = "tnum", textAlign = androidx.compose.ui.text.style.TextAlign.End), color = if (flagged) c.rubric else c.inkFaint,
-        )
+        // Verse is numbered every fifth line, as printed; prose sections always. Tap the number to flag the line;
+        // hold it for the line's menu. (Not a menu on the whole row: that would take over holding a word, which starts a highlight.)
+        Box {
+            Text(
+                if (showNumber || flagged) "${line.n}" else " ",
+                Modifier.width(30.dp)
+                    .combinedClickable(
+                        role = Role.Button,
+                        onClickLabel = if (flagged) "Unflag this line" else "Flag this line",
+                        onLongClickLabel = "Ask about this line",
+                        onLongClick = {
+                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                            menu = true
+                        },
+                        onClick = toggleFlag,
+                    )
+                    .padding(top = 6.dp)
+                    .semantics { contentDescription = if (flagged) "Line ${line.n}, flagged as hard" else "Line ${line.n}" },
+                style = LectioText.caption.copy(fontFeatureSettings = "tnum", textAlign = androidx.compose.ui.text.style.TextAlign.End), color = if (flagged) c.rubric else c.inkFaint,
+            )
+            DropdownMenu(menu, { menu = false }, containerColor = c.slip) {
+                DropdownMenuItem(
+                    text = { Text("Ask about line ${line.n}") }, leadingIcon = { Symbol("sparkles", size = 20.dp) },
+                    onClick = {
+                        menu = false
+                        onAsk()
+                    },
+                )
+                DropdownMenuItem(
+                    text = { Text(if (flagged) "Unflag line ${line.n}" else "Flag line ${line.n} as hard") },
+                    leadingIcon = { Symbol(if (flagged) "flag.slash" else "flag", size = 20.dp) },
+                    onClick = {
+                        menu = false
+                        toggleFlag()
+                    },
+                )
+            }
+        }
         FlowRow(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             for (chunk in chunks) Row {
                 for (i in chunk) TokenView(line, i, style, annotations, glossed == i, span?.contains(i) ?: false, glossaryEnabled, onTap, onHold, onNote)
@@ -425,7 +466,7 @@ private fun Modifier.drawUnderline(color: Color): Modifier = this.drawBehind {
 
 /** The gloss for a tapped word: a card over the page, short enough that the line it came from stays in view. */
 @Composable
-private fun GlossPanel(model: AppModel, selection: WordSelection, onClose: () -> Unit) {
+private fun GlossPanel(model: AppModel, selection: WordSelection, onAsk: () -> Unit, onClose: () -> Unit) {
     val c = Lectio.colors
     val library = model.content
     val entries = selection.token.glosses.mapNotNull { g -> library?.vocab(g.id)?.let { g to it } }
@@ -435,7 +476,18 @@ private fun GlossPanel(model: AppModel, selection: WordSelection, onClose: () ->
     ) {
         Box {
             Column(Modifier.verticalScroll(rememberScrollState()).padding(start = 24.dp, end = 24.dp, top = 20.dp, bottom = 18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                Text(selection.token.text, style = LectioText.latin(34.sp), color = c.ink)
+                Row(Modifier.fillMaxWidth().padding(end = 36.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(selection.token.text, Modifier.weight(1f), style = LectioText.latin(34.sp), color = c.ink)
+                    Surface(
+                        Modifier.clip(RoundedCornerShape(50)).clickable(role = Role.Button, onClick = onAsk).semantics { contentDescription = "Ask about this line" },
+                        shape = RoundedCornerShape(50), color = c.redTint,
+                    ) {
+                        Row(Modifier.padding(horizontal = 14.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Symbol("sparkles", tint = c.rubric, size = 16.dp)
+                            Text("Ask", style = LectioText.subheadline.copy(fontWeight = FontWeight.SemiBold), color = c.rubric)
+                        }
+                    }
+                }
                 if (entries.isEmpty()) {
                     Text("Not on the vocabulary lists. The exam would gloss a word like this in the margin.", style = LectioText.prose(LectioText.callout), color = c.inkMuted)
                 } else {
@@ -453,6 +505,7 @@ private fun GlossPanel(model: AppModel, selection: WordSelection, onClose: () ->
                         }
                     }
                 }
+                Text("Touch and hold a word to highlight it or add a note. Ask brings in the tutor on this line.", style = LectioText.footnote, color = c.inkFaint)
             }
             IconButton(onClose, Modifier.align(Alignment.TopEnd)) { Symbol("xmark", tint = c.inkMuted, size = 20.dp, contentDescription = "Close") }
         }

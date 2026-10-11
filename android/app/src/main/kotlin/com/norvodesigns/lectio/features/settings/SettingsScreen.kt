@@ -20,6 +20,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import com.norvodesigns.lectio.notifications.notificationsAllowed
+import com.norvodesigns.lectio.notifications.openNotificationSettings
+import com.norvodesigns.lectio.util.formatClock
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,12 +63,19 @@ fun SettingsScreen(model: AppModel) {
     var pendingImport by remember { mutableStateOf<ProgressDocument?>(null) }
     var importError by remember { mutableStateOf<String?>(null) }
     var confirmClear by remember { mutableStateOf(false) }
+    // Notifications can be switched off in the system settings while Lectio is away: checked again whenever the screen comes back.
+    var notificationsOn by remember { mutableStateOf(notificationsAllowed(context)) }
+    LifecycleResumeEffect(Unit) {
+        notificationsOn = notificationsAllowed(context)
+        onPauseOrDispose {}
+    }
     var reminderOn by remember { mutableStateOf(model.reminderEnabled) }
     var reminderNote by remember { mutableStateOf<String?>(null) }
     var aiAllowed by remember { mutableStateOf(AIConsent.granted(model)) }
 
     val askNotifications = rememberNotificationPermission { granted ->
         reminderOn = granted
+        notificationsOn = granted
         model.setReminder(granted)
         reminderNote = if (granted) null else "Notifications are off for Lectio. Turn them on in the system settings to get a reminder."
     }
@@ -149,14 +160,14 @@ fun SettingsScreen(model: AppModel) {
                     onPlus = { model.update { it.setStudyPlan(minutesPerDay = minOf(240, plan.minutesPerDay + 5)) } },
                     canMinus = plan.minutesPerDay > 5, canPlus = plan.minutesPerDay < 240,
                 )
-                ToggleRow("Daily reminder", reminderOn, { on ->
+                ToggleRow("Daily reminder", reminderOn && notificationsOn, { on ->
                     reminderNote = null
                     if (on) askNotifications() else {
                         reminderOn = false
                         model.setReminder(false)
                     }
                 })
-                if (reminderOn) {
+                if (reminderOn && notificationsOn) {
                     val minutes = model.reminderMinutes
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Text("Remind me at", Modifier.weight(1f), style = LectioText.prose(LectioText.body), color = c.ink)
@@ -168,7 +179,11 @@ fun SettingsScreen(model: AppModel) {
                         }
                     }
                 }
-                reminderNote?.let { Text(it, style = LectioText.footnote, color = c.incorrect) }
+                val note = reminderNote ?: if (reminderOn && !notificationsOn) "Notifications are off for Lectio, so the reminder can't come. Turn them on in the system settings." else null
+                note?.let {
+                    Text(it, style = LectioText.footnote, color = c.incorrect)
+                    TextAction("Open notification settings", icon = "bell") { openNotificationSettings(context) }
+                }
                 Text(
                     "Time counts while a study section is open on screen, the same way the website counts it. The reminder quotes the day’s line and says how many cards are due.",
                     style = LectioText.footnote, color = c.inkMuted,
@@ -239,10 +254,6 @@ private fun InfoRow(label: String, value: String) {
 
 private fun Modifier.clickableRow(onClick: () -> Unit): Modifier = this.then(Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick))
 
-private fun formatClock(context: android.content.Context, minutes: Int): String {
-    val cal = java.util.Calendar.getInstance().apply { set(java.util.Calendar.HOUR_OF_DAY, minutes / 60); set(java.util.Calendar.MINUTE, minutes % 60) }
-    return DateFormat.getTimeFormat(context).format(cal.time)
-}
 
 /** The bundled fonts are under the SIL Open Font License, which asks for the licence to travel with them; the Latin texts are public domain. */
 @Composable

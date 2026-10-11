@@ -5,13 +5,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.wear.watchface.complications.datasource.ComplicationDataSourceUpdateRequester
 import com.google.android.gms.wearable.PutDataRequest
 import com.google.android.gms.wearable.Wearable
 import com.norvodesigns.lectio.core.WatchDeck
+import com.norvodesigns.lectio.core.WatchGlance
 import com.norvodesigns.lectio.core.WatchPaths
 import com.norvodesigns.lectio.core.WatchReview
-import android.content.ComponentName
 import java.util.UUID
 
 /**
@@ -21,7 +20,7 @@ import java.util.UUID
  */
 class WatchStore private constructor(context: Context) {
     private val app = context.applicationContext
-    private val prefs = app.getSharedPreferences("watch", Context.MODE_PRIVATE)
+    private val prefs = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
     var deck by mutableStateOf<WatchDeck?>(null)
         private set
@@ -74,13 +73,19 @@ class WatchStore private constructor(context: Context) {
 
     private fun publish() {
         val current = deck ?: return
-        prefs.edit().putInt("cardsLeft", queue.size).putInt("streak", current.streak).putInt("days", current.daysUntilExam).apply()
-        runCatching {
-            ComplicationDataSourceUpdateRequester.create(app, ComponentName(app, CardsComplicationService::class.java)).requestUpdateAll()
-        }
+        // When the deck was sent travels with the numbers, so the face can tell yesterday's count from today's.
+        prefs.edit().putString(GLANCE, WatchGlance(queue.size, current.streak, current.daysUntilExam, current.sentAt).toJson()).apply()
+        CardsComplicationService.refresh(app)
     }
 
     companion object {
+        const val PREFS = "watch"
+        const val GLANCE = "glance"
+
+        /** What the complication shows, or null before the phone has sent a deck. */
+        fun glance(context: Context): WatchGlance? =
+            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(GLANCE, null)?.let { WatchGlance.fromJson(it) }
+
         @Volatile private var instance: WatchStore? = null
         fun get(context: Context): WatchStore = instance ?: synchronized(this) { instance ?: WatchStore(context).also { instance = it } }
     }

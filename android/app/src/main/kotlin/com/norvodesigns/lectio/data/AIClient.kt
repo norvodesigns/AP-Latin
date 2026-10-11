@@ -24,13 +24,14 @@ class AIClient(private val baseUrl: String = AppConfig.webBaseUrl) {
     private fun route(name: String) = "$baseUrl/api/ai/$name"
 
     /** Whether any AI provider is configured on the server. Every AI surface checks this first so it can show its self-graded path immediately. */
-    suspend fun isConfigured(): Boolean = withContext(Dispatchers.IO) {
+    /** Whether any AI provider is configured on the server, or null when the server couldn't be asked (offline, a slow network). */
+    suspend fun isConfigured(): Boolean? = withContext(Dispatchers.IO) {
         runCatching {
             val request = Request.Builder().url(route("status")).build()
-            Http.client.newCall(request).execute().use { response ->
-                JSONValue.parse(response.body.string())["configured"]?.boolValue ?: false
+            Http.client.newBuilder().callTimeout(15, java.util.concurrent.TimeUnit.SECONDS).build().newCall(request).execute().use { response ->
+                if (response.code != 200) null else JSONValue.parse(response.body.string())["configured"]?.boolValue
             }
-        }.getOrDefault(false)
+        }.getOrNull()
     }
 
     /** POSTs to a JSON route (grading, sight generation) and returns its JSON. */

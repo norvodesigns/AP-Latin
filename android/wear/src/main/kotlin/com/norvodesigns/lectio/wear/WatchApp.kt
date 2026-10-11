@@ -1,5 +1,6 @@
 package com.norvodesigns.lectio.wear
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -32,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.wear.compose.foundation.BasicSwipeToDismissBox
 import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.ColorScheme
 import androidx.wear.compose.material3.MaterialTheme
@@ -59,7 +61,17 @@ fun WatchApp(store: WatchStore, startReviewing: Boolean = false) {
     var reviewing by remember { mutableStateOf(startReviewing) }
     MaterialTheme(colorScheme = scheme) {
         Box(Modifier.fillMaxSize().background(Color.Black)) {
-            if (reviewing) Review(store) { reviewing = false } else Home(store) { reviewing = true }
+            if (reviewing) {
+                // Review sits over Home: a swipe from the left, or the back button, returns there (iOS pushes it on a NavigationStack).
+                BackHandler { reviewing = false }
+                BasicSwipeToDismissBox(onDismissed = { reviewing = false }) { isBackground ->
+                    Box(Modifier.fillMaxSize().background(Color.Black)) {
+                        if (isBackground) Home(store) {} else Review(store) { reviewing = false }
+                    }
+                }
+            } else {
+                Home(store) { reviewing = true }
+            }
         }
     }
 }

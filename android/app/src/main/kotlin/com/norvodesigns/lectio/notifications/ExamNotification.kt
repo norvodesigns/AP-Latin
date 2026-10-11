@@ -1,16 +1,12 @@
 package com.norvodesigns.lectio.notifications
 
-import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat
 import com.norvodesigns.lectio.MainActivity
 import com.norvodesigns.lectio.R
 
@@ -54,15 +50,16 @@ object ExamNotification {
         post(context, done)
     }
 
+    /** Posts the running section again, e.g. once the notification permission is granted part-way through it. */
+    fun repost(context: Context, done: Int) = update(context, done)
+
     fun end(context: Context) {
         endsAt = 0L
         runCatching { NotificationManagerCompat.from(context).cancel(ID) }
     }
 
     private fun post(context: Context, done: Int) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-        ) return
+        if (!notificationsAllowed(context)) return
         ensureChannel(context)
         val open = PendingIntent.getActivity(
             context, 0, Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP),
@@ -83,6 +80,10 @@ object ExamNotification {
             .setTimeoutAfter((endsAt - System.currentTimeMillis()).coerceAtLeast(1_000L) + 60_000L)
             .setContentIntent(open)
             .build()
-        runCatching { NotificationManagerCompat.from(context).notify(ID, notification) }
+        try {
+            NotificationManagerCompat.from(context).notify(ID, notification)
+        } catch (_: SecurityException) {
+            // The permission went between the check and the post: the exam runs the same without it.
+        }
     }
 }

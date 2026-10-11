@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:description="@string/widget_sententia_description"
     android:initialLayout="@layout/glance_default_loading_layout"
+    android:previewLayout="@layout/widget_preview_sententia"
     android:minWidth="110dp"
     android:minHeight="110dp"
     android:minResizeWidth="110dp"

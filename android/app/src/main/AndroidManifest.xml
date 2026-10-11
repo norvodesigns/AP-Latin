@@ -3,6 +3,12 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- The daily reminder is an alarm, set again after the phone restarts. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Exact reminder alarms where the permission is granted on install (Android 12); later versions use a ten-minute window. -->
+    <uses-permission
+        android:name="android.permission.SCHEDULE_EXACT_ALARM"
+        android:maxSdkVersion="32" />
 
     <application
         android:name=".LectioApplication"
@@ -73,6 +79,25 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_next_lesson_info" />
         </receiver>
+
+        <!-- The daily reminder, and setting it (and the widgets' midnight redraw) again after a restart, a clock or time-zone change, or an update. -->
+        <receiver
+            android:name=".notifications.ReminderReceiver"
+            android:exported="false" />
+        <receiver
+            android:name=".notifications.RescheduleReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".widgets.MidnightReceiver"
+            android:exported="false" />
 
         <!-- Grades made on the Wear OS watch arrive here; a watch that connects is sent today's cards. -->
         <service

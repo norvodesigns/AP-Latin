@@ -18,6 +18,7 @@ class LectioApplication : Application() {
         com.norvodesigns.lectio.notifications.ExamNotification.ensureChannel(this)
         com.norvodesigns.lectio.notifications.Reminders.ensureChannel(this)
         com.norvodesigns.lectio.widgets.WidgetRefreshWorker.schedule(this)
+        com.norvodesigns.lectio.widgets.MidnightRedraw.schedule(this)
         // Study time counts only while the app is on screen, and progress is saved the moment it isn't.
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onStart(owner: LifecycleOwner) = model.sceneBecameActive()

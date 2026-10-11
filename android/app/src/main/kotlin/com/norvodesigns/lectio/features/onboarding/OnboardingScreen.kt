@@ -391,12 +391,9 @@ private fun Secondary(title: String, onClick: () -> Unit) {
     LectioButton(onClick, Modifier.fillMaxWidth()) { ButtonLabel(title) }
 }
 
-private fun formatMinutes(minutes: Int): String {
-    val h = minutes / 60
-    val m = minutes % 60
-    val hour12 = if (h % 12 == 0) 12 else h % 12
-    return "%d:%02d %s".format(hour12, m, if (h < 12) "AM" else "PM")
-}
+/** The reminder time in the device's clock style, as Settings shows it. */
+@Composable
+private fun formatMinutes(minutes: Int): String = com.norvodesigns.lectio.util.formatClock(androidx.compose.ui.platform.LocalContext.current, minutes)
 
 /* ------------------------------------------------------------------ */
 /* Steps                                                               */
@@ -537,7 +534,7 @@ private fun StepContent(flow: Flow, step: Step) {
                         Symbol("bell", tint = c.ink, size = 22.dp)
                         Text("Every day at", Modifier.weight(1f).padding(start = 10.dp), style = LectioText.prose(LectioText.body), color = c.ink)
                         TextAction(formatMinutes(flow.reminderMinutes)) {
-                            android.app.TimePickerDialog(context, { _, h, m -> flow.reminderMinutes = h * 60 + m }, flow.reminderMinutes / 60, flow.reminderMinutes % 60, false).show()
+                            android.app.TimePickerDialog(context, { _, h, m -> flow.reminderMinutes = h * 60 + m }, flow.reminderMinutes / 60, flow.reminderMinutes % 60, android.text.format.DateFormat.is24HourFormat(context)).show()
                         }
                     }
                 }

@@ -100,6 +100,9 @@ class ExamPaper(val mcq: List<Question>, val frqs: List<FrqPrompt>) {
 fun ExamScreen(model: AppModel) {
     val library = model.content ?: return
     val c = Lectio.colors
+    // The countdown in the shade needs the notification permission: asked here, before the clock starts, not over a running section.
+    // The exam begins whatever the answer.
+    val begin = rememberNotificationPermission { model.examPaper = ExamPaper.build(library) }
     PageScaffold("Practice Exam") { padding ->
         ScreenColumn(Modifier.padding(padding), maxWidth = 720.dp, spacing = 22.dp) {
             Text(
@@ -122,7 +125,7 @@ fun ExamScreen(model: AppModel) {
                 "The question bank holds $pool items, so some of the 52 slots repeat a question. The timing rehearsal is still realistic; the accuracy figure less so.",
                 style = LectioText.footnote, color = c.inkMuted,
             )
-            LectioButton({ model.examPaper = ExamPaper.build(library) }, Modifier.fillMaxWidth(), prominent = true) { ButtonLabel("Begin Section I", style = LectioText.headline) }
+            LectioButton(begin, Modifier.fillMaxWidth(), prominent = true) { ButtonLabel("Begin Section I", style = LectioText.headline) }
             val past = model.progress.examResults.takeLast(5).reversed()
             if (past.isNotEmpty()) Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 RubricLabel("Previous exams")
@@ -155,8 +158,6 @@ fun ExamSession(model: AppModel, paper: ExamPaper, onClose: () -> Unit) {
     var saved by remember(paper) { mutableStateOf(false) }
     var confirmQuit by remember(paper) { mutableStateOf(false) }
     var now by remember(paper) { mutableLongStateOf(System.currentTimeMillis()) }
-
-    val askPermission = rememberNotificationPermission { }
 
     val frqDone = paper.frqs.count { p -> p.subquestions.any { !frqAnswers["${p.id}:${it.id}"].isNullOrBlank() } }
 
@@ -205,7 +206,6 @@ fun ExamSession(model: AppModel, paper: ExamPaper, onClose: () -> Unit) {
     }
 
     LaunchedEffect(paper) {
-        askPermission()
         model.update { it.markStudied() }
         mcqStart = System.currentTimeMillis()
         ExamNotification.start(context, "Section I", "Multiple choice", mcqStart + (ExamPaper.MCQ_SECONDS * 1000).toLong(), paper.mcq.size)
@@ -264,7 +264,7 @@ fun ExamSession(model: AppModel, paper: ExamPaper, onClose: () -> Unit) {
                 Stage.Frq -> FrqStage(model, paper, frqAnswers) { finish() }
                 Stage.Report -> {
                     val (correct, bySkill, byType) = tallies()
-                    ReportStage(model, paper, answers, correct, bySkill, byType, frqScores, frqPoints, frqMax, saved) { saveIfNeeded() }
+                    ReportStage(model, paper, answers, correct, bySkill, byType, frqScores, frqPoints, frqMax, saved, onScoreChanged = { saved = false }) { saveIfNeeded() }
                 }
             }
         }
@@ -429,7 +429,7 @@ private fun FrqStage(model: AppModel, paper: ExamPaper, answers: MutableMap<Stri
 @Composable
 private fun ReportStage(
     model: AppModel, paper: ExamPaper, answers: Map<Int, String>, correct: Int, bySkill: Map<String, Tally>, byType: Map<String, Tally>,
-    frqScores: MutableMap<String, Double>, frqPoints: Double, frqMax: Double, saved: Boolean, onSave: () -> Unit,
+    frqScores: MutableMap<String, Double>, frqPoints: Double, frqMax: Double, saved: Boolean, onScoreChanged: () -> Unit, onSave: () -> Unit,
 ) {
     val c = Lectio.colors
     val library = model.content
@@ -474,7 +474,10 @@ private fun ReportStage(
                         val key = "${p.id}:${row.id}"
                         MenuPicker(
                             row.label, (0..row.maxPoints).map { it.toDouble() to "$it" }, frqScores[key] ?: 0.0,
-                            { frqScores[key] = it },
+                            {
+                                frqScores[key] = it
+                                onScoreChanged()
+                            },
                         )
                     }
                 }

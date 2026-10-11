@@ -2,6 +2,7 @@ package com.norvodesigns.lectio
 
 import android.app.Application
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.norvodesigns.lectio.core.AuthCallback
@@ -253,10 +254,15 @@ class AppModel(val app: Application) {
     /* Content                                                              */
     /* ------------------------------------------------------------------ */
 
-    /** Asks the server once whether AI is configured. */
+    /**
+     * Asks the server whether AI is configured. A yes is kept for the session;
+     * a no, or no answer at all (offline, a slow network), is asked again the
+     * next time a screen needs it, so one failed check can't switch AI off
+     * until the app is restarted.
+     */
     suspend fun checkAI() {
-        if (aiAvailable != null) return
-        aiAvailable = ai.isConfigured()
+        if (aiAvailable == true) return
+        ai.isConfigured()?.let { aiAvailable = it }
     }
 
     /** Held while the content decodes: the screen and a background service (the watch) may both ask for it at once, and it should decode once. */
@@ -1162,14 +1168,23 @@ class AppModel(val app: Application) {
             }
         }
 
+    // Held as state as well as saved, so a screen showing them updates when they change.
+    private var reminderEnabledState by mutableStateOf(prefs.bool("reminderEnabled"))
     var reminderEnabled: Boolean
-        get() = prefs.bool("reminderEnabled")
-        set(value) = prefs.put("reminderEnabled", value)
+        get() = reminderEnabledState
+        set(value) {
+            reminderEnabledState = value
+            prefs.put("reminderEnabled", value)
+        }
 
     /** Minutes after midnight, local time. Defaults to 4pm, after school. */
+    private var reminderMinutesState by mutableIntStateOf(prefs.int("reminderMinutes", 16 * 60))
     var reminderMinutes: Int
-        get() = prefs.int("reminderMinutes", 16 * 60)
-        set(value) = prefs.put("reminderMinutes", value)
+        get() = reminderMinutesState
+        set(value) {
+            reminderMinutesState = value
+            prefs.put("reminderMinutes", value)
+        }
 
     /**
      * Replaces the pending reminders with ones that know the numbers: cards due

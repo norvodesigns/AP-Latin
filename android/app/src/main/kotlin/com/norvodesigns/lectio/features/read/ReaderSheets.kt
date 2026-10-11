@@ -233,6 +233,10 @@ fun AskAboutLineSheet(model: AppModel, passage: Passage, line: PassageLine, onDi
                     }
                     answer += chunk
                 }
+                if (answer.isBlank()) {
+                    answer = ""
+                    error = "The tutor didn't send an answer. Try again in a moment."
+                }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: AIClient.Failure) {
@@ -245,9 +249,15 @@ fun AskAboutLineSheet(model: AppModel, passage: Passage, line: PassageLine, onDi
         }
     }
 
+    val focus = androidx.compose.ui.platform.LocalFocusManager.current
+    val keyboard = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
+
     fun ask(raw: String) {
         val q = raw.trim()
         if (q.isEmpty() || streaming) return
+        // The keyboard goes, so the answer has the whole sheet to stream into.
+        focus.clearFocus()
+        keyboard?.hide()
         gate.ask { send(q) }
     }
 

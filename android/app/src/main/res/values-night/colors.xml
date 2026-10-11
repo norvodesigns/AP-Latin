@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="parchment">#17140F</color>
+    <color name="widget_ink">#EFE7D5</color>
+    <color name="widget_muted">#A2967F</color>
+    <color name="widget_rubric">#E0796A</color>
 </resources>

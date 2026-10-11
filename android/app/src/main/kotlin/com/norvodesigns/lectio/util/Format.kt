@@ -18,3 +18,12 @@ fun longDate(timestamp: String): String = CloudSync.parseTimestamp(timestamp)?.l
 
 /** Words in a Latin or English string, split on whitespace. */
 fun wordCount(text: String): Int = text.split(Regex("\\s+")).count { it.isNotEmpty() }
+
+/** A time of day, given in minutes after midnight, in the device's own clock style (4:00 PM, or 16:00). */
+fun formatClock(context: android.content.Context, minutes: Int): String {
+    val cal = java.util.Calendar.getInstance().apply {
+        set(java.util.Calendar.HOUR_OF_DAY, minutes / 60)
+        set(java.util.Calendar.MINUTE, minutes % 60)
+    }
+    return android.text.format.DateFormat.getTimeFormat(context).format(cal.time)
+}
