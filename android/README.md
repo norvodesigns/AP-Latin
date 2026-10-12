@@ -29,8 +29,15 @@ restore, AI consent, reminders), and the first run. Accounts and sync use the sa
 features use the website's `/api/ai/*` routes.
 
 What's Android's own: a bottom bar on phones and a sidebar from 720 dp wide; widgets (Lectio, Next lesson,
-Sententia of the day) built with Glance; launcher shortcuts (long-press the icon); a daily reminder that
-quotes the day's line; Android's backup carries the progress file to a new phone; and the Wear OS app.
+Sententia of the day) built with Glance, redrawn at midnight, with picker previews; launcher shortcuts
+(long-press the icon); a daily reminder that quotes the day's line, set as an alarm and set again after a
+restart or a time-zone change; keyboard shortcuts for tablets and Chromebooks (Ctrl and a number between
+sections, number keys and Return in lessons, quizzes and the exam); Android's backup carries the progress
+file to a new phone; and the Wear OS app with its complication.
+
+Navigation follows iOS's stack per tab: a passage or grammar topic opened from Search or Today is pushed over
+that tab (`AppModel.pushedPage`), readers push and pop passages with Previous and Next (`PassageStack`), and a
+drill or timed attempt in progress is kept while the student visits another tab (`AppModel.screenDrafts`).
 
 Over-the-air content updates work as on iOS: the app bundles the course at build time and checks
 `lectio.norvodesigns.com/content/v1` for a newer one.

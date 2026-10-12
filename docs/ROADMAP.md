@@ -475,4 +475,14 @@ finishing a lesson counts toward the streak and daily goal.
   every change and, on request, signs and uploads to Google Play; `scripts/android-keystore.sh` makes the
   upload key; `android/PLAY_STORE.md` holds the listing, the Data safety and content-rating answers and the
   owner's checklist. The website's privacy policy and support page now cover the Android app too.
+- 2026-10-12: Android parity pass. Each area of the iOS app was read side by side with the Android port and
+  every difference checked a second time before it was fixed (82 in all). Navigation now pushes the way
+  each iOS tab's stack does: a passage or grammar topic from Search or Today opens over that tab and Back
+  returns to it as it was, Previous and Next push and pop readers, and work in progress (a translation being
+  graded, a timed sight passage, quiz and vocabulary choices) survives a visit to another tab. The daily
+  reminder is an alarm set again after a restart or a time-zone change; the system bars follow the in-app
+  appearance; sync reads the network off the main thread; the watch listener waits for the content; the
+  complication shows when its count is stale and opens the app; keyboard shortcuts match the iPad's; and
+  the reader picked up the iOS change of 10 October (the line number's menu, Ask in the gloss). 161 JVM
+  tests, including the new navigation and keyboard walks.
 

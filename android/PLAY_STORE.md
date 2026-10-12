@@ -69,7 +69,7 @@ Do these in order. Each one is something the code can't do for you.
 11. **Test the build Play gives you.** Install from the Internal testing link (that's the same bundle
     that goes to production) and check: the first run, sign-up and sign-in, a password reset, an AI
     grade (it asks permission first), the daily reminder (Settings › Study; Android 13+ shows the
-    permission prompt then), a widget, Settings › Account › Delete account on a throwaway account, and
+    permission prompt then; restart the phone once and check it still comes), a widget, Settings › Account › Delete account on a throwaway account, and
     the Privacy and Support links in Settings › About.
 12. **The watch app (optional).** Play lists a Wear OS app under the phone app's listing. Release ›
     Advanced settings › Form factors › add **Wear OS**, complete its tracks, then run the workflow
@@ -229,10 +229,10 @@ Expect **Everyone 10+** or **Teen**; either is fine.
 | Forcing sign-up | | No account is needed for anything except sync and classrooms. |
 | Privacy policy gaps | User Data | The policy covers what's collected, every third party, retention, deletion, AI, support messages and children, for the website and all the apps. It's linked in the app (Settings › About) and from the AI permission screen. |
 | User-generated content without moderation | UGC | Report a name (the ⋯ menu), teachers remove students (app and web), students leave, and the support form. |
-| Notification permission without context | Permissions | Asked only when the user turns on the daily reminder (and, once, when a timed exam starts). Everything works if it is declined. |
-| Unneeded permissions | Permissions | Only `INTERNET` and `POST_NOTIFICATIONS`. No location, contacts, storage, camera or microphone. |
+| Notification permission without context | Permissions | Asked only when the user turns on the daily reminder, or on the Practice Exam page just before Section I starts (for the countdown in the shade). Everything works if it is declined, and Settings links to the system page if notifications are later switched off. |
+| Unneeded permissions | Permissions | `INTERNET`, `POST_NOTIFICATIONS`, and `RECEIVE_BOOT_COMPLETED` (to set the daily reminder again after the phone restarts). `SCHEDULE_EXACT_ALARM` is declared only up to Android 12L (`maxSdkVersion="32"`), where it is granted on install, so the reminder is exact there; later versions use a ten-minute window and never ask for it. `USE_EXACT_ALARM` is not used, so there is no exact-alarm declaration to fill in. No location, contacts, storage, camera or microphone. |
 | Trademark misuse | Impersonation / intellectual property | "AP" only describes the exam; the College Board notice is in Settings › About, the Acknowledgements, the website's footers and the description. |
 | Deceptive behaviour | Deceptive Behavior | Nothing hidden: the app does what the listing says. Sample progress exists only in debug builds. |
 | Ads, tracking | Ads, Families | None. The advertising ID isn't used. |
-| Large screens | Large screen quality | A tablet layout (sidebar, readable column widths), all orientations, edge-to-edge. |
-| Accessibility | | Text scales with the system font size, controls carry content descriptions for TalkBack, buttons are at least 48 dp tall, and the app follows system light and dark. |
+| Large screens | Large screen quality | A tablet layout (sidebar, readable column widths), all orientations, edge-to-edge, and keyboard support: Ctrl and a number jumps between sections (listed under Meta + /), and the study screens answer to the number keys, Return and Space as the iPad app does. |
+| Accessibility | | Text scales with the system font size (Today rearranges at the largest sizes), controls carry content descriptions for TalkBack and say when they're selected or switched on, touch targets are at least 48 dp, and the app follows system light and dark (or the in-app choice, status bar included). |
