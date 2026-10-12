@@ -28,6 +28,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -50,6 +52,7 @@ fun <T> StudyDeck(
     back: @Composable (T) -> Unit,
 ) {
     val c = Lectio.colors
+    val haptics = LocalHapticFeedback.current
     val byId = remember(items) { items.associateBy(id) }
     val queue = remember(items) { mutableStateListOf<String>().apply { addAll(items.map(id).shuffled()) } }
     var cursor by remember(items) { mutableIntStateOf(0) }
@@ -66,6 +69,8 @@ fun <T> StudyDeck(
 
     fun grade(again: Boolean) {
         val current = queue[cursor]
+        // A light tap with each grade, as on iOS.
+        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
         done++
         if (done == 1) model.update { it.markStudied() }
         if (again) queue.add(current)
@@ -81,18 +86,21 @@ fun <T> StudyDeck(
                 TextAction("Reshuffle", icon = "shuffle") { reset() }
             }
             AnimatedContent(
-                queue[cursor] + cursor,
+                queue[cursor] to cursor,
                 transitionSpec = { (slideInHorizontally { it / 2 } + fadeIn()) togetherWith fadeOut() }, label = "deck",
-            ) { target ->
-                androidx.compose.runtime.key(target) { Surface(
-                    Modifier.fillMaxWidth().heightIn(min = 260.dp).clickable(role = Role.Button, onClickLabel = if (shown) null else "Turn the card over") { shown = !shown },
+            ) { (targetId, at) ->
+                // Each card draws from its own key: the one sliding out keeps its face (the answer it was graded on) rather than turning into the next.
+                val card = byId[targetId] ?: return@AnimatedContent
+                val current = at == cursor
+                val face = if (current) shown else true
+                Surface(
+                    Modifier.fillMaxWidth().heightIn(min = 260.dp).clickable(enabled = current, role = Role.Button, onClickLabel = if (face) null else "Turn the card over") { shown = !shown },
                     shape = RoundedCornerShape(22.dp), color = c.slip, border = BorderStroke(0.5.dp, c.rule), shadowElevation = 4.dp,
                 ) {
-                    Box(Modifier.heightIn(max = 520.dp).verticalScroll(rememberScrollState()).padding(24.dp), contentAlignment = if (shown) Alignment.TopStart else Alignment.Center) {
-                        if (shown) back(item) else Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { front(item) }
+                    Box(Modifier.heightIn(max = 520.dp).verticalScroll(rememberScrollState()).padding(24.dp), contentAlignment = if (face) Alignment.TopStart else Alignment.Center) {
+                        if (face) back(card) else Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { front(card) }
                     }
                 }
-            }
             }
             if (shown) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp)) {

@@ -43,6 +43,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.gestures.animateScrollBy
+import com.norvodesigns.lectio.ui.components.KeyShortcutHost
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
@@ -170,6 +173,7 @@ fun PassageReader(model: AppModel, passage: Passage, onNavigate: (Passage) -> Un
 
     fun applyColor(color: String) {
         val s = span ?: return
+        haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
         val text = spanText(s)
         // Tapping the pigment a span already has takes it off again.
         val next = if (existing(s)?.color == color) null else color
@@ -180,133 +184,149 @@ fun PassageReader(model: AppModel, passage: Passage, onNavigate: (Passage) -> Un
         span = null
     }
 
-    PageScaffold(
-        passage.citation, ambient = false,
-        actions = {
-            IconButton({ model.update { it.toggleBookmark(passage.id) } }) {
-                Symbol(if (state.bookmarked) "bookmark.fill" else "bookmark", tint = if (state.bookmarked) c.rubric else c.ink, contentDescription = if (state.bookmarked) "Remove bookmark" else "Bookmark")
-            }
-            IconButton({ showNotes = true }) { Symbol("text.alignleft", tint = c.ink, contentDescription = "Notes and context") }
-            val questions = library?.questions?.filter { it.passageId == passage.id } ?: emptyList()
-            val scannable = passage.isPoetry && passage.author == "vergil" && passage.required
-            if (questions.isNotEmpty() || scannable) {
-                Box {
-                    IconButton({ practiceMenu = true }) { Symbol("graduationcap", tint = c.ink, contentDescription = "Practice") }
-                    DropdownMenu(practiceMenu, { practiceMenu = false }, containerColor = c.slip) {
-                        if (questions.isNotEmpty()) DropdownMenuItem(
-                            text = { Text("${questions.size} questions on this passage") },
-                            leadingIcon = { Symbol("checklist", size = 20.dp) },
-                            onClick = {
-                                practiceMenu = false
-                                val request = QuizSessionRequest(questions.shuffled(), isReview = false)
-                                if (practice != null) practice.quiz(request) else model.quizSession = request
-                            },
-                        )
-                        if (scannable) DropdownMenuItem(
-                            text = { Text("Scan this passage") },
-                            leadingIcon = { Symbol("waveform.path", size = 20.dp) },
-                            onClick = {
-                                practiceMenu = false
-                                if (practice != null) {
-                                    practice.scan(passage)
-                                } else {
-                                    // The lab opens as a page, and Back returns to the screen this passage was read from.
-                                    model.scansionStartPassageId = passage.id
-                                    model.openSection(AppTab.Scansion, from = model.selectedTab)
-                                }
-                            },
-                        )
-                    }
+    fun toggleBookmark() {
+        haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
+        model.update { it.toggleBookmark(passage.id) }
+    }
+
+    // A tablet's keyboard: B bookmarks the passage, N opens its notes and context.
+    KeyShortcutHost(onKey = { key ->
+        when (key) {
+            Key.B -> { toggleBookmark(); true }
+            Key.N -> { showNotes = true; true }
+            else -> false
+        }
+    }) {
+        PageScaffold(
+            passage.citation, ambient = false,
+            actions = {
+                IconButton(::toggleBookmark) {
+                    Symbol(if (state.bookmarked) "bookmark.fill" else "bookmark", tint = if (state.bookmarked) c.rubric else c.ink, contentDescription = if (state.bookmarked) "Remove bookmark" else "Bookmark")
                 }
-            }
-            Box {
-                IconButton({ optionsMenu = true }) { Symbol("textformat.size", tint = c.ink, contentDescription = "Reading options") }
-                DropdownMenu(optionsMenu, { optionsMenu = false }, containerColor = c.slip) {
-                    DropdownMenuItem(
-                        text = { Text(if (model.progress.glossaryEnabled) "Glossary on (turn off for a cold read)" else "Glossary off (turn on)") },
-                        leadingIcon = { Symbol("character.book.closed", size = 20.dp) },
-                        onClick = {
-                            model.update { it.toggleGlossary() }
-                            optionsMenu = false
-                        },
-                    )
-                    for ((label, scale) in listOf("Smaller" to 0.85, "Standard" to 1.0, "Larger" to 1.2, "Largest" to 1.45)) {
-                        DropdownMenuItem(
-                            text = { Text("Latin size: $label" + if (model.latinScale == scale) "  ✓" else "") },
-                            onClick = {
-                                model.latinScale = scale
-                                optionsMenu = false
-                            },
-                        )
-                    }
-                }
-            }
-        },
-    ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding)) {
-            LazyColumn(
-                Modifier.fillMaxSize(), listState, horizontalAlignment = Alignment.CenterHorizontally,
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(start = 20.dp, end = 20.dp, bottom = 220.dp),
-            ) {
-                item(key = "header") {
-                    Column(Modifier.widthIn(max = 760.dp).fillMaxWidth()) {
-                        Header(passage)
-                        FirstVisitTip(
-                            "tip.gloss", "Tap any word", symbol = "hand.tap",
-                            message = "Its meaning comes up from the vocabulary list. Touch and hold a word to highlight it, add a note, or ask about its line. Tap a line number to flag a hard line.",
-                            modifier = Modifier.padding(bottom = 16.dp),
-                        )
-                        passage.salutation?.let {
-                            Text(it, Modifier.padding(bottom = 12.dp), style = LectioText.latinItalic(18.sp, model.latinScale), color = c.ink2)
+                IconButton({ showNotes = true }) { Symbol("text.alignleft", tint = c.ink, contentDescription = "Notes and context") }
+                val questions = library?.questions?.filter { it.passageId == passage.id } ?: emptyList()
+                val scannable = passage.isPoetry && passage.author == "vergil" && passage.required
+                if (questions.isNotEmpty() || scannable) {
+                    Box {
+                        IconButton({ practiceMenu = true }) { Symbol("graduationcap", tint = c.ink, contentDescription = "Practice") }
+                        DropdownMenu(practiceMenu, { practiceMenu = false }, containerColor = c.slip) {
+                            if (questions.isNotEmpty()) DropdownMenuItem(
+                                text = { Text("${questions.size} questions on this passage") },
+                                leadingIcon = { Symbol("checklist", size = 20.dp) },
+                                onClick = {
+                                    practiceMenu = false
+                                    val request = QuizSessionRequest(questions.shuffled(), isReview = false)
+                                    if (practice != null) practice.quiz(request) else model.quizSession = request
+                                },
+                            )
+                            if (scannable) DropdownMenuItem(
+                                text = { Text("Scan this passage") },
+                                leadingIcon = { Symbol("waveform.path", size = 20.dp) },
+                                onClick = {
+                                    practiceMenu = false
+                                    if (practice != null) {
+                                        practice.scan(passage)
+                                    } else {
+                                        // The lab opens as a page, and Back returns to the screen this passage was read from.
+                                        model.scansionStartPassageId = passage.id
+                                        model.openSection(AppTab.Scansion, from = model.selectedTab)
+                                    }
+                                },
+                            )
                         }
                     }
                 }
-                itemsIndexed(passage.lines, key = { _, l -> l.n }) { _, line ->
-                    Box(Modifier.widthIn(max = 760.dp).fillMaxWidth()) {
-                        LineRow(
-                            model, passage, line, byLine[line.n] ?: emptyList(), line.n in state.flaggedLines,
-                            glossed = selection?.takeIf { it.lineN == line.n }?.tokenIndex,
-                            span = span?.takeIf { it.lineN == line.n },
-                            scaleBoost = if (wide) 1.2 else 1.0,
-                            onTap = { tapped(line, it) }, onHold = { held(line, it) },
-                            onNote = { a -> noteTarget = NoteTarget(SpanSelection(a.lineN, a.startTok, a.endTok), a.text, a.id, a.note) },
-                            onAsk = { askLine = line },
+                Box {
+                    IconButton({ optionsMenu = true }) { Symbol("textformat.size", tint = c.ink, contentDescription = "Reading options") }
+                    DropdownMenu(optionsMenu, { optionsMenu = false }, containerColor = c.slip) {
+                        DropdownMenuItem(
+                            text = { Text(if (model.progress.glossaryEnabled) "Glossary on (turn off for a cold read)" else "Glossary off (turn on)") },
+                            leadingIcon = { Symbol("character.book.closed", size = 20.dp) },
+                            onClick = {
+                                model.update { it.toggleGlossary() }
+                                optionsMenu = false
+                            },
                         )
+                        for ((label, scale) in listOf("Smaller" to 0.85, "Standard" to 1.0, "Larger" to 1.2, "Largest" to 1.45)) {
+                            DropdownMenuItem(
+                                text = { Text("Latin size: $label" + if (model.latinScale == scale) "  ✓" else "") },
+                                onClick = {
+                                    model.latinScale = scale
+                                    optionsMenu = false
+                                },
+                            )
+                        }
                     }
                 }
-                item(key = "footer") { Box(Modifier.widthIn(max = 760.dp).fillMaxWidth()) { Footer(model, passage, onNavigate) } }
-            }
+            },
+        ) { padding ->
+            Box(Modifier.fillMaxSize().padding(padding)) {
+                LazyColumn(
+                    Modifier.fillMaxSize(), listState, horizontalAlignment = Alignment.CenterHorizontally,
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(start = 20.dp, end = 20.dp, bottom = 220.dp),
+                ) {
+                    item(key = "header") {
+                        Column(Modifier.widthIn(max = 760.dp).fillMaxWidth()) {
+                            Header(passage)
+                            FirstVisitTip(
+                                "tip.gloss", "Tap any word", symbol = "hand.tap",
+                                message = "Its meaning comes up from the vocabulary list. Touch and hold a word to highlight it, add a note, or ask about its line. Tap a line number to flag a hard line.",
+                                modifier = Modifier.padding(bottom = 16.dp),
+                            )
+                            passage.salutation?.let {
+                                Text(it, Modifier.padding(bottom = 12.dp), style = LectioText.latinItalic(18.sp, model.latinScale), color = c.ink2)
+                            }
+                        }
+                    }
+                    itemsIndexed(passage.lines, key = { _, l -> l.n }) { _, line ->
+                        Box(Modifier.widthIn(max = 760.dp).fillMaxWidth()) {
+                            LineRow(
+                                model, passage, line, byLine[line.n] ?: emptyList(), line.n in state.flaggedLines,
+                                glossed = selection?.takeIf { it.lineN == line.n }?.tokenIndex,
+                                span = span?.takeIf { it.lineN == line.n },
+                                scaleBoost = if (wide) 1.2 else 1.0,
+                                onTap = { tapped(line, it) }, onHold = { held(line, it) },
+                                onNote = { a -> noteTarget = NoteTarget(SpanSelection(a.lineN, a.startTok, a.endTok), a.text, a.id, a.note) },
+                                onAsk = { askLine = line },
+                            )
+                        }
+                    }
+                    item(key = "footer") { Box(Modifier.widthIn(max = 760.dp).fillMaxWidth()) { Footer(model, passage, onNavigate) } }
+                }
 
-            // Floating over the page: the gloss, or the highlight bar.
-            Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().navigationBarsPadding(), horizontalAlignment = Alignment.CenterHorizontally) {
-                AnimatedVisibility(selection != null && span == null, enter = slideInVertically { it } + fadeIn(), exit = slideOutVertically { it } + fadeOut()) {
-                    selection?.let { sel ->
-                        GlossPanel(model, sel, onAsk = {
-                            selection = null
-                            askLine = passage.lines.firstOrNull { it.n == sel.lineN }
-                        }) { selection = null }
+                // Floating over the page: the gloss, or the highlight bar.
+                Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().navigationBarsPadding(), horizontalAlignment = Alignment.CenterHorizontally) {
+                    AnimatedVisibility(selection != null && span == null, enter = slideInVertically { it } + fadeIn(), exit = slideOutVertically { it } + fadeOut()) {
+                        selection?.let { sel ->
+                            GlossPanel(model, sel, onAsk = {
+                                selection = null
+                                askLine = passage.lines.firstOrNull { it.n == sel.lineN }
+                            }) { selection = null }
+                        }
                     }
-                }
-                AnimatedVisibility(span != null, enter = slideInVertically { it } + fadeIn(), exit = slideOutVertically { it } + fadeOut()) {
-                    span?.let { s ->
-                        val current = existing(s)
-                        SpanToolbar(
-                            current = current, onColor = ::applyColor,
-                            onNote = {
-                                noteTarget = NoteTarget(s, spanText(s), current?.id, current?.note ?: "")
-                                span = null
-                            },
-                            onAsk = { askLine = passage.lines.firstOrNull { it.n == s.lineN } },
-                            onRemove = {
-                                current?.let { a -> model.update { it.removeAnnotation(passage.id, a.id) } }
-                                span = null
-                            },
-                            onDone = { span = null },
-                        )
+                    AnimatedVisibility(span != null, enter = slideInVertically { it } + fadeIn(), exit = slideOutVertically { it } + fadeOut()) {
+                        span?.let { s ->
+                            val current = existing(s)
+                            SpanToolbar(
+                                current = current, onColor = ::applyColor,
+                                onNote = {
+                                    noteTarget = NoteTarget(s, spanText(s), current?.id, current?.note ?: "")
+                                    span = null
+                                },
+                                onAsk = { askLine = passage.lines.firstOrNull { it.n == s.lineN } },
+                                onRemove = {
+                                    haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                                    current?.let { a -> model.update { it.removeAnnotation(passage.id, a.id) } }
+                                    span = null
+                                },
+                                onDone = { span = null },
+                            )
+                        }
                     }
                 }
             }
         }
+
     }
 
     noteTarget?.let { target -> NoteEditor(model, target, passage.id) { noteTarget = null } }
@@ -315,7 +335,12 @@ fun PassageReader(model: AppModel, passage: Passage, onNavigate: (Passage) -> Un
         PassageNotesSheet(model, passage, onJump = { n ->
             showNotes = false
             val index = passage.lines.indexOfFirst { it.n == n }
-            if (index >= 0) scope.launch { listState.animateScrollToItem(index + 1) }
+            if (index >= 0) scope.launch {
+                listState.animateScrollToItem(index + 1)
+                val layout = listState.layoutInfo
+                val item = layout.visibleItemsInfo.firstOrNull { it.index == index + 1 }
+                if (item != null) listState.animateScrollBy(item.offset - (layout.viewportEndOffset - layout.viewportStartOffset - item.size) / 2f)
+            }
         }, onDismiss = { showNotes = false })
     }
 }

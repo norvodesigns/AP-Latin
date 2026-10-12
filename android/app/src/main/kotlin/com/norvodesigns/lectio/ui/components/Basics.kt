@@ -33,6 +33,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.material3.minimumInteractiveComponentSize
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
@@ -263,7 +265,8 @@ fun Chip(text: String, selected: Boolean, modifier: Modifier = Modifier, tint: C
     val c = Lectio.colors
     val shape = RoundedCornerShape(50)
     Surface(
-        modifier.clip(shape).clickable(role = Role.Button, onClick = onClick),
+        // A touch target of at least 48 dp around the pill, and the selection said aloud.
+        modifier.minimumInteractiveComponentSize().clip(shape).selectable(selected = selected, onClick = onClick),
         shape = shape,
         color = if (selected) tint else c.slip.copy(alpha = 0.7f),
         border = BorderStroke(0.75.dp, if (selected) tint else c.ruleStrong),

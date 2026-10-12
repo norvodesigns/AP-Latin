@@ -2,6 +2,7 @@ package com.norvodesigns.lectio.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -82,13 +83,14 @@ fun <T> MenuPicker(
     }
 }
 
-/** A short run of mutually exclusive choices laid side by side. */
+/** A short run of mutually exclusive choices laid side by side, each with an icon if [symbol] gives one. */
 @Composable
 fun <T> Segmented(
     options: List<Pair<T, String>>,
     selected: T,
     onSelect: (T) -> Unit,
     modifier: Modifier = Modifier,
+    symbol: ((T) -> String?)? = null,
 ) {
     val c = Lectio.colors
     SingleChoiceSegmentedButtonRow(modifier.fillMaxWidth()) {
@@ -100,7 +102,7 @@ fun <T> Segmented(
                     activeContainerColor = c.rubric, activeContentColor = c.onRubric, activeBorderColor = c.rubric,
                     inactiveContainerColor = c.slip.copy(alpha = 0.6f), inactiveContentColor = c.ink2, inactiveBorderColor = c.ruleStrong,
                 ),
-                icon = {},
+                icon = { symbol?.invoke(value)?.let { Symbol(it, size = 18.dp) } },
             ) { Text(text, style = LectioText.subheadline, maxLines = 1) }
         }
     }
@@ -111,7 +113,7 @@ fun <T> Segmented(
 fun ToggleRow(label: String, checked: Boolean, onChange: (Boolean) -> Unit, modifier: Modifier = Modifier, detail: String? = null, enabled: Boolean = true) {
     val c = Lectio.colors
     Row(
-        modifier.fillMaxWidth().heightIn(min = 48.dp).clickable(enabled = enabled, role = Role.Switch) { onChange(!checked) },
+        modifier.fillMaxWidth().heightIn(min = 48.dp).toggleable(checked, enabled = enabled, role = Role.Switch, onValueChange = onChange),
         horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {

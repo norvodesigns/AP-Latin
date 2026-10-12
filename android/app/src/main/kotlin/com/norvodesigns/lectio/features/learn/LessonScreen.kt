@@ -37,6 +37,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.norvodesigns.lectio.ui.components.isEnter
+import com.norvodesigns.lectio.ui.components.KeyShortcutHost
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -158,36 +160,55 @@ fun LessonScreen(model: AppModel, place: LessonPlace) {
 
     BackHandler { close() }
 
-    // A full-screen cover: it swallows touches, so nothing underneath (the tab bar, the page's buttons) can be reached while it's open.
-    Box(Modifier.fillMaxSize().background(c.parchment).pointerInput(Unit) {}) {
-        Column(Modifier.fillMaxSize().statusBarsPadding()) {
-            // The bar: close, and the progress through the steps.
-            Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = ::close) { Symbol("xmark", tint = c.ink, contentDescription = "Close") }
-                if (phase == Phase.Steps) {
-                    Box(Modifier.weight(1f).padding(horizontal = 12.dp), contentAlignment = Alignment.Center) {
-                        LectioProgress(pos.toFloat() / maxOf(queue.size, 1), Modifier.widthIn(max = 220.dp))
-                    }
-                    Text("${pos + 1} / ${queue.size}", Modifier.padding(end = 16.dp), style = LectioText.caption.copy(fontFeatureSettings = "tnum"), color = c.inkMuted)
-                }
-            }
+    val next = if (kind != Kind.Course) null else model.content?.course?.after(lesson.id)
 
-            Box(Modifier.weight(1f)) {
-                AnimatedContent(
-                    targetState = phase, label = "phase",
-                    transitionSpec = { (fadeIn() + slideInHorizontally { it / 8 }) togetherWith fadeOut() },
-                ) { current ->
-                    when (current) {
-                        Phase.Intro -> Intro(model, place, kind, onStart = ::start)
-                        Phase.Steps -> StepsView(place, queue, pos, result, ::answered, ::advance)
-                        Phase.Done -> Done(model, place, kind, firstTry.values.count { it }, exerciseCount, score, onAgain = {
-                            when (kind) {
-                                Kind.Review -> model.openReview()
-                                Kind.Derivatives -> model.openDerivatives()
-                                Kind.Sentences -> model.openSentences()
-                                else -> start()
-                            }
-                        }, onClose = ::close)
+    /** Return on a keyboard: the button at the bottom (Begin, Continue, the feedback's Continue, Next lesson). */
+    fun primary(): Boolean {
+        when (phase) {
+            Phase.Intro -> start()
+            Phase.Steps -> {
+                val index = queue.getOrNull(pos) ?: return false
+                // An exercise waits for its answer: Return only moves on once it's marked.
+                if (lesson.steps[index].isExercise && result == null) return false
+                advance()
+            }
+            Phase.Done -> if (next != null) model.activeLesson = next else close()
+        }
+        return true
+    }
+
+    // A full-screen cover: it swallows touches, so nothing underneath (the tab bar, the page's buttons) can be reached while it's open.
+    KeyShortcutHost(refocusOn = phase to pos, onKey = { it.isEnter && primary() }) {
+        Box(Modifier.fillMaxSize().background(c.parchment).pointerInput(Unit) {}) {
+            Column(Modifier.fillMaxSize().statusBarsPadding()) {
+                // The bar: close, and the progress through the steps.
+                Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = ::close) { Symbol("xmark", tint = c.ink, contentDescription = "Close") }
+                    if (phase == Phase.Steps) {
+                        Box(Modifier.weight(1f).padding(horizontal = 12.dp), contentAlignment = Alignment.Center) {
+                            LectioProgress(pos.toFloat() / maxOf(queue.size, 1), Modifier.widthIn(max = 220.dp))
+                        }
+                        Text("${pos + 1} / ${queue.size}", Modifier.padding(end = 16.dp), style = LectioText.caption.copy(fontFeatureSettings = "tnum"), color = c.inkMuted)
+                    }
+                }
+
+                Box(Modifier.weight(1f)) {
+                    AnimatedContent(
+                        targetState = phase, label = "phase",
+                        transitionSpec = { (fadeIn() + slideInHorizontally { it / 8 }) togetherWith fadeOut() },
+                    ) { current ->
+                        when (current) {
+                            Phase.Intro -> Intro(model, place, kind, onStart = ::start)
+                            Phase.Steps -> StepsView(place, queue, pos, result, ::answered, ::advance)
+                            Phase.Done -> Done(model, place, kind, firstTry.values.count { it }, exerciseCount, score, onAgain = {
+                                when (kind) {
+                                    Kind.Review -> model.openReview()
+                                    Kind.Derivatives -> model.openDerivatives()
+                                    Kind.Sentences -> model.openSentences()
+                                    else -> start()
+                                }
+                            }, onClose = ::close)
+                        }
                     }
                 }
             }
@@ -205,7 +226,7 @@ private fun eyebrow(place: LessonPlace, kind: Kind): String = when (kind) {
     Kind.Daily -> {
         val day = Daily.day(place.lesson.id)
         val text = StudyDates.dayNumber(day)?.let {
-            DateTimeFormatter.ofPattern("EEEE, MMMM d").withZone(ZoneOffset.UTC).format(Instant.ofEpochSecond(it * 86_400L + 43_200))
+            com.norvodesigns.lectio.util.localDateFormat("EEEEMMMMd").withZone(ZoneOffset.UTC).format(Instant.ofEpochSecond(it * 86_400L + 43_200))
         }
         "Sententia · ${text ?: day}"
     }

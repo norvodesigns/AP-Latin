@@ -252,7 +252,8 @@ fun SyncStatusLabel(status: SyncStatus) {
         is SyncStatus.Synced -> Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
             Symbol("checkmark.icloud", tint = c.correct, size = 18.dp)
             Text(
-                "Synced " + DateUtils.getRelativeTimeSpanString(status.at.toEpochMilli(), System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS),
+                if (System.currentTimeMillis() - status.at.toEpochMilli() < DateUtils.MINUTE_IN_MILLIS) "Synced just now"
+                else "Synced " + DateUtils.getRelativeTimeSpanString(status.at.toEpochMilli(), System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS),
                 style = LectioText.subheadline, color = c.ink,
             )
         }

@@ -27,3 +27,13 @@ fun formatClock(context: android.content.Context, minutes: Int): String {
     }
     return android.text.format.DateFormat.getTimeFormat(context).format(cal.time)
 }
+
+/**
+ * A date written the way the device's language writes it, from a skeleton of the
+ * fields wanted ("EEEEMMMMd" is a weekday, month and day: "Monday, October 12"
+ * in the US, "Monday 12 October" in Britain), as iOS's date format styles do.
+ */
+fun localDateFormat(skeleton: String): java.time.format.DateTimeFormatter {
+    val locale = Locale.getDefault()
+    return DateTimeFormatter.ofPattern(android.text.format.DateFormat.getBestDateTimePattern(locale, skeleton), locale)
+}

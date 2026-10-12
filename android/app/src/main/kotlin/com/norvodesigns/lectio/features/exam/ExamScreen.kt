@@ -37,6 +37,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.norvodesigns.lectio.ui.components.optionIndex
+import com.norvodesigns.lectio.ui.components.KeyShortcutHost
+import com.norvodesigns.lectio.ui.components.KeyShortcut
+import androidx.compose.ui.semantics.selected
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
@@ -252,7 +257,8 @@ fun ExamSession(model: AppModel, paper: ExamPaper, onClose: () -> Unit) {
             }
         },
     ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding)) {
+        // A tablet's keyboard: 1 to 4 answer the multiple-choice question on screen (McqStage).
+        KeyShortcutHost(Modifier.fillMaxSize().padding(padding), refocusOn = stage to cursor) {
             when (stage) {
                 Stage.Mcq -> McqStage(model, paper, cursor, { cursor = it }, answers, flagged) { endSectionI() }
                 Stage.Rest -> RestStage(answers.size, paper.mcq.size, onBegin = {
@@ -291,15 +297,23 @@ private fun McqStage(
     val c = Lectio.colors
     val q = paper.mcq[cursor]
     val strip = rememberLazyListState()
+    KeyShortcut { key ->
+        val option = key.optionIndex()?.let { q.options.getOrNull(it) } ?: return@KeyShortcut false
+        answers[cursor] = option.id
+        true
+    }
     LaunchedEffect(cursor) { strip.animateScrollToItem(maxOf(0, cursor - 3)) }
     Column(Modifier.fillMaxSize()) {
         LazyRow(state = strip, contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             itemsIndexed(paper.mcq) { i, _ ->
                 Box(
-                    Modifier.size(34.dp).clip(CircleShape)
+                    Modifier.size(44.dp).clip(CircleShape)
                         .background(if (i == cursor) c.rubric else if (answers[i] != null) c.sunk else androidx.compose.ui.graphics.Color.Transparent)
                         .clickable(role = Role.Button) { onCursor(i) }
-                        .semantics { contentDescription = "Question ${i + 1}${if (answers[i] != null) ", answered" else ""}${if (i in flagged) ", flagged" else ""}" },
+                        .semantics {
+                            contentDescription = "Question ${i + 1}${if (answers[i] != null) ", answered" else ""}${if (i in flagged) ", flagged" else ""}"
+                            selected = i == cursor
+                        },
                     contentAlignment = Alignment.Center,
                 ) {
                     Text("${i + 1}", style = LectioText.caption.copy(fontFeatureSettings = "tnum"), color = if (i == cursor) c.onRubric else c.ink)
@@ -324,7 +338,7 @@ private fun McqStage(
                         border = androidx.compose.foundation.BorderStroke(if (chosen) 1.dp else 0.5.dp, if (chosen) c.rubric else c.ruleStrong),
                     ) {
                         Row(
-                            Modifier.clickable(role = Role.RadioButton) { answers[cursor] = o.id }.padding(14.dp),
+                            Modifier.selectable(selected = chosen, role = Role.RadioButton) { answers[cursor] = o.id }.padding(14.dp),
                             horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text("${i + 1}", style = LectioText.caption.copy(fontFeatureSettings = "tnum"), color = c.inkMuted)

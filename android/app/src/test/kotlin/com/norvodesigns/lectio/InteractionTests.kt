@@ -11,6 +11,8 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.performScrollToKey
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performKeyInput
+import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.onAllNodesWithText
@@ -330,6 +332,48 @@ class InteractionTests {
         see("Find my level")
         model.levelCheckOpen = false
         compose.waitForIdle()
+    }
+
+    /* A tablet's keyboard, as on iOS. */
+
+    @OptIn(androidx.compose.ui.test.ExperimentalTestApi::class)
+    private fun press(key: androidx.compose.ui.input.key.Key) {
+        compose.onAllNodes(androidx.compose.ui.test.isFocused()).onFirst().performKeyInput { pressKey(key) }
+        compose.waitForIdle()
+    }
+
+    @Test fun aFlashcardIsTurnedAndGradedFromTheKeyboard() {
+        val model = model()
+        val id = model.vocab.keys.first()
+        val reviewsBefore = model.vocab.getValue(id).reviews
+        show(model) { FlashcardSession(model, VocabSession(listOf(id), VocabDirection.LaEn)) {} }
+        press(androidx.compose.ui.input.key.Key.Spacebar)
+        see("Got it")
+        press(androidx.compose.ui.input.key.Key.Two)
+        see("Session complete")
+        assertEquals(reviewsBefore + 1, model.vocab.getValue(id).reviews)
+    }
+
+    @Test fun aQuizQuestionIsAnsweredFromTheKeyboard() {
+        val model = model()
+        val questions = model.content!!.questions.filter { it.passageId != null }.take(2)
+        val before = model.progress.quizAttempts.size
+        show(model) { QuizSessionScreen(model, QuizSessionRequest(questions, false)) {} }
+        press(androidx.compose.ui.input.key.Key.One)
+        assertEquals(before + 1, model.progress.quizAttempts.size)
+        see("Why")
+        // Return goes on to the next question.
+        press(androidx.compose.ui.input.key.Key.Enter)
+        see("2 of 2")
+    }
+
+    @Test fun ctrlAndANumberJumpToASection() {
+        val model = model()
+        val activity = org.robolectric.Robolectric.buildActivity(MainActivity::class.java).setup().get()
+        val down = android.view.KeyEvent(0, 0, android.view.KeyEvent.ACTION_DOWN, android.view.KeyEvent.KEYCODE_5, 0, android.view.KeyEvent.META_CTRL_ON)
+        assertTrue(activity.onKeyShortcut(android.view.KeyEvent.KEYCODE_5, down))
+        assertEquals(AppTab.Translate, model.selectedTab)
+        model.selectedTab = AppTab.Today
     }
 }
 

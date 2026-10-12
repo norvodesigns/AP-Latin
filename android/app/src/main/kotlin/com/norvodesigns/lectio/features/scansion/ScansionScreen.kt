@@ -84,10 +84,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-internal enum class Tool(val label: String, val hint: String) {
-    Quantity("Quantity", "Tap a syllable: long, short, then clear."),
-    Feet("Feet", "Tap the last syllable of a foot to rule a boundary after it. Five boundaries make six feet."),
-    Elision("Elision", "Tap a word’s last syllable to claim it elides into the next word."),
+internal enum class Tool(val label: String, val hint: String, val symbol: String) {
+    Quantity("Quantity", "Tap a syllable: long, short, then clear.", "minus"),
+    Feet("Feet", "Tap the last syllable of a foot to rule a boundary after it. Five boundaries make six feet.", "rectangle.split.3x1"),
+    Elision("Elision", "Tap a word’s last syllable to claim it elides into the next word.", "arrow.right.to.line"),
 }
 
 /** The scansion lab's state: the corpus, the line being scanned, and the set passage being worked through. */
@@ -346,8 +346,11 @@ private fun Lab(state: LabState, work: ScansionWork, corpus: ScansionCorpus) {
             Badges(attempts, corpus.index.total)
         }
         if (!work.checked) {
+            // The tools dock at the bottom on a bar of their own, so the lab scrolling underneath doesn't show through.
             Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().navigationBarsPadding().padding(horizontal = 20.dp, vertical = 8.dp)) {
-                Segmented(Tool.entries.map { it to it.label }, state.tool, { state.tool = it })
+                androidx.compose.material3.Surface(shape = androidx.compose.foundation.shape.RoundedCornerShape(50), color = Lectio.colors.slip, shadowElevation = 6.dp) {
+                    Segmented(Tool.entries.map { it to it.label }, state.tool, { state.tool = it }, Modifier.padding(4.dp), symbol = { it.symbol })
+                }
             }
         }
     }

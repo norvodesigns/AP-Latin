@@ -163,7 +163,6 @@ fun NoteEditor(model: AppModel, target: NoteTarget, passageId: String, onDismiss
                 id = doc.setHighlight(passageId, target.span.lineN, target.span.start, target.span.end, target.text, null).id
             }
             doc.setAnnotationNote(passageId, id, text)
-            doc.markStudied()
         }
         onDismiss()
     }
@@ -175,7 +174,7 @@ fun NoteEditor(model: AppModel, target: NoteTarget, passageId: String, onDismiss
                 Text("Note", Modifier.weight(1f), style = LectioText.prose(LectioText.headline), color = c.ink, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                 TextAction("Save", onClick = ::save)
             }
-            Text("“${target.text}”", style = LectioText.latinItalic(20.sp), color = c.ink)
+            Text("“${target.text}” · line ${target.span.lineN}", style = LectioText.latinItalic(19.sp), color = c.ink2)
             LectioTextField(
                 note, { note = it }, placeholder = "Write a note for yourself…", minLines = 4, maxLines = 8, autoFocus = true,
                 textStyle = LectioText.prose(LectioText.body),

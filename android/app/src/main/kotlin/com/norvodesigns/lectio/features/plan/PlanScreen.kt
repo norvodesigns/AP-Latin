@@ -241,5 +241,5 @@ private fun examDateLabel(iso: String): String {
     val parts = iso.split("-").mapNotNull { it.toIntOrNull() }
     if (parts.size != 3) return iso
     val date = runCatching { LocalDate.of(parts[0], parts[1], parts[2]) }.getOrNull() ?: return iso
-    return date.format(DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.getDefault()))
+    return date.format(com.norvodesigns.lectio.util.localDateFormat("EEEEdMMMMyyyy"))
 }

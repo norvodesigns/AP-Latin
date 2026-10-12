@@ -46,6 +46,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import kotlinx.coroutines.flow.drop
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
@@ -252,6 +256,12 @@ private class Flow(val model: AppModel, launch: Step) {
         }
         returning = false
     }
+
+    /** The account page goes, however it's closed (signed in, Back, its arrow), and "I already have an account" is forgotten unless it signed in. */
+    fun closeAccount() {
+        showAccount = false
+        accountClosed()
+    }
 }
 
 /**
@@ -278,12 +288,20 @@ fun OnboardingScreen(model: AppModel, launchStep: Step = Step.Welcome) {
 
     // Signed in from the account page: straight on, no need to close it by hand.
     LaunchedEffect(model.account?.userId) {
-        if (model.account != null && flow.showAccount) {
-            flow.showAccount = false
-            flow.accountClosed()
+        if (model.account != null && flow.showAccount) flow.closeAccount()
+    }
+    BackHandler(enabled = flow.showAccount || flow.canGoBack) { if (flow.showAccount) flow.closeAccount() else flow.back() }
+
+    // A light tap for each step, a tick when a track or a goal is picked, and a success when the plan is ready, as on iOS.
+    val haptics = LocalHapticFeedback.current
+    LaunchedEffect(flow) {
+        snapshotFlow { flow.step }.drop(1).collect { step ->
+            haptics.performHapticFeedback(if (step == Step.Ready) HapticFeedbackType.Confirm else HapticFeedbackType.TextHandleMove)
         }
     }
-    BackHandler(enabled = flow.showAccount || flow.canGoBack) { if (flow.showAccount) flow.showAccount = false else flow.back() }
+    LaunchedEffect(flow) {
+        snapshotFlow { flow.track to flow.minutes }.drop(1).collect { haptics.performHapticFeedback(HapticFeedbackType.SegmentTick) }
+    }
 
     // Over the whole app, swallowing touches so nothing underneath can be reached.
     Box(Modifier.fillMaxSize().ambient().pointerInput(Unit) {}) {
@@ -312,7 +330,7 @@ fun OnboardingScreen(model: AppModel, launchStep: Step = Step.Welcome) {
             }, onRemind = { askNotifications() })
         }
         if (flow.showAccount) Surface(Modifier.fillMaxSize(), color = c.parchment) {
-            AccountScreen(model, startsWithSignUp = flow.signUp, onBack = { flow.showAccount = false })
+            AccountScreen(model, startsWithSignUp = flow.signUp, onBack = { flow.closeAccount() })
         }
     }
 }

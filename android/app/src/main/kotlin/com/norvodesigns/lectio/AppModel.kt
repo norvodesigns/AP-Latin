@@ -709,6 +709,8 @@ class AppModel(val app: Application) {
         auth.forget()
         account = null
         syncStatus = SyncStatus.Offline("You've been signed out. Sign in again to keep syncing.")
+        // Shown once, so a password changed or an account deleted elsewhere doesn't sign the student out without a word.
+        authNotice = "You've been signed out. Sign in again to keep syncing."
     }
 
     /** A graded result for the teacher's roster (`bump_activity_stats`). Best effort; never blocks or fails the local recording. */

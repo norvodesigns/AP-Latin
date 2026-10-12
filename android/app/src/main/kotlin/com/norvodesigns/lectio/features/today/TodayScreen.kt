@@ -72,6 +72,7 @@ import com.norvodesigns.lectio.ui.components.Symbol
 import com.norvodesigns.lectio.ui.components.ambient
 import com.norvodesigns.lectio.ui.theme.Lectio
 import com.norvodesigns.lectio.ui.theme.LectioText
+import com.norvodesigns.lectio.util.localDateFormat
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -153,13 +154,23 @@ private fun Hero(model: AppModel) {
     val examDate = library?.meta?.examDate ?: "2027-05-14"
     val days = Streaks.daysUntilExam(examDate)
     val due = SpacedRepetition.due(model.vocab.values, StudyDates.today()).size
-    val dateText = remember { LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, MMM d")) }
+    val dateText = remember { LocalDate.now().format(localDateFormat("EEEEMMMd")) }
     Panel(title = "Today", trailing = dateText) {
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                if (model.courseFirstOnToday) CourseFigure(model) else ExamFigure(days, examDate)
+        if (largeText()) {
+            // At the largest text sizes the ring goes under the figure rather than squeezing it.
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    if (model.courseFirstOnToday) CourseFigure(model) else ExamFigure(days, examDate)
+                }
+                GoalRing(model.studySecondsToday, progress.studyPlan.minutesPerDay)
             }
-            GoalRing(model.studySecondsToday, progress.studyPlan.minutesPerDay)
+        } else {
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    if (model.courseFirstOnToday) CourseFigure(model) else ExamFigure(days, examDate)
+                }
+                GoalRing(model.studySecondsToday, progress.studyPlan.minutesPerDay)
+            }
         }
         Hairline(color = c.hair)
         FigureRow(spacing = 28.dp) {
@@ -175,7 +186,7 @@ private fun ExamFigure(days: Int, examDate: String) {
     val c = Lectio.colors
     Figure("$days", if (days == 1) "day until the exam" else "days until the exam", tint = c.rubric)
     if (days > 0) {
-        val whenText = runCatching { LocalDate.parse(examDate).format(DateTimeFormatter.ofPattern("d MMMM yyyy")) }.getOrNull()
+        val whenText = runCatching { LocalDate.parse(examDate).format(localDateFormat("dMMMMyyyy")) }.getOrNull()
         if (whenText != null) {
             val weeks = days / 7
             Text(
@@ -298,7 +309,7 @@ private fun JumpPanel(model: AppModel) {
         }
         add { JumpTile("Browse", "square.grid.2x2", c.ink2) { model.selectedTab = AppTab.Search } }
     }
-    Panel(title = "Jump to") { FixedGrid(4, tiles, horizontalSpacing = 6.dp, verticalSpacing = 16.dp) }
+    Panel(title = "Jump to") { FixedGrid(if (largeText()) 2 else 4, tiles, horizontalSpacing = 6.dp, verticalSpacing = 16.dp) }
 }
 
 @Composable
@@ -309,7 +320,7 @@ private fun JumpTile(title: String, symbol: String, tint: Color, onClick: () -> 
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         IconBadge(symbol, tint, size = 50.dp)
-        Text(title, style = LectioText.caption, color = c.ink2, maxLines = 1, overflow = TextOverflow.Clip)
+        Text(title, style = LectioText.caption, color = c.ink2, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -556,3 +567,8 @@ private fun SententiaCard(model: AppModel, line: Sententia) {
         }
     }
 }
+
+/** The accessibility text sizes, where iOS stacks what sits side by side. */
+@Composable
+private fun largeText(): Boolean = androidx.compose.ui.platform.LocalDensity.current.fontScale >= 1.3f
+

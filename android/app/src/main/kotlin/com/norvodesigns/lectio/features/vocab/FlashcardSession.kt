@@ -33,6 +33,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.norvodesigns.lectio.ui.components.optionIndex
+import com.norvodesigns.lectio.ui.components.isEnter
+import com.norvodesigns.lectio.ui.components.KeyShortcutHost
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -91,41 +95,58 @@ fun FlashcardSession(model: AppModel, session: VocabSession, onClose: () -> Unit
     }
 
     CoverScaffold(onClose, title = "") { padding ->
-        Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.TopCenter) {
-            Column(Modifier.widthIn(max = 560.dp).fillMaxSize().padding(horizontal = 20.dp).padding(bottom = 20.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
-                val id = queue.firstOrNull()
-                val entry = id?.let { library?.vocab(it) }
-                if (id != null && entry != null) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        QuietLabel("${queue.size} to go")
-                        model.vocab[id]?.let { card ->
-                            QuietLabel(if (card.reviews > 0) "Seen ${card.reviews}× · EF ${"%.2f".format(card.ef)}" else "New card")
+        // A tablet's keyboard: Space shows the answer, then 1 is Practice again and 2 is Got it.
+        KeyShortcutHost(Modifier.fillMaxSize().padding(padding), onKey = { key ->
+            val id = queue.firstOrNull()
+            when {
+                id == null -> false
+                !flipped && (key == Key.Spacebar || key.isEnter) -> { flipped = true; true }
+                flipped && key.optionIndex() == 0 -> { grade(id, 0); true }
+                flipped && key.optionIndex() == 1 -> { grade(id, 4); true }
+                else -> false
+            }
+        }) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+                Column(Modifier.widthIn(max = 560.dp).fillMaxSize().padding(horizontal = 20.dp).padding(bottom = 20.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
+                    val id = queue.firstOrNull()
+                    val entry = id?.let { library?.vocab(it) }
+                    if (id != null && entry != null) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            QuietLabel("${queue.size} to go")
+                            model.vocab[id]?.let { card ->
+                                QuietLabel(if (card.reviews > 0) "Seen ${card.reviews}× · EF ${"%.2f".format(card.ef)}" else "New card")
+                            }
                         }
-                    }
-                    Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        AnimatedContent(
-                            id + reviewed,
-                            transitionSpec = {
-                                (slideInHorizontally { it / 2 } + fadeIn()) togetherWith (slideOutHorizontally { -it / 2 } + fadeOut())
-                            },
-                            label = "card",
-                        ) { target ->
-                            androidx.compose.runtime.key(target) {
+                        Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                            AnimatedContent(
+                                CardKey(id, reviewed),
+                                transitionSpec = {
+                                    (slideInHorizontally { it / 2 } + fadeIn()) togetherWith (slideOutHorizontally { -it / 2 } + fadeOut())
+                                },
+                                label = "card",
+                            ) { target ->
+                                // Each card draws from its own key, so the one sliding out keeps its word (and its answer side) rather than turning into the next.
+                                val shown = library?.vocab(target.id) ?: return@AnimatedContent
+                                val current = target.n == reviewed
                                 CardFace(
-                                    entry, session.direction, contextLine(model, session, entry), library?.derivatives?.get(entry.id) ?: emptyList(), flipped,
-                                    onFlip = { flipped = !flipped },
+                                    shown, session.direction, contextLine(model, session, shown), library.derivatives[shown.id] ?: emptyList(),
+                                    flipped = if (current) flipped else true,
+                                    onFlip = { if (current) flipped = !flipped },
                                 )
                             }
                         }
+                        Controls(flipped, { flipped = true }, { grade(id, 0) }, { grade(id, 4) })
+                    } else {
+                        Finished(reviewed, onClose)
                     }
-                    Controls(flipped, { flipped = true }, { grade(id, 0) }, { grade(id, 4) })
-                } else {
-                    Finished(reviewed, onClose)
                 }
             }
         }
     }
 }
+
+/** A card's place in the session: the word, and how many had been graded when it came up (a missed word comes up again as a new card). */
+private data class CardKey(val id: String, val n: Int)
 
 @Composable
 private fun Controls(flipped: Boolean, onShow: () -> Unit, onAgain: () -> Unit, onGotIt: () -> Unit) {

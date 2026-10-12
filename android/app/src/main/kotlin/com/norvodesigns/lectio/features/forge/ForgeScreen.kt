@@ -36,6 +36,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.norvodesigns.lectio.ui.components.isEnter
+import com.norvodesigns.lectio.ui.components.KeyShortcutHost
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -221,45 +223,55 @@ fun ForgeRoundScreen(model: AppModel, start: ForgeRound, onClose: () -> Unit) {
             LectioProgress(index.toFloat() / questions.size, Modifier.widthIn(min = 120.dp))
         }
     }) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.TopCenter) {
-            if (!finished) {
-                val q = questions[index]
-                androidx.compose.runtime.key(index) {
-                    Column(
-                        Modifier.widthIn(max = 640.dp).fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp).padding(bottom = 200.dp),
-                        verticalArrangement = Arrangement.spacedBy(18.dp),
-                    ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            QuietLabel(q.paradigm.title)
-                            Text(
-                                buildAnnotatedString {
-                                    withStyle(SpanStyle(fontSize = 22.sp, color = c.ink)) { append(q.paradigm.lemma) }
-                                    append("  ")
-                                    withStyle(SpanStyle(color = c.inkMuted)) { append(q.paradigm.gloss) }
-                                },
-                                style = LectioText.latin(22.sp),
-                            )
-                        }
-                        when (q) {
-                            is Forge.ForgeQuestion.Make -> MakeQuestion(q, verdict, ::answer)
-                            is Forge.ForgeQuestion.Name -> NameQuestion(q, verdict, ::answer)
-                            is Forge.ForgeQuestion.Chart -> ChartQuestion(q, verdict, ::answer)
+        // A tablet's keyboard: Return goes on once an answer is marked.
+        KeyShortcutHost(Modifier.fillMaxSize().padding(padding), refocusOn = index to (verdict != null), onKey = { key ->
+            if (key.isEnter && verdict != null && !finished) {
+                next()
+                true
+            } else {
+                false
+            }
+        }) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+                if (!finished) {
+                    val q = questions[index]
+                    androidx.compose.runtime.key(index) {
+                        Column(
+                            Modifier.widthIn(max = 640.dp).fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp).padding(bottom = 200.dp),
+                            verticalArrangement = Arrangement.spacedBy(18.dp),
+                        ) {
+                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                QuietLabel(q.paradigm.title)
+                                Text(
+                                    buildAnnotatedString {
+                                        withStyle(SpanStyle(fontSize = 22.sp, color = c.ink)) { append(q.paradigm.lemma) }
+                                        append("  ")
+                                        withStyle(SpanStyle(color = c.inkMuted)) { append(q.paradigm.gloss) }
+                                    },
+                                    style = LectioText.latin(22.sp),
+                                )
+                            }
+                            when (q) {
+                                is Forge.ForgeQuestion.Make -> MakeQuestion(q, verdict, ::answer)
+                                is Forge.ForgeQuestion.Name -> NameQuestion(q, verdict, ::answer)
+                                is Forge.ForgeQuestion.Chart -> ChartQuestion(q, verdict, ::answer)
+                            }
                         }
                     }
+                    AnimatedVisibility(
+                        verdict != null, Modifier.align(Alignment.BottomCenter),
+                        enter = fadeIn() + slideInVertically { it }, exit = fadeOut() + slideOutVertically { it },
+                    ) {
+                        verdict?.let { v -> Verdict(v, correctAnswer(q)) { next() } }
+                    }
+                } else {
+                    Summary(results, onAnother = {
+                        questions = Forge.round(start.scope, start.mode, questions.size)
+                        results.clear()
+                        verdict = null
+                        index = 0
+                    }, onClose)
                 }
-                AnimatedVisibility(
-                    verdict != null, Modifier.align(Alignment.BottomCenter),
-                    enter = fadeIn() + slideInVertically { it }, exit = fadeOut() + slideOutVertically { it },
-                ) {
-                    verdict?.let { v -> Verdict(v, correctAnswer(q)) { next() } }
-                }
-            } else {
-                Summary(results, onAnother = {
-                    questions = Forge.round(start.scope, start.mode, questions.size)
-                    results.clear()
-                    verdict = null
-                    index = 0
-                }, onClose)
             }
         }
     }

@@ -23,6 +23,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -83,8 +86,8 @@ fun GrammarScreen(model: AppModel) {
             }
         }
     }
-    if (studying) ModalBottomSheet({ studying = false }, containerColor = c.parchment) {
-        Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
+    if (studying) ModalBottomSheet({ studying = false }, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), containerColor = c.parchment) {
+        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).navigationBarsPadding().padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
             Text("Study grammar", Modifier.align(Alignment.CenterHorizontally).padding(bottom = 16.dp), style = LectioText.prose(LectioText.headline), color = c.ink)
             StudyDeck(model, library.grammarTopics, { it.id }, "topic", front = { t ->
                 Text(t.name, style = LectioText.prose(LectioText.title), color = c.ink, textAlign = TextAlign.Center)

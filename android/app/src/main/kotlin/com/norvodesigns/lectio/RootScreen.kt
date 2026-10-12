@@ -49,6 +49,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
@@ -341,8 +342,8 @@ private fun WideShell(model: AppModel) {
                         val on = row.tab == selected
                         Row(
                             Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(if (on) c.redTint else androidx.compose.ui.graphics.Color.Transparent)
-                                .clickable(role = Role.Tab) { model.selectedTab = row.tab }.padding(horizontal = 12.dp, vertical = 11.dp)
-                                .semantics { contentDescription = row.title },
+                                .selectable(selected = on, role = Role.Tab) { model.selectedTab = row.tab }.padding(horizontal = 12.dp, vertical = 11.dp)
+                                .semantics { contentDescription = if (row.tab == AppTab.Vocab && due > 0) "${row.title}, $due due" else row.title },
                             horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Symbol(row.symbol, tint = if (on) c.rubric else c.inkMuted, size = 22.dp)
@@ -395,8 +396,10 @@ private fun PushedPageOverTab(model: AppModel) {
 @Composable
 private fun GoalToast(model: AppModel) {
     val c = Lectio.colors
+    val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
     LaunchedEffect(model.goalJustReached) {
         if (model.goalJustReached) {
+            haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.Confirm)
             delay(5000)
             model.goalJustReached = false
         }

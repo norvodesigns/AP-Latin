@@ -28,6 +28,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.SpanStyle
@@ -316,7 +319,11 @@ private fun SightQuestion(number: Int, question: Question, chosen: String?, subm
             }
             Row(
                 Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(wash)
-                    .clickable(enabled = !submitted, role = Role.RadioButton) { onChoose(option.id) }.padding(vertical = 8.dp, horizontal = 10.dp),
+                    .selectable(selected = isChosen, enabled = !submitted, role = Role.RadioButton) { onChoose(option.id) }
+                    .semantics {
+                        if (submitted) stateDescription = if (isAnswer) "Correct answer" else if (isChosen) "Your answer, incorrect" else ""
+                    }
+                    .padding(vertical = 8.dp, horizontal = 10.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically,
             ) {
                 Symbol(if (isChosen) "largecircle.fill.circle" else "circle", tint = if (isChosen) c.rubric else c.inkFaint, size = 20.dp)

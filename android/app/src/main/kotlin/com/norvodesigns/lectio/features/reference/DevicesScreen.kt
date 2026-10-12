@@ -18,6 +18,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.semantics.Role
@@ -112,6 +114,7 @@ private fun DeviceBack(model: AppModel, device: DeviceCard, showDefinition: Bool
 @Composable
 private fun SpotTheDevice(model: AppModel, devices: List<DeviceCard>) {
     val c = Lectio.colors
+    val haptics = LocalHapticFeedback.current
     class Item(val example: GrammarExample, val answerId: String, val options: List<String>)
 
     fun build(): List<Item> {
@@ -156,6 +159,7 @@ private fun SpotTheDevice(model: AppModel, devices: List<DeviceCard>) {
                 if (chosen == null) {
                     chosen = id
                     if (isAnswer) right++
+                    haptics.performHapticFeedback(if (isAnswer) HapticFeedbackType.Confirm else HapticFeedbackType.Reject)
                     model.update { it.markStudied() }
                 }
             }) {

@@ -47,6 +47,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.norvodesigns.lectio.ui.components.optionIndex
+import com.norvodesigns.lectio.ui.components.isEnter
+import com.norvodesigns.lectio.ui.components.KeyShortcutHost
+import com.norvodesigns.lectio.ui.components.KeyShortcut
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -132,14 +136,24 @@ fun QuizSessionScreen(model: AppModel, session: QuizSessionRequest, onClose: () 
     }
 
     CoverScaffold(onClose, closeLabel = if (finished) "Done" else "End set") { padding ->
-        Box(Modifier.fillMaxSize().padding(padding)) {
-            AnimatedContent(
-                index, transitionSpec = { (slideInHorizontally { it / 3 } + fadeIn()) togetherWith fadeOut() }, label = "question",
-            ) { i ->
-                if (i < session.questions.size) {
-                    QuestionPage(model, session.questions[i], i + 1, session.questions.size, if (i == index) chosen else null, ::choose, ::next) { reading.push(it) }
-                } else {
-                    ResultsPage(session, results, onClose)
+        // A tablet's keyboard: 1 to 4 answer (QuestionPage), Return goes on once an answer is marked.
+        KeyShortcutHost(Modifier.fillMaxSize().padding(padding), refocusOn = index, onKey = { key ->
+            if (key.isEnter && chosen != null && !finished) {
+                next()
+                true
+            } else {
+                false
+            }
+        }) {
+            Box(Modifier.fillMaxSize()) {
+                AnimatedContent(
+                    index, transitionSpec = { (slideInHorizontally { it / 3 } + fadeIn()) togetherWith fadeOut() }, label = "question",
+                ) { i ->
+                    if (i < session.questions.size) {
+                        QuestionPage(model, session.questions[i], i + 1, session.questions.size, if (i == index) chosen else null, ::choose, ::next) { reading.push(it) }
+                    } else {
+                        ResultsPage(session, results, onClose)
+                    }
                 }
             }
         }
@@ -154,6 +168,15 @@ private fun QuestionPage(
     val c = Lectio.colors
     val library = model.content
     val revealed = chosen != null
+    KeyShortcut { key ->
+        val option = key.optionIndex()?.let { question.options.getOrNull(it) }
+        if (!revealed && option != null) {
+            onChoose(option.id)
+            true
+        } else {
+            false
+        }
+    }
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(Modifier.widthIn(max = 720.dp).fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp).padding(bottom = if (revealed) 76.dp else 0.dp), verticalArrangement = Arrangement.spacedBy(22.dp)) {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {

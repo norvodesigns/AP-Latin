@@ -31,6 +31,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.norvodesigns.lectio.ui.components.optionIndex
+import com.norvodesigns.lectio.ui.components.KeyShortcut
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalFocusManager
@@ -222,16 +226,26 @@ private fun ChoiceExercise(step: ChoiceStep, result: Boolean?, answer: (Boolean)
         if (i == chosen) return OptionState.Wrong
         return OptionState.Faded
     }
+    fun choose(i: Int) {
+        if (result != null) return
+        chosen = i
+        answer(i == step.answer)
+    }
+    // The number keys answer, as the digits beside the options say (a tablet's keyboard).
+    KeyShortcut { key ->
+        val i = key.optionIndex()
+        if (result == null && i != null && i < step.options.size) {
+            choose(i)
+            true
+        } else {
+            false
+        }
+    }
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Prompt(step.prompt)
         Stimulus(step.latin)
         step.options.forEachIndexed { i, option ->
-            OptionCard(state(i), Modifier.fillMaxWidth(), enabled = result == null, onClick = {
-                if (result == null) {
-                    chosen = i
-                    answer(i == step.answer)
-                }
-            }) {
+            OptionCard(state(i), Modifier.fillMaxWidth(), enabled = result == null, onClick = { choose(i) }) {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text("${i + 1}", style = LectioText.caption.copy(fontFeatureSettings = "tnum"), color = c.inkFaint)
                     RichText(option, style = LectioText.prose(LectioText.body), color = c.ink)
@@ -317,13 +331,15 @@ private fun BuildExercise(step: BuildStep, result: Boolean?, answer: (Boolean) -
     val tiles = remember(step) { (step.answer + step.extra).mapIndexed { i, t -> Tile(i, t) }.shuffled() }
     val placed = remember(step) { mutableStateListOf<Int>() }
     val latin = step.isLatin
+    val haptics = LocalHapticFeedback.current
+    val tick = { haptics.performHapticFeedback(HapticFeedbackType.SegmentTick) }
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Prompt(step.prompt)
         Text(step.source, style = if (latin) LectioText.prose(LectioText.title2) else LectioText.latin(26.sp), color = c.ink)
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             FlowRow(Modifier.fillMaxWidth().heightIn(min = 44.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                for (id in placed.toList()) tiles.firstOrNull { it.id == id }?.let { TileButton(it, latin, result == null, "Removes it from your sentence") { placed.remove(it.id) } }
+                for (id in placed.toList()) tiles.firstOrNull { it.id == id }?.let { TileButton(it, latin, result == null, "Removes it from your sentence") { tick(); placed.remove(it.id) } }
             }
             if (placed.isEmpty()) {
                 Text(if (step.anyOrder == true) "Tap the words, in any order" else "Tap the words in order", style = LectioText.caption, color = c.inkFaint)
@@ -333,7 +349,7 @@ private fun BuildExercise(step: BuildStep, result: Boolean?, answer: (Boolean) -
 
         FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             for (tile in tiles) {
-                if (tile.id !in placed) TileButton(tile, latin, result == null, "Adds it to your sentence") { placed.add(tile.id) }
+                if (tile.id !in placed) TileButton(tile, latin, result == null, "Adds it to your sentence") { tick(); placed.add(tile.id) }
                 else TileLabel(tile, latin, Modifier.alpha(0.18f).semantics { contentDescription = "" })
             }
         }
@@ -344,7 +360,7 @@ private fun BuildExercise(step: BuildStep, result: Boolean?, answer: (Boolean) -
                     { answer(LessonCheck.checkBuild(placed.mapNotNull { id -> tiles.firstOrNull { it.id == id }?.text }, step)) },
                     prominent = true, enabled = placed.isNotEmpty(),
                 ) { ButtonLabel("Check") }
-                if (placed.isNotEmpty()) LectioButton({ placed.clear() }) { ButtonLabel("Clear") }
+                if (placed.isNotEmpty()) LectioButton({ tick(); placed.clear() }) { ButtonLabel("Clear") }
             }
         }
     }
@@ -375,6 +391,7 @@ private fun MatchExercise(step: MatchStep, result: Boolean?, answer: (Boolean) -
     var wrong by remember(step) { mutableStateOf<Pair<Int, Int>?>(null) }
     var mistakes by remember(step) { mutableStateOf(false) }
     var wrongTick by remember(step) { mutableStateOf(0) }
+    val haptics = LocalHapticFeedback.current
     LaunchedEffect(wrongTick) {
         if (wrongTick > 0) {
             kotlinx.coroutines.delay(550)
@@ -394,8 +411,9 @@ private fun MatchExercise(step: MatchStep, result: Boolean?, answer: (Boolean) -
         selected = null
         if (l == r) {
             matched.add(l)
-            if (matched.size == step.pairs.size) answer(!mistakes)
+            if (matched.size == step.pairs.size) answer(!mistakes) else haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
         } else {
+            haptics.performHapticFeedback(HapticFeedbackType.Reject)
             mistakes = true
             wrong = l to r
             wrongTick++

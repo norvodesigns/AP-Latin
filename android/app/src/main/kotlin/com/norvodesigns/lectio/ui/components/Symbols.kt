@@ -5,6 +5,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.outlined.KeyboardTab
+import androidx.compose.material.icons.outlined.Remove
+import androidx.compose.material.icons.outlined.ViewColumn
 import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.automirrored.outlined.Notes
 import androidx.compose.material.icons.automirrored.outlined.Undo
@@ -208,6 +211,9 @@ object Symbols {
         "person.2" -> Icons.Outlined.People
         "person.2.badge.gearshape" -> Icons.Outlined.ManageAccounts
         "seal", "seal.fill" -> Icons.Outlined.WorkspacePremium
+        "minus" -> Icons.Outlined.Remove
+        "rectangle.split.3x1" -> Icons.Outlined.ViewColumn
+        "arrow.right.to.line" -> Icons.AutoMirrored.Outlined.KeyboardTab
         else -> Icons.Outlined.Book
     }
 }
