@@ -1200,3 +1200,54 @@ export function elidesBefore(word: string, next: string): boolean {
   const startsVowelish = isVowel(b[0]) || b[0] === 'h';
   return endsVowelish && startsVowelish;
 }
+
+/* ------------------------------------------------------------------ */
+/* Exam-style glossing                                                  */
+/* ------------------------------------------------------------------ */
+
+export interface GlossedWord {
+  /** The word exactly as it appears in the passage. */
+  word: string;
+  /** A short, one-sense definition — the length an actual margin note has room for. */
+  meaning: string;
+}
+
+/**
+ * Every word in `latin` that is not on the CED's required vocabulary list —
+ * the same words the real AP exam prints a marginal gloss for, on the
+ * reasoning that a student sitting the exam was never expected to have
+ * memorized them. `coreVocabulary` is that required list; an entry marked
+ * `supplementary` is everything else, real Latin the exam itself would
+ * define for you. Returns each qualifying word once, in the order it first
+ * appears, with a one-sense definition short enough to read as a margin
+ * note rather than a dictionary entry.
+ *
+ * `context` runs the same per-line disambiguation the Reading Room's own
+ * glossary popup uses, so an ambiguous spelling (e.g. "spirisque") is
+ * glossed with the sense that is actually correct in this line rather than
+ * whichever tier happens to answer first. Sight passages have no
+ * passage/line to key that table on, so they fall back to `lookup()` alone
+ * — exactly what a hand-authored `stimulus.gloss` would otherwise supply.
+ */
+export function glossWords(latin: string, context?: { passageId: string; lineN: number }): GlossedWord[] {
+  const out: GlossedWord[] = [];
+  const seen = new Set<string>();
+  for (const t of tokenize(latin)) {
+    if (!t.isWord) continue;
+    const norm = normalizeWord(t.text);
+    if (!norm || seen.has(norm)) continue;
+    seen.add(norm);
+    let results = lookup(t.text);
+    if (context) results = disambiguateInContext(context.passageId, context.lineN, t.text, results, t.index);
+    const top = results[0];
+    if (!top?.entry.supplementary) continue;
+    out.push({ word: t.text, meaning: top.entry.definition.split(';')[0].trim() });
+  }
+  return out;
+}
+
+/** `glossWords`, as a set of normalized spellings — for O(1) "is this word
+ *  glossed?" checks while rendering a passage word by word. */
+export function glossedWordSet(latin: string, context?: { passageId: string; lineN: number }): Set<string> {
+  return new Set(glossWords(latin, context).map((g) => normalizeWord(g.word)));
+}
