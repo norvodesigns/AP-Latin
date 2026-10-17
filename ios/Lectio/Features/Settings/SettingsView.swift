@@ -80,6 +80,24 @@ struct SettingsView: View {
                     Text("AI grading, the line tutor and sight-passage selection send the Latin and what you wrote or asked to an AI provider (Google Gemini, or Groq as a backup). Nothing is sent until you press an AI button. With AI off, every feature still has its self-graded path.")
                 }
 
+                // Only in a build that can show ads at all (App/Ads/AdConfig.swift).
+                if model.ads.enabled {
+                    Section {
+                        if model.ads.privacyOptionsRequired {
+                            Button("Ad privacy choices", systemImage: "hand.raised") {
+                                Task { await model.ads.showPrivacyOptions() }
+                            }
+                        }
+                        Link(destination: AppConfig.web("privacy")) {
+                            Label("How ads are handled", systemImage: "doc.text")
+                        }
+                    } header: {
+                        Text("Ads")
+                    } footer: {
+                        Text("Lectio shows one small ad at the bottom of Today and, at most once a day, after you finish a lesson. Never during lessons, quizzes, exams or reading, and none on your first day. The ads are non-personalized, from Google AdMob.")
+                    }
+                }
+
                 Section {
                     NavigationLink {
                         AccountView()

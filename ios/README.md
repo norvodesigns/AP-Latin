@@ -103,19 +103,20 @@ with a deployment target of iOS 17, so an unguarded iOS 26 call fails the build.
 
 ## Shipping to TestFlight
 
-The step-by-step is in [TESTFLIGHT.md](TESTFLIGHT.md). In short, it builds in the cloud with Expo's
-EAS Build, like the Palette app, so no Mac is needed:
+Build and ship from Xcode on your Mac; the step-by-step is [XCODE.md](XCODE.md). In short, after a
+one-time setup (Xcode 26.2+, `brew install xcodegen`, your Apple ID signed in under Xcode > Settings >
+Accounts):
 
-1. `cd ios && npm ci && npx eas-cli@latest login && npx eas-cli@latest init`, then commit the
-   `projectId` it writes into `app.json`.
-2. Once, interactively: `npx eas-cli@latest build -p ios --profile production --auto-submit`. EAS
-   signs in to Apple, creates the certificate, profiles and app group, creates the App Store Connect
-   app and uploads the build.
-3. After that: add an `EXPO_TOKEN` secret and run **Actions > TestFlight > Run workflow**.
+```bash
+scripts/ios-testflight.sh
+```
 
-Fallbacks that don't use EAS: Product > Archive in Xcode, or **Actions > iOS > Run workflow** with
-*Upload a build to TestFlight* ticked (needs the `ASC_KEY_ID`, `ASC_ISSUER_ID` and `ASC_KEY_P8`
-secrets; both are in TESTFLIGHT.md).
+archives, signs and uploads a build with a rising build number; App Store Connect processes it and you
+add it to TestFlight (or to a version for review). No Expo, no build limit.
+
+Fallbacks that don't need your Mac: Expo's EAS Build ([TESTFLIGHT.md](TESTFLIGHT.md); the free tier is
+limited), or **Actions > iOS > Run workflow** with *Upload a build to TestFlight* ticked (needs the
+`ASC_KEY_ID`, `ASC_ISSUER_ID` and `ASC_KEY_P8` secrets).
 
 ## What's in the app
 

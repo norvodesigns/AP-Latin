@@ -32,6 +32,7 @@ struct TodayView: View {
                         }
                         JumpPanel().id("jump")
                         panels.id("panels")
+                        AdPanel()
                         Color.clear.frame(height: 1).id("end")
                     }
                     .padding(.horizontal, 20)

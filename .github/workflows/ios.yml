@@ -21,6 +21,7 @@ on:
       - 'src/lib/mergeProgress.ts'
       - 'src/store/useStore.ts'
       - 'scripts/export-*.ts'
+      - 'scripts/ios-testflight.sh'
       - '.github/workflows/ios.yml'
   pull_request:
     paths:
@@ -31,6 +32,7 @@ on:
       - 'src/lib/mergeProgress.ts'
       - 'src/store/useStore.ts'
       - 'scripts/export-*.ts'
+      - 'scripts/ios-testflight.sh'
       - '.github/workflows/ios.yml'
   workflow_dispatch:
     inputs:
@@ -101,19 +103,12 @@ jobs:
       # device, watch app embedded) but unsigned, so a problem that only a
       # device build or an archive has (an extension, the watch app, an asset
       # catalog) shows here and not in the first upload.
-      - name: Archive for devices (Release, unsigned)
-        working-directory: ios
-        run: |
-          set -o pipefail
-          xcodebuild archive \
-            -project Lectio.xcodeproj \
-            -scheme Lectio \
-            -destination 'generic/platform=iOS' \
-            -archivePath build/Lectio.xcarchive \
-            -derivedDataPath build \
-            CODE_SIGNING_ALLOWED=NO \
-            | tee archive.log | grep -E '(error|warning: .*(deprecated|isolat|Sendable))|ARCHIVE (SUCCEEDED|FAILED)' || true
-          grep -q 'ARCHIVE SUCCEEDED' archive.log
+      # The same script you run on your Mac to ship (scripts/ios-testflight.sh),
+      # in its unsigned mode: it generates the project, stamps the build
+      # number and archives the Release build for a real device. Everything
+      # but signing and the upload, so a broken release build shows up here.
+      - name: Archive for devices (the release script, unsigned)
+        run: scripts/ios-testflight.sh --check
       - name: Check what the archive contains
         working-directory: ios
         run: |

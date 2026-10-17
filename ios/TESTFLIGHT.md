@@ -1,9 +1,10 @@
 # Getting Lectio onto TestFlight
 
-For a first build you can put on your own devices and give feedback on. Do the setup once, in order;
-after that a build is one button.
+**The route to use: Xcode on your Mac, one command: [XCODE.md](XCODE.md).** `scripts/ios-testflight.sh`
+archives, signs and uploads, with no Expo and no build limit. This page keeps the other routes (cloud
+builds from Expo or from GitHub, which need no Mac) and the text to paste into TestFlight.
 
-## The route: Expo EAS (same as Palette, no Mac needed)
+## Fallback: Expo EAS (cloud builds, no Mac needed, free tier is limited)
 
 Lectio builds in the cloud with **EAS Build**, the way the Palette app does. EAS isn't only for React
 Native: it runs `xcodebuild` on its own Macs, and a *custom build config* lets it build a plain SwiftUI
@@ -71,15 +72,9 @@ complications is the least-trodden part. If the first build fails, send me the f
 run the TestFlight workflow, which prints it) and I'll fix the recipe. The routes below don't depend
 on EAS and stay as the fallback.
 
-## Fallback routes
+## Other routes
 
-- **From Xcode, on a Mac.** `brew install xcodegen`; Xcode 26 or later. `cd ios && xcodegen && open
-  Lectio.xcodeproj`, select the **Lectio** scheme and your iPhone, Run (turn on Developer Mode on the
-  phone first: Settings > Privacy & Security). Xcode signs automatically under team `M46ZNP323Y` and
-  registers all four bundle IDs and the app group. Create the app record (App Store Connect > Apps > +
-  > New App, bundle ID `com.norvodesigns.lectio`), then *Any iOS Device (arm64)*, Product > Archive,
-  Distribute App > App Store Connect > Distribute. Best for a first build, since errors are easiest to
-  read there.
+- **From Xcode, on a Mac:** [XCODE.md](XCODE.md), the route to use.
 - **From GitHub, on a GitHub Mac.** Create an App Store Connect API key (Users and Access >
   Integrations > App Store Connect API, role **Admin**), add the repository secrets `ASC_KEY_ID`,
   `ASC_ISSUER_ID` and `ASC_KEY_P8` (the whole .p8 file), then Actions > iOS > Run workflow with

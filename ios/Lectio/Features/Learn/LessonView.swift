@@ -38,6 +38,14 @@ struct LessonView: View {
     }
 
     private var isDaily: Bool { kind == .daily }
+
+    /// Done, on the result screen: close the lesson. After a course lesson
+    /// that's a natural pause, so the day's one full-screen ad (if the ad
+    /// policy allows it) is offered once the lesson has gone.
+    private func finish() {
+        dismiss()
+        if kind == .course { model.ads.lessonFinished() }
+    }
     /// Made on the spot rather than one of the course's lessons.
     private var isSession: Bool { kind != .course }
 
@@ -336,11 +344,11 @@ struct LessonView: View {
                         Button { choice.action() } label: { Text(choice.label).frame(maxWidth: .infinity).padding(.vertical, 4) }
                             .glassButton()
                         if next == nil {
-                            Button { dismiss() } label: { Text("Done").frame(maxWidth: .infinity).padding(.vertical, 4) }
+                            Button { finish() } label: { Text("Done").frame(maxWidth: .infinity).padding(.vertical, 4) }
                                 .glassButton(prominent: true)
                                 .keyboardShortcut(.return, modifiers: [])
                         } else {
-                            Button { dismiss() } label: { Text("Done").frame(maxWidth: .infinity).padding(.vertical, 4) }
+                            Button { finish() } label: { Text("Done").frame(maxWidth: .infinity).padding(.vertical, 4) }
                                 .glassButton()
                         }
                     }

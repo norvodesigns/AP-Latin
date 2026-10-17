@@ -37,6 +37,9 @@ struct RootView: View {
                 .pageBackground()
         case .ready(let library):
             Tabs()
+                // Ads start only once the first-run screens are done, and the
+                // policy (AdPolicy) holds them back for a day after that.
+                .task(id: model.showOnboarding) { await model.ads.prepare(onboarded: !model.showOnboarding) }
                 // The first run: where the student is starting, and a goal.
                 .fullScreenCover(isPresented: Binding(get: { model.showOnboarding }, set: { model.showOnboarding = $0 })) {
                     OnboardingView()

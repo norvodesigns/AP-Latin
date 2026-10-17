@@ -107,6 +107,9 @@ final class AppModel {
     @ObservationIgnored var contentDirectory: URL? = nil
     @ObservationIgnored var contentUpdate: Task<Void, Never>? = nil
 
+    /* Ads — see App/Ads and ios/ADS.md. */
+    @ObservationIgnored let ads = AdManager()
+
     /* AI — the website's routes. Nil until checked. */
     var aiAvailable: Bool? = nil
     @ObservationIgnored let ai = AIClient()
