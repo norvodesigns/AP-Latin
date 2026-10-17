@@ -485,4 +485,14 @@ finishing a lesson counts toward the streak and daily goal.
   complication shows when its count is stale and opens the app; keyboard shortcuts match the iPad's; and
   the reader picked up the iOS change of 10 October (the line number's menu, Ask in the gloss). 161 JVM
   tests, including the new navigation and keyboard walks.
+- 2026-10-17: Building and shipping from Xcode, and ads. `scripts/ios-testflight.sh` archives, signs and
+  uploads from a Mac with a rising build number (`--archive-only` opens the Organizer; `--check` is the
+  unsigned archive CI now runs, so the route is exercised on every push); `ios/XCODE.md` covers setup,
+  editing, shipping and the usual signing errors. The Expo files stay as an optional fallback. Ads (Google
+  AdMob), kept small: `AdPolicy` in LectioCore (tested) allows none until the first-run screens are done and
+  a day has passed, a banner below Today, and at most one full-screen ad a day, only after a course lesson
+  is closed. Google's consent form runs first, requests are non-personalized and the app never asks to
+  track. Sample IDs ship in `project.yml`, and a Release build with them shows no ads, so nothing goes out
+  until real IDs are pasted in (`ios/ADS.md`). The privacy policy has an Ads section; `APP_STORE.md` has
+  what to change in App Store Connect when the first ad build ships.
 

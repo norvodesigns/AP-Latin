@@ -243,6 +243,46 @@ Safe to declare now: **Dark Interface**, **Larger Text** (every screen follows D
 screenshots the largest sizes) and **Reduced Motion** (the first run and the course respect it).
 Declare **VoiceOver** only after you've walked through the main tasks with it on a device.
 
+## When ads ship (version 1.1 or later)
+
+The listing above describes **1.0, which has no ads**. The first build that carries real AdMob IDs
+([ADS.md](ADS.md)) must go out with these changes, made in App Store Connect first; Apple compares what
+the app does with what you declared, and an ad SDK with answers that say "no data collected" is the usual
+cause of a 5.1.2 rejection.
+
+1. **App Privacy** (App Store Connect > App Privacy > Edit). Add, with purpose **Third-Party Advertising**
+   (and *Analytics* for the diagnostic ones, as Google lists them):
+
+   | Data type | Linked to you | Used for tracking |
+   | --- | --- | --- |
+   | Identifiers › **Device ID** | Yes | **No** |
+   | Usage Data › **Advertising Data** | Yes | **No** |
+   | Usage Data › **Product Interaction** (already declared, so add the purpose) | Yes | **No** |
+   | Location › **Coarse Location** (Google estimates it from the IP address) | Yes | **No** |
+   | Diagnostics › **Crash Data**, **Performance Data**, **Other Diagnostic Data** | No | **No** |
+
+   *Used for tracking: No* is true of this app, as built: it never asks for the Advertising ID, requests
+   non-personalized ads only, and shows no tracking prompt. If you ever turn personalization on, that
+   answer changes to Yes and the app must ask permission first. "Linked: Yes" is the safe reading of
+   Apple's definition for identifiers (over-declaring is harmless; under-declaring is what gets flagged).
+   Google lists the data its SDK collects at developers.google.com/admob/ios/privacy/data-disclosure
+   and leaves the linked/tracking answers to you; read it once against this table.
+2. **Age Rating** (App Information > Age Rating > Edit): **Advertising: Yes**. The rating may rise a
+   notch, which is fine for an exam-prep app.
+3. **The description:** in the line near the end, replace "No account is needed, and there are no ads, no
+   tracking and no purchases." with: "No account is needed to study. The iPhone and iPad app shows a small
+   ad now and then (never during a lesson, quiz or exam), has no purchases, and never tracks you across
+   other apps." Descriptions and screenshots must match what's in the app (guideline 2.3).
+4. **App Review notes:** add: "The app shows ads from Google AdMob: a banner at the bottom of Today and at
+   most one full-screen ad a day after a lesson, never in the first 24 hours after install, so you will
+   not see any during a short review. They are non-personalized; the app never requests tracking
+   permission. Google's consent form runs first where the law requires it (Settings › Ads has the privacy
+   choices)."
+5. **If App Store Connect asks** whether the app uses the Advertising Identifier (IDFA): the SDK contains
+   the code, so answer **Yes** and tick only *Serve advertisements within the app*; the Limit Ad Tracking
+   confirmation is true (the app never asks to track and never reads the identifier).
+6. **Privacy policy:** already updated (the Ads section at /privacy).
+
 ## What's already handled in the app
 
 | Common rejection | Guideline | What Lectio does |
