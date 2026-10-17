@@ -68,7 +68,7 @@ targets:
       - package: GoogleMobileAds
         product: GoogleMobileAds
       - package: GoogleUserMessagingPlatform
-        product: UserMessagingPlatform
+        product: GoogleUserMessagingPlatform
       - target: LectioWidgets
       # The watch app ships inside the iPhone app (Lectio.app/Watch), which
       # is how the App Store delivers it to a paired watch.

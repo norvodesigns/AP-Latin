@@ -68,21 +68,41 @@ export default function PrivacyPage() {
           </p>
         </Section>
 
+        <Section title="Ads" className="mb-10">
+          <p>
+            The iPhone and iPad app (not the website, and not the Android app) may show ads from Google
+            AdMob: a small banner at the bottom of the Today screen and, at most once a day, a
+            full-screen ad after you finish a lesson. There are none during your first day with the app,
+            and never during a lesson, quiz, exam, flashcard session or reading.
+          </p>
+          <p>
+            When an ad is requested, Google receives your device&rsquo;s IP address, device identifiers
+            and details about the ad and how you interact with it, and uses them to serve and measure the
+            ad and to prevent fraud. Lectio asks for non-personalized ads, never asks to track you across
+            other apps or websites, and gives Google no name, email address, progress or anything you
+            write. Where the law asks for it (for example in the UK and the European Economic Area, and in
+            some US states), the app asks for your choice before requesting ads, and you can change it in
+            Settings › Ads. Google&rsquo;s own policy covers what it does with that data:{' '}
+            <a href="https://policies.google.com/technologies/ads">policies.google.com/technologies/ads</a>.
+          </p>
+        </Section>
+
         <Section title="Analytics and tracking" className="mb-10">
           <p>
             The website uses Vercel Web Analytics to count page views. It uses no cookies and does not
-            identify you. The iPhone, iPad and Android apps include no analytics, advertising or tracking of any
-            kind, and do not track you across other apps or websites.
+            identify you. The iPhone, iPad and Android apps include no analytics or tracking of any kind,
+            and do not track you across other apps or websites. (The iPhone and iPad app&rsquo;s ads are
+            described above.)
           </p>
         </Section>
 
         <Section title="Who else handles your data" className="mb-10">
           <p>
-            Lectio has no advertisers and sells nothing. The only other companies involved are the ones
-            that run it: Supabase (accounts and synced progress), Vercel (the website and its server,
-            including page-view counts), and, only when you use an AI feature, Google or Groq (see
-            above). Each processes data only to provide its service to Lectio, under its own privacy
-            terms, which protect it at least as well as this policy.
+            Lectio sells nothing. The companies involved are the ones that run it: Supabase (accounts and
+            synced progress), Vercel (the website and its server, including page-view counts), and,
+            only when you use an AI feature, Google or Groq (see above); plus Google AdMob, which supplies
+            the iPhone and iPad app&rsquo;s ads (see Ads). Each processes data only to provide its
+            service, under its own privacy terms.
           </p>
         </Section>
 
@@ -105,10 +125,10 @@ export default function PrivacyPage() {
 
         <Section title="Children" className="mb-10">
           <p>
-            Lectio is made for high-school and college students. Accounts are not meant for children
-            under 13; if you are under 13, use Lectio without an account, which keeps everything on your
-            device. If you believe a child under 13 has created an account, tell us on the support page
-            and we will delete it.
+            Lectio is made for high-school and college students and is not directed at children under 13.
+            Accounts are not meant for them; if you believe a child under 13 has created an account,
+            tell us on the support page and we will delete it. Ads in the iPhone and iPad app are
+            requested for general audiences and without personalization.
           </p>
         </Section>
 
@@ -127,7 +147,7 @@ export default function PrivacyPage() {
             Write to us through the <Link href="/support">support page</Link>. If this policy changes,
             the new version is posted here with a new date.
           </p>
-          <p>Last updated 9 October 2026.</p>
+          <p>Last updated 17 October 2026.</p>
           <p style={{ fontSize: '0.9375rem', color: 'var(--fg-muted)' }}>{TRADEMARK_NOTICE}</p>
         </Section>
       </Prose>
