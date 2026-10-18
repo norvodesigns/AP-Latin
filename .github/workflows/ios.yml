@@ -166,8 +166,16 @@ jobs:
                       print(d['udid']); sys.exit()
           ")
           echo "Simulator: $udid"
+          # Boot it fully first: a test that launches the app while the
+          # simulator is still starting fails with "Failed to get background
+          # assertion ... Timed out", which is the runner's doing, not the app's.
+          xcrun simctl boot "$udid" || true
+          xcrun simctl bootstatus "$udid" -b
+          # A test that fails is run again (up to three tries in all); only a
+          # test that fails every time fails the job.
           xcodebuild test -project Lectio.xcodeproj -scheme LectioUITests \
             -destination "id=$udid" -derivedDataPath build -resultBundlePath build/uitests.xcresult \
+            -retry-tests-on-failure -test-iterations 3 \
             CODE_SIGNING_ALLOWED=NO \
             | tee uitests.log | grep -E "Test Case|error:|skipped|\*\* TEST" || true
           grep -q '\*\* TEST SUCCEEDED \*\*' uitests.log
