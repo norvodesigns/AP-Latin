@@ -62,6 +62,16 @@ if [ "$MODE" != check ] && [ -z "${ALLOW_BETA_XCODE:-}" ] && printf '%s' "$DEV_D
   (Installed Xcodes: ls -d /Applications/Xcode*. The release is on the Mac App Store or developer.apple.com/download/all.)"
 fi
 
+# An Icon Composer app icon (Lectio/Resources/*.icon) needs XcodeGen 2.45.1 or
+# later to be put in the project; an older one drops it and the app keeps its
+# old icon.
+if compgen -G "Lectio/Resources/*.icon" >/dev/null; then
+  HAVE_XCODEGEN="$(xcodegen --version 2>/dev/null | grep -Eo '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1)"
+  if [ -n "$HAVE_XCODEGEN" ] && [ "$(printf '%s\n%s\n' 2.45.1 "$HAVE_XCODEGEN" | sort -V | head -1)" != "2.45.1" ]; then
+    die "XcodeGen $HAVE_XCODEGEN is too old for the Icon Composer app icon (it needs 2.45.1 or later). Run: brew upgrade xcodegen"
+  fi
+fi
+
 BUILD="${BUILD_NUMBER:-$(date -u +%y%m%d%H%M)}"
 VERSION="$(sed -n 's/^ *MARKETING_VERSION: *"\{0,1\}\([^"]*\)"\{0,1\} *$/\1/p' project.yml | head -1)"
 say "Lectio $VERSION, build $BUILD ($(git rev-parse --short HEAD 2>/dev/null || echo 'no git')$(git diff --quiet 2>/dev/null || echo ', with uncommitted changes'))"

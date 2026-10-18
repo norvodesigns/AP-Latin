@@ -44,6 +44,23 @@ fallback; see the end.)
 - **The simulator:** the sample progress button (Settings > Developer) shows only in Debug builds; or
   launch with `-seedDemo YES` in the scheme's Arguments to fill an empty install.
 
+## Changing the app icon
+
+The icon is set in `project.yml`, like every other setting, so Xcode's own icon picker can't change it
+(it only edits the generated project, which the next `xcodegen generate` throws away). Two ways:
+
+- **An Icon Composer file** (the layered, glass-aware kind, saved as `Something.icon`): put it in
+  `ios/Lectio/Resources/`, then in `ios/project.yml` set the Lectio target's
+  `ASSETCATALOG_COMPILER_APPICON_NAME` to its name without the `.icon` (`Lectio-icon`). Needs XcodeGen
+  2.45.1 or later (`brew upgrade xcodegen`; the script checks). Commit the whole `.icon` folder and
+  `project.yml` together. Icon Composer makes the dark and tinted looks itself, and Xcode makes the flat
+  icon older iOS versions use.
+- **A flat picture:** replace `ios/Lectio/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png`
+  (1024 × 1024 PNG, **no transparency**) and leave `ASSETCATALOG_COMPILER_APPICON_NAME` as `AppIcon`.
+
+The Apple Watch icon is separate: `ios/LectioWatch/Assets.xcassets/AppIcon.appiconset/AppIcon.png`.
+The Home Screen caches icons, so after installing a build delete the old app first to see the new icon.
+
 ## Shipping to TestFlight
 
 One command, from the repo root:

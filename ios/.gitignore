@@ -4,6 +4,8 @@ Lectio/Info.plist
 
 # Build products
 build/
+# What scripts/ios-testflight.sh writes while it archives and uploads
+*.log
 # ...but not EAS's build recipe, which lives in .eas/build/
 !/.eas/build/
 DerivedData/
