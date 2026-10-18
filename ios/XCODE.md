@@ -60,8 +60,12 @@ then processes the build for 10 to 30 minutes and emails you. After that:
   testing group. Internal testers skip Beta App Review.
 - **The App Store:** on the version's page, Build > Add Build, pick it, and submit for review.
 
-To release a new version number (what users see), change `MARKETING_VERSION` in `ios/project.yml`
-(`1.0.0` > `1.1.0`) and commit it first; the build number takes care of itself.
+**Each App Store release needs a higher version number than the last one Apple approved.** Once a version
+is approved, Apple takes no more builds under it (the upload fails with *train version … is closed* /
+*must contain a higher version*). So for every release: raise `MARKETING_VERSION` in `ios/project.yml`
+(`1.1.0` > `1.2.0`, or `1.1.1` for a small fix) and commit it; create that version in App Store Connect
+(your app > **+** next to *iOS App*); then run the script. The build number takes care of itself. TestFlight
+builds follow the same rule, because they're uploaded to the same version.
 
 ### Prefer clicking? Use the Organizer
 
@@ -87,11 +91,13 @@ The script prints the usual cause under its error and keeps the full log in `ios
 
 | You see | What to do |
 | --- | --- |
+| *train version '1.x.x' is closed for new build submissions* / *must contain a higher version than … previously approved* | That version number is already approved. Raise `MARKETING_VERSION` in `ios/project.yml`, commit, add the new version in App Store Connect, re-run. |
 | *Unsupported SDK or Xcode version* (the upload fails, after the archive worked) | The Xcode in use is a beta. Check with `xcodebuild -version` and `xcode-select -p`, then build with the release one: `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer scripts/ios-testflight.sh` (adjust the name to the release Xcode in `ls -d /Applications/Xcode*`), or switch for good with `sudo xcode-select -s /Applications/Xcode.app`. The script now stops early if the selected Xcode is named beta. |
 | *No Accounts* / *Unable to authenticate* | Xcode > Settings > Accounts: add (or re-add) your Apple ID. |
 | *No profiles for 'com.norvodesigns.lectio…'* | Open the project, each target > Signing & Capabilities: *Automatically manage signing* on, team set, no red errors. Re-run. |
 | *Maximum number of Distribution certificates* | developer.apple.com > Certificates: revoke an unused one (the one Expo made is fine to revoke once you've stopped using Expo). Re-run. |
 | *The bundle version must be higher* / already used | Wait a minute and re-run (the number is a timestamp), or set `BUILD_NUMBER=` to something higher. |
+| *Upload Symbols Failed … GoogleMobileAds.framework / UserMessagingPlatform.framework* | A warning, not an error: Google ships its ad frameworks without debug symbols. Only crash reports for Google's own code are affected. |
 | *Missing package product* / *Failed to resolve* | File > Packages > Reset Package Caches, then re-run. Needs internet the first time. |
 | *Developer Mode required* (running on your phone) | Settings > Privacy & Security > Developer Mode, then restart the phone. |
 

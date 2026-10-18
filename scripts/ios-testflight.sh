@@ -85,7 +85,9 @@ fi
 
 hint() {
   # $1: a log file. Says what the usual cause of its error is.
-  if grep -qiE "Unsupported SDK or Xcode version" "$1"; then
+  if grep -qiE "closed for new build submissions|must contain a higher version|previously approved version" "$1"; then
+    echo "  -> Apple has already approved this version number, so it takes no more builds under it. Raise MARKETING_VERSION in ios/project.yml (1.1.0 -> 1.1.1 or 1.2.0), commit it, create that version in App Store Connect (your app > + next to iOS App), and run this again."
+  elif grep -qiE "Unsupported SDK or Xcode version" "$1"; then
     echo "  -> This Xcode (or its SDK) is a beta, or no longer accepted. Check which one this is: xcodebuild -version; xcode-select -p. Then use the release Xcode: DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer scripts/ios-testflight.sh (or sudo xcode-select -s /Applications/Xcode.app). Archives made with a beta can't be uploaded; this run builds a fresh one."
   elif grep -qiE "No Accounts|no account for team|Unable to authenticate" "$1"; then
     echo "  -> Xcode isn't signed in. Open Xcode > Settings > Accounts, add your Apple ID (the one on the developer team), and run this again."
