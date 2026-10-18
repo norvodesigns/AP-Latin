@@ -52,15 +52,26 @@ fi
 
 # Apple only takes builds made with a release Xcode (or a Release Candidate),
 # never a beta: the archive would build and the upload would then be refused.
-# Say which Xcode this is, and stop early if it looks like a beta.
+# If the selected Xcode is a beta and a release one is installed, use that for
+# this run (nothing else on the Mac changes); if there isn't one, stop before
+# spending minutes on an archive that can't be uploaded.
 DEV_DIR="${DEVELOPER_DIR:-$(xcode-select -p 2>/dev/null || true)}"
-say "Using $(xcodebuild -version 2>/dev/null | head -1) ($DEV_DIR)"
 if [ "$MODE" != check ] && [ -z "${ALLOW_BETA_XCODE:-}" ] && printf '%s' "$DEV_DIR" | grep -qi beta; then
-  die "This is a beta Xcode, and App Store Connect refuses builds made with one. Use the release Xcode, either just for this run:
-    DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer scripts/ios-testflight.sh
-  or for everything: sudo xcode-select -s /Applications/Xcode.app
-  (Installed Xcodes: ls -d /Applications/Xcode*. The release is on the Mac App Store or developer.apple.com/download/all.)"
+  RELEASE_XCODE=""
+  for app in /Applications/Xcode.app /Applications/Xcode*.app; do
+    [ -d "$app/Contents/Developer" ] || continue
+    printf '%s' "$app" | grep -qi beta && continue
+    RELEASE_XCODE="$app/Contents/Developer"
+    break
+  done
+  if [ -z "$RELEASE_XCODE" ]; then
+    die "The selected Xcode is a beta ($DEV_DIR), and App Store Connect refuses builds made with one, and no release Xcode is installed in /Applications. Install the release one (Mac App Store, or developer.apple.com/download/all), then run this again. (Installed Xcodes: ls -d /Applications/Xcode*)"
+  fi
+  say "The selected Xcode is a beta, which App Store Connect refuses; using $RELEASE_XCODE for this run instead"
+  export DEVELOPER_DIR="$RELEASE_XCODE"
+  DEV_DIR="$RELEASE_XCODE"
 fi
+say "Using $(xcodebuild -version 2>/dev/null | head -1) ($DEV_DIR)"
 
 # An Icon Composer app icon (Lectio/Resources/*.icon) needs XcodeGen 2.45.1 or
 # later to be put in the project; an older one drops it and the app keeps its
