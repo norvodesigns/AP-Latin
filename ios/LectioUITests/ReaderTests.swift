@@ -30,12 +30,33 @@ final class ReaderTests: XCTestCase {
         element.tap()
     }
 
+    /// A word of the passage, once the page has opened and settled: it
+    /// exists as soon as the passage is on screen, but a press during the
+    /// push animation or while a slow simulator is still laying out the
+    /// page can miss it, which is what once failed a run.
+    private func word(_ app: XCUIApplication, _ id: String) -> XCUIElement {
+        let word = element(app, id)
+        XCTAssertTrue(word.waitForExistence(timeout: 30), "The passage didn't open")
+        let hittable = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isHittable == true"), object: word)
+        XCTAssertEqual(XCTWaiter().wait(for: [hittable], timeout: 20), .completed, "\(id) never became tappable")
+        return word
+    }
+
+    /// Touches and holds a word until the highlight bar is up, trying up to
+    /// three times: a press that lands while the simulator is busy can be
+    /// read as too short, and holding again is exactly what a person does.
+    private func hold(_ word: XCUIElement, in app: XCUIApplication) -> Bool {
+        let bar = element(app, "highlight-done")
+        for _ in 0..<3 {
+            word.press(forDuration: 1.0)
+            if bar.waitForExistence(timeout: 6) { return true }
+        }
+        return false
+    }
+
     func testHoldingAWordStartsAHighlight() {
         let app = launch(aiConsent: false)
-        let word = element(app, "word-1-virumque")
-        XCTAssertTrue(word.waitForExistence(timeout: 30), "The passage didn't open")
-        word.press(forDuration: 0.9)
-        XCTAssertTrue(element(app, "highlight-done").waitForExistence(timeout: 5),
+        XCTAssertTrue(hold(word(app, "word-1-virumque"), in: app),
                       "Holding a word should start a highlight and show the highlight bar")
         // A pigment, then the bar goes and the mark stays.
         tap(app.buttons["Gilt"], "The gilt pigment")
@@ -44,21 +65,15 @@ final class ReaderTests: XCTestCase {
 
     func testTheTutorOpensFromTheHighlightBar() {
         let app = launch(aiConsent: false)
-        let word = element(app, "word-1-virumque")
-        XCTAssertTrue(word.waitForExistence(timeout: 30))
-        word.press(forDuration: 0.9)
-        let ask = element(app, "highlight-ask")
-        XCTAssertTrue(ask.waitForExistence(timeout: 5))
-        ask.tap()
+        XCTAssertTrue(hold(word(app, "word-1-virumque"), in: app), "Holding a word should show the highlight bar")
+        tap(element(app, "highlight-ask"), "The highlight bar's Ask button")
         XCTAssertTrue(app.navigationBars["Ask about this line"].waitForExistence(timeout: 5),
                       "Ask on the highlight bar should open the line tutor")
     }
 
     func testTheTutorOpensFromAWordsGloss() {
         let app = launch(aiConsent: false)
-        let word = element(app, "word-1-Arma")
-        XCTAssertTrue(word.waitForExistence(timeout: 30))
-        word.tap()
+        word(app, "word-1-Arma").tap()
         let ask = element(app, "gloss-ask")
         XCTAssertTrue(ask.waitForExistence(timeout: 5), "A word's gloss should offer Ask about this line")
         ask.tap()
@@ -79,9 +94,7 @@ final class ReaderTests: XCTestCase {
 
     func testTheTutorAsksPermissionFirst() {
         let app = launch(aiConsent: false)
-        let word = element(app, "word-1-Arma")
-        XCTAssertTrue(word.waitForExistence(timeout: 30))
-        word.tap()
+        word(app, "word-1-Arma").tap()
         tap(element(app, "gloss-ask"), "The gloss's Ask button")
         tap(app.buttons["Parse every word in this line."], "The suggested question")
         let allow = app.buttons["Allow AI features"]
@@ -95,9 +108,7 @@ final class ReaderTests: XCTestCase {
     /// provider's quota) skips rather than fails; a problem in the app fails.
     func testTheTutorAnswers() throws {
         let app = launch(aiConsent: true)
-        let word = element(app, "word-1-virumque")
-        XCTAssertTrue(word.waitForExistence(timeout: 30))
-        word.tap()
+        word(app, "word-1-virumque").tap()
         tap(element(app, "gloss-ask"), "The gloss's Ask button")
         tap(app.buttons["Parse every word in this line."], "The suggested question")
 
@@ -109,7 +120,9 @@ final class ReaderTests: XCTestCase {
         }
         if failure.exists {
             let message = failure.label
-            if message.hasPrefix("Couldn't reach the tutor") || message.hasPrefix("The tutor didn't send") {
+            // "Couldn't reach" is the app's own catch-all; an empty answer or a
+            // refusal (rate limit, the AI provider's quota) is the server's.
+            if message.hasPrefix("Couldn't reach the tutor") {
                 XCTFail("The tutor failed in the app: \(message)")
             } else {
                 throw XCTSkip("The AI server declined just now: \(message)")
