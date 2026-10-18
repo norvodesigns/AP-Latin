@@ -50,6 +50,18 @@ if ! command -v xcodegen >/dev/null; then
   brew install xcodegen
 fi
 
+# Apple only takes builds made with a release Xcode (or a Release Candidate),
+# never a beta: the archive would build and the upload would then be refused.
+# Say which Xcode this is, and stop early if it looks like a beta.
+DEV_DIR="${DEVELOPER_DIR:-$(xcode-select -p 2>/dev/null || true)}"
+say "Using $(xcodebuild -version 2>/dev/null | head -1) ($DEV_DIR)"
+if [ "$MODE" != check ] && [ -z "${ALLOW_BETA_XCODE:-}" ] && printf '%s' "$DEV_DIR" | grep -qi beta; then
+  die "This is a beta Xcode, and App Store Connect refuses builds made with one. Use the release Xcode, either just for this run:
+    DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer scripts/ios-testflight.sh
+  or for everything: sudo xcode-select -s /Applications/Xcode.app
+  (Installed Xcodes: ls -d /Applications/Xcode*. The release is on the Mac App Store or developer.apple.com/download/all.)"
+fi
+
 BUILD="${BUILD_NUMBER:-$(date -u +%y%m%d%H%M)}"
 VERSION="$(sed -n 's/^ *MARKETING_VERSION: *"\{0,1\}\([^"]*\)"\{0,1\} *$/\1/p' project.yml | head -1)"
 say "Lectio $VERSION, build $BUILD ($(git rev-parse --short HEAD 2>/dev/null || echo 'no git')$(git diff --quiet 2>/dev/null || echo ', with uncommitted changes'))"
@@ -73,7 +85,9 @@ fi
 
 hint() {
   # $1: a log file. Says what the usual cause of its error is.
-  if grep -qiE "No Accounts|no account for team|Unable to authenticate" "$1"; then
+  if grep -qiE "Unsupported SDK or Xcode version" "$1"; then
+    echo "  -> This Xcode (or its SDK) is a beta, or no longer accepted. Check which one this is: xcodebuild -version; xcode-select -p. Then use the release Xcode: DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer scripts/ios-testflight.sh (or sudo xcode-select -s /Applications/Xcode.app). Archives made with a beta can't be uploaded; this run builds a fresh one."
+  elif grep -qiE "No Accounts|no account for team|Unable to authenticate" "$1"; then
     echo "  -> Xcode isn't signed in. Open Xcode > Settings > Accounts, add your Apple ID (the one on the developer team), and run this again."
   elif grep -qiE "No profiles for|Provisioning profile .* doesn't|requires a provisioning profile" "$1"; then
     echo "  -> Xcode couldn't create the signing profiles. Open ios/Lectio.xcodeproj, select each target > Signing & Capabilities and check 'Automatically manage signing' shows the team with no red errors, then run this again."

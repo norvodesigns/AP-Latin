@@ -6,8 +6,10 @@ fallback; see the end.)
 
 ## One-time setup
 
-1. **A Mac with Xcode 26.2 or later** (Mac App Store, or developer.apple.com/download). Open it once so it
-   finishes installing its components.
+1. **A Mac with a release Xcode, 26.2 or later** (Mac App Store, or developer.apple.com/download/all).
+   Open it once so it finishes installing its components. **Not a beta**: Apple refuses uploads built
+   with one, even though the build itself works. If you keep a beta around for trying new iOS versions,
+   point the build at the release one (see the table below).
 2. **Sign in to your Apple ID in Xcode:** Xcode > Settings > Accounts > + > Apple ID. It must be the one on
    the developer team (`M46ZNP323Y`) with the Account Holder, Admin or App Manager role. Lectio signs
    itself with *Automatically manage signing*: Xcode creates the certificates and profiles for the app,
@@ -85,6 +87,7 @@ The script prints the usual cause under its error and keeps the full log in `ios
 
 | You see | What to do |
 | --- | --- |
+| *Unsupported SDK or Xcode version* (the upload fails, after the archive worked) | The Xcode in use is a beta. Check with `xcodebuild -version` and `xcode-select -p`, then build with the release one: `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer scripts/ios-testflight.sh` (adjust the name to the release Xcode in `ls -d /Applications/Xcode*`), or switch for good with `sudo xcode-select -s /Applications/Xcode.app`. The script now stops early if the selected Xcode is named beta. |
 | *No Accounts* / *Unable to authenticate* | Xcode > Settings > Accounts: add (or re-add) your Apple ID. |
 | *No profiles for 'com.norvodesigns.lectio…'* | Open the project, each target > Signing & Capabilities: *Automatically manage signing* on, team set, no red errors. Re-run. |
 | *Maximum number of Distribution certificates* | developer.apple.com > Certificates: revoke an unused one (the one Expo made is fine to revoke once you've stopped using Expo). Re-run. |
