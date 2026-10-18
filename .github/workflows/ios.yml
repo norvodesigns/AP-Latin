@@ -124,6 +124,12 @@ jobs:
             echo "$p"; plutil -p "$p" | grep -E 'MinimumOSVersion|CFBundleVersion|CFBundleShortVersionString|WKCompanionAppBundleIdentifier'
           done
           grep -q '"MinimumOSVersion" => "17.0"' <(plutil -p "$APP/Info.plist") || { echo "::error::the app should support iOS 17"; exit 1; }
+          # The app icon is an Icon Composer file (Lectio/Resources/Lectio-icon.icon).
+          # If project.yml's icon name or XcodeGen's version is wrong, the build still
+          # succeeds and quietly keeps the old icon, so check the built app has it.
+          echo "Icon entries:"; plutil -p "$APP/Info.plist" | grep -i 'icon' || true
+          grep -q 'Lectio-icon' <(plutil -p "$APP/Info.plist") || { echo "::error::the app icon (Lectio-icon.icon) isn't in the built app: check ASSETCATALOG_COMPILER_APPICON_NAME in project.yml and that XcodeGen is 2.45.1 or later"; exit 1; }
+          test -f "$APP/Assets.car" || { echo "::error::no compiled assets (Assets.car) in the app"; exit 1; }
           du -sh "$APP"
       - name: Upload build logs
         if: failure()
@@ -263,6 +269,10 @@ jobs:
                 sleep 8
                 xcrun simctl io "$udid" screenshot "shots/$label-$mode-onboarding-tour-$page.png"
               done
+              # The Home Screen, with the app closed: the app icon, light and dark.
+              xcrun simctl terminate "$udid" com.norvodesigns.lectio || true
+              sleep 4
+              xcrun simctl io "$udid" screenshot "shots/$label-$mode-homescreen.png"
             done
             # The look older systems get (-legacyChrome YES): no glass, a
             # classic tab bar on iPhone and a split view on iPad.
