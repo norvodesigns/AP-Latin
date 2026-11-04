@@ -119,6 +119,21 @@ import Testing
         #expect(library.meta.examDate == "2027-05-14")
     }
 
+    /// The Course Project set: cited by College Board's line numbers, prose
+    /// included, under its author's name, and ready as a project passage.
+    @Test func courseProjectPassages() throws {
+        let set = library.courseProjectPassages
+        #expect(set.count >= 4)
+        let augustine = try #require(set.first { $0.id == "cp26-augustine-confessions" })
+        #expect(!augustine.isPoetry && augustine.citesByLine && augustine.lineWord == "line")
+        #expect(augustine.authorLabel == "Augustine" && augustine.project == "2025–26")
+        #expect(augustine.lines.first?.n == 1 && augustine.lines.allSatisfy { $0.english != nil })
+        let drafts = ProjectPassage.fromSet(augustine)
+        #expect(drafts.id == "set-cp26-augustine-confessions" && drafts.latin.hasPrefix("1  Cur ergo"))
+        // Pliny is still cited by section.
+        #expect(library.passages.first { $0.author == "pliny" }?.lineWord == "section")
+    }
+
     @Test func everyGlossResolves() {
         var unresolved: [String] = []
         for passage in library.passages {
@@ -177,6 +192,59 @@ import Testing
         doc.setHighlight(passageId: "p", lineN: 1, startTok: 0, endTok: 0, text: "x", color: nil, now: now)
         let stored = doc.raw.object("passages")["p"]?["annotations"]?.arrayValue?.first
         #expect(stored?["color"] == .null)
+    }
+
+    @Test func aNewerPigmentKeepsAnOriginalColorForOlderApps() {
+        var doc = ProgressDocument.blank(now: now)
+        doc.setHighlight(passageId: "p", lineN: 1, startTok: 0, endTok: 0, text: "x", color: .murex, now: now)
+        let stored = doc.raw.object("passages")["p"]?["annotations"]?.arrayValue?.first
+        #expect(stored?["color"]?.stringValue == "rubric")
+        #expect(stored?["pigment"]?.stringValue == "murex")
+        #expect(doc.passage("p").annotations.first?.shownPigment == .murex)
+        // Back to one of the original four: the pigment field goes.
+        doc.setHighlight(passageId: "p", lineN: 1, startTok: 0, endTok: 0, text: "x", color: .woad, now: now)
+        let again = doc.raw.object("passages")["p"]?["annotations"]?.arrayValue?.first
+        #expect(again?["pigment"] == nil)
+        #expect(doc.passage("p").annotations.first?.shownPigment == .woad)
+    }
+
+    @Test func oneUnreadableHighlightNoLongerHidesThePassage() throws {
+        let text = """
+        {"notes":"","bookmarked":true,"flaggedLines":[],"coldReads":0,"annotations":[
+          {"id":"a","lineN":1,"startTok":0,"endTok":0,"text":"x","color":"ultraviolet","note":"","createdAt":"2026-10-01"},
+          {"id":"b","lineN":2,"startTok":0,"endTok":0,"text":"y","color":"woad","note":"","createdAt":"2026-10-01"},
+          {"broken":true}
+        ]}
+        """
+        let state: PassageState = try JSONValue.parse(text).decode()
+        #expect(state.bookmarked)
+        #expect(state.annotations.map(\.id) == ["a", "b"])
+        #expect(state.annotations.first?.color == .gilt)
+    }
+
+    @Test func removingRecordsItSoSyncCannotBringItBack() {
+        var doc = ProgressDocument.blank(now: now)
+        let a = doc.setHighlight(passageId: "p", lineN: 4, startTok: 2, endTok: 3, text: "x", color: .gilt, now: now)
+        doc.removeAnnotation(passageId: "p", annotationId: a.id, now: now.addingTimeInterval(60))
+        let removed = doc.raw.object("passages")["p"]?["removed"]?.objectValue
+        #expect(removed?["a:4:2:3"]?.stringValue == "2026-10-15T12:01:00.000Z")
+        // The other device still has the highlight: merging must not restore it.
+        var other = ProgressDocument.blank(now: now)
+        other.setHighlight(passageId: "p", lineN: 4, startTok: 2, endTok: 3, text: "x", color: .gilt, now: now)
+        let merged = ProgressMerge.merge(local: other.raw, cloud: doc.raw, cloudIsNewer: true)
+        let anns = merged.object("passages")["p"]?["annotations"]?.arrayValue ?? []
+        #expect(anns.isEmpty)
+    }
+
+    @Test func marksReplaceOnTheSameSpanAndCanBeTakenOff() {
+        var doc = ProgressDocument.blank(now: now)
+        doc.setMark(passageId: "p", lineN: 1, startTok: 0, endTok: 0, text: "Arma", role: .object, now: now)
+        doc.setMark(passageId: "p", lineN: 1, startTok: 0, endTok: 0, text: "Arma", role: .accusative, now: now)
+        doc.setMark(passageId: "p", lineN: 1, startTok: 4, endTok: 4, text: "canō", role: .verb, now: now)
+        #expect(doc.passage("p").allMarks.map(\.role) == ["accusative", "verb"])
+        doc.setMark(passageId: "p", lineN: 1, startTok: 0, endTok: 0, text: "Arma", role: nil, now: now)
+        #expect(doc.passage("p").allMarks.map(\.role) == ["verb"])
+        #expect(doc.raw.object("passages")["p"]?["removed"]?["m:1:0:0"] != nil)
     }
 
     @Test func aiUsageCountsPerDayAndRoute() {

@@ -270,6 +270,8 @@ object ProgressMerge {
                 out[id] = pb
                 continue
             }
+            val removed = mergeRemoved(pa["removed"]?.objectValue, pb["removed"]?.objectValue)
+            val hasMarks = pa["marks"]?.arrayValue != null || pb["marks"]?.arrayValue != null
             val merged = JSONObject()
             merged["notes"] = if (cloudIsNewer) pb["notes"] else pa["notes"]
             merged["bookmarked"] = if (cloudIsNewer) pb["bookmarked"] else pa["bookmarked"]
@@ -277,10 +279,49 @@ object ProgressMerge {
             merged["flaggedLines"] = JSONValue.Arr(flags.sortedBy { it.doubleValue ?: 0.0 })
             merged["coldReads"] = JSONValue.Num(max(pa["coldReads"]?.doubleValue ?: 0.0, pb["coldReads"]?.doubleValue ?: 0.0))
             merged["lastOpened"] = laterOf(pa["lastOpened"]?.stringValue, pb["lastOpened"]?.stringValue)?.let { JSONValue.Str(it) }
-            merged["annotations"] = JSONValue.Arr(mergeAnnotations(pa["annotations"]?.arrayValue ?: emptyList(), pb["annotations"]?.arrayValue ?: emptyList()))
+            val annotations = mergeAnnotations(pa["annotations"]?.arrayValue ?: emptyList(), pb["annotations"]?.arrayValue ?: emptyList())
+            merged["annotations"] = JSONValue.Arr(dropRemoved(annotations, removed, "a"))
+            // Since 1.2. Written only when either side has them, so a passage from an older
+            // app merges to exactly what it did before.
+            if (hasMarks) {
+                val marks = mergeMarks(pa["marks"]?.arrayValue ?: emptyList(), pb["marks"]?.arrayValue ?: emptyList())
+                merged["marks"] = JSONValue.Arr(dropRemoved(marks, removed, "m"))
+            }
+            removed?.let { merged["removed"] = JSONValue.Obj(it) }
             out[id] = JSONValue.Obj(merged)
         }
         return out
+    }
+
+    /** Removal records kept per passage: the web's `REMOVED_CAP`. */
+    const val REMOVED_CAP = 300
+
+    /** Both devices' removal records: every key either side has, at the later time where both
+     *  have it, in local's order then the cloud's new keys. */
+    internal fun mergeRemoved(a: JSONObject?, b: JSONObject?): JSONObject? {
+        if (a == null && b == null) return null
+        val out = a?.copy() ?: JSONObject()
+        for ((key, at) in b ?: JSONObject()) {
+            val current = out[key]
+            if (current == null || (at.stringValue ?: "") > (current.stringValue ?: "")) out[key] = at
+        }
+        if (out.size > REMOVED_CAP) out.removeFirst(out.size - REMOVED_CAP)
+        return out
+    }
+
+    /** The newest edit of an annotation or mark: `updatedAt`, else `createdAt`. */
+    internal fun stamp(x: JSONValue): String = x["updatedAt"]?.stringValue ?: x["createdAt"]?.stringValue ?: ""
+
+    internal fun spanKey(x: JSONValue): String =
+        "${JSONValue.format(x["lineN"]?.doubleValue ?: 0.0)}:${JSONValue.format(x["startTok"]?.doubleValue ?: 0.0)}:${JSONValue.format(x["endTok"]?.doubleValue ?: 0.0)}"
+
+    /** Drops whatever was removed after its last edit; anything made or changed since is newer and stays. */
+    internal fun dropRemoved(items: List<JSONValue>, removed: JSONObject?, kind: String): List<JSONValue> {
+        if (removed == null) return items
+        return items.filter { x ->
+            val at = removed["$kind:${spanKey(x)}"]?.stringValue ?: return@filter true
+            stamp(x) > at
+        }
     }
 
     internal fun laterOf(a: String?, b: String?): String? {
@@ -290,12 +331,11 @@ object ProgressMerge {
     }
 
     /**
-     * Annotations on the exact same span are one highlight even when made
-     * independently on two devices: keep the one with a note, else the newer.
+     * Annotations on the exact same span are one highlight even when made independently on two
+     * devices. Two copies of the same annotation (one id): the later edit. Two independent ones:
+     * the one with a note, else the newer.
      */
     internal fun mergeAnnotations(a: List<JSONValue>, b: List<JSONValue>): List<JSONValue> {
-        fun spanKey(x: JSONValue): String =
-            "${JSONValue.format(x["lineN"]?.doubleValue ?: 0.0)}:${JSONValue.format(x["startTok"]?.doubleValue ?: 0.0)}:${JSONValue.format(x["endTok"]?.doubleValue ?: 0.0)}"
         fun hasNote(x: JSONValue): Boolean = (x["note"]?.stringValue ?: "").trim().isNotEmpty()
         val bySpan = JSONObject()
         for (ann in a + b) {
@@ -305,17 +345,32 @@ object ProgressMerge {
                 bySpan[key] = ann
                 continue
             }
-            val winner = if (hasNote(ann) != hasNote(existing)) {
-                if (hasNote(ann)) ann else existing
-            } else {
-                if ((ann["createdAt"]?.stringValue ?: "") > (existing["createdAt"]?.stringValue ?: "")) ann else existing
+            val sameId = ann["id"]?.stringValue != null && ann["id"]?.stringValue == existing["id"]?.stringValue
+            val winner = when {
+                sameId -> if (stamp(ann) > stamp(existing)) ann else existing
+                hasNote(ann) != hasNote(existing) -> if (hasNote(ann)) ann else existing
+                else -> if (stamp(ann) > stamp(existing)) ann else existing
             }
             bySpan[key] = winner
         }
-        return bySpan.map { it.second }.sortedWith { x, y ->
-            val lx = x["lineN"]?.doubleValue ?: 0.0
-            val ly = y["lineN"]?.doubleValue ?: 0.0
-            if (lx != ly) lx.compareTo(ly) else (x["startTok"]?.doubleValue ?: 0.0).compareTo(y["startTok"]?.doubleValue ?: 0.0)
+        return inReadingOrder(bySpan.map { it.second })
+    }
+
+    /** Sentence-part marks: one per span, the later edit winning. */
+    internal fun mergeMarks(a: List<JSONValue>, b: List<JSONValue>): List<JSONValue> {
+        val bySpan = JSONObject()
+        for (mark in a + b) {
+            val key = spanKey(mark)
+            val existing = bySpan[key]
+            if (existing != null && stamp(mark) <= stamp(existing)) continue
+            bySpan[key] = mark
         }
+        return inReadingOrder(bySpan.map { it.second })
+    }
+
+    private fun inReadingOrder(items: List<JSONValue>): List<JSONValue> = items.sortedWith { x, y ->
+        val lx = x["lineN"]?.doubleValue ?: 0.0
+        val ly = y["lineN"]?.doubleValue ?: 0.0
+        if (lx != ly) lx.compareTo(ly) else (x["startTok"]?.doubleValue ?: 0.0).compareTo(y["startTok"]?.doubleValue ?: 0.0)
     }
 }

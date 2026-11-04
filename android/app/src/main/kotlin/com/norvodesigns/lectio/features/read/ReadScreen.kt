@@ -80,8 +80,10 @@ private fun ReadIndex(model: AppModel, showSupplementary: Boolean, setShowSupple
         Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.TopCenter) {
             LazyColumn(Modifier.widthIn(max = 760.dp).fillMaxWidth(), listState, contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 24.dp)) {
                 if (library != null) for (group in library.passagesByUnit) {
-                    val passages = group.passages.filter { showSupplementary || it.required }
-                        .sortedWith(compareBy({ if (it.required) 0 else 1 }, { it.citation }))
+                    val order = library.passages.withIndex().associate { it.value.id to it.index }
+                    val rank = { p: Passage -> if (p.required) 0 else if (p.project != null) 1 else 2 }
+                    val passages = group.passages.filter { showSupplementary || it.required || it.project != null }
+                        .sortedWith(compareBy({ rank(it) }, { if (rank(it) == 1) order[it.id] ?: 0 else 0 }, { it.citation }))
                     if (passages.isEmpty()) continue
                     item(key = "u-${group.unit}") {
                         Column(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -108,9 +110,10 @@ private fun PassageRow(model: AppModel, passage: Passage) {
             horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(passage.citation, style = LectioText.latin(19.sp), color = c.ink)
+                Text(if (passage.project != null) "${passage.authorLabel}, ${passage.citation}" else passage.citation, style = LectioText.latin(19.sp), color = c.ink)
                 Text(passage.title, style = LectioText.prose(LectioText.subheadline), color = c.inkMuted, maxLines = 2)
-                if (!passage.required) QuietLabel("Supplementary")
+                if (passage.project != null) RubricLabel("Course Project · ${passage.project}")
+                else if (!passage.required) QuietLabel("Supplementary")
             }
             if (state.bookmarked) Symbol("bookmark.fill", tint = c.rubric, size = 22.dp, contentDescription = "Bookmarked")
         }

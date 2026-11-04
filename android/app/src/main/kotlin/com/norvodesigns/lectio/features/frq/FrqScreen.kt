@@ -56,7 +56,9 @@ import com.norvodesigns.lectio.core.FrqPrompt
 import com.norvodesigns.lectio.core.FrqRubrics
 import com.norvodesigns.lectio.core.JSONObject
 import com.norvodesigns.lectio.core.JSONValue
+import com.norvodesigns.lectio.core.Passage
 import com.norvodesigns.lectio.core.ProjectPassage
+import com.norvodesigns.lectio.core.projectPassageFromSet
 import com.norvodesigns.lectio.core.jobj
 import com.norvodesigns.lectio.data.AIClient
 import com.norvodesigns.lectio.ui.components.AIConsentHost
@@ -122,7 +124,7 @@ fun FrqScreen(model: AppModel) {
                         Hairline(color = c.hair)
                     }
                 }
-                FrqMode.Project -> item { Box(Modifier.widthIn(max = 720.dp).fillMaxWidth()) { CourseProject(model, library.frqRubrics) } }
+                FrqMode.Project -> item { Box(Modifier.widthIn(max = 720.dp).fillMaxWidth()) { CourseProject(model, library.frqRubrics, library.courseProjectPassages) } }
             }
         }
     }
@@ -156,7 +158,13 @@ private fun FrqWorkspace(model: AppModel, prompt: FrqPrompt, onBack: () -> Unit)
     val wantedGenre = if (prompt.type == "project-poetry") "poetry" else "prose"
     val totalPoints = prompt.rubric.sumOf { it.maxPoints }
     val earned = selfScore.values.sum()
-    val candidates = model.progress.projectPassages.filter { it.genre == wantedGenre }
+    // College Board's set first (with the drafts started on one), then the student's own passages.
+    val candidates = run {
+        val own = model.progress.projectPassages
+        val set = (library?.courseProjectPassages ?: emptyList()).filter { it.genre == wantedGenre }.map(::projectPassageFromSet)
+        val setIds = set.map { it.id }.toSet()
+        set.map { s -> own.firstOrNull { it.id == s.id } ?: s } + own.filter { it.genre == wantedGenre && it.id !in setIds }
+    }
     val project = candidates.firstOrNull { it.id == projectId } ?: candidates.firstOrNull()
 
     LaunchedEffect(Unit) { model.checkAI() }
@@ -330,7 +338,7 @@ private fun PassageSection(
     if (isProject) {
         if (candidates.isEmpty()) {
             Notice(
-                "FRQ ${if (prompt.type == "project-prose") "4" else "5"} is always set on one of the passages you choose for the course project. Add your $wantedGenre passage under Course Project first.",
+                "FRQ ${if (prompt.type == "project-prose") "4" else "5"} is set on one of the year's two $wantedGenre Course Project passages. Add one under Course Project first.",
             )
         } else if (project != null) {
             SlipBlock {
@@ -455,17 +463,34 @@ private fun ShortAnswerFeedback(data: JSONValue) {
 /* Course project                                                       */
 /* ------------------------------------------------------------------ */
 
-/** The four passages a student chooses for the course project — two prose, two poetry. They become the passages FRQ 4 and 5 are set on here. */
+/** College Board's Course Project passages, the student's checkpoint drafts on each, and any passage they add. FRQ 4 and 5 are set on these here. */
 @Composable
-private fun CourseProject(model: AppModel, rubrics: FrqRubrics) {
+private fun CourseProject(model: AppModel, rubrics: FrqRubrics, set: List<Passage>) {
     val c = Lectio.colors
     var editing by remember { mutableStateOf<ProjectPassage?>(null) }
+    val setIds = set.map { "set-${it.id}" }.toSet()
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(
-            "The course project is four passages you choose with your teacher — two prose, two poetry. Two are assessed on the exam as FRQ 4 and 5. Add them here and they become available in those workspaces.",
+            "College Board sets the Course Project: four passages a year, two prose and two poetry, the same for every AP Latin student. FRQ 4 is set on one of the prose passages and FRQ 5 on one of the poetry ones, and two in-class checkpoints your teacher scores count for 2% of your exam score. Each is in the Reading Room with a glossary and a line-by-line translation.",
             style = LectioText.prose(LectioText.callout), color = c.ink2,
         )
-        for (p in model.progress.projectPassages) {
+        for (year in set.mapNotNull { it.project }.distinct()) {
+            RubricLabel("The $year passages")
+            for (p in set.filter { it.project == year }) {
+                val mine = model.progress.projectPassages.firstOrNull { it.id == "set-${p.id}" }
+                Column(Modifier.fillMaxWidth().clickable(role = Role.Button) { editing = mine ?: projectPassageFromSet(p) }.padding(vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Text(p.title, Modifier.weight(1f), style = LectioText.headline, color = c.ink)
+                        QuietLabel(p.genre)
+                    }
+                    Text("${p.authorLabel}, ${p.citation}", style = LectioText.subheadline, color = c.inkMuted)
+                    Text(if (mine == null) "Start your drafts" else listOf("CP1" to mine.checkpoint1, "CP2" to mine.checkpoint2).joinToString("  ") { (l, t) -> if (t.isEmpty()) "○ $l" else "● $l" }, style = LectioText.caption, color = c.gilt)
+                }
+                Hairline(color = c.hair)
+            }
+        }
+        RubricLabel("Other passages")
+        for (p in model.progress.projectPassages.filter { it.id !in setIds }) {
             Column(Modifier.fillMaxWidth().clickable(role = Role.Button) { editing = p }.padding(vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Text(p.title.ifEmpty { "Untitled" }, Modifier.weight(1f), style = LectioText.headline, color = c.ink)

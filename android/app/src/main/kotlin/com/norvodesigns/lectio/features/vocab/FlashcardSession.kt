@@ -181,7 +181,7 @@ private fun contextLine(model: AppModel, session: VocabSession, entry: VocabEntr
     for (passage in library.passages) {
         for (line in passage.lines) {
             if (line.tokens.any { t -> t.glosses.firstOrNull()?.let { it.id == entry.id && it.isExact } == true }) {
-                return line.latin to if (passage.isPoetry) "${passage.citation} (${line.n})" else "${passage.citation}.${line.n}"
+                return line.latin to if (passage.citesByLine) "${passage.citation} (${line.n})" else "${passage.citation}.${line.n}"
             }
         }
     }

@@ -150,7 +150,7 @@ export const unit: CurriculumUnit = {
             { la: 'neu Trōas fierī iubeās Teucrōsque vocārī', en: 'or to become Trojans and be called Teucrians,' },
             { la: 'aut vōcem mūtāre virōs aut vertere vestem.', en: 'or the men to change their language or their dress.' },
             { la: 'Sit Latium, sint Albānī per saecula rēgēs,', en: 'Let there be Latium, let there be Alban kings through the ages,' },
-            { la: 'sit Rōmāna potēns Ītala virtūte propāgō:', en: 'let there be a Roman race, strong in Italian courage:' },
+            { la: 'sit Rōmāna potēns Italā virtūte propāgō:', en: 'let there be a Roman race, strong in Italian courage:' },
             { la: 'occidit, occideritque sinās cum nōmine Trōia.”', en: 'Troy has fallen; let it stay fallen, name and all.”' },
           ],
           gloss: [

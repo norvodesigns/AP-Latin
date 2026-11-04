@@ -7,12 +7,35 @@ import kotlinx.serialization.Serializable
 // edits are written back with `JSONObject.overlaid` so any field this build
 // doesn't know about survives.
 
+/** The four original highlighter colours: the only values `Annotation.color` ever holds,
+ *  because the 1.0 and 1.1 iPhone apps decode it as a closed set of four. */
 object HighlightColor {
     const val GILT = "gilt"
     const val VERDIGRIS = "verdigris"
     const val WOAD = "woad"
     const val RUBRIC = "rubric"
     val all = listOf(GILT, VERDIGRIS, WOAD, RUBRIC)
+}
+
+/** Every pigment the highlighter offers since 1.2, in the toolbar's order. A newer one is
+ *  stored in `Annotation.pigment`, with `color` set to the nearest original (the web's
+ *  `LEGACY_COLOR`). */
+object Pigment {
+    const val MINIUM = "minium"
+    const val MADDER = "madder"
+    const val MUREX = "murex"
+    const val AZURITE = "azurite"
+    val all = listOf(HighlightColor.GILT, MINIUM, HighlightColor.RUBRIC, MADDER, MUREX, HighlightColor.WOAD, AZURITE, HighlightColor.VERDIGRIS)
+    val legacy = mapOf(
+        HighlightColor.GILT to HighlightColor.GILT, MINIUM to HighlightColor.GILT,
+        HighlightColor.RUBRIC to HighlightColor.RUBRIC, MADDER to HighlightColor.RUBRIC, MUREX to HighlightColor.RUBRIC,
+        HighlightColor.WOAD to HighlightColor.WOAD, AZURITE to HighlightColor.WOAD,
+        HighlightColor.VERDIGRIS to HighlightColor.VERDIGRIS,
+    )
+    val plainName = mapOf(
+        HighlightColor.GILT to "gold", MINIUM to "orange", HighlightColor.RUBRIC to "red", MADDER to "pink",
+        MUREX to "purple", HighlightColor.WOAD to "blue", AZURITE to "sky blue", HighlightColor.VERDIGRIS to "green",
+    )
 }
 
 @Serializable
@@ -27,7 +50,17 @@ data class Annotation(
     val color: String? = null,
     val note: String = "",
     val createdAt: String = "",
+    /** Since 1.2: the last change, so the later edit wins a merge. */
+    val updatedAt: String? = null,
+    /** Since 1.2: the pigment chosen when it is one of the newer four ([Pigment]). */
+    val pigment: String? = null,
+    /** Since 1.2: shared by the per-line pieces of one selection. */
+    val group: String? = null,
 ) {
+    /** The pigment the highlight shows, or null for a note with no colour. */
+    val shownPigment: String? get() = color?.let { pigment ?: it }
+    val hasNote: Boolean get() = note.trim().isNotEmpty()
+
     /** `color` is written as an explicit null, as the web does, rather than omitted. */
     fun toJson(): JSONValue = JSONValue.Obj(
         JSONObject(
@@ -39,7 +72,65 @@ data class Annotation(
             "color" to (color?.let { JSONValue.Str(it) } ?: JSONValue.Null),
             "note" to JSONValue.Str(note),
             "createdAt" to JSONValue.Str(createdAt),
-        ),
+        ).also { o ->
+            updatedAt?.let { o["updatedAt"] = JSONValue.Str(it) }
+            pigment?.let { o["pigment"] = JSONValue.Str(it) }
+            group?.let { o["group"] = JSONValue.Str(it) }
+        },
+    )
+}
+
+/** The parts of a sentence a reader can mark: the web's `SYNTAX_ROLES`, in the picker's order. */
+object SyntaxRoles {
+    data class Role(val id: String, val short: String, val label: String, val group: String, val hint: String)
+
+    val all = listOf(
+        Role("subject", "S", "Subject", "sentence", "Who or what does the action; nominative"),
+        Role("verb", "V", "Verb", "sentence", "The main verb of the clause"),
+        Role("object", "DO", "Direct object", "sentence", "Receives the action; accusative"),
+        Role("indirect", "IO", "Indirect object", "sentence", "To or for whom; dative"),
+        Role("nominative", "nom", "Nominative", "case", "Subject, or predicate after sum"),
+        Role("genitive", "gen", "Genitive", "case", "of; possession, part of a whole"),
+        Role("dative", "dat", "Dative", "case", "to, for; also with compounds and special verbs"),
+        Role("accusative", "acc", "Accusative", "case", "Object, extent, place to which, subject of an infinitive"),
+        Role("ablative", "abl", "Ablative", "case", "by, with, from, in, on; means, manner, place where"),
+        Role("vocative", "voc", "Vocative", "case", "Someone addressed directly"),
+        Role("participle", "ptc", "Participle", "construction", "A verbal adjective; find the noun it agrees with"),
+        Role("infinitive", "inf", "Infinitive", "construction", "Complementary, or indirect statement"),
+        Role("ablAbs", "abl abs", "Ablative absolute", "construction", "Noun and participle in the ablative, apart from the sentence"),
+        Role("prep", "prep", "Prepositional phrase", "construction", "A preposition and its object"),
+        Role("clause", "[ ]", "Subordinate clause", "construction", "cum, ut, quī, sī, dum… to its verb"),
+    )
+    val byId = all.associateBy { it.id }
+}
+
+/** A sentence-part mark on a run of tokens: the web's `SyntaxMark`. */
+@Serializable
+data class SyntaxMark(
+    val id: String,
+    val lineN: Int,
+    val startTok: Int,
+    val endTok: Int,
+    val text: String,
+    /** One of [SyntaxRoles], kept raw so a role a later version adds round-trips. */
+    val role: String,
+    val createdAt: String = "",
+    val updatedAt: String? = null,
+    val group: String? = null,
+) {
+    fun toJson(): JSONValue = JSONValue.Obj(
+        JSONObject(
+            "id" to JSONValue.Str(id),
+            "lineN" to JSONValue.Num(lineN.toDouble()),
+            "startTok" to JSONValue.Num(startTok.toDouble()),
+            "endTok" to JSONValue.Num(endTok.toDouble()),
+            "text" to JSONValue.Str(text),
+            "role" to JSONValue.Str(role),
+            "createdAt" to JSONValue.Str(createdAt),
+        ).also { o ->
+            updatedAt?.let { o["updatedAt"] = JSONValue.Str(it) }
+            group?.let { o["group"] = JSONValue.Str(it) }
+        },
     )
 }
 
@@ -51,6 +142,9 @@ data class PassageState(
     val lastOpened: String? = null,
     val coldReads: Int = 0,
     val annotations: List<Annotation> = emptyList(),
+    /** Since 1.2. Null (and so never written) on a passage that has had none. The `removed`
+     *  records stay in the raw document, in order: see `ProgressDocument.recordRemoved`. */
+    val marks: List<SyntaxMark>? = null,
 ) {
     fun toJson(): JSONObject = JSONObject(
         "notes" to JSONValue.Str(notes),
@@ -58,7 +152,10 @@ data class PassageState(
         "flaggedLines" to JSONValue.Arr(flaggedLines.map { JSONValue.Num(it.toDouble()) }),
         "coldReads" to JSONValue.Num(coldReads.toDouble()),
         "annotations" to JSONValue.Arr(annotations.map { it.toJson() }),
-    ).also { o -> lastOpened?.let { o["lastOpened"] = JSONValue.Str(it) } }
+    ).also { o ->
+        lastOpened?.let { o["lastOpened"] = JSONValue.Str(it) }
+        marks?.let { m -> o["marks"] = JSONValue.Arr(m.map { it.toJson() }) }
+    }
 }
 
 @Serializable
@@ -147,6 +244,16 @@ data class ProjectPassage(
     val notes: String,
     val checkpoint1: String,
     val checkpoint2: String,
+)
+
+/**
+ * A Course Project passage from the Reading Room as a project passage to keep checkpoint drafts on: a fixed
+ * id ("set-" and the passage's own) so the drafts find it again, and the Latin with College Board's line
+ * numbers, which an essay cites. The same as the website's and the iPhone's.
+ */
+fun projectPassageFromSet(p: Passage): ProjectPassage = ProjectPassage(
+    "set-${p.id}", p.title, p.authorLabel, p.citation, p.genre,
+    p.lines.joinToString("\n") { "${it.n}  ${it.latin}" }, "", "", "",
 )
 
 @Serializable

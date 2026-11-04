@@ -126,6 +126,11 @@ class ContentLibrary(source: ContentSource) {
         }
 
     /** Passages grouped by CED unit, in unit order. */
+    /** The Course Project passages, the latest year's set first, each set in the content's (College Board's) order. */
+    val courseProjectPassages: List<Passage>
+        get() = passages.withIndex().filter { it.value.project != null }
+            .sortedWith(compareByDescending<IndexedValue<Passage>> { it.value.project }.thenBy { it.index }).map { it.value }
+
     val passagesByUnit: List<UnitGroup>
         get() = passages.groupBy { it.unit }.toSortedMap(::naturalCompare).map { (unit, list) ->
             UnitGroup(unit, meta.unitTitles[unit] ?: "Unit $unit", list)

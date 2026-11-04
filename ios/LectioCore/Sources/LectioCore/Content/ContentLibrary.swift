@@ -147,6 +147,15 @@ public struct ContentLibrary: Sendable {
 
     public var requiredPassages: [Passage] { passages.filter(\.required) }
 
+    /// The Course Project passages, the latest year's set first, each set in
+    /// the order the content lists it (College Board's own).
+    public var courseProjectPassages: [Passage] {
+        passages.enumerated()
+            .filter { $0.element.project != nil }
+            .sorted { ($0.element.project ?? "", -$0.offset) > ($1.element.project ?? "", -$1.offset) }
+            .map(\.element)
+    }
+
     /// Passages grouped by CED unit, in unit order.
     public var passagesByUnit: [UnitGroup] {
         Dictionary(grouping: passages, by: \.unit)

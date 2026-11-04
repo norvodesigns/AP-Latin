@@ -75,7 +75,10 @@ import kotlinx.coroutines.launch
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun PassageNotesSheet(model: AppModel, passage: Passage, onJump: (Int) -> Unit, onDismiss: () -> Unit) {
+fun PassageNotesSheet(
+    model: AppModel, passage: Passage, onJump: (Int) -> Unit, onDismiss: () -> Unit,
+    englishShown: Boolean = false, onToggleEnglish: (() -> Unit)? = null,
+) {
     val c = Lectio.colors
     var showEnglish by remember { mutableStateOf(false) }
     val state = model.progress.passage(passage.id)
@@ -84,6 +87,13 @@ fun PassageNotesSheet(model: AppModel, passage: Passage, onJump: (Int) -> Unit, 
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(), containerColor = c.parchment) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).navigationBarsPadding().padding(horizontal = 20.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(26.dp)) {
             Text(passage.citation, style = LectioText.prose(LectioText.headline), color = c.ink, modifier = Modifier.align(Alignment.CenterHorizontally))
+            if (onToggleEnglish != null && passage.lines.any { it.english != null }) NoteSection("English translation") {
+                Text(
+                    "Literal and line by line, in the AP style, with the words English needs in [brackets]. Construe first, then check.",
+                    style = LectioText.footnote, color = c.inkMuted,
+                )
+                LectioButton(onToggleEnglish) { ButtonLabel(if (englishShown) "Hide it" else "Show it under each line") }
+            }
             NoteSection("Summary") {
                 if (showEnglish) Text(passage.summary, style = LectioText.prose(LectioText.body), color = c.ink)
                 else LectioButton({ showEnglish = true }) { ButtonLabel("Reveal the English summary") }
@@ -265,7 +275,7 @@ fun AskAboutLineSheet(model: AppModel, passage: Passage, line: PassageLine, onDi
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
                 Text("Ask about this line", style = LectioText.prose(LectioText.headline), color = c.ink, modifier = Modifier.align(Alignment.CenterHorizontally))
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    RubricLabel("${passage.citation} · ${if (passage.isPoetry) "line" else "section"} ${line.n}")
+                    RubricLabel("${passage.citation} · ${passage.lineWord} ${line.n}")
                     Text(line.latin, style = LectioText.latin(21.sp), color = c.ink)
                 }
                 if (model.aiAvailable == false) {

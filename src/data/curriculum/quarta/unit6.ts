@@ -149,7 +149,7 @@ export const unit: CurriculumUnit = {
             { la: 'At lēvem clipeum sublātīs cornibus Īō', en: 'But on his polished shield, in gold, Io, her horns raised,' },
             { la: 'aurō īnsignībat, iam saetīs obsita, iam bōs,', en: 'was emblazoned, already covered with bristles, already a cow,' },
             { la: 'argūmentum ingēns, et custōs virginis Argus,', en: 'a mighty theme, and Argus, the girl’s guard,' },
-            { la: 'caelātaque amnem fundēns pater Īnachus urnā.', en: 'and her father Inachus, pouring his river from an engraved urn.' },
+            { la: 'caelātāque amnem fundēns pater Īnachus urnā.', en: 'and her father Inachus, pouring his river from an engraved urn.' },
           ],
           gloss: [
             { word: 'praestāns, -antis', meaning: 'outstanding' },
@@ -249,7 +249,7 @@ export const unit: CurriculumUnit = {
           title: 'Aeneid 7.803–817',
           intro: 'The catalogue closes.',
           lines: [
-            { la: 'Hōs super advenit Volsca dē gente Camilla', en: 'After these comes Camilla, of the Volscian race,' },
+            { la: 'Hōs super advēnit Volscā dē gente Camilla', en: 'After these comes Camilla, of the Volscian race,' },
             { la: 'agmen agēns equitum et flōrentīs aere catervās,', en: 'leading a column of horsemen and squadrons bright with bronze,' },
             { la: 'bellātrīx, nōn illa colō calathīsve Minervae', en: 'a warrior woman, her hands not trained to Minerva’s distaff' },
             { la: 'fēmineās adsuēta manūs, sed proelia virgō', en: 'or wool baskets, women’s work, but a girl hardened' },

@@ -27,6 +27,7 @@ import { fileURLToPath } from 'node:url';
 
 import { allPassages, UNIT_TITLES } from '../src/data/passages/index';
 import { passageVocabIds } from '../src/data/passages/vocabIds';
+import { englishFor } from '../src/data/english';
 import { coreVocabulary } from '../src/data/vocabulary';
 import { supplementaryVocabulary } from '../src/data/supplementaryVocabulary';
 import { questions, questionSets, QUESTION_TYPE_LABELS, SKILL_LABELS } from '../src/data/questions';
@@ -69,23 +70,29 @@ type Gloss = { id: string; m: 'e' | 's' };
 type ExportToken = { t: string; w?: 1; g?: Gloss[] };
 
 function exportPassages() {
-  return allPassages.map((p) => ({
-    ...p,
-    vocabIds: passageVocabIds(p),
-    lines: p.lines.map((line) => ({
-      n: line.n,
-      latin: line.latin,
-      tokens: tokenize(line.latin).map((tok): ExportToken => {
-        if (!tok.isWord) return { t: tok.text };
-        const results = disambiguateInContext(p.id, line.n, tok.text, lookup(tok.text), tok.index);
-        return {
-          t: tok.text,
-          w: 1,
-          g: results.map((r) => ({ id: r.entry.id, m: r.match === 'exact' ? 'e' : 's' })),
-        };
-      }),
-    })),
-  }));
+  return allPassages.map((p) => {
+    const english = englishFor(p);
+    return {
+      ...p,
+      vocabIds: passageVocabIds(p),
+      lines: p.lines.map((line) => ({
+        n: line.n,
+        latin: line.latin,
+        // Since 1.2: the line's literal translation. Optional, so an older
+        // app reading this file simply ignores it.
+        ...(english?.[line.n] ? { english: english[line.n] } : {}),
+        tokens: tokenize(line.latin).map((tok): ExportToken => {
+          if (!tok.isWord) return { t: tok.text };
+          const results = disambiguateInContext(p.id, line.n, tok.text, lookup(tok.text), tok.index);
+          return {
+            t: tok.text,
+            w: 1,
+            g: results.map((r) => ({ id: r.entry.id, m: r.match === 'exact' ? 'e' : 's' })),
+          };
+        }),
+      })),
+    };
+  });
 }
 
 /* ------------------------------------------------------------------ */

@@ -171,6 +171,7 @@ object Laurels {
         Spec("secunda", "Secunda perfecta", "Level II, done", "Finish every lesson of Secunda.", 1),
         Spec("tertia", "Tertia perfecta", "Level III, done", "Finish every lesson of Tertia.", 1),
         Spec("quarta", "Quārta perfecta", "Level IV, done", "Finish every lesson of Quārta: the whole AP syllabus, read with a guide.", 1),
+        Spec("quinta", "Quīnta perfecta", "Level V, done", "Finish every lesson of Quīnta: every required passage, read closely.", 1),
         Spec("verba", "Omnia verba", "The whole AP list", "Finish every unit of Verba, the AP word list by letter.", 1),
         Spec("lessons-50", "Quīnquāgintā lēctiōnēs", "Fifty lessons", "Finish fifty lessons of the course.", 50),
         // Habit
@@ -251,6 +252,7 @@ object Laurels {
             "secunda" to levelDone("secunda"),
             "tertia" to levelDone("tertia"),
             "quarta" to levelDone("quarta"),
+            "quinta" to levelDone("quinta"),
             "verba" to levelDone("verba"),
             "lessons-50" to done.size,
             "streak-7" to longest,

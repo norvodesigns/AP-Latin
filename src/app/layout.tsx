@@ -3,6 +3,7 @@ import { EB_Garamond, Literata, Inter, Italianno } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/next';
 import './globals.css';
 import AppShell from '@/components/AppShell';
+import { APP_STORE_ID } from '@/lib/appStore';
 import { getCurrentProfile } from '@/lib/supabase/server';
 import { supabaseConfigured } from '@/lib/supabase/config';
 
@@ -68,6 +69,12 @@ export const metadata: Metadata = {
   other: {
     'apple-mobile-web-app-capable': 'yes',
   },
+  /**
+   * Safari's Smart App Banner: on iPhone and iPad, Safari offers the App
+   * Store app at the top of the page. Other iOS browsers, and the site saved
+   * to the Home Screen, get AppBanner instead.
+   */
+  itunes: { appId: APP_STORE_ID },
 };
 
 export const viewport: Viewport = {

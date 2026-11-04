@@ -40,6 +40,9 @@ public struct PassageLine: Codable, Sendable, Hashable, Identifiable {
     public let n: Int
     public let latin: String
     public let tokens: [Token]
+    /// Since 1.2: the line's literal translation, AP style. Absent in older
+    /// content and for any line not yet translated.
+    public let english: String?
     public var id: Int { n }
 }
 
@@ -51,6 +54,12 @@ public struct Passage: Codable, Sendable, Hashable, Identifiable {
     public let book: Int
     public let letter: Int?
     public let salutation: String?
+    /// Since 1.2: the author's name, for one outside the four the app is
+    /// built around (`author == "other"`), e.g. "Augustine".
+    public let authorName: String?
+    /// Since 1.2, Course Project passages only: the school year College
+    /// Board set them for, e.g. "2025–26".
+    public let project: String?
     public let citation: String
     public let title: String
     /// On the official 2025 CED required reading list.
@@ -67,6 +76,18 @@ public struct Passage: Codable, Sendable, Hashable, Identifiable {
     public let vocabIds: [String]
 
     public var isPoetry: Bool { genre == "poetry" }
+
+    /// Cited by line (verse, and the Course Project's prose, numbered as
+    /// College Board prints it) rather than by section (Pliny, Caesar).
+    public var citesByLine: Bool { isPoetry || project != nil }
+
+    /// "line" or "section", as the passage is cited.
+    public var lineWord: String { citesByLine ? "line" : "section" }
+
+    /// The author's name as a reader would write it: "Vergil", "Augustine".
+    public var authorLabel: String {
+        authorName ?? ["vergil": "Vergil", "pliny": "Pliny", "caesar": "Caesar", "catullus": "Catullus"][author] ?? author
+    }
 }
 
 /* ------------------------------------------------------------------ */

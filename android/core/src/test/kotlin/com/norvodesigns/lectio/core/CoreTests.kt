@@ -155,6 +155,42 @@ class ProgressDocumentTests {
     }
 
     @Test
+    fun aNewerPigmentKeepsAnOriginalColorForOlderApps() {
+        val doc = ProgressDocument.blank(now)
+        doc.setHighlight("p", 1, 0, 0, "x", Pigment.MUREX, now)
+        val stored = doc.raw.obj("passages")["p"]?.get("annotations")?.arrayValue?.first()
+        assertEquals("rubric", stored?.get("color")?.stringValue)
+        assertEquals("murex", stored?.get("pigment")?.stringValue)
+        assertEquals(Pigment.MUREX, doc.passage("p").annotations.first().shownPigment)
+        doc.setHighlight("p", 1, 0, 0, "x", HighlightColor.WOAD, now)
+        assertNull(doc.raw.obj("passages")["p"]?.get("annotations")?.arrayValue?.first()?.get("pigment"))
+    }
+
+    @Test
+    fun removingRecordsItSoSyncCannotBringItBack() {
+        val doc = ProgressDocument.blank(now)
+        val a = doc.setHighlight("p", 4, 2, 3, "x", HighlightColor.GILT, now)
+        doc.removeAnnotation("p", a.id, now.plusSeconds(60))
+        assertEquals("2026-10-15T12:01:00.000Z", doc.raw.obj("passages")["p"]?.get("removed")?.get("a:4:2:3")?.stringValue)
+        val other = ProgressDocument.blank(now)
+        other.setHighlight("p", 4, 2, 3, "x", HighlightColor.GILT, now)
+        val merged = ProgressMerge.merge(other.raw, doc.raw, true)
+        assertTrue(merged.obj("passages")["p"]?.get("annotations")?.arrayValue?.isEmpty() == true)
+    }
+
+    @Test
+    fun marksReplaceOnTheSameSpanAndCanBeTakenOff() {
+        val doc = ProgressDocument.blank(now)
+        doc.setMark("p", 1, 0, 0, "Arma", "object", now)
+        doc.setMark("p", 1, 0, 0, "Arma", "accusative", now)
+        doc.setMark("p", 1, 4, 4, "canō", "verb", now)
+        assertEquals(listOf("accusative", "verb"), doc.passage("p").marks?.map { it.role })
+        doc.setMark("p", 1, 0, 0, "Arma", null, now)
+        assertEquals(listOf("verb"), doc.passage("p").marks?.map { it.role })
+        assertNotNull(doc.raw.obj("passages")["p"]?.get("removed")?.get("m:1:0:0"))
+    }
+
+    @Test
     fun colorIsWrittenAsExplicitNull() {
         val doc = ProgressDocument.blank(now)
         doc.setHighlight("p", 1, 0, 0, "x", null, now)
