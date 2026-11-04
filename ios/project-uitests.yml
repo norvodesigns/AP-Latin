@@ -1,6 +1,10 @@
-# The app's project plus its UI tests, for CI only:
+# The app's project plus its UI tests:
 #
 #     xcodegen generate --spec project-uitests.yml
+#
+# Xcode Cloud generates this one (ci_scripts/ci_post_clone.sh), so its "UI
+# tests" workflow can run the LectioUITests scheme; archiving the Lectio
+# scheme still builds only the app and what it embeds.
 #
 # project.yml (what EAS builds for TestFlight and the App Store) stays as it
 # is: every target in it must be one EAS signs, and a test bundle isn't.
