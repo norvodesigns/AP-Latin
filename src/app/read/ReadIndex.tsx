@@ -289,8 +289,11 @@ function PassageRow({ p, tag = true }: { p: Passage; tag?: boolean }) {
         >
           {p.project ? `${authorLabel(p)}, ${p.citation}` : p.citation}
         </span>
+        {/* A 10rem basis, not 0: on a phone the title then drops to its own
+            line instead of being squeezed beside the citation and spilling
+            out of the row. */}
         <span
-          className="min-w-0 flex-1"
+          className="min-w-0 flex-[1_1_10rem]"
           style={{
             fontFamily: 'var(--font-latin)',
             fontSize: '1.125rem',
