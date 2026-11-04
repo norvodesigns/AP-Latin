@@ -53,8 +53,10 @@ enum Ink {
 nonisolated struct MarkRule: Shape {
     var double = false
 
-    func path(in rect: CGRect) -> Path {
-        var p = Path()
+    // SwiftUI's Path, spelled out: LectioCore has a `Path` too (the course's
+    // adaptive path), and a bare `Path` in a type is ambiguous here.
+    func path(in rect: CGRect) -> SwiftUI.Path {
+        var p = SwiftUI.Path()
         p.move(to: CGPoint(x: rect.minX, y: rect.minY + 0.75))
         p.addLine(to: CGPoint(x: rect.maxX, y: rect.minY + 0.75))
         if double {

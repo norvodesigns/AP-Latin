@@ -26,6 +26,10 @@ public struct PathLesson: Sendable, Hashable, Decodable {
 /// check found probably known is offered as its unit test first; and a
 /// passed unit test counts the unit's lessons as done and puts their words in
 /// the deck as known, spread over three weeks.
+///
+/// SwiftUI has a `Path` too. In a file that imports both, `Path.knownInterval`
+/// and the like still resolve, but `Path` as a type (a `Shape`'s
+/// `path(in:) -> Path`) is ambiguous and fails the build: write `SwiftUI.Path`.
 public enum Path {
     /// A card at least this many days between reviews counts as well known.
     public static let knownInterval = 21

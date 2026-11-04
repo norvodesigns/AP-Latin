@@ -818,7 +818,9 @@ private nonisolated struct PillSegment: Shape {
     var start: Bool
     var end: Bool
 
-    func path(in rect: CGRect) -> Path {
+    // SwiftUI's Path, spelled out: LectioCore has a `Path` too (the course's
+    // adaptive path), and a bare `Path` in a type is ambiguous here.
+    func path(in rect: CGRect) -> SwiftUI.Path {
         let full = rect.height / 2
         // A short word with both ends round can't take more than half its width.
         let r = min(full, start && end ? rect.width / 2 : rect.width)
