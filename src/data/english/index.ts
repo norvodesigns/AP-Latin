@@ -2,6 +2,7 @@ import type { Passage } from '../types';
 import { caesarEnglish } from './caesar';
 import { catullusEnglish } from './catullus';
 import { plinyEnglish } from './pliny';
+import { projectEnglish } from './project';
 import { vergilEnglish } from './vergil';
 
 /**
@@ -15,6 +16,7 @@ export const englishByPassage: Record<string, Record<number, string>> = {
   ...plinyEnglish,
   ...caesarEnglish,
   ...catullusEnglish,
+  ...projectEnglish,
 };
 
 /** The translation of one passage, keyed by line number, or undefined if it

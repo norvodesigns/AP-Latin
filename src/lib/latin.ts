@@ -76,6 +76,8 @@ const ENDINGS = [
   // landing on the present stem exactly like the participle endings above.
   'andus', 'andum', 'anda', 'andi', 'ando', 'andos', 'andas', 'andis', 'andorum', 'andarum',
   'endus', 'endum', 'enda', 'endi', 'endo', 'endos', 'endas', 'endis', 'endorum', 'endarum',
+  // and the feminine -ae/-am the list above lacked (ediscendae linguae).
+  'andae', 'andam', 'endae', 'endam',
   // Comparative adjective (-ior/-ius and its 3rd-declension case forms),
   // landing on the positive adjective's own stem — gravior/gravius/
   // gravioris/etc. all reduce to grav-, gravis's own indexed stem.
@@ -94,6 +96,10 @@ const ENDINGS = [
   // participle and gerund endings above already resolve through.
   'ebamus', 'ebatis', 'ebantur', 'ebamur', 'ebamini',
   'ebam', 'ebas', 'ebat', 'ebant', 'ebar', 'ebaris', 'ebatur', 'bar',
+  // The rest of the bare imperfect next to "bam"/"bat"/"bant": its 2nd
+  // singular and both plurals, which no ending reached until 1.2, so
+  // rogabas, parabamus and the like found nothing at all.
+  'bas', 'bamus', 'batis',
   // Imperfect subjunctive, active and passive/deponent alike (amarem/
   // amarer, regerem/regerer — 3rd conjugation needs the same "-e-" link
   // the imperfect indicative above does; the rest land straight on their
@@ -145,6 +151,32 @@ const ENDINGS = [
   'as', 'is', 'os', 'us', 'um', 'em', 'es', 'ei', 'ia', 'ibus',
   'i', 'o', 'a', 'e', 'u', 's', 'm', 't',
 ];
+
+/**
+ * A verb's perfect or supine as the dictionary abbreviates it, written out
+ * in full: "rogo, -are, -avi, -atum" gives rogavi and rogatum, "trado,
+ * -ere, -didi, -ditum" tradidi, "duco, -ere, -xi, -ctum" duxi. The root is
+ * the headword less its "-o"/"-or" and any thematic e or i (moneo -> mon,
+ * capio -> cap, vereor -> ver). An ending that starts with a vowel is added
+ * to it (rog + avi, mon + ui); one that starts with a consonant takes over
+ * from that consonant's last place in the root (tra|d + didi, re|l + liqui,
+ * ma|n + nsi), or, where the root has no such letter or the splice would
+ * shorten it, from its last consonant (du|c + xi, scri|b + psi, ge|r + ssi,
+ * inten|d + tum). Until 1.2 these parts were
+ * skipped outright, so rogavit, amavit and tradidit found nothing.
+ */
+function expandVerbPart(head: string, suffix: string): string | null {
+  let root = head.endsWith('or') ? head.slice(0, -2) : head.endsWith('o') ? head.slice(0, -1) : null;
+  if (!root || root.length < 2 || !/^[a-z]+$/.test(suffix)) return null;
+  if (/[ei]$/.test(root) && root.length > 2) root = root.slice(0, -1);
+  if (/^[aeiou]/.test(suffix)) return root + suffix;
+  // A splice never shortens the root: intendo's "-tum" is inten|tum, not
+  // in|tum, though the root has a t further in.
+  const at = root.lastIndexOf(suffix[0]);
+  if (at >= 0 && root.length - at <= suffix.length) return root.slice(0, at) + suffix;
+  const bare = root.replace(/[^aeiou]$/, '');
+  return bare === root ? null : bare + suffix;
+}
 
 function stemOf(word: string): string[] {
   const stems: string[] = [word];
@@ -249,6 +281,8 @@ export function buildIndex(entries: VocabEntry[]): Index {
           // there being root, not thematic, exactly as for active "induo").
           const dropsVowel = /[aei]/.test(head[head.length - 3] ?? '');
           w = head.slice(0, dropsVowel ? -3 : -2) + suffix;
+        } else if (e.pos.startsWith('verb') && !/^(are|ere|ire|ari|eri|iri|i|esse|isse)$/.test(suffix)) {
+          w = expandVerbPart(head, normalizeWord(suffix));
         }
       } else {
         w = normalizeWord(p);
@@ -682,6 +716,11 @@ const EXTRA_FORMS: Record<string, string> = {
   // tantam entry above; never the adverb tantum, which needs a verb to
   // modify and never appears under this stem here.
   tanto: 'tantus', tanti: 'tantus', tantae: 'tantus', tanta: 'tantus',
+  // fio's subjunctive, and the contracted perfect system of nosco (nosse =
+  // novisse, nossem = novissem), whose 2-letter roots the stemmer can't
+  // reach. Augustine, Confessions 1.14.23 and Ruodlieb 4.205.
+  fiam: 'fio', fias: 'fio', fiat: 'fio', fiant: 'fio', fieret: 'fio', fierent: 'fio',
+  nosse: 'nosco', nossem: 'nosco', nosses: 'nosco', nosset: 'nosco', noram: 'nosco',
 };
 
 for (const [form, headword] of Object.entries(EXTRA_FORMS)) {
@@ -721,6 +760,8 @@ const NOUN_STEMS: Record<string, string> = {
   caput: 'capit',
   // -es (m.), stem in -it-/-ip-
   comes: 'comit', eques: 'equit', miles: 'milit', hospes: 'hospit', princeps: 'princip',
+  // -os (m.), stem in -od-
+  custos: 'custod',
   // -ex (m./f.), stem in -ic-
   iudex: 'iudic', vertex: 'vertic', pumex: 'pumic',
   // -is (m.) with a hidden nasal
@@ -934,7 +975,29 @@ const SUPPLEMENTARY_EXTRA_FORMS: Record<string, string> = {
   // pondere — always pondus ("weight"), ablative singular, never pondero
   // ("to weigh"), whose own forms are pondero/ponderas/ponderat.
   pondere: 'pondus',
+  // odi has a two-letter root the stemmer can't reach (Confessions 1.14.23
+  // "oderam"); obsum's forms are sum's.
+  oderam: 'odi', oderat: 'odi', oderant: 'odi', oderit: 'odi', oderint: 'odi', odisti: 'odi', odit: 'odi',
+  odisse: 'odi', obest: 'obsum', obsunt: 'obsum', oberat: 'obsum', oberit: 'obsum', obesset: 'obsum',
+  // Greek accusatives of the Course Project's Arion and his dolphin.
+  ariona: 'Arion', delphina: 'delphinus', delphinas: 'delphinus',
 };
+
+/**
+ * NOUN_STEMS for the supplementary list: oblique stems its abbreviated
+ * lemmas don't give. tempus, -oris here is the temple of the head (Fasti
+ * 2.100 "traiectus penna tempora"), a word of its own beside the core list's
+ * tempus, "time"; its lemma stays abbreviated so that "temporis" is never an
+ * exact match that would outrank time.
+ */
+const SUPPLEMENTARY_STEMS: Record<string, string> = {
+  tempus: 'tempor',
+};
+for (const [headword, stem] of Object.entries(SUPPLEMENTARY_STEMS)) {
+  for (const entry of supplementaryIndex.byHeadword.get(normalizeWord(headword)) ?? []) {
+    push(supplementaryIndex.byStem, normalizeWord(stem), entry);
+  }
+}
 
 for (const [form, headword] of Object.entries(SUPPLEMENTARY_EXTRA_FORMS)) {
   for (const entry of supplementaryIndex.byHeadword.get(normalizeWord(headword)) ?? []) {

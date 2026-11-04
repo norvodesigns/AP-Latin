@@ -44,12 +44,14 @@ const { vergilPassages: vergil } = await load('src/data/passages/vergil.ts');
 const { plinyPassages: pliny } = await load('src/data/passages/pliny.ts');
 const { caesarPassages: caesar } = await load('src/data/passages/caesar.ts');
 const { catullusPassages: catullus } = await load('src/data/passages/catullus.ts');
-const passages = [...vergil, ...pliny, ...caesar, ...catullus];
+const { projectPassages: project } = await load('src/data/passages/project.ts');
+const passages = [...vergil, ...pliny, ...caesar, ...catullus, ...project];
 const english = {
   ...(await load('src/data/english/vergil.ts')).vergilEnglish,
   ...(await load('src/data/english/pliny.ts')).plinyEnglish,
   ...(await load('src/data/english/caesar.ts')).caesarEnglish,
   ...(await load('src/data/english/catullus.ts')).catullusEnglish,
+  ...(await load('src/data/english/project.ts')).projectEnglish,
 };
 const byId = new Map(passages.map((p) => [p.id, p]));
 
@@ -117,7 +119,7 @@ for (const p of passages) {
   // passage must have one.
   const en = english[p.id];
   if (!en) {
-    if (p.required) fail(`${p.id}: required passage has no English translation (src/data/english)`);
+    if (p.required || p.project) fail(`${p.id}: ${p.required ? 'required' : 'Course Project'} passage has no English translation (src/data/english)`);
   } else {
     const nums = new Set(p.lines.map((l) => l.n));
     for (const l of p.lines) if (!en[l.n]?.trim()) fail(`${p.id}: no English for line ${l.n}`);
@@ -127,10 +129,23 @@ for (const p of passages) {
   if (p.required && (!p.cedReading?.trim() || !p.unit)) {
     fail(`${p.id}: required passage is missing cedReading/unit`);
   }
-  // A supplementary passage must say so in its context note.
-  if (!p.required && !/not on the official/i.test(p.context)) {
+  // A Course Project passage names its year, in its id and its context
+  // note, so last year's set can never pass for this year's; it is cited by
+  // College Board's own line numbers, which start at 1. Any other
+  // supplementary passage must say it is not on the reading list.
+  if (p.project) {
+    const yy = p.project.match(/^\d{4}–(\d{2})$/)?.[1];
+    if (!yy) fail(`${p.id}: project should be a school year like "2025–26", not "${p.project}"`);
+    else if (!p.id.startsWith(`cp${yy}-`)) fail(`${p.id}: a ${p.project} Course Project passage's id starts cp${yy}-`);
+    if (!p.context.includes(`Course Project passages for ${p.project}`)) fail(`${p.id}: context note should say it is one of the Course Project passages for ${p.project}`);
+    if (p.lines[0]?.n !== 1) fail(`${p.id}: Course Project lines are numbered from 1, as College Board prints them`);
+    if (p.author === 'other' && !p.authorName?.trim()) fail(`${p.id}: needs an authorName`);
+  } else if (!p.required && !/not on the official/i.test(p.context)) {
     fail(`${p.id}: supplementary passage does not flag itself in its context note`);
   }
+  // The word count shown in the Reading Room is the passage's own.
+  const words = p.lines.flatMap((l) => l.latin.split(/\s+/).filter((w) => /[a-z]/i.test(w))).length;
+  if (p.project && Math.abs(words - p.wordCount) > 2) fail(`${p.id}: wordCount ${p.wordCount}, but the Latin has ${words} words`);
 }
 
 /* --- questions --------------------------------------------------- */
