@@ -33,7 +33,7 @@ export default function ReadIndex() {
         lede={
           <>
             Every passage on the official reading list, with the Latin, a click-any-word glossary,
-            running notes, an English summary and context. {required.length} required passages;{' '}
+            highlighting and sentence marks, a line-by-line literal translation and context. {required.length} required passages;{' '}
             {supplementary.length} supplementary.
           </>
         }

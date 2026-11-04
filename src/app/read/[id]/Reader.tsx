@@ -672,7 +672,8 @@ export default function Reader({
 
       {/* The ref goes on the grid, so the whole Latin column arrives as one
           object rather than line by line under the reader's eye. */}
-      <div ref={columns} className="grid lg:grid-cols-[minmax(0,1fr)_1px_366px]">
+      {/* Side by side needs the width, so the margin moves below the text. */}
+      <div ref={columns} className={`grid ${side ? '' : 'lg:grid-cols-[minmax(0,1fr)_1px_366px]'}`}>
         {/* ─────────── The Latin ─────────── */}
         <article className="min-w-0 px-5 py-10 sm:px-10 sm:py-14 lg:pr-12">
           <header className="mb-9">
@@ -891,11 +892,11 @@ export default function Reader({
         </article>
 
         {/* The ruling */}
-        <div className="hidden lg:block print:hidden" style={{ background: 'var(--rule)' }} />
+        <div className={`hidden print:hidden ${side ? '' : 'lg:block'}`} style={{ background: 'var(--rule)' }} />
 
         {/* ─────────── Apparatus ─────────── */}
         <aside
-          className="flex min-w-0 flex-col gap-8 border-t px-5 py-10 sm:px-10 lg:border-t-0 lg:py-14 lg:pl-9 lg:pr-10 print:hidden"
+          className={`flex min-w-0 flex-col gap-8 border-t px-5 py-10 sm:px-10 lg:py-14 print:hidden ${side ? 'lg:grid lg:grid-cols-2 lg:gap-x-14' : 'lg:border-t-0 lg:pl-9 lg:pr-10'}`}
           style={{ borderColor: 'var(--rule)' }}
         >
           <RailSection title={hasEnglish ? 'English translation' : 'English summary'}>

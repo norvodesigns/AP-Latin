@@ -45,6 +45,12 @@ const { plinyPassages: pliny } = await load('src/data/passages/pliny.ts');
 const { caesarPassages: caesar } = await load('src/data/passages/caesar.ts');
 const { catullusPassages: catullus } = await load('src/data/passages/catullus.ts');
 const passages = [...vergil, ...pliny, ...caesar, ...catullus];
+const english = {
+  ...(await load('src/data/english/vergil.ts')).vergilEnglish,
+  ...(await load('src/data/english/pliny.ts')).plinyEnglish,
+  ...(await load('src/data/english/caesar.ts')).caesarEnglish,
+  ...(await load('src/data/english/catullus.ts')).catullusEnglish,
+};
 const byId = new Map(passages.map((p) => [p.id, p]));
 
 const { coreVocabulary: vocab } = await load('src/data/vocabulary.ts');
@@ -59,7 +65,7 @@ const { deviceCards } = await load('src/data/devices.ts');
 const { contextCards } = await load('src/data/context.ts');
 const { frqPrompts } = await load('src/data/frq.ts');
 
-notes.push(`${passages.length} passages (${passages.filter((p) => p.required).length} required)`);
+notes.push(`${passages.length} passages (${passages.filter((p) => p.required).length} required), ${Object.keys(english).length} with a line-by-line translation`);
 notes.push(`${vocab.length} core vocabulary entries, ${suppVocab.length} supplementary`);
 notes.push(`${disambig.length} per-line disambiguation overrides`);
 notes.push(`${questions.length + sightQs.length} questions`);
@@ -102,6 +108,20 @@ for (const p of passages) {
   }
   for (const l of p.lines) {
     if (!l.latin?.trim()) fail(`${p.id}: empty text at line ${l.n}`);
+    // A line number pasted in with the text (a source's own margin numbers)
+    // becomes a word to gloss and mark. Aeneid 6.425 carried one until 1.2.
+    if (/\s\d+\s*$/.test(l.latin)) fail(`${p.id}: line ${l.n} ends in a stray number: "${l.latin.slice(-12)}"`);
+  }
+  // The translation, where there is one, must be line for line: one entry
+  // per line of Latin, none for lines the passage does not have. A required
+  // passage must have one.
+  const en = english[p.id];
+  if (!en) {
+    if (p.required) fail(`${p.id}: required passage has no English translation (src/data/english)`);
+  } else {
+    const nums = new Set(p.lines.map((l) => l.n));
+    for (const l of p.lines) if (!en[l.n]?.trim()) fail(`${p.id}: no English for line ${l.n}`);
+    for (const k of Object.keys(en)) if (!nums.has(Number(k))) fail(`${p.id}: English for line ${k}, which the passage does not have`);
   }
   // A required passage must carry the CED reading number that put it there.
   if (p.required && (!p.cedReading?.trim() || !p.unit)) {

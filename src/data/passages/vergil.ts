@@ -1158,7 +1158,7 @@ export const vergilPassages: Passage[] = [
       { n: 422, latin: `corripit obiectam, atque immania terga resolvit` },
       { n: 423, latin: `fusus humi totoque ingens extenditur antro.` },
       { n: 424, latin: `occupat Aeneas aditum custode sepulto` },
-      { n: 425, latin: `evaditque celer ripam inremeabilis undae. 425` },
+      { n: 425, latin: `evaditque celer ripam inremeabilis undae.` },
     ],
   },
   {

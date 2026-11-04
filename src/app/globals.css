@@ -1058,6 +1058,7 @@ h1, h2, h3, h4 {
     line-height: 1.55;
     color: var(--ink2);
   }
+  .verse-block.side-by-side { max-width: none; }
   .side-by-side .line-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.125rem 2rem; }
   @media (min-width: 768px) {
     .side-by-side .line-row { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: baseline; }

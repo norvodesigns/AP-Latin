@@ -40,6 +40,9 @@ public struct PassageLine: Codable, Sendable, Hashable, Identifiable {
     public let n: Int
     public let latin: String
     public let tokens: [Token]
+    /// Since 1.2: the line's literal translation, AP style. Absent in older
+    /// content and for any line not yet translated.
+    public let english: String?
     public var id: Int { n }
 }
 

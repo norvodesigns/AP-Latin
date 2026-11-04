@@ -44,6 +44,8 @@ data class PassageLine(
     val n: Int,
     val latin: String,
     val tokens: List<Token>,
+    /** Since 1.2: the line's literal translation, AP style. */
+    val english: String? = null,
 )
 
 @Serializable
