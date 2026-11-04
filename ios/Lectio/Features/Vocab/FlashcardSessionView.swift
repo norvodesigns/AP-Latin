@@ -132,7 +132,7 @@ struct FlashcardSessionView: View {
         guard session.direction == .context, let library else { return nil }
         for passage in library.passages {
             for line in passage.lines where line.tokens.contains(where: { $0.glosses.first?.id == entry.id && $0.glosses.first?.isExact == true }) {
-                return (line.latin, passage.isPoetry ? "\(passage.citation) (\(line.n))" : "\(passage.citation).\(line.n)")
+                return (line.latin, passage.citesByLine ? "\(passage.citation) (\(line.n))" : "\(passage.citation).\(line.n)")
             }
         }
         return nil

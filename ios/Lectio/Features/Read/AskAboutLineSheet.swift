@@ -30,7 +30,7 @@ struct AskAboutLineSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("\(passage.citation) · \(passage.isPoetry ? "line" : "section") \(line.n)").rubricLabel()
+                        Text("\(passage.citation) · \(passage.lineWord) \(line.n)").rubricLabel()
                         Text(line.latin).font(.latin(21)).foregroundStyle(Palette.ink)
                     }
 

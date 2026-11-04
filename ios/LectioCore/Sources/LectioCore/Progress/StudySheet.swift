@@ -28,14 +28,13 @@ public enum StudySheet {
         for (i, a) in notes.enumerated() { numbers[a.id] = i + 1 }
 
         var body = ""
-        let author = ["vergil": "Vergil", "pliny": "Pliny", "caesar": "Caesar", "catullus": "Catullus"][passage.author]
-        body += "<header><p class=\"cite\">\(esc(author.map { "\($0), " } ?? ""))\(esc(passage.citation))</p>"
+        body += "<header><p class=\"cite\">\(esc(passage.authorLabel)), \(esc(passage.citation))</p>"
         body += "<h1>\(esc(passage.title))</h1></header>"
         if let salutation = passage.salutation { body += "<p class=\"salutation\">\(esc(salutation))</p>" }
 
         // A table rather than flex rows: the print formatter's renderer is
         // most dependable with tables, and a row never splits across pages.
-        body += "<table class=\"text \(passage.isPoetry ? "verse" : "prose")\">"
+        body += "<table class=\"text \(passage.citesByLine ? "verse" : "prose")\">"
         for line in passage.lines {
             let lineAnns = annotations.filter { $0.lineN == line.n }
             let lineMarks = marks.filter { $0.lineN == line.n }
@@ -58,13 +57,13 @@ public enum StudySheet {
                 for a in notes {
                     let text = groupOf(a, in: state.annotations).map(\.text).joined(separator: " ")
                     body += "<li><b>\(numbers[a.id] ?? 0)</b><span><i>\(esc(text))</i> "
-                    body += "<span class=\"faint\">(\(passage.isPoetry ? "line" : "section") \(a.lineN))</span> — \(esc(a.note))</span></li>"
+                    body += "<span class=\"faint\">(\(passage.lineWord) \(a.lineN))</span> — \(esc(a.note))</span></li>"
                 }
                 body += "</ol>"
             }
             if !state.flaggedLines.isEmpty {
                 let lines = state.flaggedLines.sorted().map(String.init).joined(separator: ", ")
-                let word = (passage.isPoetry ? "line" : "section") + (state.flaggedLines.count > 1 ? "s" : "")
+                let word = passage.lineWord + (state.flaggedLines.count > 1 ? "s" : "")
                 body += "<p class=\"small\"><b>Flagged as hard:</b> \(word) \(lines)</p>"
             }
             let used = SyntaxRole.allCases.filter { role in marks.contains { $0.roleValue == role } }

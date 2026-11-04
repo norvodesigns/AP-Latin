@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { frqPrompts, getPrompt, promptLines, FRQ_TYPE_LABELS, CHECKPOINT_1_RUBRIC, CHECKPOINT_2_RUBRIC } from '@/data/frq';
-import { getPassage } from '@/data/passages';
+import { authorLabel, courseProjectPassages, getPassage } from '@/data/passages';
+import Link from 'next/link';
+import type { Passage } from '@/data/types';
 import { useStore, type ProjectPassage } from '@/store/useStore';
 import { useAiStatus, useAiCall } from '@/lib/useAi';
 import { Page, PageHeader, Panel, CalledOut, BackLink, Empty, SourceNote } from '@/components/ui';
@@ -112,7 +114,13 @@ function Workspace({ prompt, onBack }: { prompt: FrqPrompt; onBack: () => void }
 
   const isProject = prompt.type === 'project-prose' || prompt.type === 'project-poetry';
   const wantedGenre = prompt.type === 'project-poetry' ? 'poetry' : 'prose';
-  const candidates = projectPassages.filter((p) => p.genre === wantedGenre);
+  // College Board's set first (with any notes the student has started on
+  // one), then passages the student added themselves.
+  const candidates = useMemo(() => {
+    const set = courseProjectPassages.filter((p) => p.genre === wantedGenre).map(fromSet);
+    const own = projectPassages.filter((p) => p.genre === wantedGenre && !set.some((s) => s.id === p.id));
+    return [...set.map((s) => projectPassages.find((p) => p.id === s.id) ?? s), ...own];
+  }, [projectPassages, wantedGenre]);
 
   const [projectId, setProjectId] = useState<string>('');
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -176,7 +184,7 @@ function Workspace({ prompt, onBack }: { prompt: FrqPrompt; onBack: () => void }
         candidates.length === 0 ? (
           <Empty
             title={`No ${wantedGenre} project passage yet`}
-            body={`FRQ ${prompt.type === 'project-prose' ? '4' : '5'} is always set on one of the four passages you choose for the course project. Add yours in the Course Project tab, then come back.`}
+            body={`FRQ ${prompt.type === 'project-prose' ? '4' : '5'} is set on one of the year's two ${wantedGenre} Course Project passages. Add one in the Course Project tab, then come back.`}
             action={<button type="button" className="btn btn-primary" onClick={onBack}>Go to Course Project</button>}
           />
         ) : (
@@ -191,7 +199,7 @@ function Workspace({ prompt, onBack }: { prompt: FrqPrompt; onBack: () => void }
                   onChange={(e) => setProjectId(e.target.value)}
                 >
                   {candidates.map((p) => (
-                    <option key={p.id} value={p.id}>{p.title || p.citation}</option>
+                    <option key={p.id} value={p.id}>{p.title || p.citation}{SET_YEAR.get(p.id) ? ` (${SET_YEAR.get(p.id)})` : ''}</option>
                   ))}
                 </select>
               )}
@@ -552,6 +560,27 @@ function ShortAnswerPanel({ data }: { data: ShortAnswerGrade }) {
 /* Course project                                                      */
 /* ------------------------------------------------------------------ */
 
+/** A Course Project passage from the Reading Room, as a project passage the
+ *  student can keep checkpoint drafts on. Its id is fixed, so the drafts
+ *  find it again; the Latin carries College Board's line numbers, which an
+ *  essay cites. */
+function fromSet(p: Passage): ProjectPassage {
+  return {
+    id: `set-${p.id}`,
+    title: p.title,
+    author: authorLabel(p),
+    citation: p.citation,
+    genre: p.genre,
+    latin: p.lines.map((l) => `${l.n}  ${l.latin}`).join('\n'),
+    notes: '',
+    checkpoint1: '',
+    checkpoint2: '',
+  };
+}
+
+/** Which year's set a project passage came from, by its id. */
+const SET_YEAR = new Map(courseProjectPassages.map((p) => [`set-${p.id}`, p.project!]));
+
 const EMPTY_PROJECT = (): ProjectPassage => ({
   id: Math.random().toString(36).slice(2, 10),
   title: '',
@@ -685,21 +714,64 @@ function CourseProject() {
     );
   }
 
+  const years = [...new Set(courseProjectPassages.map((p) => p.project!))];
+  const ownOnly = passages.filter((p) => !SET_YEAR.has(p.id));
   return (
     <>
       <Panel className="mb-8">
         <p className="measure text-sm" style={{ color: 'var(--fg-muted)', margin: 0 }}>
-          The course project is four passages you choose with your teacher — two prose, two poetry.
-          Two of them are assessed on the exam as FRQ 4 and 5, and two teacher-scored in-class
-          checkpoints are worth 2% of the free-response section. Add your passages here and they
-          become available in the FRQ 4 and 5 workspaces.
+          College Board sets the Course Project: four passages a year, two prose and two poetry, the
+          same for every AP Latin student. FRQ 4 is set on one of the prose passages and FRQ 5 on one
+          of the poetry ones, and two in-class checkpoints your teacher scores count for 2% of your
+          exam score. Each passage is in the Reading Room with a glossary and a line-by-line
+          translation. Keep your checkpoint drafts and notes on each one here.
         </p>
       </Panel>
 
-      {!mounted ? null : passages.length === 0 ? (
+      {years.map((year) => (
+        <section key={year} className="mb-10">
+          <h2 className="slab-sm mb-3">The {year} passages</h2>
+          <ul className="grid gap-2.5 sm:grid-cols-2">
+            {courseProjectPassages
+              .filter((p) => p.project === year)
+              .map((p) => {
+                const mine = passages.find((x) => x.id === `set-${p.id}`);
+                return (
+                  <li key={p.id} className="border-t pt-4 pb-5" style={{ borderColor: 'var(--rule)' }}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div style={{ fontWeight: 600 }}>{p.title}</div>
+                        <div className="text-sm" style={{ color: 'var(--fg-muted)' }}>
+                          {authorLabel(p)}, {p.citation}
+                        </div>
+                      </div>
+                      <span className={p.genre === 'poetry' ? 'chip chip-accent' : 'chip'}>{p.genre}</span>
+                    </div>
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <Link href={`/read/${p.id}`} className="btn text-xs">Read</Link>
+                      <button type="button" className="btn text-xs" onClick={() => setEditing(mine ?? fromSet(p))}>
+                        {mine ? 'Your drafts' : 'Start your drafts'}
+                      </button>
+                      {mine && (
+                        <div className="ml-auto flex gap-1">
+                          <span className={mine.checkpoint1.trim() ? 'chip chip-gilt' : 'chip'}>CP1</span>
+                          <span className={mine.checkpoint2.trim() ? 'chip chip-gilt' : 'chip'}>CP2</span>
+                        </div>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+          </ul>
+        </section>
+      ))}
+
+      <h2 className="slab-sm mb-3">Other passages</h2>
+
+      {!mounted ? null : ownOnly.length === 0 ? (
         <Empty
-          title="No project passages yet"
-          body="Add the four passages you have chosen for your course project. Everything stays in this browser."
+          title="None added"
+          body="If your teacher gives you a passage that isn't in the set above, add it here and it can be practised in the FRQ 4 and 5 workspaces too."
           action={
             <button type="button" className="btn btn-primary" onClick={() => setEditing(EMPTY_PROJECT())}>
               Add a passage
@@ -709,7 +781,7 @@ function CourseProject() {
       ) : (
         <>
           <ul className="mb-4 grid gap-2.5 sm:grid-cols-2">
-            {passages.map((p) => (
+            {ownOnly.map((p) => (
               <li key={p.id}>
                 <div className="border-t pt-5 pb-6" style={{ borderColor: 'var(--rule)' }}>
                   <div className="flex items-start justify-between gap-3">
@@ -749,10 +821,6 @@ function CourseProject() {
           <button type="button" className="btn btn-primary" onClick={() => setEditing(EMPTY_PROJECT())}>
             Add another passage
           </button>
-          <p className="mt-2 text-sm" style={{ color: 'var(--fg-faint)' }}>
-            {passages.filter((p) => p.genre === 'prose').length} prose,{' '}
-            {passages.filter((p) => p.genre === 'poetry').length} poetry — the project calls for two of each.
-          </p>
         </>
       )}
     </>

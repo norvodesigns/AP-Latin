@@ -200,11 +200,12 @@ struct PassageReaderView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(passage.required ? "CED reading \(passage.cedReading ?? "")" : "Supplementary").rubricLabel()
+            Text(passage.required ? "CED reading \(passage.cedReading ?? "")"
+                 : passage.project.map { "Course Project · \($0)" } ?? "Supplementary").rubricLabel()
             Text(passage.title)
                 .font(.system(.title2, design: .serif))
                 .foregroundStyle(Palette.ink)
-            Text("\(passage.work) · \(passage.wordCount) words")
+            Text("\(passage.project != nil ? "\(passage.authorLabel), " : "")\(passage.work) · \(passage.wordCount) words")
                 .font(.subheadline)
                 .foregroundStyle(Palette.inkMuted)
             Hairline(color: Palette.redLine).padding(.top, 10)
@@ -605,7 +606,7 @@ private struct LineRow: View {
                 }
             }
         }
-        .padding(.vertical, passage.isPoetry ? 3 : 8)
+        .padding(.vertical, passage.citesByLine ? 3 : 8)
     }
 
     private var number: some View {
@@ -794,7 +795,7 @@ private struct LineRow: View {
     }
 
     private var showNumber: Bool {
-        !passage.isPoetry || english != nil || line.n % 5 == 0 || line.n == passage.lines.first?.n
+        !passage.citesByLine || english != nil || line.n % 5 == 0 || line.n == passage.lines.first?.n
     }
 
     /// Token index ranges, each a word plus the punctuation and space after

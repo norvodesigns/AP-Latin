@@ -119,6 +119,21 @@ import Testing
         #expect(library.meta.examDate == "2027-05-14")
     }
 
+    /// The Course Project set: cited by College Board's line numbers, prose
+    /// included, under its author's name, and ready as a project passage.
+    @Test func courseProjectPassages() throws {
+        let set = library.courseProjectPassages
+        #expect(set.count >= 4)
+        let augustine = try #require(set.first { $0.id == "cp26-augustine-confessions" })
+        #expect(!augustine.isPoetry && augustine.citesByLine && augustine.lineWord == "line")
+        #expect(augustine.authorLabel == "Augustine" && augustine.project == "2025–26")
+        #expect(augustine.lines.first?.n == 1 && augustine.lines.allSatisfy { $0.english != nil })
+        let drafts = ProjectPassage.fromSet(augustine)
+        #expect(drafts.id == "set-cp26-augustine-confessions" && drafts.latin.hasPrefix("1  Cur ergo"))
+        // Pliny is still cited by section.
+        #expect(library.passages.first { $0.author == "pliny" }?.lineWord == "section")
+    }
+
     @Test func everyGlossResolves() {
         var unresolved: [String] = []
         for passage in library.passages {

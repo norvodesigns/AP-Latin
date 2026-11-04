@@ -392,7 +392,7 @@ fun PassageReader(model: AppModel, passage: Passage, onNavigate: (Passage) -> Un
 private fun Header(passage: Passage) {
     val c = Lectio.colors
     Column(Modifier.padding(top = 12.dp, bottom = 18.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        RubricLabel(if (passage.required) "CED reading ${passage.cedReading ?: ""}" else "Supplementary")
+        RubricLabel(if (passage.required) "CED reading ${passage.cedReading ?: ""}" else passage.project?.let { "Course Project · $it" } ?: "Supplementary")
         Text(passage.title, style = LectioText.prose(LectioText.title2), color = c.ink)
         Text("${passage.work} · ${passage.wordCount} words", style = LectioText.subheadline, color = c.inkMuted)
         Hairline(Modifier.padding(top = 10.dp), color = c.redLine)
@@ -439,7 +439,7 @@ private fun LineRow(
     val toggleFlag = { model.update { it.toggleFlaggedLine(passage.id, line.n) } }
     val glossaryEnabled = model.progress.glossaryEnabled
     // Verse is numbered every fifth line, as printed; prose sections always.
-    val showNumber = !passage.isPoetry || english != null || line.n % 5 == 0 || line.n == passage.lines.firstOrNull()?.n
+    val showNumber = !passage.citesByLine || english != null || line.n % 5 == 0 || line.n == passage.lines.firstOrNull()?.n
     val chunks = remember(line) {
         // Token index ranges, each a word plus the punctuation and space after it, so the flow never starts a line with a stray space.
         val out = ArrayList<IntRange>()
@@ -450,7 +450,7 @@ private fun LineRow(
     }
     val style = LectioText.latin(if (passage.isPoetry) 22.sp else 21.sp, model.latinScale * scaleBoost)
 
-    Row(Modifier.fillMaxWidth().padding(vertical = if (passage.isPoetry) 3.dp else 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
+    Row(Modifier.fillMaxWidth().padding(vertical = if (passage.citesByLine) 3.dp else 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
         // Verse is numbered every fifth line, as printed; prose sections always. Tap the number to flag the line;
         // hold it for the line's menu. (Not a menu on the whole row: that would take over holding a word, which starts a highlight.)
         Box {

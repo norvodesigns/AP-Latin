@@ -400,6 +400,19 @@ public struct ProjectPassage: Codable, Sendable, Hashable, Identifiable {
     }
 }
 
+extension ProjectPassage {
+    /// A Course Project passage from the Reading Room, as a project passage
+    /// the student keeps checkpoint drafts on. The id is fixed ("set-" and
+    /// the passage's own), so the drafts find it again, and the Latin keeps
+    /// College Board's line numbers, which an essay cites. The website does
+    /// the same (FrqWorkshop.tsx `fromSet`).
+    public static func fromSet(_ p: Passage) -> ProjectPassage {
+        ProjectPassage(id: "set-\(p.id)", title: p.title, author: p.authorLabel, citation: p.citation, genre: p.genre,
+                       latin: p.lines.map { "\($0.n)  \($0.latin)" }.joined(separator: "\n"),
+                       notes: "", checkpoint1: "", checkpoint2: "")
+    }
+}
+
 public struct ScansionDraft: Codable, Sendable, Hashable {
     /// One per syllable, elided ones included: "long", "short" or null.
     public var marks: [String?]

@@ -32,8 +32,10 @@ import {
   type Range,
 } from '@/lib/readerSelection';
 import { passageVocabIds } from '@/data/passages/vocabIds';
+import { authorLabel, citesByLine, lineWord } from '@/data/passages/labels';
+import { AP_LATIN_COURSE } from '@/lib/ced';
 import { coreVocabulary } from '@/data/vocabulary';
-import { BackLink, CedLink, SupplementaryNotice } from '@/components/ui';
+import { BackLink, CedLink, CourseProjectNotice, SupplementaryNotice } from '@/components/ui';
 import { useRevealChildren } from '@/hooks/useRevealChildren';
 import AskAboutLine from '@/components/AskAboutLine';
 import AnnotatedLine from '@/components/reader/AnnotatedLine';
@@ -601,6 +603,9 @@ export default function Reader({
   /* ---------------------------------------------------------------- */
 
   const isVerse = passage.genre === 'poetry';
+  /** Set out line by line (verse, and the Course Project's prose, cited by
+   *  College Board's line numbers) rather than in numbered sections. */
+  const lined = citesByLine(passage);
   const side = englishView === 'side' && hasEnglish;
 
   /** Notes numbered in reading order, for the printed sheet's endnotes. */
@@ -680,7 +685,7 @@ export default function Reader({
             {/* On paper: who it belongs to, and where the text comes from. */}
             <div className="hidden print:mb-6 print:flex print:items-baseline print:justify-between print:gap-8">
               <span className="slab-sm">
-                {passage.author === 'vergil' ? 'Vergil' : passage.author === 'pliny' ? 'Pliny' : passage.author},{' '}
+                {authorLabel(passage)},{' '}
                 {passage.citation}
               </span>
               <span className="print-clean-only" style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem' }}>
@@ -790,7 +795,7 @@ export default function Reader({
 
           {!passage.required && (
             <div className="mb-8 print:hidden">
-              <SupplementaryNotice />
+              {passage.project ? <CourseProjectNotice year={passage.project} /> : <SupplementaryNotice />}
             </div>
           )}
 
@@ -808,7 +813,7 @@ export default function Reader({
                   key={`${line.n}-${li}`}
                   data-line-n={line.n}
                   className={`group relative flex gap-5 ${lineMarks.some((m) => m.role !== 'clause') ? 'line-marked' : ''}`}
-                  style={{ marginBottom: isVerse ? (side ? '0.625rem' : '0.375rem') : '1.15rem' }}
+                  style={{ marginBottom: lined ? (side ? '0.625rem' : '0.375rem') : '1.15rem' }}
                 >
                   <button
                     type="button"
@@ -878,16 +883,28 @@ export default function Reader({
             className="measure mt-10 border-t pt-5 print:hidden"
             style={{ borderColor: 'var(--hair)', fontFamily: 'var(--font-latin)', fontSize: '1rem', lineHeight: 1.5, color: 'var(--fg-muted)' }}
           >
-            Latin text from The Latin Library (public domain).{' '}
+            {passage.project
+              ? `Latin text as College Board prints it for the ${passage.project} Course Project (the Latin is public domain), with its line numbers. `
+              : 'Latin text from The Latin Library (public domain). '}
             {passage.macronized
               ? 'This passage carries vowel-quantity macrons from the source.'
               : 'This source does not mark vowel quantity; macrons are not shown because they would have to be invented.'}{' '}
             {hasEnglish && 'The English is a literal translation in the exam’s own style, written for this app. '}
-            Click a line number to flag it as hard. This passage&rsquo;s place on the syllabus is set by the{' '}
-            <CedLink to="requiredReading">CED&rsquo;s required reading list</CedLink>.
+            Click a line number to flag it as hard.{' '}
+            {passage.project ? (
+              <>
+                College Board publishes each year&rsquo;s Course Project passages on{' '}
+                <a href={AP_LATIN_COURSE} target="_blank" rel="noreferrer">AP Central</a>.
+              </>
+            ) : (
+              <>
+                This passage&rsquo;s place on the syllabus is set by the{' '}
+                <CedLink to="requiredReading">CED&rsquo;s required reading list</CedLink>.
+              </>
+            )}
           </p>
 
-          <PrintStudyNotes notes={notes} all={annotations} noteNumbers={noteNumbers} passageNotes={mounted ? (state?.notes ?? '') : ''} marks={marks} flagged={[...flagged].sort((a, b) => a - b)} isVerse={isVerse} />
+          <PrintStudyNotes notes={notes} all={annotations} noteNumbers={noteNumbers} passageNotes={mounted ? (state?.notes ?? '') : ''} marks={marks} flagged={[...flagged].sort((a, b) => a - b)} lineWord={lineWord(passage)} />
           <PrintVocabulary passage={passage} ids={vocabIds} />
         </article>
 
@@ -1030,7 +1047,7 @@ export default function Reader({
           </div>
 
           {mounted && flagged.size > 0 && (
-            <RailSection title={`Flagged ${isVerse ? 'lines' : 'sections'}`} last>
+            <RailSection title={`Flagged ${lineWord(passage)}s`} last>
               <div className="flex flex-wrap gap-2">
                 {[...flagged]
                   .sort((a, b) => a - b)
@@ -1318,7 +1335,7 @@ function PrintStudyNotes({
   passageNotes,
   marks,
   flagged,
-  isVerse,
+  lineWord,
 }: {
   notes: Annotation[];
   all: Annotation[];
@@ -1326,7 +1343,7 @@ function PrintStudyNotes({
   passageNotes: string;
   marks: SyntaxMark[];
   flagged: number[];
-  isVerse: boolean;
+  lineWord: 'line' | 'section';
 }) {
   const used = [...new Set(marks.map((m) => m.role))].map((r) => ROLE_INFO[r]).filter(Boolean);
   if (notes.length === 0 && !passageNotes.trim() && used.length === 0 && flagged.length === 0) return null;
@@ -1347,7 +1364,7 @@ function PrintStudyNotes({
                 <b style={{ minWidth: '1.4rem' }}>{noteNumbers.get(a.id)}</b>
                 <span>
                   <span style={{ fontFamily: 'var(--font-latin)', fontStyle: 'italic' }}>{groupText(a, all)}</span>{' '}
-                  <span style={{ color: '#555' }}>({isVerse ? 'line' : 'section'} {a.lineN})</span> — {a.note}
+                  <span style={{ color: '#555' }}>({lineWord} {a.lineN})</span> — {a.note}
                 </span>
               </li>
             ))}
@@ -1356,7 +1373,7 @@ function PrintStudyNotes({
       )}
       {flagged.length > 0 && (
         <p style={{ fontSize: '0.875rem', margin: '0 0 1rem' }}>
-          <b>Flagged as hard:</b> {isVerse ? 'line' : 'section'}{flagged.length > 1 ? 's' : ''} {flagged.join(', ')}
+          <b>Flagged as hard:</b> {lineWord}{flagged.length > 1 ? 's' : ''} {flagged.join(', ')}
         </p>
       )}
       {used.length > 0 && (

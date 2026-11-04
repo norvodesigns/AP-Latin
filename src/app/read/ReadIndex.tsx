@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import Link from 'next/link';
-import { allPassages, UNIT_TITLES } from '@/data/passages';
+import { allPassages, authorLabel, citesByLine, courseProjectPassages, UNIT_TITLES } from '@/data/passages';
 import { Page, PageHeader, SourceNote } from '@/components/ui';
 import type { Passage, UnitId } from '@/data/types';
 
@@ -23,7 +23,7 @@ export default function ReadIndex() {
   const [view, setView] = useState<View>('text');
   const units = ['2', '3', '4', '5'] as UnitId[];
   const required = allPassages.filter((p) => p.required);
-  const supplementary = allPassages.filter((p) => !p.required);
+  const supplementary = allPassages.filter((p) => !p.required && !p.project);
 
   return (
     <Page wide>
@@ -33,8 +33,8 @@ export default function ReadIndex() {
         lede={
           <>
             Every passage on the official reading list, with the Latin, a click-any-word glossary,
-            highlighting and sentence marks, a line-by-line literal translation and context. {required.length} required passages;{' '}
-            {supplementary.length} supplementary.
+            highlighting and sentence marks, a line-by-line literal translation and context. {required.length} required passages,{' '}
+            {courseProjectPassages.length} Course Project passages and {supplementary.length} supplementary.
           </>
         }
         actions={
@@ -76,17 +76,20 @@ export default function ReadIndex() {
  *  next to the required passages either side of it instead of being routed
  *  to a separate section entirely. */
 function ByText() {
-  const works = [...new Set(allPassages.map((p) => p.work))].sort((a, b) => {
+  const works = [...new Set(allPassages.filter((p) => !p.project).map((p) => p.work))].sort((a, b) => {
     const rank = (w: string) => {
       const i = WORK_ORDER.indexOf(w);
       return i === -1 ? WORK_ORDER.length : i;
     };
     return rank(a) - rank(b);
   });
+  // The Course Project comes after the two required authors: two of the
+  // exam's essays are on it.
+  const afterRequired = works.filter((w) => w === 'Aeneid' || w === 'Letters').length;
 
   return (
     <>
-      {works.map((work) => {
+      {works.map((work, wi) => {
         const passages = allPassages
           .filter((p) => p.work === work)
           .sort((a, b) => {
@@ -99,38 +102,80 @@ function ByText() {
         const books = [...new Set(passages.map((p) => p.book))];
 
         return (
-          <section key={work} className="mb-12">
-            <div
-              className="mb-1 border-b pb-3"
-              style={{ borderColor: 'var(--rule)' }}
-            >
-              <h2 className="rubric">{WORK_LABELS[work] ?? work}</h2>
-            </div>
-            {books.length > 1 ? (
-              books.map((book) => (
-                <div key={book} className="mb-2">
-                  <h3 className="slab-sm mt-5 mb-1" style={{ color: 'var(--fg-faint)' }}>
-                    Book {book}
-                  </h3>
-                  <ul>
-                    {passages
-                      .filter((p) => p.book === book)
-                      .map((p) => (
-                        <PassageRow key={p.id} p={p} />
-                      ))}
-                  </ul>
-                </div>
-              ))
-            ) : (
-              <ul>
-                {passages.map((p) => (
-                  <PassageRow key={p.id} p={p} />
-                ))}
-              </ul>
-            )}
-          </section>
+          <Fragment key={work}>
+            {wi === afterRequired && <CourseProject />}
+            <section className="mb-12">
+              <div
+                className="mb-1 border-b pb-3"
+                style={{ borderColor: 'var(--rule)' }}
+              >
+                <h2 className="rubric">{WORK_LABELS[work] ?? work}</h2>
+              </div>
+              {books.length > 1 ? (
+                books.map((book) => (
+                  <div key={book} className="mb-2">
+                    <h3 className="slab-sm mt-5 mb-1" style={{ color: 'var(--fg-faint)' }}>
+                      Book {book}
+                    </h3>
+                    <ul>
+                      {passages
+                        .filter((p) => p.book === book)
+                        .map((p) => (
+                          <PassageRow key={p.id} p={p} />
+                        ))}
+                    </ul>
+                  </div>
+                ))
+              ) : (
+                <ul>
+                  {passages.map((p) => (
+                    <PassageRow key={p.id} p={p} />
+                  ))}
+                </ul>
+              )}
+            </section>
+          </Fragment>
         );
       })}
+    </>
+  );
+}
+
+/** The Course Project passages, each year's set together in College
+ *  Board's own order, with who wrote each one. */
+function CourseProject() {
+  if (courseProjectPassages.length === 0) return null;
+  const years = [...new Set(courseProjectPassages.map((p) => p.project!))];
+  return (
+    <>
+      {years.map((year) => (
+        <section key={year} className="mb-12">
+          <div
+            className="mb-1 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b pb-3"
+            style={{ borderColor: 'var(--rule)' }}
+          >
+            <h2 className="rubric">Course Project · {year}</h2>
+            <span style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem', color: 'var(--fg-muted)' }}>
+              Two prose, two poetry
+            </span>
+          </div>
+          <p
+            className="measure py-4"
+            style={{ fontFamily: 'var(--font-latin)', fontSize: '1.0625rem', lineHeight: 1.55, color: 'var(--ink2)', margin: 0 }}
+          >
+            College Board sets four new Course Project passages every year, and two of the exam&rsquo;s
+            free-response essays are on the current year&rsquo;s. These are the {year} set, here to
+            practise on; lines are numbered as College Board prints them.
+          </p>
+          <ul>
+            {courseProjectPassages
+              .filter((p) => p.project === year)
+              .map((p) => (
+                <PassageRow key={p.id} p={p} />
+              ))}
+          </ul>
+        </section>
+      ))}
     </>
   );
 }
@@ -176,6 +221,8 @@ function ByUnit({
           </section>
         );
       })}
+
+      <CourseProject />
 
       <section className="mb-8">
         <div
@@ -240,7 +287,7 @@ function PassageRow({ p, tag = true }: { p: Passage; tag?: boolean }) {
             minWidth: '9rem',
           }}
         >
-          {p.citation}
+          {p.project ? `${authorLabel(p)}, ${p.citation}` : p.citation}
         </span>
         <span
           className="min-w-0 flex-1"
@@ -253,13 +300,13 @@ function PassageRow({ p, tag = true }: { p: Passage; tag?: boolean }) {
           {p.title}
         </span>
         <span className="slab-sm flex shrink-0 items-baseline gap-3">
-          {tag && !p.required && <span style={{ color: 'var(--gilt)' }}>supplementary</span>}
+          {tag && !p.required && !p.project && <span style={{ color: 'var(--gilt)' }}>supplementary</span>}
           {p.macronized && <span style={{ color: 'var(--gilt)' }}>macrons</span>}
           <span style={{ color: p.genre === 'poetry' ? 'var(--accent)' : undefined }}>
             {p.genre}
           </span>
           <span>
-            {p.lines.length} {p.genre === 'poetry' ? 'lines' : '§§'}
+            {p.lines.length} {citesByLine(p) ? 'lines' : '§§'}
           </span>
           <span>{p.wordCount} words</span>
         </span>

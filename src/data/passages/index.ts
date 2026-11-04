@@ -32,16 +32,7 @@ export const courseProjectPassages = allPassages
   .filter((p) => p.project)
   .sort((a, b) => (a.project === b.project ? projectPassages.indexOf(a) - projectPassages.indexOf(b) : a.project! < b.project! ? 1 : -1));
 
-/** Whether a passage is cited by line (verse, and the Course Project's
- *  prose) or by section (Pliny, Caesar). */
-export function citesByLine(p: Pick<Passage, 'genre' | 'project'>): boolean {
-  return p.genre === 'poetry' || !!p.project;
-}
-
-/** "line" or "section", as the passage is cited. */
-export function lineWord(p: Pick<Passage, 'genre' | 'project'>): 'line' | 'section' {
-  return citesByLine(p) ? 'line' : 'section';
-}
+export { citesByLine, lineWord, authorLabel } from './labels';
 
 export function getPassage(id: string): Passage | undefined {
   return allPassages.find((p) => p.id === id);

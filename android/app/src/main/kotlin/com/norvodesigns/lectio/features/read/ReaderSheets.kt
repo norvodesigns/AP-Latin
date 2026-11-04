@@ -275,7 +275,7 @@ fun AskAboutLineSheet(model: AppModel, passage: Passage, line: PassageLine, onDi
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
                 Text("Ask about this line", style = LectioText.prose(LectioText.headline), color = c.ink, modifier = Modifier.align(Alignment.CenterHorizontally))
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    RubricLabel("${passage.citation} · ${if (passage.isPoetry) "line" else "section"} ${line.n}")
+                    RubricLabel("${passage.citation} · ${passage.lineWord} ${line.n}")
                     Text(line.latin, style = LectioText.latin(21.sp), color = c.ink)
                 }
                 if (model.aiAvailable == false) {

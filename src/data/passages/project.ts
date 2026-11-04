@@ -56,7 +56,7 @@ export const projectPassages: Passage[] = [
   {
     id: 'cp26-laudatio-turiae',
     author: 'other',
-    authorName: 'Unknown (a husband’s epitaph)',
+    authorName: 'Unknown',
     project: '2025–26',
     genre: 'prose',
     work: 'Laudatio Turiae',

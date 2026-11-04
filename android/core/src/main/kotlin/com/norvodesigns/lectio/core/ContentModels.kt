@@ -57,6 +57,10 @@ data class Passage(
     val book: Int,
     val letter: Int? = null,
     val salutation: String? = null,
+    /** Since 1.2: the author's name, for one outside the app's four (author "other"), e.g. "Augustine". */
+    val authorName: String? = null,
+    /** Since 1.2, Course Project passages only: the school year College Board set them for, e.g. "2025–26". */
+    val project: String? = null,
     val citation: String,
     val title: String,
     /** On the official 2025 CED required reading list. */
@@ -73,6 +77,16 @@ data class Passage(
     val vocabIds: List<String>,
 ) {
     val isPoetry: Boolean get() = genre == "poetry"
+
+    /** Cited by line (verse, and the Course Project's prose, numbered as College Board prints it), not by section. */
+    val citesByLine: Boolean get() = isPoetry || project != null
+
+    /** "line" or "section", as the passage is cited. */
+    val lineWord: String get() = if (citesByLine) "line" else "section"
+
+    /** The author's name as a reader would write it: "Vergil", "Augustine". */
+    val authorLabel: String
+        get() = authorName ?: mapOf("vergil" to "Vergil", "pliny" to "Pliny", "caesar" to "Caesar", "catullus" to "Catullus")[author] ?: author
 }
 
 /* Vocabulary */

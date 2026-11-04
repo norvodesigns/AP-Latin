@@ -246,6 +246,16 @@ data class ProjectPassage(
     val checkpoint2: String,
 )
 
+/**
+ * A Course Project passage from the Reading Room as a project passage to keep checkpoint drafts on: a fixed
+ * id ("set-" and the passage's own) so the drafts find it again, and the Latin with College Board's line
+ * numbers, which an essay cites. The same as the website's and the iPhone's.
+ */
+fun projectPassageFromSet(p: Passage): ProjectPassage = ProjectPassage(
+    "set-${p.id}", p.title, p.authorLabel, p.citation, p.genre,
+    p.lines.joinToString("\n") { "${it.n}  ${it.latin}" }, "", "", "",
+)
+
 @Serializable
 data class ScansionDraft(
     /** One per syllable, elided ones included: "long", "short" or null. */

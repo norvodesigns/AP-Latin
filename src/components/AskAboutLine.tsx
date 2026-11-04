@@ -5,6 +5,7 @@ import type { Passage } from '@/data/types';
 import { useAiStatus } from '@/lib/useAi';
 import { useStore } from '@/store/useStore';
 import { lookup, disambiguateInContext } from '@/lib/latin';
+import { lineWord } from '@/data/passages/labels';
 
 const SUGGESTED = [
   'Parse every word in this line.',
@@ -119,7 +120,7 @@ export default function AskAboutLine({
         <header className="flex items-start justify-between gap-3 border-b px-4 py-3" style={{ borderColor: 'var(--rule)' }}>
           <div className="min-w-0">
             <div className="eyebrow">
-              {passage.citation} · {passage.genre === 'poetry' ? 'line' : 'section'} {lineN}
+              {passage.citation} · {lineWord(passage)} {lineN}
             </div>
             <p className="latin mt-1" style={{ fontSize: '1.125rem', margin: 0 }}>
               {latin}

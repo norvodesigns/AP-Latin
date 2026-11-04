@@ -81,7 +81,7 @@ extension Passage {
     /// "line 4", "lines 4–6", or "section 3" in prose.
     func linesLabel(_ pieces: [RangePiece]) -> String {
         guard let first = pieces.first, let last = pieces.last else { return "" }
-        let word = isPoetry ? "line" : "section"
+        let word = lineWord
         return first.lineN == last.lineN ? "\(word) \(first.lineN)" : "\(word)s \(first.lineN)–\(last.lineN)"
     }
 }

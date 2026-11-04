@@ -63,7 +63,7 @@ struct PassageNotesSheet: View {
                         section("Flagged as hard") {
                             FlowLayout(lineSpacing: 8) {
                                 ForEach(state.flaggedLines, id: \.self) { n in
-                                    Button("\(passage.isPoetry ? "Line" : "Section") \(n)") { onJump(n) }
+                                    Button("\(passage.lineWord.capitalized) \(n)") { onJump(n) }
                                         .glassButton()
                                         .padding(.trailing, 6)
                                 }
@@ -256,7 +256,7 @@ struct PassageNotesSheet: View {
         }
     }
 
-    private var lineWord: String { passage.isPoetry ? "line" : "section" }
+    private var lineWord: String { passage.lineWord }
 
     /* -------------------------------------------------------------- */
 

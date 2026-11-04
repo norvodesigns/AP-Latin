@@ -77,10 +77,19 @@ struct FrqWorkspaceView: View {
     private var isProject: Bool { prompt.type == "project-prose" || prompt.type == "project-poetry" }
     private var wantedGenre: String { prompt.type == "project-poetry" ? "poetry" : "prose" }
     private var totalPoints: Int { prompt.rubric.reduce(0) { $0 + $1.maxPoints } }
+
+    /// College Board's set first (with the drafts the student has started on
+    /// one), then the passages the student added themselves.
+    private var projectCandidates: [ProjectPassage] {
+        let own = model.progress.projectPassages
+        let set = (library?.courseProjectPassages ?? []).filter { $0.genre == wantedGenre }.map(ProjectPassage.fromSet)
+        let setIds = Set(set.map(\.id))
+        return set.map { s in own.first { $0.id == s.id } ?? s } + own.filter { $0.genre == wantedGenre && !setIds.contains($0.id) }
+    }
     private var earned: Double { selfScore.values.reduce(0, +) }
 
     var body: some View {
-        let candidates = model.progress.projectPassages.filter { $0.genre == wantedGenre }
+        let candidates = projectCandidates
         let project = candidates.first { $0.id == projectId } ?? candidates.first
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
@@ -173,7 +182,7 @@ struct FrqWorkspaceView: View {
     private func passageSection(candidates: [ProjectPassage], project: ProjectPassage?) -> some View {
         if isProject {
             if candidates.isEmpty {
-                Text("FRQ \(prompt.type == "project-prose" ? "4" : "5") is always set on one of the passages you choose for the course project. Add your \(wantedGenre) passage under Course Project first.")
+                Text("FRQ \(prompt.type == "project-prose" ? "4" : "5") is set on one of the year's two \(wantedGenre) Course Project passages. Add one under Course Project first.")
                     .font(.prose(.callout)).foregroundStyle(Palette.ink2)
                     .padding(14).background(Palette.partialWash, in: .rect(cornerRadius: 12))
             } else if let project {
@@ -441,19 +450,55 @@ private struct ShortAnswerFeedback: View {
 /* Course project                                                       */
 /* ------------------------------------------------------------------ */
 
-/// The four passages a student chooses for the course project — two prose,
-/// two poetry. They become the passages FRQ 4 and 5 are set on here.
+/// College Board's Course Project passages, the student's checkpoint drafts
+/// on each, and any other passage the student adds. FRQ 4 and 5 are set on
+/// these here.
 private struct CourseProjectSection: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.library) private var library
     let rubrics: FrqRubrics
     @State private var editing: ProjectPassage?
 
     var body: some View {
+        let set = library?.courseProjectPassages ?? []
+        let setIds = Set(set.map { "set-\($0.id)" })
         Section {
-            Text("The course project is four passages you choose with your teacher — two prose, two poetry. Two are assessed on the exam as FRQ 4 and 5. Add them here and they become available in those workspaces.")
+            Text("College Board sets the Course Project: four passages a year, two prose and two poetry, the same for every AP Latin student. FRQ 4 is set on one of the prose passages and FRQ 5 on one of the poetry ones, and two in-class checkpoints your teacher scores count for 2% of your exam score. Each is in the Reading Room with a glossary and a line-by-line translation.")
                 .font(.prose(.callout)).foregroundStyle(Palette.ink2)
                 .listRowBackground(Color.clear)
-            ForEach(model.progress.projectPassages) { p in
+        }
+        ForEach(Array(Set(set.compactMap(\.project))).sorted(by: >), id: \.self) { year in
+            Section {
+                ForEach(set.filter { $0.project == year }) { p in
+                    let mine = model.progress.projectPassages.first { $0.id == "set-\(p.id)" }
+                    Button { editing = mine ?? .fromSet(p) } label: {
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text(p.title).font(.headline).foregroundStyle(Palette.ink)
+                                Spacer()
+                                Text(p.genre).quietLabel()
+                            }
+                            Text("\(p.authorLabel), \(p.citation)").font(.subheadline).foregroundStyle(Palette.inkMuted)
+                            HStack(spacing: 8) {
+                                if let mine {
+                                    Label("CP1", systemImage: mine.checkpoint1.isEmpty ? "circle" : "checkmark.circle.fill")
+                                    Label("CP2", systemImage: mine.checkpoint2.isEmpty ? "circle" : "checkmark.circle.fill")
+                                } else {
+                                    Text("Start your drafts").font(.caption.weight(.semibold))
+                                }
+                            }
+                            .font(.caption).foregroundStyle(Palette.gilt)
+                        }
+                        .padding(.vertical, 4)
+                    }
+                    .listRowBackground(Color.clear)
+                }
+            } header: {
+                Text("The \(year) passages").rubricLabel()
+            }
+        }
+        Section {
+            ForEach(model.progress.projectPassages.filter { !setIds.contains($0.id) }) { p in
                 Button { editing = p } label: {
                     VStack(alignment: .leading, spacing: 4) {
                         HStack {

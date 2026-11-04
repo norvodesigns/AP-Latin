@@ -7,7 +7,7 @@ import {
 } from '@/lib/ai/guard';
 import { translationGradeSchema } from '@/lib/ai/schemas';
 import { getDrill } from '@/data/translation';
-import { getPassage } from '@/data/passages';
+import { authorLabel, getPassage } from '@/data/passages';
 import { lookup } from '@/lib/latin';
 
 export const runtime = 'nodejs';
@@ -70,7 +70,7 @@ export async function POST(req: Request) {
   const prompt = [
     `PASSAGE: ${drill.citation}${
       passage
-        ? ` (${passage.author.charAt(0).toUpperCase()}${passage.author.slice(1)}, ${passage.genre === 'poetry' ? 'verse' : 'prose'})`
+        ? ` (${authorLabel(passage)}, ${passage.genre === 'poetry' ? 'verse' : 'prose'})`
         : ''
     }`,
     '',
