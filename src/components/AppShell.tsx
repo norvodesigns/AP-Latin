@@ -16,6 +16,7 @@ import FirstLoginWelcome from './FirstLoginWelcome';
 import SplashScreen from './SplashScreen';
 import { needsOnboarding } from '@/lib/onboarding';
 import DailyGoalToast from './DailyGoalToast';
+import AppBanner from './AppBanner';
 
 // The first run carries the whole course (for the placement check), so it is
 // fetched only for the visitor who will see it.
@@ -261,6 +262,9 @@ export default function AppShell({
           backdropFilter: 'saturate(1.4) blur(8px)',
         }}
       >
+        {/* Inside the masthead, so the index (docked at --masthead) still
+            lines up beneath everything above it. */}
+        <AppBanner />
         <div className="mx-auto flex w-full max-w-[1160px] items-center justify-between gap-6 px-5 py-3.5 sm:px-10 sm:py-4">
           {/* Wordmark — also the link home, which is why no "Dashboard" item
               appears in the nav beside it. `.home-link` draws the same

@@ -132,6 +132,23 @@ opening of the Aeneid set faintly as a manuscript page, in the app's parchment a
 words over the art, since the App Store sets the app's name over it; the middle third holds
 everything that matters, so a crop still works.
 
+## What's New (1.2)
+
+Paste into App Store Connect > the 1.2 version > What's New in This Version. It says what the
+app's own What's New sheet says (Features/Onboarding/WhatsNewSheet.swift), plus the smaller things.
+
+> Lectio 1.2 is about marking up what you read.
+>
+> • Mark up a passage: touch and hold a word, or turn on Mark up, then tap the last word of the phrase, even on the next line. Eight highlighter colours, drawn as pills.
+> • Mark the sentence: label the subject, verb, objects and cases with coloured underlines, and bracket a clause.
+> • Notes in one place: write a note on any word or phrase, and tap a highlight to change it or take it off. The Notes sheet lists everything on the page.
+> • English, line by line: a literal, AP-style translation under each Latin line, or side by side on iPad.
+> • Print a study sheet of your colours, marks and notes, with or without the English, or save it as a PDF.
+> • Definitions stay put: tap another word while a definition is open and the sheet changes to the new word.
+> • The Course Project passages in the Reading Room, every word glossed.
+> • Level V of the course: how to read hard poetry, syncope included, then every required Aeneid passage, closely.
+> • Sharper definitions across the glossary, and many small fixes.
+
 ## What's New (1.0)
 
 Leave blank for a first release.

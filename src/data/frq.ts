@@ -380,7 +380,7 @@ B. The ending sets Anchises' imperial programme against the reality of the man w
     ],
     rubric: PROJECT_ESSAY_RUBRIC,
     sampleResponse:
-      'Add your own project passages in the Course Project tab of the FRQ Workshop — this question is always set on one of the four passages you choose with your teacher, so the sample has to be yours.',
+      'This question is set on one of the year’s two prose Course Project passages, which College Board changes every year, so there is no fixed sample. Write yours on one of them (the FRQ Workshop has the set) and score it against the rubric.',
     scoringNotes:
       'Part A is worth 4 of the 11 points and is pure summary — do not skip it to get to the argument. Note that on FRQ 4 and 5 words outside the core vocabulary are NOT glossed.',
   },
@@ -408,7 +408,7 @@ B. The ending sets Anchises' imperial programme against the reality of the man w
     ],
     rubric: PROJECT_ESSAY_RUBRIC,
     sampleResponse:
-      'Add your own project passages in the Course Project tab of the FRQ Workshop — this question is always set on one of the four passages you choose with your teacher.',
+      'This question is set on one of the year’s two poetry Course Project passages, which College Board changes every year, so there is no fixed sample. Write yours on one of them (the FRQ Workshop has the set) and score it against the rubric.',
     scoringNotes:
       'The same 11-point rubric as FRQ 4. For poetry, stylistic information (metre, word order, sound effects) is usually the easiest way to earn row 8.',
   },

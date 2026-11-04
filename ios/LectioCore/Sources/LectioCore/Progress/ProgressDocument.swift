@@ -212,50 +212,138 @@ public struct ProgressDocument: Sendable, Equatable {
     /// have an id to attach the note to). Marks drawn wholly inside a new
     /// colored one are absorbed by it, unless they carry a note: a note is
     /// the reader's own writing and is never discarded as a side effect.
+    /// What goes is recorded as removed, so another device's copy doesn't
+    /// bring it back on the next sync.
     @discardableResult
     public mutating func setHighlight(passageId: String, lineN: Int, startTok: Int, endTok: Int, text: String,
-                                      color: HighlightColor?, now: Date = Date()) -> Annotation {
+                                      color chosen: Pigment?, group: String? = nil, now: Date = Date()) -> Annotation {
         var p = passage(passageId)
+        let stamp = StudyDates.isoTimestamp(now)
         let existing = p.annotations.first { $0.lineN == lineN && $0.startTok == startTok && $0.endTok == endTok }
         var next = existing ?? Annotation(id: Self.uid(now: now), lineN: lineN, startTok: startTok, endTok: endTok,
-                                          text: text, color: color, note: "", createdAt: StudyDates.isoTimestamp(now))
-        next.color = color
+                                          text: text, color: nil, note: "", createdAt: stamp)
+        next.color = chosen?.legacy
+        next.pigment = chosen.flatMap { $0.rawValue == $0.legacy.rawValue ? nil : $0.rawValue }
         next.text = text
-        let drop = existing != nil && next.color == nil && next.note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        next.updatedAt = stamp
+        if next.group == nil, let group { next.group = group }
+        let drop = existing != nil && next.color == nil && !next.hasNote
 
         func subsumed(_ a: Annotation) -> Bool {
-            a.id != next.id && a.lineN == lineN && a.startTok >= startTok && a.endTok <= endTok
-                && a.note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            a.id != next.id && a.lineN == lineN && a.startTok >= startTok && a.endTok <= endTok && !a.hasNote
         }
-        let kept = p.annotations.filter { !(next.color != nil && subsumed($0)) }
+        let gone = p.annotations.filter { (next.color != nil && subsumed($0)) || (drop && $0.id == next.id) }
+        let goneIds = Set(gone.map(\.id))
+        let kept = p.annotations.filter { !goneIds.contains($0.id) }
         if drop {
-            p.annotations = kept.filter { $0.id != next.id }
+            p.annotations = kept
         } else if existing != nil {
             p.annotations = kept.map { $0.id == next.id ? next : $0 }
         } else {
             p.annotations = kept + [next]
         }
         updateRecord(in: "passages", key: passageId, with: p)
+        recordRemoved(passageId: passageId, keys: gone.map { Self.removedKey("a", $0.lineN, $0.startTok, $0.endTok) }, at: stamp)
         return next
     }
 
-    public mutating func setAnnotationNote(passageId: String, annotationId: String, note: String) {
+    public mutating func setAnnotationNote(passageId: String, annotationId: String, note: String, now: Date = Date()) {
         var p = passage(passageId)
-        p.annotations = p.annotations
-            .map { a in
-                var a = a
-                if a.id == annotationId { a.note = note }
-                return a
+        let stamp = StudyDates.isoTimestamp(now)
+        let edited = p.annotations.map { a in
+            var a = a
+            if a.id == annotationId {
+                a.note = note
+                a.updatedAt = stamp
             }
-            // A colorless annotation with no note carries nothing worth keeping.
-            .filter { $0.color != nil || !$0.note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            return a
+        }
+        // A colorless annotation with no note carries nothing worth keeping.
+        let gone = edited.filter { $0.color == nil && !$0.hasNote }
+        p.annotations = edited.filter { $0.color != nil || $0.hasNote }
+        updateRecord(in: "passages", key: passageId, with: p)
+        recordRemoved(passageId: passageId, keys: gone.map { Self.removedKey("a", $0.lineN, $0.startTok, $0.endTok) }, at: stamp)
+    }
+
+    public mutating func removeAnnotation(passageId: String, annotationId: String, now: Date = Date()) {
+        var p = passage(passageId)
+        let gone = p.annotations.filter { $0.id == annotationId }
+        p.annotations.removeAll { $0.id == annotationId }
+        updateRecord(in: "passages", key: passageId, with: p)
+        recordRemoved(passageId: passageId, keys: gone.map { Self.removedKey("a", $0.lineN, $0.startTok, $0.endTok) },
+                      at: StudyDates.isoTimestamp(now))
+    }
+
+    /// Marks exactly this token range as a part of the sentence, replacing any
+    /// mark already on it; nil takes the mark off. The web's `setMark`.
+    @discardableResult
+    public mutating func setMark(passageId: String, lineN: Int, startTok: Int, endTok: Int, text: String,
+                                 role: SyntaxRole?, group: String? = nil, now: Date = Date()) -> SyntaxMark? {
+        var p = passage(passageId)
+        let stamp = StudyDates.isoTimestamp(now)
+        var marks = p.allMarks
+        let existing = marks.first { $0.lineN == lineN && $0.startTok == startTok && $0.endTok == endTok }
+        guard let role else {
+            guard let existing else { return nil }
+            marks.removeAll { $0.id == existing.id }
+            p.marks = marks
+            updateRecord(in: "passages", key: passageId, with: p)
+            recordRemoved(passageId: passageId, keys: [Self.removedKey("m", lineN, startTok, endTok)], at: stamp)
+            return nil
+        }
+        var next = existing ?? SyntaxMark(id: Self.uid(now: now), lineN: lineN, startTok: startTok, endTok: endTok,
+                                          text: text, role: role, createdAt: stamp, group: group)
+        next.role = role.rawValue
+        next.text = text
+        next.updatedAt = stamp
+        if existing != nil {
+            marks = marks.map { $0.id == next.id ? next : $0 }
+        } else {
+            marks.append(next)
+        }
+        p.marks = marks
+        updateRecord(in: "passages", key: passageId, with: p)
+        return next
+    }
+
+    public mutating func removeMark(passageId: String, markId: String, now: Date = Date()) {
+        var p = passage(passageId)
+        let gone = p.allMarks.filter { $0.id == markId }
+        guard !gone.isEmpty else { return }
+        p.marks = p.allMarks.filter { $0.id != markId }
+        updateRecord(in: "passages", key: passageId, with: p)
+        recordRemoved(passageId: passageId, keys: gone.map { Self.removedKey("m", $0.lineN, $0.startTok, $0.endTok) },
+                      at: StudyDates.isoTimestamp(now))
+    }
+
+    /// The passage's free-text notes — the web's `updatePassage(id, { notes })`.
+    public mutating func setPassageNotes(_ passageId: String, notes: String) {
+        var p = passage(passageId)
+        p.notes = notes
         updateRecord(in: "passages", key: passageId, with: p)
     }
 
-    public mutating func removeAnnotation(passageId: String, annotationId: String) {
-        var p = passage(passageId)
-        p.annotations.removeAll { $0.id == annotationId }
-        updateRecord(in: "passages", key: passageId, with: p)
+    /// The `removed` key for an annotation (`a`) or a mark (`m`) — the web's `removedKey`.
+    static func removedKey(_ kind: String, _ lineN: Int, _ startTok: Int, _ endTok: Int) -> String {
+        "\(kind):\(lineN):\(startTok):\(endTok)"
+    }
+
+    /// Records what was taken off a passage, and when, in the raw document so
+    /// the records keep their order (oldest first, capped as on the web) —
+    /// the web store's `withRemoved`.
+    mutating func recordRemoved(passageId: String, keys: [String], at stamp: String) {
+        guard !keys.isEmpty else { return }
+        var records = raw.object("passages")
+        var record = records[passageId]?.objectValue ?? JSONObject()
+        var removed = record["removed"]?.objectValue ?? JSONObject()
+        for key in keys {
+            removed[key] = nil
+            removed[key] = .string(stamp)
+        }
+        if removed.count > ProgressMerge.removedCap { removed.removeFirst(removed.count - ProgressMerge.removedCap) }
+        record["removed"] = .object(removed)
+        records[passageId] = .object(record)
+        raw["passages"] = .object(records)
     }
 
     /// Counts an AI call against today's usage meter — the web's `recordAiCall`.

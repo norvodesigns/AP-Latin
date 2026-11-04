@@ -66,6 +66,18 @@ export interface Passage {
   letter?: number;
   /** Pliny only, e.g. "C. PLINIUS TACITO SUO S." */
   salutation?: string;
+  /**
+   * The author's name, for an author outside the four the app is built
+   * around (`author: 'other'`), e.g. "Augustine".
+   */
+  authorName?: string;
+  /**
+   * Course Project passages only: the school year College Board set them
+   * for, e.g. "2025–26". Their lines are numbered as College Board's
+   * handout prints them, prose included, because the exam cites them by
+   * line.
+   */
+  project?: string;
   /** Human-readable citation, e.g. "Aeneid 4.305–361". */
   citation: string;
   title: string;

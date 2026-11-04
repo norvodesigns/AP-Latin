@@ -37,13 +37,24 @@ struct RootView: View {
                 .pageBackground()
         case .ready(let library):
             Tabs()
-                // Ads start only once the first-run screens are done, and the
-                // policy (AdPolicy) holds them back for a day after that.
-                .task(id: model.showOnboarding) { await model.ads.prepare(onboarded: !model.showOnboarding) }
+                // Ads start only once the first-run screens (or this release's
+                // What's new) are done, so Google's consent form never lands
+                // on top of them, and the policy (AdPolicy) holds them back
+                // for a day after that.
+                .task(id: model.showOnboarding || model.showWhatsNew) {
+                    await model.ads.prepare(onboarded: !model.showOnboarding && !model.showWhatsNew)
+                }
                 // The first run: where the student is starting, and a goal.
                 .fullScreenCover(isPresented: Binding(get: { model.showOnboarding }, set: { model.showOnboarding = $0 })) {
                     OnboardingView()
                         .environment(\.library, library)
+                }
+                // Once per release, for a student who was already here.
+                .sheet(
+                    isPresented: Binding(get: { model.showWhatsNew }, set: { model.showWhatsNew = $0 }),
+                    onDismiss: { model.markWhatsNewSeen() }
+                ) {
+                    WhatsNewSheet()
                 }
                 .environment(\.library, library)
                 // A course lesson opens over everything, from wherever it was started.
@@ -89,6 +100,9 @@ struct RootView: View {
 
     private func open(host: String?, path: String, in library: ContentLibrary) {
         guard let tab = AppTab(host: host) else { return }
+        // A link (the widget, Siri) goes where it points, rather than under
+        // the What's new sheet; closing it this way counts as seen.
+        if model.showWhatsNew { model.showWhatsNew = false }
         model.selectedTab = tab
         if tab == .read, path != "/", !path.isEmpty, let passage = library.passage(path) {
             model.readPath = [passage]

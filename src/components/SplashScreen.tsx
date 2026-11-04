@@ -5,19 +5,61 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 export const SEEN_KEY = 'ap-latin-splash-seen';
 
 /**
- * Bump this when there's a "what's new" worth telling a returning visitor
- * about. The seen-key below stores whichever version a browser last
- * dismissed, so raising this number is what makes the splash reappear —
- * once, framed as an update rather than a first welcome — for everyone who
- * already saw an earlier version. A visitor who has genuinely never seen the
- * splash at all is distinguished by having no stored value whatsoever.
+ * The release a returning visitor is told about, numbered as the App Store
+ * numbers the app, so the website and the iPhone app announce the same
+ * update by the same name.
  */
-export const CURRENT_VERSION = '1.3';
+export const RELEASE = '1.2';
 
-const WHATS_NEW: string[] = [
-  'A new Course: Latin from the very first word, in short lessons that teach a little and ask a lot. Start at the beginning, or anywhere along the way.',
-  'Every word a lesson teaches joins your flashcards, and every lesson counts toward your streak and daily goal.',
-  'Your course progress syncs with your account, like everything else.',
+/**
+ * What a dismissal stores, and what makes the splash come back: raise it
+ * with `RELEASE` when there's a "what's new" worth telling a returning
+ * visitor about, and it reappears once, framed as an update rather than a
+ * first welcome, for everyone who already saw an earlier one. A visitor who
+ * has never seen the splash at all has no stored value whatsoever.
+ *
+ * Three parts on purpose: the splash before 1.2 was numbered on its own and
+ * stored '1.3', so a two-part '1.3' later would read as already seen.
+ */
+export const CURRENT_VERSION = `${RELEASE}.0`;
+
+/** Each new thing: a title, drawn as a highlight in one of the eight
+ *  pigments (the pills are themselves new in 1.2), and a line on how to use it. */
+const WHATS_NEW: { title: string; pigment: string; detail: string }[] = [
+  {
+    title: 'Mark up a passage',
+    pigment: 'gilt',
+    detail:
+      'Turn on Mark up (or press m), then tap the first and last word of a phrase, even across lines. Eight highlighter colours, drawn as pills.',
+  },
+  {
+    title: 'Mark the sentence',
+    pigment: 'minium',
+    detail: 'Label the subject, verb, objects and cases with a coloured underline, and bracket a clause.',
+  },
+  {
+    title: 'Notes in one place',
+    pigment: 'verdigris',
+    detail:
+      'Write a note on any word or phrase. Tap a highlight to change it or take it off. Everything you have marked is listed under the passage, and on the new My notes page.',
+  },
+  {
+    title: 'English, line by line',
+    pigment: 'woad',
+    detail:
+      'Tap English (or press t) for a literal, AP-style translation with matching line numbers, in the margin or side by side.',
+  },
+  {
+    title: 'Print a study sheet',
+    pigment: 'madder',
+    detail: 'Your colours, marks and notes, laid out for revision, with or without the English.',
+  },
+  {
+    title: 'More to read',
+    pigment: 'azurite',
+    detail:
+      'The Course Project passages on a new Reading Room shelf, and Level V of the course: how to read hard poetry, syncope included, then every required Aeneid passage, closely.',
+  },
 ];
 
 /** How long the dissolve-out plays before the dialog actually unmounts —
@@ -104,7 +146,7 @@ export default function SplashScreen() {
       <div
         role="dialog"
         aria-modal="true"
-        aria-label={returning ? `What's new in Lectio ${CURRENT_VERSION}` : 'Welcome to Lectio'}
+        aria-label={returning ? `What's new in Lectio ${RELEASE}` : 'Welcome to Lectio'}
         className="splash-card relative w-full max-w-lg overflow-y-auto"
         data-closing={closing}
         style={{ maxHeight: '90vh' }}
@@ -127,15 +169,17 @@ export default function SplashScreen() {
           </svg>
         </button>
 
-        <div className="flex flex-col items-center px-7 pb-8 pt-9 text-center sm:px-9">
-          <Rosette />
+        {/* A returning visitor came for the list, so the ornament shrinks and,
+            on a phone, the motto goes, to bring the first items into view. */}
+        <div className="flex flex-col items-center px-7 pt-9 text-center sm:px-9">
+          <Rosette size={returning ? 64 : 96} />
 
-          <span className="wordmark mt-5" style={{ fontSize: '2.5rem' }}>
+          <span className={returning ? 'wordmark mt-3' : 'wordmark mt-5'} style={{ fontSize: returning ? '2.125rem' : '2.5rem' }}>
             Lectio
           </span>
 
           <p
-            className="mt-2"
+            className={returning ? 'mt-1 hidden sm:block' : 'mt-2'}
             style={{
               fontFamily: 'var(--font-latin)',
               fontSize: '1.0625rem',
@@ -164,38 +208,55 @@ export default function SplashScreen() {
           )}
 
           <div className="mt-6 w-full text-left">
-            <div className="rubric mb-3.5 text-center">
-              What&rsquo;s new in version {CURRENT_VERSION}
-            </div>
-            <ul className="flex flex-col gap-2.5 pl-0" style={{ listStyle: 'none' }}>
+            <div className="rubric mb-4 text-center">What&rsquo;s new in Lectio {RELEASE}</div>
+            <ul className="flex flex-col gap-4 pl-0" style={{ listStyle: 'none' }}>
               {WHATS_NEW.map((item) => (
-                <li
-                  key={item}
-                  className="flex gap-2.5"
-                  style={{
-                    fontFamily: 'var(--font-latin)',
-                    fontSize: '1.0625rem',
-                    lineHeight: 1.5,
-                    color: 'var(--ink2)',
-                  }}
-                >
-                  <span aria-hidden="true" style={{ color: 'var(--accent)' }}>
-                    ·
+                <li key={item.title}>
+                  <span
+                    className={`hl hl-${item.pigment}`}
+                    style={{
+                      fontFamily: 'var(--font-latin)',
+                      fontSize: '1.125rem',
+                      lineHeight: 1.35,
+                      color: 'var(--fg)',
+                    }}
+                  >
+                    {item.title}
                   </span>
-                  <span>{item}</span>
+                  <p
+                    className="mt-1"
+                    style={{
+                      fontFamily: 'var(--font-latin)',
+                      fontSize: '1rem',
+                      lineHeight: 1.5,
+                      color: 'var(--ink2)',
+                    }}
+                  >
+                    {item.detail}
+                  </p>
                 </li>
               ))}
             </ul>
           </div>
 
-          <button
-            type="button"
-            onClick={dismiss}
-            className="btn btn-primary mt-7 px-8"
-            style={{ fontSize: '0.9375rem' }}
+          {/* Held at the foot of the card while the list scrolls under it, so
+              the way out is always in reach on a short screen. */}
+          <div
+            className="sticky bottom-0 -mx-7 mt-3 flex w-[calc(100%+3.5rem)] justify-center px-7 pb-7 pt-4 sm:-mx-9 sm:w-[calc(100%+4.5rem)]"
+            style={{
+              background:
+                'linear-gradient(to bottom, transparent, var(--bg-raised) 1rem, var(--bg-raised))',
+            }}
           >
-            {returning ? 'Continue' : 'Begin reading'}
-          </button>
+            <button
+              type="button"
+              onClick={dismiss}
+              className="btn btn-primary px-8"
+              style={{ fontSize: '0.9375rem' }}
+            >
+              {returning ? 'Continue' : 'Begin reading'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -209,10 +270,10 @@ export default function SplashScreen() {
  * the whole ornament is exactly as symmetrical as SVG's own `rotate()` is,
  * not hand-plotted trigonometry.
  */
-function Rosette() {
+function Rosette({ size = 96 }: { size?: number }) {
   const petals = 12;
   return (
-    <svg width="96" height="96" viewBox="0 0 200 200" aria-hidden="true">
+    <svg width={size} height={size} viewBox="0 0 200 200" aria-hidden="true">
       <circle cx="100" cy="100" r="90" fill="none" stroke="var(--rule-strong)" strokeWidth="1" />
       {Array.from({ length: petals }).map((_, i) => (
         <path

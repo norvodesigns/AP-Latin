@@ -4,7 +4,7 @@ import {
   readJson, checkLength, rateLimit, clientIp, errorResponse, handleAiError,
   ASK_RULE, LIMITS,
 } from '@/lib/ai/guard';
-import { getPassage } from '@/data/passages';
+import { authorLabel, getPassage } from '@/data/passages';
 import { lookup } from '@/lib/latin';
 
 export const runtime = 'nodejs';
@@ -85,9 +85,9 @@ export async function POST(req: Request) {
 
   const prompt = [
     passage
-      ? `PASSAGE: ${passage.citation} — ${passage.title} (${
+      ? `PASSAGE: ${authorLabel(passage)}, ${passage.citation} — ${passage.title} (${
           passage.author === 'vergil' ? 'dactylic hexameter' : passage.genre === 'poetry' ? 'Latin verse' : 'prose'
-        })`
+        }${passage.project ? `; one of College Board's Course Project passages for ${passage.project}, lines numbered as College Board prints them` : ''})`
       : '',
     `LINE ${lineN}: ${latin}`,
     neighbours ? `\nSURROUNDING LINES (context only):\n${neighbours}` : '',

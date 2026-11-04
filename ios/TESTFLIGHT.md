@@ -101,7 +101,22 @@ TestFlight builds are the same binary the App Store gets, so there is no testers
 builds (run from Xcode, or the simulator with `-seedDemo YES`); **Settings > Your data > Clear all
 progress on this device** (signed out only) is an ordinary setting.
 
-## What to Test (paste into TestFlight)
+## What to Test in 1.2 (paste into TestFlight)
+
+> Version 1.2 is about marking up what you read. Update from 1.1 (don't delete the app first) so
+> you see the What's New sheet, which comes up once. Then, on iPhone and iPad:
+>
+> 1. Open Aeneid 1.1–33. Tap a word, then tap another without closing the definition: it should
+>    change in place, not go full screen.
+> 2. Touch and hold a word, then tap a word on the next line: colour the phrase, mark a subject and
+>    a verb, write a note. Tap the highlight again and take it off.
+> 3. The Notes sheet, English translation (under each line on iPhone, side by side on iPad), and
+>    Print > Study sheet with the English.
+> 4. The Course Project shelf in the Reading Room, and Level V at the end of the Course.
+>
+> Tell me anything that's cut off, hard to tap, or confusing.
+
+## What to Test (1.0, paste into TestFlight)
 
 > This is the first look at the Lectio app for iPhone, iPad and Apple Watch, for judging how it looks
 > and feels. Please don't worry about the Latin content yet.

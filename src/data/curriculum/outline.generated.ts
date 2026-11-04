@@ -1627,6 +1627,263 @@ export const OUTLINE: OutlineLevel[] = [
     ]
   },
   {
+    "id": "quinta",
+    "numeral": "V",
+    "title": "Quīnta",
+    "subtitle": "Close reading",
+    "blurb": "For after the syllabus: how to take a hard passage of Vergil apart, then every required passage again, slowly, with everything the exam can ask about it: the grammar, the shortened forms, the meter, the figures and the argument.",
+    "units": [
+      {
+        "id": "quinta-1",
+        "n": 1,
+        "title": "Reading hard poetry",
+        "blurb": "A method for the sentences that will not come out, a full lesson on syncope and the other shortened forms, the constructions poets prefer, and how the exam wants a reading written up.",
+        "lessons": [
+          {
+            "id": "quinta-1-1",
+            "title": "A method for hard sentences",
+            "summary": "Read to the full stop first, find the frame, sort by endings, and keep a list of open questions until the sentence answers them.",
+            "minutes": 14,
+            "reviewable": true
+          },
+          {
+            "id": "quinta-1-2",
+            "title": "Syncope: finding the missing letters",
+            "summary": "Shortened forms like *spērāstī*, *ululārunt*, *audierat* and *repostum*: what drops out, how to spot it, and how to put it back.",
+            "minutes": 16,
+            "reviewable": true
+          },
+          {
+            "id": "quinta-1-3",
+            "title": "Poets’ grammar",
+            "summary": "The constructions Vergil uses where prose would not: the Greek accusative, places without prepositions, the dative of direction, the poetic infinitive and the historical present.",
+            "minutes": 14,
+            "reviewable": true
+          },
+          {
+            "id": "quinta-1-4",
+            "title": "From reading to writing",
+            "summary": "What the exam asks about a passage of poetry, and how to answer it: the literal translation, the short answer, and the essay point.",
+            "minutes": 12,
+            "reviewable": true
+          },
+          {
+            "id": "quinta-1-test",
+            "title": "Unit test: Reading hard poetry",
+            "summary": "Sixteen questions from the whole unit. Pass it to skip what you already know.",
+            "minutes": 8,
+            "reviewable": true,
+            "test": true
+          }
+        ]
+      },
+      {
+        "id": "quinta-2",
+        "n": 2,
+        "title": "Aeneid 1: Juno and the storm",
+        "blurb": "The close readings go in the poem’s order, so that each passage’s context is fresh. First, the proem with the causes of Juno’s anger, and the storm in which we meet Aeneas.",
+        "lessons": [
+          {
+            "id": "quinta-2-1",
+            "title": "Aeneid 1.1–33, closely",
+            "summary": "The proem and Juno’s anger taken apart: every construction, the shortened forms, the meter of the key lines, the figures, and what each part gives an essay.",
+            "minutes": 25,
+            "reviewable": true
+          },
+          {
+            "id": "quinta-2-2",
+            "title": "Aeneid 1.88–107, closely",
+            "summary": "The storm, and the hero’s first words: why Aeneas envies the dead at Troy, and how the sound and meter of the wreck make you hear it.",
+            "minutes": 20,
+            "reviewable": true
+          }
+        ]
+      },
+      {
+        "id": "quinta-3",
+        "n": 3,
+        "title": "Aeneid 2: Laocoön and the horse",
+        "blurb": "Aeneas tells Dido how Troy fell: Laocoön’s warning, the serpents, and the horse dragged into the city. Every line of the three passages, with the conditions, the irony and the sound.",
+        "lessons": [
+          {
+            "id": "quinta-3-1",
+            "title": "Aeneid 2.40–56, closely",
+            "summary": "Laocoön’s warning: his questions, his three guesses about the horse, the spear that makes it groan, and Aeneas’s mixed contrary-to-fact condition.",
+            "minutes": 20,
+            "reviewable": true
+          },
+          {
+            "id": "quinta-3-2",
+            "title": "Aeneid 2.201–227, closely",
+            "summary": "The serpents: the frame of *geminī … anguēs*, the Greek accusatives, tmesis, the bull simile and its irony, and the sound of the sea and the snakes.",
+            "minutes": 22,
+            "reviewable": true
+          },
+          {
+            "id": "quinta-3-3",
+            "title": "Aeneid 2.228–249, closely",
+            "summary": "The Trojans misread the omen, break their own walls and drag the horse in, singing: the indirect statements, the dative of agent, a half-line, and Vergil’s irony.",
+            "minutes": 20,
+            "reviewable": true
+          },
+          {
+            "id": "quinta-3-test",
+            "title": "Unit test: Aeneid 2: Laocoön and the horse",
+            "summary": "Six questions from the whole unit. Pass it to skip what you already know.",
+            "minutes": 5,
+            "reviewable": true,
+            "test": true
+          }
+        ]
+      },
+      {
+        "id": "quinta-4",
+        "n": 4,
+        "title": "Dido in love",
+        "blurb": "Dido as Aeneas first sees her, a queen at work, likened to Diana; Dido after Cupid’s wound, with her city stopped; and the cave, the “wedding” and Rumor.",
+        "lessons": [
+          {
+            "id": "quinta-4-1",
+            "title": "Aeneid 1.496–508, closely",
+            "summary": "Dido enters her temple: the Diana simile and what it hides, the queen at work, and the meter of a stately entrance.",
+            "minutes": 16,
+            "reviewable": true
+          },
+          {
+            "id": "quinta-4-2",
+            "title": "Aeneid 4.74–89, closely",
+            "summary": "Dido in love: her days and nights with Aeneas and without him, the stopped city, and the echoes that tie it to Books 1 and 2.",
+            "minutes": 18,
+            "reviewable": true
+          },
+          {
+            "id": "quinta-4-3",
+            "title": "Aeneid 4.165–197, closely",
+            "summary": "The cave and the “wedding” nature stages, the narrator’s verdict, and Rumor: Vergil’s monster, her birth, her body, and the story she spreads.",
+            "minutes": 25,
+            "reviewable": true
+          }
+        ]
+      },
+      {
+        "id": "quinta-5",
+        "n": 5,
+        "title": "Dido and Aeneas part",
+        "blurb": "Dido’s speech of accusation and entreaty, Aeneas’s answer of duty, and their last meeting among the dead, where every part of Book 4 is turned around.",
+        "lessons": [
+          {
+            "id": "quinta-5-1",
+            "title": "Aeneid 4.305–330, closely",
+            "summary": "Dido’s speech, movement by movement: the charge, the argument from winter, the entreaty, what she has lost, and the little Aeneas she never had.",
+            "minutes": 25,
+            "reviewable": true
+          },
+          {
+            "id": "quinta-5-2",
+            "title": "Aeneid 4.331–361, closely",
+            "summary": "Aeneas answers: the effort before he speaks, his denials, the fates and the oracles, his father and son, the god he saw, and the half-line he ends on.",
+            "minutes": 25,
+            "reviewable": true
+          },
+          {
+            "id": "quinta-5-3",
+            "title": "Aeneid 6.450–476, closely",
+            "summary": "The last meeting: the new moon, Aeneas’s plea and his oath, and Dido’s silence, with every echo of Books 1 and 4 that turns the scene around.",
+            "minutes": 22,
+            "reviewable": true
+          }
+        ]
+      },
+      {
+        "id": "quinta-6",
+        "n": 6,
+        "title": "Rome to come",
+        "blurb": "Anchises shows Aeneas Augustus and the Roman arts of rule; then Book 7 opens the war half of the poem with Latium at peace: an old king, a daughter, a suitor and the gods’ warning.",
+        "lessons": [
+          {
+            "id": "quinta-6-1",
+            "title": "Aeneid 6.788–800 and 847–853, closely",
+            "summary": "Augustus in the Parade of Heroes, the golden age and the ends of the earth; then the arts of others and the Roman arts of rule.",
+            "minutes": 22,
+            "reviewable": true
+          },
+          {
+            "id": "quinta-6-2",
+            "title": "Aeneid 7.45–58, closely",
+            "summary": "The second half begins: Latium at peace, King Latinus and his line back to Saturn, a daughter of age to marry, Turnus, and the gods who stand in the way.",
+            "minutes": 16,
+            "reviewable": true
+          }
+        ]
+      },
+      {
+        "id": "quinta-7",
+        "n": 7,
+        "title": "War in Italy",
+        "blurb": "Turnus and Camilla at the end of the Catalogue of Italians; then Diana’s story of Camilla: a baby thrown across a flood, a childhood in the wild, and a goddess’s grief.",
+        "lessons": [
+          {
+            "id": "quinta-7-1",
+            "title": "Aeneid 7.783–792 and 803–817, closely",
+            "summary": "Turnus’s helmet and shield, and what they say about him; Camilla, the warrior girl who runs on the grain, and the crowd that stares at her.",
+            "minutes": 20,
+            "reviewable": true
+          },
+          {
+            "id": "quinta-7-2",
+            "title": "Aeneid 11.532–566, closely",
+            "summary": "Diana tells Camilla’s story: a king in exile, a baby carried through battle, a flooded river, a vow, and a spear thrown across the water.",
+            "minutes": 25,
+            "reviewable": true
+          },
+          {
+            "id": "quinta-7-3",
+            "title": "Aeneid 11.567–594, closely",
+            "summary": "Camilla’s wild childhood, the bride no one could win, and Diana’s orders: an arrow of revenge and a grave at home.",
+            "minutes": 20,
+            "reviewable": true
+          }
+        ]
+      },
+      {
+        "id": "quinta-8",
+        "n": 8,
+        "title": "The end",
+        "blurb": "Juno’s anger is ended on Olympus and Troy is allowed to fall; then the duel, Turnus’s plea, the belt of Pallas, and the last lines of the poem.",
+        "lessons": [
+          {
+            "id": "quinta-8-1",
+            "title": "Aeneid 12.791–796 and 803–812, closely",
+            "summary": "Jupiter asks Juno what is left, sums up her war in four infinitives and forbids her to go on; she yields, with her face lowered and her pride intact.",
+            "minutes": 20,
+            "reviewable": true
+          },
+          {
+            "id": "quinta-8-2",
+            "title": "Aeneid 12.818–828, closely",
+            "summary": "Juno’s terms: the Latins keep their name, their language and their dress, and Troy is allowed to stay fallen.",
+            "minutes": 15,
+            "reviewable": true
+          },
+          {
+            "id": "quinta-8-3",
+            "title": "Aeneid 12.919–938, closely",
+            "summary": "The spear, the fall, and Turnus’s plea: a suppliant who concedes everything and asks Aeneas, by his own father, to go no further.",
+            "minutes": 22,
+            "reviewable": true
+          },
+          {
+            "id": "quinta-8-4",
+            "title": "Aeneid 12.938–952, closely",
+            "summary": "The last fifteen lines: Aeneas wavers, sees the belt of Pallas, and kills Turnus in a fury; the poem ends on Turnus’s soul.",
+            "minutes": 20,
+            "reviewable": true
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "verba",
     "track": "vocabulary",
     "numeral": "A–V",
@@ -3527,4 +3784,4 @@ export const OUTLINE: OutlineLevel[] = [
 export const REQUIRED_PASSAGE_IDS: string[] = ["pliny-6-16-a","pliny-6-20-a","pliny-6-20-b","pliny-6-16-b","pliny-6-4","pliny-6-7","pliny-7-27-a","pliny-7-27-b","pliny-10-7","pliny-10-5","pliny-10-6","pliny-10-37","pliny-10-90","aen-1-1-33","aen-1-88-107","aen-1-496-508","aen-2-40-56","aen-2-201-249","aen-4-74-89","aen-4-165-197","aen-4-305-361","aen-6-450-476","aen-6-788-800","aen-6-847-853","aen-7-45-58","aen-7-783-792","aen-7-803-817","aen-11-532-594","aen-12-791-796","aen-12-803-812","aen-12-818-828","aen-12-919-952"];
 
 /** Words in the core and supplementary vocabulary together. */
-export const VOCAB_COUNT = 3399;
+export const VOCAB_COUNT = 3498;

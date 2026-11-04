@@ -178,6 +178,14 @@ struct FlowLayout: Layout {
             lineHeight = max(lineHeight, size.height)
         }
     }
+
+    /// The first word's baseline, so a line number beside a wrapped line of
+    /// Latin lines up with its first row rather than its last.
+    func explicitAlignment(of guide: VerticalAlignment, in bounds: CGRect, proposal: ProposedViewSize,
+                           subviews: Subviews, cache: inout ()) -> CGFloat? {
+        guard guide == .firstTextBaseline, let first = subviews.first else { return nil }
+        return bounds.minY + first.dimensions(in: .unspecified)[.firstTextBaseline]
+    }
 }
 
 /* ------------------------------------------------------------------ */

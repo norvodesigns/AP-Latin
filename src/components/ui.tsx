@@ -392,6 +392,32 @@ export function SupplementaryNotice() {
   );
 }
 
+/** The Reader's note on a Course Project passage: whose set it is, and
+ *  which year's the exam asks about. */
+export function CourseProjectNotice({ year }: { year: string }) {
+  return (
+    <div className="border-l-2 py-1 pl-5" style={{ borderColor: 'var(--accent)' }}>
+      <div className="slab-sm mb-1.5" style={{ color: 'var(--accent)' }}>
+        Course Project · {year}
+      </div>
+      <p
+        className="measure"
+        style={{
+          margin: 0,
+          fontFamily: 'var(--font-latin)',
+          fontSize: '1.0625rem',
+          lineHeight: 1.55,
+          color: 'var(--ink2)',
+        }}
+      >
+        One of the four Course Project passages College Board set for {year}. The set changes every
+        year, and the exam&rsquo;s two project-passage essays are on the current year&rsquo;s, so
+        this one is here for practice. Lines are numbered as College Board prints them.
+      </p>
+    </div>
+  );
+}
+
 /* ==========================================================================
    Official sources
 

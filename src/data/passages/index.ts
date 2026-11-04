@@ -3,8 +3,15 @@ import { vergilPassages } from './vergil';
 import { plinyPassages } from './pliny';
 import { caesarPassages } from './caesar';
 import { catullusPassages } from './catullus';
+import { projectPassages } from './project';
 
-export const allPassages: Passage[] = [...plinyPassages, ...vergilPassages, ...caesarPassages, ...catullusPassages].sort((a, b) => {
+export const allPassages: Passage[] = [
+  ...plinyPassages,
+  ...vergilPassages,
+  ...caesarPassages,
+  ...catullusPassages,
+  ...projectPassages,
+].sort((a, b) => {
   // Required first, then by unit, then by book/line so the list reads like the syllabus.
   if (a.required !== b.required) return a.required ? -1 : 1;
   if (a.unit !== b.unit) return a.unit < b.unit ? -1 : 1;
@@ -17,7 +24,15 @@ export const allPassages: Passage[] = [...plinyPassages, ...vergilPassages, ...c
 export const requiredPassages = allPassages.filter((p) => p.required);
 export const supplementaryPassages = allPassages.filter((p) => !p.required);
 
-export { vergilPassages, plinyPassages, caesarPassages, catullusPassages };
+export { vergilPassages, plinyPassages, caesarPassages, catullusPassages, projectPassages };
+
+/** The Course Project passages, the current year's first, each year in
+ *  College Board's own order. */
+export const courseProjectPassages = allPassages
+  .filter((p) => p.project)
+  .sort((a, b) => (a.project === b.project ? projectPassages.indexOf(a) - projectPassages.indexOf(b) : a.project! < b.project! ? 1 : -1));
+
+export { citesByLine, lineWord, authorLabel } from './labels';
 
 export function getPassage(id: string): Passage | undefined {
   return allPassages.find((p) => p.id === id);

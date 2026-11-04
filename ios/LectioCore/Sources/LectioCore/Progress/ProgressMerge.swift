@@ -268,6 +268,8 @@ public enum ProgressMerge {
                 out[id] = pb
                 continue
             }
+            let removed = mergeRemoved(pa["removed"]?.objectValue, pb["removed"]?.objectValue)
+            let hasMarks = pa["marks"]?.arrayValue != nil || pb["marks"]?.arrayValue != nil
             var merged = JSONObject()
             merged["notes"] = cloudIsNewer ? pb["notes"] : pa["notes"]
             merged["bookmarked"] = cloudIsNewer ? pb["bookmarked"] : pa["bookmarked"]
@@ -275,10 +277,57 @@ public enum ProgressMerge {
             merged["flaggedLines"] = .array(stableSorted(flags) { ($0.doubleValue ?? 0) < ($1.doubleValue ?? 0) })
             merged["coldReads"] = .number(max(pa["coldReads"]?.doubleValue ?? 0, pb["coldReads"]?.doubleValue ?? 0))
             merged["lastOpened"] = laterOf(pa["lastOpened"]?.stringValue, pb["lastOpened"]?.stringValue).map(JSONValue.string)
-            merged["annotations"] = .array(mergeAnnotations(pa["annotations"]?.arrayValue ?? [], pb["annotations"]?.arrayValue ?? []))
+            let annotations = mergeAnnotations(pa["annotations"]?.arrayValue ?? [], pb["annotations"]?.arrayValue ?? [])
+            merged["annotations"] = .array(dropRemoved(annotations, removed, kind: "a"))
+            // Since 1.2. Written only when either side has them, so a passage
+            // from an older app merges to exactly what it did before.
+            if hasMarks {
+                let marks = mergeMarks(pa["marks"]?.arrayValue ?? [], pb["marks"]?.arrayValue ?? [])
+                merged["marks"] = .array(dropRemoved(marks, removed, kind: "m"))
+            }
+            if let removed { merged["removed"] = .object(removed) }
             out[id] = .object(merged)
         }
         return out
+    }
+
+    /// Removal records kept per passage — the web's `REMOVED_CAP`.
+    public static let removedCap = 300
+
+    /// Both devices' removal records: every key either side has, at the later
+    /// time where both have it, in local's order then the cloud's new keys.
+    static func mergeRemoved(_ a: JSONObject?, _ b: JSONObject?) -> JSONObject? {
+        guard a != nil || b != nil else { return nil }
+        var out = a ?? JSONObject()
+        for (key, at) in b ?? JSONObject() {
+            let time = at.stringValue ?? ""
+            if let current = out[key]?.stringValue {
+                if time > current { out[key] = at }
+            } else if out[key] == nil {
+                out[key] = at
+            }
+        }
+        if out.count > removedCap { out.removeFirst(out.count - removedCap) }
+        return out
+    }
+
+    /// The newest edit of an annotation or mark: `updatedAt`, else `createdAt`.
+    static func stamp(_ x: JSONValue) -> String {
+        x["updatedAt"]?.stringValue ?? x["createdAt"]?.stringValue ?? ""
+    }
+
+    static func spanKey(_ x: JSONValue) -> String {
+        "\(JSONValue.format(x["lineN"]?.doubleValue ?? 0)):\(JSONValue.format(x["startTok"]?.doubleValue ?? 0)):\(JSONValue.format(x["endTok"]?.doubleValue ?? 0))"
+    }
+
+    /// Drops whatever was removed after its last edit; anything made or
+    /// changed since the removal is newer than the record and stays.
+    static func dropRemoved(_ items: [JSONValue], _ removed: JSONObject?, kind: String) -> [JSONValue] {
+        guard let removed else { return items }
+        return items.filter { x in
+            guard let at = removed["\(kind):\(spanKey(x))"]?.stringValue else { return true }
+            return stamp(x) > at
+        }
     }
 
     static func laterOf(_ a: String?, _ b: String?) -> String? {
@@ -288,11 +337,10 @@ public enum ProgressMerge {
     }
 
     /// Annotations on the exact same span are one highlight even when made
-    /// independently on two devices: keep the one with a note, else the newer.
+    /// independently on two devices. Two copies of the same annotation (one
+    /// id): the later edit. Two independent ones: the one with a note, else
+    /// the newer.
     static func mergeAnnotations(_ a: [JSONValue], _ b: [JSONValue]) -> [JSONValue] {
-        func spanKey(_ x: JSONValue) -> String {
-            "\(JSONValue.format(x["lineN"]?.doubleValue ?? 0)):\(JSONValue.format(x["startTok"]?.doubleValue ?? 0)):\(JSONValue.format(x["endTok"]?.doubleValue ?? 0))"
-        }
         func hasNote(_ x: JSONValue) -> Bool {
             !(x["note"]?.stringValue ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         }
@@ -304,14 +352,31 @@ public enum ProgressMerge {
                 continue
             }
             let winner: JSONValue
-            if hasNote(ann) != hasNote(existing) {
+            if let id = ann["id"]?.stringValue, id == existing["id"]?.stringValue {
+                winner = stamp(ann) > stamp(existing) ? ann : existing
+            } else if hasNote(ann) != hasNote(existing) {
                 winner = hasNote(ann) ? ann : existing
             } else {
-                winner = (ann["createdAt"]?.stringValue ?? "") > (existing["createdAt"]?.stringValue ?? "") ? ann : existing
+                winner = stamp(ann) > stamp(existing) ? ann : existing
             }
             bySpan[key] = winner
         }
-        return stableSorted(bySpan.map { $0.value }) { x, y in
+        return inReadingOrder(bySpan.map { $0.value })
+    }
+
+    /// Sentence-part marks: one per span, the later edit winning.
+    static func mergeMarks(_ a: [JSONValue], _ b: [JSONValue]) -> [JSONValue] {
+        var bySpan = JSONObject()
+        for mark in a + b {
+            let key = spanKey(mark)
+            if let existing = bySpan[key], stamp(mark) <= stamp(existing) { continue }
+            bySpan[key] = mark
+        }
+        return inReadingOrder(bySpan.map { $0.value })
+    }
+
+    static func inReadingOrder(_ items: [JSONValue]) -> [JSONValue] {
+        stableSorted(items) { x, y in
             let lx = x["lineN"]?.doubleValue ?? 0, ly = y["lineN"]?.doubleValue ?? 0
             if lx != ly { return lx < ly }
             return (x["startTok"]?.doubleValue ?? 0) < (y["startTok"]?.doubleValue ?? 0)

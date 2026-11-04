@@ -48,6 +48,20 @@ class LectioColors(
     val washGilt: Color,
     val washVerdigris: Color,
     val washWoad: Color,
+    /** Since 1.2: the other four pigments (orange, pink, purple, sky blue), fills and washes. */
+    val minium: Color = Color(0xFFC8662A),
+    val madder: Color = Color(0xFFC2557A),
+    val murex: Color = Color(0xFF7A4A9E),
+    val azurite: Color = Color(0xFF2F8DB3),
+    val washMinium: Color,
+    val washMadder: Color,
+    val washMurex: Color,
+    val washAzurite: Color,
+    /** Since 1.2: the sentence marks' underlines. The verb's is rubric. */
+    val markSubject: Color,
+    val markObject: Color,
+    val markCase: Color,
+    val markConstruction: Color,
 ) {
     /** Text on a rubric fill: the page colour, so it's light on the deep red of light mode and dark on the brighter red of dark mode. */
     val onRubric: Color get() = parchment
@@ -85,6 +99,8 @@ class LectioColors(
             partial = Color(0xFF8A6D24), partialWash = Color(0xFFF5EED9),
             incorrect = Color(0xFF9D2F24), incorrectWash = Color(0xFFF3E3D8),
             washRubric = Color(0xFFDDBBB0), washGilt = Color(0xFFD0C3A2), washVerdigris = Color(0xFFB0C3B4), washWoad = Color(0xFFB0BAC0),
+            washMinium = Color(0xFFE6C2A6), washMadder = Color(0xFFE6C2C6), washMurex = Color(0xFFCDBCCC), washAzurite = Color(0xFFB9D2D6),
+            markSubject = Color(0xFF2F5478), markObject = Color(0xFF2F6E57), markCase = Color(0xFF8A6A1F), markConstruction = Color(0xFF6D6455),
         )
 
         val Dark = LectioColors(
@@ -98,6 +114,8 @@ class LectioColors(
             partial = Color(0xFFCFA94D), partialWash = Color(0xFF2B2416),
             incorrect = Color(0xFFE0796A), incorrectWash = Color(0xFF38241F),
             washRubric = Color(0xFF4F3028), washGilt = Color(0xFF574825), washVerdigris = Color(0xFF1F3428), washWoad = Color(0xFF1F2A34),
+            washMinium = Color(0xFF683A1B), washMadder = Color(0xFF5F2F3C), washMurex = Color(0xFF3B2645), washAzurite = Color(0xFF1F4653),
+            markSubject = Color(0xFF8DB4DC), markObject = Color(0xFF8CC5A8), markCase = Color(0xFFD8B45C), markConstruction = Color(0xFFB3A78F),
         )
     }
 }

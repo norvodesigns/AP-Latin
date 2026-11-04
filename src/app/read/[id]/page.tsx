@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { allPassages, getPassage } from '@/data/passages';
 import { questions } from '@/data/questions';
+import { englishFor } from '@/data/english';
 import Reader from './Reader';
 
 export function generateStaticParams() {
@@ -35,6 +36,7 @@ export default async function PassagePage({ params }: { params: Promise<{ id: st
       prev={prev ? { id: prev.id, citation: prev.citation } : null}
       next={next ? { id: next.id, citation: next.citation } : null}
       quizCount={quizCount}
+      english={englishFor(passage)}
     />
   );
 }

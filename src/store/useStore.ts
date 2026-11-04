@@ -5,6 +5,8 @@ import { persist, createJSONStorage, subscribeWithSelector } from 'zustand/middl
 import type { SkillCategory, QuestionType, UnitId } from '@/data/types';
 import { knownCard, testOut, type PathLesson } from '@/lib/path';
 import { bumpActivityStats } from '@/lib/supabase/sync';
+import { LEGACY_COLOR, REMOVED_CAP, removedKey } from '@/lib/annotations';
+export { LEGACY_COLOR, pigmentOf, stampOf, removedKey, REMOVED_CAP } from '@/lib/annotations';
 
 export const STORE_VERSION = 1;
 export const STORAGE_KEY = 'ap-latin-store';
@@ -16,17 +18,27 @@ export const EXAM_DATE = '2027-05-14';
 /* Record shapes                                                      */
 /* ------------------------------------------------------------------ */
 
-/** The highlighter colors offered on a text selection, manuscript-pigment
- *  names to match the rest of the palette rather than generic marker colors. */
+/** The four original highlighter colors, manuscript-pigment names to match
+ *  the rest of the palette rather than generic marker colors. These are the
+ *  only values `Annotation.color` ever holds, because the 1.0 and 1.1 apps
+ *  decode it as a closed set of four and drop a passage's marks entirely on
+ *  any other value. */
 export type HighlightColor = 'gilt' | 'verdigris' | 'woad' | 'rubric';
 
+/** Every pigment the highlighter offers since 1.2: the original four and
+ *  four more. A newer one is stored in `Annotation.pigment`, with `color`
+ *  set to the nearest of the original four, so an older app shows a close
+ *  colour instead of failing to read the passage. */
+export type Pigment = HighlightColor | 'minium' | 'madder' | 'murex' | 'azurite';
+
 /**
- * A highlight and/or note anchored to a run of tokens within one line — never
- * across lines, which keeps both the anchor (a line number plus a token
- * range `tokenize()` reproduces deterministically from the passage's own
- * fixed text) and the rendering simple. `color` and `note` are independent:
- * a highlight can carry no note, and a note can exist on a span the reader
- * never colored.
+ * A highlight and/or note anchored to a run of tokens within one line. The
+ * anchor is a line number plus a token range that `tokenize()` reproduces
+ * deterministically from the passage's own fixed text. A selection that
+ * crosses a line break is stored as one annotation per line sharing a
+ * `group`, so every piece is still an ordinary one-line anchor that an
+ * older app can draw. `color` and `note` are independent: a highlight can
+ * carry no note, and a note can exist on a span the reader never colored.
  */
 export interface Annotation {
   id: string;
@@ -38,11 +50,55 @@ export interface Annotation {
    *  and export never need to re-tokenize the passage to show a snippet. */
   text: string;
   color: HighlightColor | null;
+  /** Since 1.2: the pigment chosen, when it is one of the four newer ones. */
+  pigment?: Pigment;
   note: string;
   createdAt: string;
+  /** Since 1.2: the last change, so an edit made on one device beats the
+   *  older copy of the same highlight on another. */
+  updatedAt?: string;
+  /** Since 1.2: shared by the per-line pieces of one selection. */
+  group?: string;
+}
+
+/** The parts of a sentence a reader can mark on the text. */
+export type SyntaxRole =
+  | 'subject'
+  | 'verb'
+  | 'object'
+  | 'indirect'
+  | 'nominative'
+  | 'genitive'
+  | 'dative'
+  | 'accusative'
+  | 'ablative'
+  | 'vocative'
+  | 'participle'
+  | 'infinitive'
+  | 'ablAbs'
+  | 'prep'
+  | 'clause';
+
+/**
+ * A sentence-part mark: "this is the subject", "this phrase is ablative".
+ * Anchored exactly like an annotation (one line, a token range, a `group`
+ * for a phrase that runs on to the next line), but kept in its own list so a
+ * mark and a highlight on the same words never fight over one record.
+ */
+export interface SyntaxMark {
+  id: string;
+  lineN: number;
+  startTok: number;
+  endTok: number;
+  text: string;
+  role: SyntaxRole;
+  createdAt: string;
+  updatedAt?: string;
+  group?: string;
 }
 
 export interface PassageState {
+  /** Free-text notes on the passage as a whole. */
   notes: string;
   bookmarked: boolean;
   /** Line/section numbers the reader marked as hard. */
@@ -52,6 +108,17 @@ export interface PassageState {
   coldReads: number;
   /** Highlights and notes anchored to spans of text, newest last. */
   annotations: Annotation[];
+  /** Since 1.2: sentence-part marks, newest last. */
+  marks?: SyntaxMark[];
+  /**
+   * Since 1.2: what the reader took off the page, and when, keyed
+   * `a:line:start:end` for a highlight or note and `m:line:start:end` for a
+   * mark. Merging two devices unions their marks, so without this a
+   * highlight removed on the phone came straight back from the laptop's
+   * copy. A mark made after its removal (a re-highlight of the same words)
+   * is newer than the record and stays.
+   */
+  removed?: Record<string, string>;
 }
 
 /** SM-2 scheduling record for one vocabulary item. */
@@ -374,17 +441,31 @@ export interface StoreState {
   toggleFlaggedLine: (id: string, line: number) => void;
 
   /** Create or update the highlight color of the annotation spanning exactly
-   *  this token range (creating one if none exists yet), and return it. */
+   *  this token range (creating one if none exists yet), and return it.
+   *  `group` ties the per-line pieces of one cross-line selection together. */
   setHighlight: (
     passageId: string,
     lineN: number,
     startTok: number,
     endTok: number,
     text: string,
-    color: HighlightColor | null,
+    color: Pigment | null,
+    group?: string,
   ) => Annotation;
   setAnnotationNote: (passageId: string, annotationId: string, note: string) => void;
   removeAnnotation: (passageId: string, annotationId: string) => void;
+  /** Marks exactly this token range as a part of the sentence, replacing any
+   *  mark already on that range; `null` takes the mark off. */
+  setMark: (
+    passageId: string,
+    lineN: number,
+    startTok: number,
+    endTok: number,
+    text: string,
+    role: SyntaxRole | null,
+    group?: string,
+  ) => SyntaxMark | null;
+  removeMark: (passageId: string, markId: string) => void;
 
   reviewVocab: (id: string, quality: number) => void;
   seedVocab: (ids: string[]) => void;
@@ -450,6 +531,23 @@ const emptyPassage = (): PassageState => ({
   coldReads: 0,
   annotations: [],
 });
+
+/**
+ * `{ removed }` with these keys recorded as removed `at`, for spreading into
+ * a passage being written; nothing at all when there is nothing to record,
+ * so a passage that never lost a mark never grows the field. The oldest
+ * records go once there are more than `REMOVED_CAP`.
+ */
+function withRemoved(cur: PassageState, keys: string[], at: string): Pick<PassageState, 'removed'> {
+  if (keys.length === 0) return cur.removed ? { removed: cur.removed } : {};
+  const next: Record<string, string> = { ...(cur.removed ?? {}) };
+  for (const k of keys) {
+    delete next[k];
+    next[k] = at;
+  }
+  const entries = Object.entries(next);
+  return { removed: Object.fromEntries(entries.slice(Math.max(0, entries.length - REMOVED_CAP))) };
+}
 
 /**
  * A one-time read, not a live link to either signal — the app has no
@@ -616,14 +714,26 @@ export const useStore = create<StoreState>()(
           };
         }),
 
-      setHighlight: (passageId, lineN, startTok, endTok, text, color) => {
+      setHighlight: (passageId, lineN, startTok, endTok, text, chosen, group) => {
         const cur = get().passages[passageId] ?? emptyPassage();
+        const now = new Date().toISOString();
         const existing = cur.annotations.find(
           (a) => a.lineN === lineN && a.startTok === startTok && a.endTok === endTok,
         );
-        const next: Annotation = existing
-          ? { ...existing, color, text }
-          : { id: uid(), lineN, startTok, endTok, text, color, note: '', createdAt: new Date().toISOString() };
+        const color = chosen ? LEGACY_COLOR[chosen] : null;
+        const pigment = chosen && chosen !== color ? chosen : undefined;
+        const base: Annotation = existing
+          ? { ...existing, color, text, updatedAt: now }
+          : { id: uid(), lineN, startTok, endTok, text, color, note: '', createdAt: now, updatedAt: now };
+        // `pigment` is written only for the newer pigments, and taken off
+        // again when the reader goes back to one of the original four.
+        const { pigment: _old, ...rest } = base;
+        void _old;
+        const next: Annotation = {
+          ...rest,
+          ...(pigment ? { pigment } : {}),
+          ...(group && !base.group ? { group } : {}),
+        };
         // A colorless annotation with no note carries nothing worth keeping
         // — but only once it already existed: a brand-new one reaching here
         // with no color is `ensureAnnotation`'s note-flow calling this just
@@ -654,7 +764,10 @@ export const useStore = create<StoreState>()(
           a.endTok <= endTok &&
           !a.note.trim();
 
-        const kept = cur.annotations.filter((a) => !(next.color && subsumed(a)));
+        const gone = cur.annotations.filter(
+          (a) => (next.color && subsumed(a)) || (drop && a.id === next.id),
+        );
+        const kept = cur.annotations.filter((a) => !gone.includes(a));
 
         set({
           passages: {
@@ -662,10 +775,11 @@ export const useStore = create<StoreState>()(
             [passageId]: {
               ...cur,
               annotations: drop
-                ? kept.filter((a) => a.id !== next.id)
+                ? kept
                 : existing
                   ? kept.map((a) => (a.id === next.id ? next : a))
                   : [...kept, next],
+              ...withRemoved(cur, gone.map((a) => removedKey('a', a)), now),
             },
           },
         });
@@ -675,15 +789,19 @@ export const useStore = create<StoreState>()(
       setAnnotationNote: (passageId, annotationId, note) =>
         set((s) => {
           const cur = s.passages[passageId] ?? emptyPassage();
+          const now = new Date().toISOString();
+          const edited = cur.annotations.map((a) =>
+            a.id === annotationId ? { ...a, note, updatedAt: now } : a,
+          );
+          // A colorless annotation with no note carries nothing worth keeping.
+          const gone = edited.filter((a) => !(a.color || a.note.trim()));
           return {
             passages: {
               ...s.passages,
               [passageId]: {
                 ...cur,
-                annotations: cur.annotations
-                  .map((a) => (a.id === annotationId ? { ...a, note } : a))
-                  // A colorless annotation with no note carries nothing worth keeping.
-                  .filter((a) => a.color || a.note.trim()),
+                annotations: edited.filter((a) => !gone.includes(a)),
+                ...withRemoved(cur, gone.map((a) => removedKey('a', a)), now),
               },
             },
           };
@@ -692,12 +810,71 @@ export const useStore = create<StoreState>()(
       removeAnnotation: (passageId, annotationId) =>
         set((s) => {
           const cur = s.passages[passageId] ?? emptyPassage();
+          const gone = cur.annotations.filter((a) => a.id === annotationId);
           return {
             passages: {
               ...s.passages,
               [passageId]: {
                 ...cur,
                 annotations: cur.annotations.filter((a) => a.id !== annotationId),
+                ...withRemoved(cur, gone.map((a) => removedKey('a', a)), new Date().toISOString()),
+              },
+            },
+          };
+        }),
+
+      setMark: (passageId, lineN, startTok, endTok, text, role, group) => {
+        const cur = get().passages[passageId] ?? emptyPassage();
+        const now = new Date().toISOString();
+        const marks = cur.marks ?? [];
+        const existing = marks.find(
+          (m) => m.lineN === lineN && m.startTok === startTok && m.endTok === endTok,
+        );
+        if (!role) {
+          if (!existing) return null;
+          set({
+            passages: {
+              ...get().passages,
+              [passageId]: {
+                ...cur,
+                marks: marks.filter((m) => m.id !== existing.id),
+                ...withRemoved(cur, [removedKey('m', existing)], now),
+              },
+            },
+          });
+          return null;
+        }
+        const next: SyntaxMark = existing
+          ? { ...existing, role, text, updatedAt: now }
+          : {
+              id: uid(), lineN, startTok, endTok, text, role, createdAt: now, updatedAt: now,
+              ...(group ? { group } : {}),
+            };
+        set({
+          passages: {
+            ...get().passages,
+            [passageId]: {
+              ...cur,
+              marks: existing ? marks.map((m) => (m.id === next.id ? next : m)) : [...marks, next],
+            },
+          },
+        });
+        return next;
+      },
+
+      removeMark: (passageId, markId) =>
+        set((s) => {
+          const cur = s.passages[passageId] ?? emptyPassage();
+          const marks = cur.marks ?? [];
+          const gone = marks.filter((m) => m.id === markId);
+          if (gone.length === 0) return {};
+          return {
+            passages: {
+              ...s.passages,
+              [passageId]: {
+                ...cur,
+                marks: marks.filter((m) => m.id !== markId),
+                ...withRemoved(cur, gone.map((m) => removedKey('m', m)), new Date().toISOString()),
               },
             },
           };
