@@ -608,12 +608,15 @@ export default function Reader({
   const lined = citesByLine(passage);
   const side = englishView === 'side' && hasEnglish;
 
-  /** Notes numbered in reading order, for the printed sheet's endnotes. */
+  /** Notes numbered in reading order, for the printed study sheet. */
   const notes = useMemo(
     () => annotations.filter((a) => a.note.trim()).sort((a, b) => a.lineN - b.lineN || a.startTok - b.startTok),
     [annotations],
   );
   const noteNumbers = useMemo(() => new Map(notes.map((a, i) => [a.id, i + 1])), [notes]);
+  /** On the printed study sheet, each note goes beside its line, unless the
+   *  English has that place, when the notes follow the text on a new page. */
+  const notesBeside = mounted && !side && notes.length > 0;
 
   const vocabIds = useMemo(() => passageVocabIds(passage), [passage]);
   const coverage = useMemo(
@@ -766,9 +769,9 @@ export default function Reader({
                 </button>
                 {printMenu && (
                   <div role="menu" className="panel absolute left-0 z-30 mt-2 flex w-72 flex-col gap-1 p-2" style={{ top: '100%' }}>
-                    <PrintItem title="Study sheet" body="Your highlights, sentence marks and numbered notes, in colour." onClick={() => print('study', false)} />
+                    <PrintItem title="Study sheet" body="Your highlights and sentence marks in colour, with each note beside its line." onClick={() => print('study', false)} />
                     {hasEnglish && (
-                      <PrintItem title="Study sheet with the English" body="The same, with the translation line by line beside the Latin." onClick={() => print('study', true)} />
+                      <PrintItem title="Study sheet with the English" body="The translation beside the Latin, line by line, and your notes on a page after the text." onClick={() => print('study', true)} />
                     )}
                     <PrintItem title="Clean handout" body="The Latin double-spaced with its vocabulary and room to write." onClick={() => print('clean', false)} />
                   </div>
@@ -800,7 +803,7 @@ export default function Reader({
           )}
 
           {/* The verse block: a red margin rule with the text ruled off it. */}
-          <div className={`verse-block print-ruled ${side ? 'side-by-side' : ''}`} ref={verseRef}>
+          <div className={`verse-block print-ruled ${side ? 'side-by-side' : ''} ${notesBeside ? 'notes-beside' : ''}`} ref={verseRef}>
             {passage.lines.map((line, li) => {
               const isFlagged = mounted && flagged.has(line.n);
               const tokens = lineTokens(passage, line.n);
@@ -865,6 +868,19 @@ export default function Reader({
                     )}
                   </div>
 
+                  {notesBeside && (
+                    <div className="print-line-notes print-study-only hidden print:block" aria-hidden>
+                      {notes
+                        .filter((a) => a.lineN === line.n)
+                        .map((a) => (
+                          <p key={a.id}>
+                            <b>{noteNumbers.get(a.id)}</b>
+                            <i>{groupText(a, annotations)}</i> — {a.note}
+                          </p>
+                        ))}
+                    </div>
+                  )}
+
                   <button
                     type="button"
                     onClick={() => setAskLine({ n: line.n, latin: line.latin })}
@@ -904,7 +920,16 @@ export default function Reader({
             )}
           </p>
 
-          <PrintStudyNotes notes={notes} all={annotations} noteNumbers={noteNumbers} passageNotes={mounted ? (state?.notes ?? '') : ''} marks={marks} flagged={[...flagged].sort((a, b) => a - b)} lineWord={lineWord(passage)} />
+          <PrintStudyNotes
+            notes={notesBeside ? [] : notes}
+            all={annotations}
+            noteNumbers={noteNumbers}
+            passageNotes={mounted ? (state?.notes ?? '') : ''}
+            marks={marks}
+            flagged={[...flagged].sort((a, b) => a - b)}
+            lineWord={lineWord(passage)}
+            newPage={side}
+          />
           <PrintVocabulary passage={passage} ids={vocabIds} />
         </article>
 
@@ -1325,8 +1350,9 @@ function RailSection({
 
 /**
  * The study sheet's back matter, on paper only: the notes numbered to match
- * the marks in the text, notes on the whole passage, the flagged lines, and
- * a key to the sentence marks used.
+ * the marks in the text (when they are not already beside their lines), notes
+ * on the whole passage, the flagged lines, and a key to the sentence marks
+ * used. With the English beside the Latin, it starts a page of its own.
  */
 function PrintStudyNotes({
   notes,
@@ -1336,6 +1362,7 @@ function PrintStudyNotes({
   marks,
   flagged,
   lineWord,
+  newPage,
 }: {
   notes: Annotation[];
   all: Annotation[];
@@ -1344,11 +1371,12 @@ function PrintStudyNotes({
   marks: SyntaxMark[];
   flagged: number[];
   lineWord: 'line' | 'section';
+  newPage: boolean;
 }) {
   const used = [...new Set(marks.map((m) => m.role))].map((r) => ROLE_INFO[r]).filter(Boolean);
   if (notes.length === 0 && !passageNotes.trim() && used.length === 0 && flagged.length === 0) return null;
   return (
-    <section className="print-study-only hidden print:mt-8 print:block">
+    <section className={`print-study-only hidden print:mt-8 print:block ${newPage ? 'print-new-page' : ''}`}>
       {passageNotes.trim() && (
         <>
           <h2 className="slab-sm mb-2">Notes on the passage</h2>

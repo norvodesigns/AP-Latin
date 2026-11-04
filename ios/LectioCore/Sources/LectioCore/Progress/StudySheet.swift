@@ -3,8 +3,9 @@ import Foundation
 /// A passage with the reader's marks on it, as a printable HTML page: the
 /// iPhone and iPad version of the web Reader's study sheet. Highlights in
 /// their pigments, sentence-part marks as labelled underlines, subordinate
-/// clauses in brackets, notes numbered in the text and written out after it,
-/// and optionally the English under each line.
+/// clauses in brackets, and notes numbered in the text. Without the English,
+/// each note is printed beside the line it is on; with the English beside
+/// the Latin, the notes start on a page of their own after the text.
 ///
 /// Plain HTML and inline CSS, so `UIMarkupTextPrintFormatter` can paginate it
 /// and the same page can be shared as a file.
@@ -32,9 +33,15 @@ public enum StudySheet {
         body += "<h1>\(esc(passage.title))</h1></header>"
         if let salutation = passage.salutation { body += "<p class=\"salutation\">\(esc(salutation))</p>" }
 
+        // Without the English, the notes go in a column beside their lines;
+        // with it, the English takes that column and the notes follow the
+        // text on a new page.
+        let english = withEnglish && passage.lines.contains { $0.english != nil }
+        let besideLines = marked && !english && !notes.isEmpty
         // A table rather than flex rows: the print formatter's renderer is
         // most dependable with tables, and a row never splits across pages.
-        body += "<table class=\"text \(passage.citesByLine ? "verse" : "prose")\">"
+        let layout = english ? " with-english" : besideLines ? " with-notes" : ""
+        body += "<table class=\"text \(passage.citesByLine ? "verse" : "prose")\(layout)\">"
         for line in passage.lines {
             let lineAnns = annotations.filter { $0.lineN == line.n }
             let lineMarks = marks.filter { $0.lineN == line.n }
@@ -42,17 +49,30 @@ public enum StudySheet {
             let flagged = marked && state.flaggedLines.contains(line.n)
             body += "<tr class=\"row\(labelled ? " labelled" : "")\">"
             body += "<td class=\"n\(flagged ? " flagged" : "")\">\(line.n)</td><td class=\"line\">"
-            body += "<p class=\"latin\">\(lineHTML(line, annotations: lineAnns, marks: lineMarks, numbers: numbers))</p>"
-            if withEnglish, let english = line.english { body += "<p class=\"english\">\(esc(english))</p>" }
-            body += "</td></tr>"
+            body += "<p class=\"latin\">\(lineHTML(line, annotations: lineAnns, marks: lineMarks, numbers: numbers))</p></td>"
+            if english {
+                body += "<td class=\"english\">\(esc(line.english ?? ""))</td>"
+            } else if besideLines {
+                body += "<td class=\"line-notes\">"
+                for a in notes where a.lineN == line.n {
+                    let text = groupOf(a, in: state.annotations).map(\.text).joined(separator: " ")
+                    body += "<p><b>\(numbers[a.id] ?? 0)</b><i>\(esc(text))</i> — \(esc(a.note))</p>"
+                }
+                body += "</td>"
+            }
+            body += "</tr>"
         }
         body += "</table>"
 
         if marked {
-            if !state.notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            let passageNotes = !state.notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            let used = SyntaxRole.allCases.filter { role in marks.contains { $0.roleValue == role } }
+            let hasBack = passageNotes || (!notes.isEmpty && !besideLines) || !state.flaggedLines.isEmpty || !used.isEmpty
+            if hasBack { body += english ? "<section class=\"back new-page\">" : "<section class=\"back\">" }
+            if passageNotes {
                 body += "<h2>Notes on the passage</h2><p class=\"prose-note\">\(esc(state.notes))</p>"
             }
-            if !notes.isEmpty {
+            if !notes.isEmpty && !besideLines {
                 body += "<h2>Notes</h2><ol class=\"notes\">"
                 for a in notes {
                     let text = groupOf(a, in: state.annotations).map(\.text).joined(separator: " ")
@@ -66,7 +86,6 @@ public enum StudySheet {
                 let word = passage.lineWord + (state.flaggedLines.count > 1 ? "s" : "")
                 body += "<p class=\"small\"><b>Flagged as hard:</b> \(word) \(lines)</p>"
             }
-            let used = SyntaxRole.allCases.filter { role in marks.contains { $0.roleValue == role } }
             if !used.isEmpty {
                 let key = used.map { r in
                     let sample = r == .clause
@@ -76,10 +95,13 @@ public enum StudySheet {
                 }.joined(separator: " · ")
                 body += "<p class=\"small\"><b>Key:</b> \(key)</p>"
             }
+            if hasBack { body += "</section>" }
         }
 
         let stamp = DateFormatter.localizedString(from: date, dateStyle: .medium, timeStyle: .none)
-        body += "<footer>Latin text: The Latin Library (public domain). \(marked ? "Study sheet" : "Handout") printed from Lectio, \(esc(stamp)).</footer>"
+        let source = passage.project.map { "College Board's \($0) Course Project passages (the Latin is public domain)" }
+            ?? "The Latin Library (public domain)"
+        body += "<footer>Latin text: \(esc(source)). \(marked ? "Study sheet" : "Handout") printed from Lectio, \(esc(stamp)).</footer>"
 
         return """
         <!doctype html><html><head><meta charset="utf-8"><title>\(esc(passage.citation))</title>
@@ -188,7 +210,17 @@ public enum StudySheet {
         .latin { margin: 0; font-size: 13pt; line-height: \(leading); }
         .prose .latin { line-height: \(kind == .clean ? "2.6" : "2.0"); }
         .prose td.line { padding-bottom: 8pt; }
-        .english { margin: -4pt 0 6pt; font-size: 10pt; line-height: 1.45; color: #444; }
+        td.english { width: 40%; padding: 0 0 0 14pt; font-size: 9.5pt; line-height: 1.4; color: #444; border-left: 0.5pt solid #ddd; }
+        .with-english .latin { font-size: 11.5pt; line-height: 1.9; padding-bottom: 6pt; }
+        .with-english .row.labelled .latin { padding-bottom: 14pt; }
+        .with-notes .latin { font-size: 12pt; }
+        td.line-notes { width: 31%; padding: 0 0 2pt 14pt; font: 8.5pt -apple-system, Helvetica, sans-serif; line-height: 1.4; color: #333; }
+        td.line-notes p { margin: 0 0 3pt; }
+        td.line-notes p:last-child { margin-bottom: 0; }
+        td.line-notes b { color: #9d2f24; margin-right: 4pt; }
+        td.line-notes i { font-family: 'Iowan Old Style', Palatino, Georgia, serif; font-size: 9.5pt; }
+        .new-page { break-before: page; page-break-before: always; }
+        .new-page h2:first-child { margin-top: 0; }
         .hl { border-radius: 1em; padding: 0.04em 0.28em; margin: 0 -0.28em; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
         .mk { text-decoration-line: underline; text-underline-offset: 0.22em; text-decoration-thickness: 1.5pt; }
         .mk-s { text-decoration-color: #2f5478; }

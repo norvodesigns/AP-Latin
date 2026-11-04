@@ -1896,6 +1896,33 @@ h1, h2, h3, h4 {
   [data-print='study'] .print-ruled .latin-verse,
   [data-print='study'] .print-ruled .latin { line-height: 2.2 !important; }
   .print-notes li { break-inside: avoid; margin-bottom: 0.45rem; }
+
+  /* The English beside the Latin on paper too, where the page is narrower
+     than the screen's two-column breakpoint. */
+  .side-by-side .line-row { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) !important; align-items: baseline; gap: 0 1.25rem; }
+  .print-ruled.side-by-side .latin-verse,
+  .print-ruled.side-by-side .latin { font-size: 11.5pt; line-height: 2 !important; }
+  .side-by-side .line-english { font-size: 9.5pt; line-height: 1.4; }
+
+  /* Notes only: each note in a column beside the line it is on. */
+  [data-print='study'] .verse-block.notes-beside { max-width: none; }
+  [data-print='study'] .notes-beside .latin-verse,
+  [data-print='study'] .notes-beside .latin { font-size: 12pt; }
+  .print-line-notes {
+    flex: 0 0 31%;
+    padding-top: 0.2rem;
+    font-family: var(--font-sans);
+    font-size: 8.5pt;
+    line-height: 1.4;
+    color: #333;
+  }
+  .print-line-notes p { margin: 0 0 0.25rem; }
+  .print-line-notes p:last-child { margin-bottom: 0; }
+  .print-line-notes b { color: var(--accent); margin-right: 0.3rem; }
+  .print-line-notes i { font-family: var(--font-latin); font-size: 9.5pt; }
+
+  /* With the English side by side, the notes start a page of their own. */
+  .print-new-page { break-before: page; margin-top: 0 !important; }
   .selrun { box-shadow: none !important; }
   .selrun:not(.hl) { background: none !important; }
 }

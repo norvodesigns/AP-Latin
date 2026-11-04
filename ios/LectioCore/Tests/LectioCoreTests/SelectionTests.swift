@@ -107,6 +107,20 @@ import Testing
         #expect(html.contains("Notes on the passage"))
         #expect(html.contains("Flagged as hard:</b> line 4"))
         #expect(html.contains("I sing of arms"))
+        // The English sits beside the Latin, and the notes start a new page.
+        #expect(html.contains("<td class=\"english\">"))
+        #expect(html.contains("<section class=\"back new-page\">"))
+        #expect(html.contains("<h2>Notes</h2>"))
+        #expect(!html.contains("class=\"line-notes\""))
+    }
+
+    @Test func notesOnlySheetPutsEachNoteBesideItsLine() {
+        let html = StudySheet.html(passage: passage, state: marked(), kind: .study, withEnglish: false)
+        #expect(html.contains("<td class=\"line-notes\"><p><b>1</b><i>lītora</i> — Object of vēnit &lt;b&gt;</p></td>"))
+        #expect(!html.contains("<h2>Notes</h2>"))           // no endnote list
+        #expect(!html.contains("class=\"back new-page\""))
+        #expect(!html.contains("I sing of arms"))
+        #expect(html.contains("Notes on the passage"))      // the passage note still follows the text
     }
 
     @Test func cleanHandoutLeavesTheMarksOff() {
