@@ -46,6 +46,14 @@ Cloud runs are in `ios/ci_scripts/`; they have to be on `main` before the first 
    `project-uitests.yml` is the usual project plus the UI-test target; Xcode Cloud generates the same one,
    so the `LectioUITests` scheme you'll pick below exists there too.
 
+   **Then commit the package versions** (once; Xcode Cloud can't choose them itself, see
+   [The package versions](#the-package-versions)). Still in `ios/`:
+   ```bash
+   xcodebuild -resolvePackageDependencies -project Lectio.xcodeproj -scheme Lectio
+   cp Lectio.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved Package.resolved
+   git add Package.resolved && git commit -m "Pin the Swift package versions for Xcode Cloud" && git push
+   ```
+
 2. **Start.** Open the Report navigator (the last icon above the file list, or ⌘9), click **Cloud**, then
    **Get Started**. Pick the product **Lectio** and click Next. If Xcode asks for a team, choose
    `M46ZNP323Y`.
@@ -147,20 +155,26 @@ more separation, install it under a second, standard macOS user.
 | Screenshots for App Store Connect | `scripts/ios-screenshots.sh` (about 45 minutes; into `ios/shots/`) |
 | Ship to TestFlight | `scripts/ios-testflight.sh` ([XCODE.md](XCODE.md)) |
 
-## Pinning the package versions (optional)
+## The package versions
 
-Xcode Cloud never picks Swift package versions itself; it builds the versions a `Package.resolved` file
-lists. Because the project is generated, `ci_post_clone.sh` resolves them fresh on each build (the newest
-13.x of Google's ad SDK, and so on), as a first open in Xcode does. To build exact versions instead, copy
-the file from a project that builds on your Mac and commit it:
+Xcode Cloud never picks Swift package versions itself: it turns off automatic package resolution for every
+build, including any `xcodebuild` a script runs, and builds exactly the versions a `Package.resolved` file
+lists. A committed project would carry that file; Lectio's project is generated, so the file is kept at
+`ios/Package.resolved` and `ci_post_clone.sh` copies it into the new project. Without it the build stops
+with *ios/Package.resolved is missing*.
+
+Make it (or bring it up to date) on your Mac, from `ios/`:
 
 ```bash
-cp ios/Lectio.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved ios/Package.resolved
-git add ios/Package.resolved && git commit -m "Pin the Swift package versions" && git push
+xcodegen generate --spec project-uitests.yml
+xcodebuild -resolvePackageDependencies -project Lectio.xcodeproj -scheme Lectio
+cp Lectio.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved Package.resolved
+git add Package.resolved && git commit -m "Update the Swift package versions" && git push
 ```
 
-The script uses it when it's there. To move to newer versions later, File > Packages > Update to Latest
-Package Versions in Xcode, then copy and commit it again.
+Do this again whenever a package in `project.yml` is added, removed or given a new version range, and
+whenever you want newer versions of the ones there (File > Packages > Update to Latest Package Versions in
+Xcode first). Until then, Xcode Cloud keeps building the versions in the file.
 
 ## When a build fails
 
@@ -168,10 +182,12 @@ Package Versions in Xcode, then copy and commit it again.
   from step 7), and the build's log is in Xcode (Report navigator > Cloud) or App Store Connect (Lectio >
   Xcode Cloud > Builds). For a log Claude can read in full: Actions > iOS > Run workflow, with *Build*
   ticked (about 8 minutes of GitHub's Mac, or free on your own).
-- **"Setup failed before the build".** `ci_post_clone.sh` stopped: Homebrew couldn't install XcodeGen, or
-  the packages didn't resolve. Its log says which. A network hiccup goes away with **Rebuild**.
-- **"a resolved file is required" or "out-of-date resolved file".** If `ios/Package.resolved` is committed,
-  it no longer matches `project.yml`: copy a fresh one (above), or delete it to let the script resolve.
+- **"Setup failed before the build".** `ci_post_clone.sh` stopped: usually Homebrew couldn't install
+  XcodeGen. Its log says why. A network hiccup goes away with **Rebuild**.
+- **"ios/Package.resolved is missing", "a resolved file is required" or "out-of-date resolved file".** The
+  committed package versions are missing or no longer match `project.yml` (a package was added or its
+  version range changed). Make a fresh `ios/Package.resolved` on your Mac and commit it
+  ([The package versions](#the-package-versions)).
 - **Signing errors in "Check".** Xcode Cloud signs with certificates Apple keeps for the team. The app's
   four bundle IDs and the app group were registered by earlier uploads; if one was removed, building and
   running each target once in Xcode on your Mac registers it again.

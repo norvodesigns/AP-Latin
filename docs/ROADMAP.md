@@ -21,6 +21,9 @@ take the next unchecked item. Tick items off and add a line to the log at the bo
   compiles (`ios/XCODE_CLOUD.md`): its result is the **Xcode Cloud: Check (archive)** status on the
   commit, with the first error in its description. For a full log, or the screenshots, run
   Actions > iOS > Run workflow by hand; those jobs use GitHub's macOS minutes, so only when needed.
+- Changing a Swift package in `ios/project.yml` (adding one, or a new version range) breaks the
+  Xcode Cloud build until `ios/Package.resolved` is made again on a Mac and committed: Xcode Cloud
+  can't resolve packages itself. Say so to the owner in the same change (`ios/XCODE_CLOUD.md`).
 - Latin must be right. Use classical forms with macrons in teaching text. Keep sentences simple
   and unambiguous at the level taught. Never reuse copyrighted textbook sentences.
 - The live site stays working at every commit.
