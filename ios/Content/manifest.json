@@ -1,7 +1,8 @@
 {
   "schemaVersion": 1,
-  "contentHash": "93f99544a08c5a633c2d7ccd30fd303d3dc4d3ea6f96f598ce5143d4f05b2a62",
+  "contentHash": "1dd7284ba1cfb5ed699b4a0cd42c5773b7d6285bd14a9ce9e80f6f1ad8825cd5",
   "supersedes": [
+    "93f99544a08c5a633c2d7ccd30fd303d3dc4d3ea6f96f598ce5143d4f05b2a62",
     "becb3fd67354d9a45dd7ede8d354f1a7585beaf18852682dbb0fba76d2b17b5b",
     "52bf63fb481f2eeace872985d1d15e354393a7de453449784e2880f55903f2c7",
     "7f74579845441077966b65cd114dfe19f3dda286eea9618da32016d0fee05819",
@@ -66,7 +67,7 @@
     "sight.json": "6b6ea0bed2f5e63d09a5ab2547df009ee6a7786bf7f7e2ee04ee0832bb798882",
     "translation.json": "c9fa6246cfb206c0ea0df9838b4711c1c3921336bfbf388aa806cc391b9ec8ca",
     "scansion.json": "2cad78104c4b8028316c1335b4d51ee393094483eaa3516301c645e53153887b",
-    "curriculum.json": "79ec09da8dcc88bfc6e7e97affaedec562dc649a1efdaf413aeab27eab3a07ef",
+    "curriculum.json": "29ec89781d347efb0439911a5c4a983b3b66ebc8301c5dfb1fffc4d09d58a9b0",
     "forms.json": "0a5225e712527d387320136e15c87f6e6cb8903e867d4ccc5f47266d822a269d",
     "daily.json": "9cc56f9175ff6e703b9bc0a12f5d31432a19434a1741354b29e37e6e1d8ee154",
     "meta.json": "efd00c603b7c2a1dd44933f4642867306c93df6d887b6c4aab5afb0b28eaff7d"

@@ -1,7 +1,7 @@
 /**
  * The course: Latin from the first day to the AP syllabus.
  *
- *   Level  (Prīma, Secunda, Tertia, Quārta) → Unit → Lesson → Steps
+ *   Level  (Prīma, Secunda, Tertia, Quārta, Quīnta) → Unit → Lesson → Steps
  *
  * A lesson is a short, fixed sequence of steps: a few that teach and many
  * that ask. Everything here is plain data. The website (/learn) and the app
@@ -17,7 +17,7 @@
  *     set in rubric red. The bar never shows.
  */
 
-export type LevelId = 'prima' | 'secunda' | 'tertia' | 'quarta' | 'verba';
+export type LevelId = 'prima' | 'secunda' | 'tertia' | 'quarta' | 'quinta' | 'verba';
 
 /**
  * The course runs as two tracks side by side: the grammar levels, taken in
