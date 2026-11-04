@@ -28,7 +28,7 @@ nonisolated struct TodayTip: Tip {
 nonisolated struct GlossTip: Tip {
     var title: Text { Text("Tap any word") }
     var message: Text? {
-        Text("Its meaning comes up from the vocabulary list. Touch and hold a word to highlight it, add a note, or ask about its line. Tap a line number to flag a hard line.")
+        Text("Its meaning comes up from the vocabulary list. Touch and hold a word, or turn on Mark up, to colour a phrase, mark the parts of a sentence or write a note. Tap a line number to flag a hard line.")
     }
     var image: Image? { Image(systemName: "hand.tap") }
 }

@@ -1356,7 +1356,7 @@ function PrintStudyNotes({
       )}
       {flagged.length > 0 && (
         <p style={{ fontSize: '0.875rem', margin: '0 0 1rem' }}>
-          <b>Flagged as hard:</b> {isVerse ? 'lines' : 'sections'} {flagged.join(', ')}
+          <b>Flagged as hard:</b> {isVerse ? 'line' : 'section'}{flagged.length > 1 ? 's' : ''} {flagged.join(', ')}
         </p>
       )}
       {used.length > 0 && (

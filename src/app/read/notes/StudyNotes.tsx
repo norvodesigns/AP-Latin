@@ -239,7 +239,7 @@ function PassageNotes({ passage, state, scope }: { passage: Passage; state: Pass
 
       {flagged.size > 0 && (
         <p style={{ margin: '0.75rem 0 0', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--fg-muted)' }}>
-          <b>Flagged as hard:</b> {isVerse ? 'lines' : 'sections'} {[...flagged].sort((a, b) => a - b).join(', ')}
+          <b>Flagged as hard:</b> {isVerse ? 'line' : 'section'}{flagged.size > 1 ? 's' : ''} {[...flagged].sort((a, b) => a - b).join(', ')}
         </p>
       )}
     </section>

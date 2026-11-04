@@ -56,11 +56,32 @@ final class ReaderTests: XCTestCase {
 
     func testHoldingAWordStartsAHighlight() {
         let app = launch(aiConsent: false)
+        // The sample progress has "Arma virumque" in gilt: holding a word of
+        // it selects the whole highlight, with its colour ticked.
         XCTAssertTrue(hold(word(app, "word-1-virumque"), in: app),
-                      "Holding a word should start a highlight and show the highlight bar")
-        // A pigment, then the bar goes and the mark stays.
-        tap(app.buttons["Gilt"], "The gilt pigment")
+                      "Holding a word should select it and show the mark-up bar")
+        let gilt = element(app, "pigment-gilt")
+        XCTAssertTrue(gilt.waitForExistence(timeout: 5))
+        XCTAssertEqual(gilt.label, "Remove the gold highlight")
+        // Another colour, and the bar stays up for more; Done lets go.
+        tap(element(app, "pigment-murex"), "The purple pigment")
+        XCTAssertEqual(element(app, "pigment-murex").label, "Remove the purple highlight")
+        tap(element(app, "highlight-done"), "Done")
         XCTAssertFalse(element(app, "highlight-done").waitForExistence(timeout: 2))
+    }
+
+    /// The 1.1 bug: a second word tapped with a gloss open came up full
+    /// screen. Now the same short sheet just shows the new word.
+    func testTappingAnotherWordSwapsTheGlossInPlace() {
+        let app = launch(aiConsent: false)
+        word(app, "word-1-Arma").tap()
+        let ask = element(app, "gloss-ask")
+        XCTAssertTrue(ask.waitForExistence(timeout: 5))
+        let firstTop = ask.frame.minY
+        word(app, "word-2-profugus").tap()
+        XCTAssertTrue(ask.waitForExistence(timeout: 5))
+        XCTAssertEqual(ask.frame.minY, firstTop, accuracy: 4, "The gloss should stay the same height")
+        XCTAssertTrue(word(app, "word-3-multum").isHittable, "The page should still be in view behind the gloss")
     }
 
     func testTheTutorOpensFromTheHighlightBar() {
