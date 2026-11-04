@@ -21,7 +21,7 @@ android {
         targetSdk = 36
         // Play needs a number that only goes up; CI passes the run number.
         versionCode = (project.findProperty("lectio.versionCode") as String?)?.toInt() ?: 1
-        versionName = "1.0.0"
+        versionName = "1.2.0"
         vectorDrawables.useSupportLibrary = true
     }
 

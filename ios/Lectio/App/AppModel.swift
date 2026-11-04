@@ -67,6 +67,8 @@ final class AppModel {
     }
     /// The first-run screens (Features/Onboarding), over everything.
     var showOnboarding = false
+    /// This release's "What's new" sheet (AppModel+WhatsNew.swift), once.
+    var showWhatsNew = false
     /// What a sign-up confirmation link did when it opened the app, shown
     /// once as an alert (`completeEmailLink`).
     var authNotice: String? = nil
@@ -190,6 +192,13 @@ final class AppModel {
             let hasSession = await auth.session != nil
             if needsOnboarding, !hasSession || UserDefaults.standard.bool(forKey: "showOnboarding") {
                 showOnboarding = true
+            }
+            // A student who was already here hears about this release once;
+            // a new one has the first-run screens instead.
+            if showOnboarding {
+                markWhatsNewSeen()
+            } else if needsWhatsNew {
+                showWhatsNew = true
             }
             refreshWidgets()
             startWatchBridge()
