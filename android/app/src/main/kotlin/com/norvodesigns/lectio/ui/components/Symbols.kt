@@ -121,7 +121,7 @@ object Symbols {
         "rectangle.on.rectangle.angled" -> Icons.Outlined.Style
         "rectangle.stack" -> Icons.Outlined.Layers
         "checklist" -> Icons.Outlined.Checklist
-        "character.book.closed" -> Icons.Outlined.Translate
+        "character.book.closed", "translate" -> Icons.Outlined.Translate
         "eye" -> Icons.Outlined.Visibility
         "waveform.path" -> Icons.Outlined.GraphicEq
         "hammer" -> Icons.Outlined.Hardware

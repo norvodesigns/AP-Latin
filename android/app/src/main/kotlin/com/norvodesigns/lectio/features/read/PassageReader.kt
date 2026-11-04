@@ -40,6 +40,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,6 +49,7 @@ import com.norvodesigns.lectio.ui.components.KeyShortcutHost
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -57,6 +59,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -64,6 +67,9 @@ import com.norvodesigns.lectio.AppModel
 import com.norvodesigns.lectio.AppTab
 import com.norvodesigns.lectio.core.Annotation
 import com.norvodesigns.lectio.core.HighlightColor
+import com.norvodesigns.lectio.core.Pigment
+import com.norvodesigns.lectio.core.SyntaxMark
+import com.norvodesigns.lectio.core.SyntaxRoles
 import com.norvodesigns.lectio.core.Passage
 import com.norvodesigns.lectio.core.PassageLine
 import com.norvodesigns.lectio.core.PassageState
@@ -90,19 +96,41 @@ data class SpanSelection(val lineN: Int, val start: Int, val end: Int) {
 
 data class NoteTarget(val span: SpanSelection, val text: String, val existingId: String?, val note: String)
 
-internal fun washFor(c: LectioColors, color: String?): Color = when (color) {
+/** A pigment's wash, behind the words: any of the eight [Pigment]s. */
+internal fun washFor(c: LectioColors, pigment: String?): Color = when (pigment) {
     HighlightColor.GILT -> c.washGilt
-    HighlightColor.VERDIGRIS -> c.washVerdigris
-    HighlightColor.WOAD -> c.washWoad
+    Pigment.MINIUM -> c.washMinium
     HighlightColor.RUBRIC -> c.washRubric
-    else -> Color.Transparent
+    Pigment.MADDER -> c.washMadder
+    Pigment.MUREX -> c.washMurex
+    HighlightColor.WOAD -> c.washWoad
+    Pigment.AZURITE -> c.washAzurite
+    HighlightColor.VERDIGRIS -> c.washVerdigris
+    null -> Color.Transparent
+    else -> c.washGilt
 }
 
-internal fun fillFor(c: LectioColors, color: String): Color = when (color) {
+/** A pigment's swatch, at full strength. */
+internal fun fillFor(c: LectioColors, pigment: String): Color = when (pigment) {
     HighlightColor.GILT -> c.gilt
-    HighlightColor.VERDIGRIS -> c.verdigris
+    Pigment.MINIUM -> c.minium
+    Pigment.MADDER -> c.madder
+    Pigment.MUREX -> c.murex
     HighlightColor.WOAD -> c.woad
+    Pigment.AZURITE -> c.azurite
+    HighlightColor.VERDIGRIS -> c.verdigris
     else -> c.rubric
+}
+
+/** A sentence mark's underline colour, as on the web and iPhone. */
+internal fun markColor(c: LectioColors, role: String): Color = when (SyntaxRoles.byId[role]?.group) {
+    "sentence" -> when (role) {
+        "subject" -> c.markSubject
+        "verb" -> c.rubric
+        else -> c.markObject
+    }
+    "case" -> c.markCase
+    else -> c.markConstruction
 }
 
 /**
@@ -126,6 +154,10 @@ fun PassageReader(model: AppModel, passage: Passage, onNavigate: (Passage) -> Un
     var showNotes by remember { mutableStateOf(false) }
     var optionsMenu by remember { mutableStateOf(false) }
     var practiceMenu by remember { mutableStateOf(false) }
+    // The line-by-line English, under each line, hidden until asked for.
+    var showEnglish by rememberSaveable { mutableStateOf(false) }
+    val hasEnglish = remember(passage) { passage.lines.any { it.english != null } }
+    val marksByLine = remember(state) { (state.marks ?: emptyList()).groupBy { it.lineN } }
     val listState = rememberLazyListState()
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     val wide = LocalConfiguration.current.screenWidthDp >= 600
@@ -176,7 +208,7 @@ fun PassageReader(model: AppModel, passage: Passage, onNavigate: (Passage) -> Un
         haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
         val text = spanText(s)
         // Tapping the pigment a span already has takes it off again.
-        val next = if (existing(s)?.color == color) null else color
+        val next = if (existing(s)?.shownPigment == color) null else color
         model.update {
             it.setHighlight(passage.id, s.lineN, s.start, s.end, text, next)
             it.markStudied()
@@ -194,6 +226,7 @@ fun PassageReader(model: AppModel, passage: Passage, onNavigate: (Passage) -> Un
         when (key) {
             Key.B -> { toggleBookmark(); true }
             Key.N -> { showNotes = true; true }
+            Key.T -> { if (hasEnglish) showEnglish = !showEnglish; hasEnglish }
             else -> false
         }
     }) {
@@ -239,6 +272,14 @@ fun PassageReader(model: AppModel, passage: Passage, onNavigate: (Passage) -> Un
                 Box {
                     IconButton({ optionsMenu = true }) { Symbol("textformat.size", tint = c.ink, contentDescription = "Reading options") }
                     DropdownMenu(optionsMenu, { optionsMenu = false }, containerColor = c.slip) {
+                        if (hasEnglish) DropdownMenuItem(
+                            text = { Text(if (showEnglish) "Hide the English translation" else "Show the English translation") },
+                            leadingIcon = { Symbol("translate", size = 20.dp) },
+                            onClick = {
+                                showEnglish = !showEnglish
+                                optionsMenu = false
+                            },
+                        )
                         DropdownMenuItem(
                             text = { Text(if (model.progress.glossaryEnabled) "Glossary on (turn off for a cold read)" else "Glossary off (turn on)") },
                             leadingIcon = { Symbol("character.book.closed", size = 20.dp) },
@@ -281,10 +322,11 @@ fun PassageReader(model: AppModel, passage: Passage, onNavigate: (Passage) -> Un
                     itemsIndexed(passage.lines, key = { _, l -> l.n }) { _, line ->
                         Box(Modifier.widthIn(max = 760.dp).fillMaxWidth()) {
                             LineRow(
-                                model, passage, line, byLine[line.n] ?: emptyList(), line.n in state.flaggedLines,
+                                model, passage, line, byLine[line.n] ?: emptyList(), marksByLine[line.n] ?: emptyList(), line.n in state.flaggedLines,
                                 glossed = selection?.takeIf { it.lineN == line.n }?.tokenIndex,
                                 span = span?.takeIf { it.lineN == line.n },
                                 scaleBoost = if (wide) 1.2 else 1.0,
+                                english = if (showEnglish) line.english else null,
                                 onTap = { tapped(line, it) }, onHold = { held(line, it) },
                                 onNote = { a -> noteTarget = NoteTarget(SpanSelection(a.lineN, a.startTok, a.endTok), a.text, a.id, a.note) },
                                 onAsk = { askLine = line },
@@ -341,7 +383,7 @@ fun PassageReader(model: AppModel, passage: Passage, onNavigate: (Passage) -> Un
                 val item = layout.visibleItemsInfo.firstOrNull { it.index == index + 1 }
                 if (item != null) listState.animateScrollBy(item.offset - (layout.viewportEndOffset - layout.viewportStartOffset - item.size) / 2f)
             }
-        }, onDismiss = { showNotes = false })
+        }, onDismiss = { showNotes = false }, englishShown = showEnglish, onToggleEnglish = { showEnglish = !showEnglish })
     }
 }
 
@@ -365,7 +407,7 @@ private fun Footer(model: AppModel, passage: Passage, onNavigate: (Passage) -> U
     val prev = if (i > 0) all[i - 1] else null
     val next = if (i >= 0 && i + 1 < all.size) all[i + 1] else null
     Column(Modifier.padding(top = 28.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-        Text("Tap a word for its gloss. Touch and hold to highlight, add a note, or ask about the line.", style = LectioText.footnote, color = c.inkFaint)
+        Text("Tap a word for its gloss. Touch and hold to highlight, add a note, or ask about the line. The English translation is under Reading options.", style = LectioText.footnote, color = c.inkFaint)
         Hairline()
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             if (prev != null) Column(Modifier.clickable(role = Role.Button) { onNavigate(prev) }.padding(vertical = 6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -387,8 +429,9 @@ private fun Footer(model: AppModel, passage: Passage, onNavigate: (Passage) -> U
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun LineRow(
-    model: AppModel, passage: Passage, line: PassageLine, annotations: List<Annotation>, flagged: Boolean, glossed: Int?, span: SpanSelection?,
-    scaleBoost: Double, onTap: (Int) -> Unit, onHold: (Int) -> Unit, onNote: (Annotation) -> Unit, onAsk: () -> Unit,
+    model: AppModel, passage: Passage, line: PassageLine, annotations: List<Annotation>, marks: List<SyntaxMark>, flagged: Boolean, glossed: Int?,
+    span: SpanSelection?, scaleBoost: Double, english: String?, onTap: (Int) -> Unit, onHold: (Int) -> Unit, onNote: (Annotation) -> Unit,
+    onAsk: () -> Unit,
 ) {
     val c = Lectio.colors
     val haptics = LocalHapticFeedback.current
@@ -396,7 +439,7 @@ private fun LineRow(
     val toggleFlag = { model.update { it.toggleFlaggedLine(passage.id, line.n) } }
     val glossaryEnabled = model.progress.glossaryEnabled
     // Verse is numbered every fifth line, as printed; prose sections always.
-    val showNumber = !passage.isPoetry || line.n % 5 == 0 || line.n == passage.lines.firstOrNull()?.n
+    val showNumber = !passage.isPoetry || english != null || line.n % 5 == 0 || line.n == passage.lines.firstOrNull()?.n
     val chunks = remember(line) {
         // Token index ranges, each a word plus the punctuation and space after it, so the flow never starts a line with a stray space.
         val out = ArrayList<IntRange>()
@@ -446,9 +489,15 @@ private fun LineRow(
                 )
             }
         }
-        FlowRow(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            for (chunk in chunks) Row {
-                for (i in chunk) TokenView(line, i, style, annotations, glossed == i, span?.contains(i) ?: false, glossaryEnabled, onTap, onHold, onNote)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            // Marked lines get room for the underlines.
+            FlowRow(verticalArrangement = Arrangement.spacedBy(if (marks.isEmpty()) 2.dp else 8.dp)) {
+                for (chunk in chunks) Row {
+                    for (i in chunk) TokenView(line, i, style, annotations, marks, glossed == i, span?.contains(i) ?: false, glossaryEnabled, onTap, onHold, onNote)
+                }
+            }
+            if (english != null) {
+                Text(english, Modifier.padding(bottom = 8.dp), style = LectioText.prose(LectioText.callout), color = c.inkMuted)
             }
         }
     }
@@ -457,27 +506,55 @@ private fun LineRow(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun TokenView(
-    line: PassageLine, i: Int, style: androidx.compose.ui.text.TextStyle, annotations: List<Annotation>, glossed: Boolean, inSpan: Boolean, glossaryEnabled: Boolean,
-    onTap: (Int) -> Unit, onHold: (Int) -> Unit, onNote: (Annotation) -> Unit,
+    line: PassageLine, i: Int, style: androidx.compose.ui.text.TextStyle, annotations: List<Annotation>, marks: List<SyntaxMark>, glossed: Boolean,
+    inSpan: Boolean, glossaryEnabled: Boolean, onTap: (Int) -> Unit, onHold: (Int) -> Unit, onNote: (Annotation) -> Unit,
 ) {
     val c = Lectio.colors
     val token = line.tokens[i]
-    // The newest mark covering a token is the one shown, as on the web.
-    val mark = annotations.lastOrNull { it.color != null && i >= it.startTok && i <= it.endTok }?.color
-    val bg = if (inSpan || glossed) c.redTint else washFor(c, mark)
-    var modifier = Modifier.clip(RoundedCornerShape(3.dp)).background(bg)
+    // The newest highlight covering a token is the one shown, as on the web.
+    fun winner(k: Int) = annotations.lastOrNull { it.color != null && k >= it.startTok && k <= it.endTok }
+    val shown = winner(i)
+    val bg = if (inSpan || glossed) c.redTint else washFor(c, shown?.shownPigment)
+    // A pill: round only where a run of highlighted words begins and ends.
+    val start = shown == null || i == 0 || winner(i - 1)?.id != shown.id
+    val end = shown == null || i + 1 >= line.tokens.size || winner(i + 1)?.id != shown.id
+    val shape = RoundedCornerShape(
+        topStartPercent = if (start) 50 else 0, bottomStartPercent = if (start) 50 else 0,
+        topEndPercent = if (end) 50 else 0, bottomEndPercent = if (end) 50 else 0,
+    )
+    // The innermost sentence mark decides the underline; a clause is shown by its brackets.
+    val underline = marks.filter { it.role != "clause" && i >= it.startTok && i <= it.endTok }.minByOrNull { it.endTok - it.startTok }
+    val opens = marks.count { it.role == "clause" && it.startTok == i }
+    val closes = marks.count { it.role == "clause" && it.endTok == i }
+    if (opens > 0) Text("[".repeat(opens), style = style.copy(fontWeight = FontWeight.SemiBold), color = c.rubric)
+    var modifier = Modifier.clip(shape).background(bg)
     if (token.isWord) {
         modifier = modifier.combinedClickable(onClick = { onTap(i) }, onLongClick = { onHold(i) }, role = Role.Button)
+        val described = marks.filter { i >= it.startTok && i <= it.endTok }.mapNotNull { SyntaxRoles.byId[it.role]?.label?.lowercase() }
+        if (described.isNotEmpty()) modifier = modifier.semantics { stateDescription = described.joinToString(", ") }
     }
-    Box(modifier.then(if (inSpan) Modifier.drawUnderline(c.rubric) else Modifier)) {
+    Box(
+        modifier
+            .then(if (inSpan) Modifier.drawUnderline(c.rubric) else Modifier)
+            .then(if (underline != null) Modifier.drawMarkLine(markColor(c, underline.role), double = underline.role == "verb") else Modifier),
+    ) {
         Text(token.text, Modifier.padding(horizontal = if (token.isWord) 1.dp else 0.dp), style = style, color = c.ink)
     }
+    if (closes > 0) Text("]".repeat(closes), style = style.copy(fontWeight = FontWeight.SemiBold), color = c.rubric)
     val noted = annotations.lastOrNull { it.endTok == i && it.note.trim().isNotEmpty() }
     if (noted != null) {
         Box(Modifier.clickable(role = Role.Button) { onNote(noted) }.semantics { contentDescription = "Your note on ${noted.text}" }.padding(horizontal = 1.dp)) {
             Symbol("text.bubble.fill", tint = c.rubric, size = 12.dp, modifier = Modifier.padding(bottom = 10.dp))
         }
     }
+}
+
+/** A sentence mark's underline, just under the word (two rules for the verb). */
+private fun Modifier.drawMarkLine(color: Color, double: Boolean): Modifier = this.drawWithContent {
+    drawContent()
+    val h = 1.5.dp.toPx()
+    drawRect(color, topLeft = Offset(0f, size.height - h), size = Size(size.width, h))
+    if (double) drawRect(color, topLeft = Offset(0f, size.height - h * 3), size = Size(size.width, h))
 }
 
 private fun Modifier.drawUnderline(color: Color): Modifier = this.drawBehind {
@@ -537,29 +614,36 @@ private fun GlossPanel(model: AppModel, selection: WordSelection, onAsk: () -> U
     }
 }
 
-/** Floats over the page while a span is selected: the four manuscript pigments, a note, the tutor, and remove. */
+/** Floats over the page while a span is selected: the eight pigments, then a note, the tutor, and remove. */
 @Composable
 private fun SpanToolbar(current: Annotation?, onColor: (String) -> Unit, onNote: () -> Unit, onAsk: () -> Unit, onRemove: () -> Unit, onDone: () -> Unit) {
     val c = Lectio.colors
     Surface(
-        Modifier.padding(horizontal = 16.dp, vertical = 8.dp), shape = RoundedCornerShape(50), color = c.slip,
+        Modifier.widthIn(max = 520.dp).padding(horizontal = 12.dp, vertical = 8.dp), shape = RoundedCornerShape(26.dp), color = c.slip,
         border = BorderStroke(0.75.dp, c.ruleStrong), shadowElevation = 10.dp,
     ) {
-        Row(Modifier.padding(horizontal = 10.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(2.dp), verticalAlignment = Alignment.CenterVertically) {
-            for (color in HighlightColor.all) {
-                Box(
-                    Modifier.size(44.dp).clickable(role = Role.Button) { onColor(color) }.semantics { contentDescription = color.replaceFirstChar { it.uppercase() } },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Box(Modifier.size(26.dp).clip(CircleShape).background(fillFor(c, color)), contentAlignment = Alignment.Center) {
-                        if (current?.color == color) Symbol("checkmark", tint = Color.White, size = 16.dp)
+        Column(Modifier.padding(horizontal = 8.dp, vertical = 6.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
+                for (pigment in Pigment.all) {
+                    val on = current?.shownPigment == pigment
+                    val name = Pigment.plainName[pigment] ?: pigment
+                    Box(
+                        Modifier.size(40.dp).clickable(role = Role.Button) { onColor(pigment) }
+                            .semantics { contentDescription = if (on) "Remove the $name highlight" else "Highlight in $name" },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Box(Modifier.size(26.dp).clip(CircleShape).background(fillFor(c, pigment)), contentAlignment = Alignment.Center) {
+                            if (on) Symbol("checkmark", tint = Color.White, size = 16.dp)
+                        }
                     }
                 }
             }
-            IconButton(onNote) { Symbol("square.and.pencil", tint = c.ink, contentDescription = "Note") }
-            IconButton(onAsk) { Symbol("sparkles", tint = c.ink, contentDescription = "Ask") }
-            if (current != null) IconButton(onRemove) { Symbol("trash", tint = c.incorrect, contentDescription = "Remove") }
-            IconButton(onDone) { Symbol("xmark", tint = c.ink, contentDescription = "Done") }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onNote) { Symbol("square.and.pencil", tint = c.ink, contentDescription = "Note") }
+                IconButton(onAsk) { Symbol("sparkles", tint = c.ink, contentDescription = "Ask") }
+                if (current != null) IconButton(onRemove) { Symbol("trash", tint = c.incorrect, contentDescription = "Remove") }
+                IconButton(onDone) { Symbol("xmark", tint = c.ink, contentDescription = "Done") }
+            }
         }
     }
 }
