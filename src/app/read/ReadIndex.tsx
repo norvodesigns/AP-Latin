@@ -38,19 +38,24 @@ export default function ReadIndex() {
           </>
         }
         actions={
-          <div className="flex gap-1.5" role="tablist" aria-label="Organize by">
-            {(['text', 'unit'] as View[]).map((v) => (
-              <button
-                key={v}
-                type="button"
-                role="tab"
-                aria-selected={view === v}
-                onClick={() => setView(v)}
-                className={view === v ? 'btn btn-rubric' : 'btn'}
-              >
-                {v === 'text' ? 'By text' : 'By unit'}
-              </button>
-            ))}
+          <div className="flex flex-wrap gap-1.5">
+            <Link href="/read/notes" className="btn btn-ghost">
+              My notes
+            </Link>
+            <div className="flex gap-1.5" role="tablist" aria-label="Organize by">
+              {(['text', 'unit'] as View[]).map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  role="tab"
+                  aria-selected={view === v}
+                  onClick={() => setView(v)}
+                  className={view === v ? 'btn btn-rubric' : 'btn'}
+                >
+                  {v === 'text' ? 'By text' : 'By unit'}
+                </button>
+              ))}
+            </div>
           </div>
         }
       />

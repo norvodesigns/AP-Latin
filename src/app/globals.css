@@ -84,6 +84,21 @@
   --hl-woad-fill: #3f6a94;
   --hl-rubric: color-mix(in srgb, var(--accent) 28%, var(--bg));
   --hl-rubric-fill: var(--accent);
+  /* Added in 1.2: red lead, rose madder, Tyrian purple, azurite. */
+  --hl-minium: color-mix(in srgb, #c8662a 34%, var(--bg));
+  --hl-minium-fill: #c8662a;
+  --hl-madder: color-mix(in srgb, #c2557a 30%, var(--bg));
+  --hl-madder-fill: #c2557a;
+  --hl-murex: color-mix(in srgb, #6c3f8f 30%, var(--bg));
+  --hl-murex-fill: #7a4a9e;
+  --hl-azurite: color-mix(in srgb, #2a8bb0 30%, var(--bg));
+  --hl-azurite-fill: #2f8db3;
+
+  /* Sentence-part marks: the underline colours. */
+  --mk-subject: #2f5478;
+  --mk-object: #2f6e57;
+  --mk-case: #8a6a1f;
+  --mk-construction: #6d6455;
 
   /* Semantic — kept for graded work, tuned to sit inside the palette. */
   --correct: #4a6b3f;
@@ -164,6 +179,11 @@
   --partial-bg: #2b2416;
   --incorrect: #e0796a;
   --incorrect-bg: #38241f;
+
+  --mk-subject: #8db4dc;
+  --mk-object: #8cc5a8;
+  --mk-case: #d8b45c;
+  --mk-construction: #b3a78f;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -205,6 +225,11 @@
     --partial-bg: #2b2416;
     --incorrect: #e0796a;
     --incorrect-bg: #38241f;
+
+    --mk-subject: #8db4dc;
+    --mk-object: #8cc5a8;
+    --mk-case: #d8b45c;
+    --mk-construction: #b3a78f;
   }
 }
 
@@ -871,39 +896,87 @@ h1, h2, h3, h4 {
     box-shadow: inset 0 -0.09em 0 color-mix(in srgb, var(--gilt) 45%, transparent);
   }
 
-  /* A reader-made highlight — a wash under the text.
+  /* A reader-made highlight: one pill per run of words.
    *
-   * Every word in the reader is its own element, so a highlight over four
-   * words is four boxes side by side. Rounding all four gave a scalloped
-   * edge at every word gap: the mark read as four separate stabs rather
-   * than one drawn stroke. The radius is now applied only at the two ends
-   * of a run, which the component marks with data-hl-start / data-hl-end,
-   * and the middle stays square so the pieces butt together seamlessly. */
+   * The run is a single inline span around the words (see AnnotatedLine),
+   * so the colour follows the type's own height rather than each word's
+   * button box, and the ends are round. The negative margin gives the pill
+   * room to breathe without moving a single letter. `clone` closes each
+   * fragment of a run that wraps onto the next line into a pill of its own. */
   .hl {
-    border-radius: 0;
+    border-radius: var(--r-pill);
+    padding: 0.04em 0.28em;
+    margin: 0 -0.28em;
     box-decoration-break: clone;
     -webkit-box-decoration-break: clone;
-  }
-  .hl[data-hl-start='true'] {
-    border-top-left-radius: 5px;
-    border-bottom-left-radius: 5px;
-  }
-  .hl[data-hl-end='true'] {
-    border-top-right-radius: 5px;
-    border-bottom-right-radius: 5px;
   }
   .hl-gilt { background: var(--hl-gilt); }
   .hl-verdigris { background: var(--hl-verdigris); }
   .hl-woad { background: var(--hl-woad); }
   .hl-rubric { background: var(--hl-rubric); }
+  .hl-minium { background: var(--hl-minium); }
+  .hl-madder { background: var(--hl-madder); }
+  .hl-murex { background: var(--hl-murex); }
+  .hl-azurite { background: var(--hl-azurite); }
 
   /* Hovering a highlighted word keeps its pigment and answers with the
-     underline alone — the wash is suppressed at the source above rather
-     than painted over here, since `background: inherit` would have taken
-     the line's own transparent background and wiped the highlight out
-     exactly the way the bug did. */
-  .word.hl:hover { box-shadow: 0 2px 0 var(--redborder); }
-  .word.hl.word-active { box-shadow: 0 2px 0 var(--accent); }
+     underline alone. */
+  .hl .word:hover,
+  .hl .word-active { background: transparent; box-shadow: 0 2px 0 var(--redborder); }
+  .hl .word-active { box-shadow: 0 2px 0 var(--accent); }
+
+  /* The words the reader has selected, before they pick what to do. */
+  .selrun {
+    border-radius: var(--r-pill);
+    padding: 0.04em 0.28em;
+    margin: 0 -0.28em;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    box-shadow: inset 0 0 0 1.5px var(--accent);
+  }
+  .selrun:not(.hl) { background: color-mix(in srgb, var(--accent) 9%, transparent); }
+  .selrun .word:hover { background: transparent; box-shadow: none; }
+
+  /* Sentence-part marks: an underline in the role's colour and style, and a
+     small label hung under the first word. Subordinate clauses are
+     bracketed instead, the way students mark them on paper. */
+  .mk {
+    text-decoration-line: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.24em;
+    text-decoration-skip-ink: none;
+  }
+  .mk-subject { text-decoration-color: var(--mk-subject); }
+  .mk-verb { text-decoration-color: var(--accent); text-decoration-style: double; text-decoration-thickness: 1.5px; }
+  .mk-object { text-decoration-color: var(--mk-object); text-decoration-style: dashed; }
+  .mk-indirect { text-decoration-color: var(--mk-object); text-decoration-style: dotted; text-decoration-thickness: 2.5px; }
+  .mk-g-case { text-decoration-color: var(--mk-case); text-decoration-thickness: 1.5px; }
+  .mk-g-construction { text-decoration-color: var(--mk-construction); text-decoration-style: dotted; text-decoration-thickness: 2px; }
+  .mk-has-label { position: relative; }
+  .mk-label {
+    position: absolute;
+    left: 0;
+    top: calc(100% - 0.05em);
+    font-family: var(--font-sans);
+    font-size: max(0.6875rem, 0.42em);
+    font-style: normal;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    color: var(--fg-muted);
+    pointer-events: none;
+    text-decoration: none;
+  }
+  .mk-bracket {
+    color: var(--accent);
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    margin: 0 0.04em;
+  }
+  /* A line with marks makes room under itself for their labels. */
+  .line-marked { padding-bottom: 0.85em; }
 
   /* The small dot marking a highlight that also carries a note — sits right
      after the marked text, never before it, so it reads as an endnote mark. */
@@ -920,13 +993,82 @@ h1, h2, h3, h4 {
   .note-mark:focus-visible {
     color: var(--fg);
   }
+  .note-mark-static { cursor: default; font-family: var(--font-sans); font-weight: 600; }
+  .note-mark-n { display: none; }
+
+  /* Mark-up mode: tap words to select them. A thin dock at the foot of the
+     screen says so while nothing is selected. */
+  .markup-dock {
+    /* Centred with auto margins, not a translate: the pop-in animation
+       ends on `transform: none`, which would undo a centring translate. */
+    position: fixed;
+    left: 0;
+    right: 0;
+    margin-inline: auto;
+    width: fit-content;
+    bottom: calc(1rem + env(safe-area-inset-bottom));
+    z-index: 39;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    max-width: calc(var(--vw) - 2rem);
+    padding: 0.5rem 0.5rem 0.5rem 1rem;
+    background: var(--panel);
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--r-pill);
+    box-shadow: 0 10px 26px var(--shadow);
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    color: var(--ink2);
+    animation: pop-in var(--dur-2) var(--ease) both;
+  }
+  .reader-markup .verse-block .word { cursor: cell; }
+
+  /* The sentence-part picker inside the toolbar. */
+  .role-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.3125rem;
+  }
+  .role-chip {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    padding: 0.3125rem 0.5rem;
+    border: 1px solid var(--rule);
+    border-radius: var(--r-sm);
+    line-height: 1.3;
+    background: transparent;
+    font-family: var(--font-sans);
+    font-size: 0.8125rem;
+    color: var(--fg);
+    text-align: left;
+    cursor: pointer;
+    transition: background-color var(--dur-1) var(--ease-io), border-color var(--dur-1) var(--ease-io);
+  }
+  .role-chip:hover { background: var(--redtint); }
+  .role-chip[aria-pressed='true'] { border-color: var(--accent); background: var(--redtint); }
+  .role-chip b { font-weight: 700; color: var(--accent); min-width: 1.9rem; flex: none; }
+
+  /* The English beside the Latin, line for line. Two columns from tablet
+     width; underneath each line, smaller, on a phone. */
+  .line-english {
+    font-family: var(--font-serif);
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    color: var(--ink2);
+  }
+  .side-by-side .line-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.125rem 2rem; }
+  @media (min-width: 768px) {
+    .side-by-side .line-row { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: baseline; }
+  }
 
   /* The select-to-annotate toolbar — the same anchored-slip mechanism the
      glossary uses (--gx/--gy, a full-width sheet on touch), but sized as a
      compact bar instead of a tall card, since its content never needs the
      room. */
   .annotate-bar {
-    --pop-w: 15.75rem;
+    --pop-w: 24rem;
     position: fixed;
     left: 0;
     right: 0;
@@ -939,9 +1081,21 @@ h1, h2, h3, h4 {
     border-radius: var(--r-lg) var(--r-lg) 0 0;
     padding: 1rem 1.25rem calc(1rem + env(safe-area-inset-bottom));
     animation: sheet-up var(--dur-3) var(--ease) both;
+    max-height: 72dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  /* The bar's actions keep to one line each and share the row, wrapping to
+     a second row only when a label grows ("Marked: abl abs", "Edit note"). */
+  .markup-actions > .btn {
+    flex: 1 1 auto;
+    white-space: nowrap;
+    padding-left: 0.625rem;
+    padding-right: 0.625rem;
   }
   @media (min-width: 1024px) {
     .annotate-bar {
+      max-height: calc(100dvh - 5rem);
       /* `--gx` is the anchor's centre, not a pre-computed left edge: the
          offset and both edge stops are done here, where the width is, so
          the two can't drift apart. They did — the bar was pinned to 236px
@@ -1002,6 +1156,10 @@ h1, h2, h3, h4 {
   .swatch-verdigris { background: var(--hl-verdigris-fill); }
   .swatch-woad { background: var(--hl-woad-fill); }
   .swatch-rubric { background: var(--hl-rubric-fill); }
+  .swatch-minium { background: var(--hl-minium-fill); }
+  .swatch-madder { background: var(--hl-madder-fill); }
+  .swatch-murex { background: var(--hl-murex-fill); }
+  .swatch-azurite { background: var(--hl-azurite-fill); }
 
   .hair-v { width: 1px; align-self: stretch; background: var(--hair); border: 0; }
 
@@ -1709,4 +1867,34 @@ h1, h2, h3, h4 {
 
   .print-vocab { columns: 2; column-gap: 2rem; }
   .print-vocab li { break-inside: avoid; margin-bottom: 0.2rem; }
+
+  /* A clean handout leaves the reader's own marks off the paper. */
+  [data-print='clean'] .hl,
+  [data-print='clean'] .selrun { background: none !important; box-shadow: none !important; padding: 0; margin: 0; }
+  [data-print='clean'] .hl { padding: 0; margin: 0; }
+  [data-print='clean'] .mk { text-decoration: none !important; }
+  [data-print='clean'] .mk-label,
+  [data-print='clean'] .mk-bracket,
+  [data-print='clean'] .note-mark { display: none !important; }
+  [data-print='clean'] .line-marked { padding-bottom: 0; }
+  [data-print='clean'] .print-study-only { display: none !important; }
+
+  /* The study sheet keeps every colour, and numbers the notes. */
+  [data-print='study'] .hl,
+  [data-print='study'] .mk,
+  [data-print='study'] .mk-label,
+  [data-print='study'] .mk-bracket,
+  .study-sheet .hl,
+  .study-sheet .mk {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  [data-print='study'] .note-mark .note-mark-dot { display: none; }
+  [data-print='study'] .note-mark .note-mark-n { display: inline; font-family: var(--font-sans); font-weight: 600; }
+  [data-print='study'] .print-clean-only { display: none !important; }
+  [data-print='study'] .print-ruled .latin-verse,
+  [data-print='study'] .print-ruled .latin { line-height: 2.2 !important; }
+  .print-notes li { break-inside: avoid; margin-bottom: 0.45rem; }
+  .selrun { box-shadow: none !important; }
+  .selrun:not(.hl) { background: none !important; }
 }

@@ -20,7 +20,7 @@ Jetpack Compose, with a Wear OS watch app) does the same on Google Play. See
 | Section | What it does |
 | --- | --- |
 | **Dashboard** | Countdown, mastery by unit and skill category, recent scores, what to study next, streak |
-| **Reading Room** | Every syllabus passage with click-any-word glossary, notes, bookmarks, line flagging, cold-read toggle |
+| **Reading Room** | Every syllabus passage with click-any-word glossary, highlights in eight colours, sentence-part marks, notes, printable study sheets, bookmarks, line flagging, cold-read toggle |
 | **Translate** | Literal-translation drills in the exam's own 15-segment shape, with self- and AI-grading |
 | **Sight Reading** | Timed unseen passages from the CED's recommended authors, plus an AI generator |
 | **Quiz Engine** | Configurable MCQ sets filtered by author, passage, unit, skill or question type; review queue |
@@ -38,7 +38,8 @@ Jetpack Compose, with a Wear OS watch app) does the same on Google Play. See
 
 `⌘K` / `Ctrl+K` opens the command palette. `g` then a letter jumps to a section (`g` `r` for Reading
 Room, `g` `v` for Vocabulary, and so on — each section's letter is shown on hover in the sidebar).
-In the Reading Room: `c` cold read, `n` notes, `s` summary, `b` bookmark. In the Quiz Engine,
+In the Reading Room: `m` mark up, `c` cold read, `t` English, `n` your notes, `b` bookmark; with
+words selected, `1`–`8` pick a colour and `Delete` takes the mark off. In the Quiz Engine,
 `1`–`4` answer and `↵` advances. In Vocabulary, `space` reveals and `1`–`4` grade.
 
 ---
