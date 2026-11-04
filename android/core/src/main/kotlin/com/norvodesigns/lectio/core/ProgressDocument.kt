@@ -198,44 +198,111 @@ class ProgressDocument(raw: JSONObject, now: Instant = Instant.now()) {
 
     /**
      * Creates or recolors the highlight spanning exactly this token range on
-     * one line, and returns it. A colorless highlight with no note is dropped
-     * (unless it's brand new: the note flow creates one just to have an id to
-     * attach the note to). Marks drawn wholly inside a new colored one are
-     * absorbed by it, unless they carry a note: a note is the reader's own
-     * writing and is never discarded as a side effect.
+     * one line, and returns it. `color` is any [Pigment]; a newer one is
+     * stored in `pigment`, with the nearest original in `color`. A colorless
+     * highlight with no note is dropped (unless it's brand new: the note flow
+     * creates one just to have an id to attach the note to). Marks drawn
+     * wholly inside a new colored one are absorbed by it, unless they carry a
+     * note. What goes is recorded as removed, so sync doesn't bring it back.
      */
     fun setHighlight(
-        passageId: String, lineN: Int, startTok: Int, endTok: Int, text: String, color: String?, now: Instant = Instant.now(),
+        passageId: String, lineN: Int, startTok: Int, endTok: Int, text: String, color: String?,
+        now: Instant = Instant.now(), group: String? = null,
     ): Annotation {
         val p = passage(passageId)
+        val stamp = StudyDates.isoTimestamp(now)
         val existing = p.annotations.firstOrNull { it.lineN == lineN && it.startTok == startTok && it.endTok == endTok }
-        val base = existing ?: Annotation(uid(now), lineN, startTok, endTok, text, color, "", StudyDates.isoTimestamp(now))
-        val next = base.copy(color = color, text = text)
-        val drop = existing != null && next.color == null && next.note.trim().isEmpty()
+        val base = existing ?: Annotation(uid(now), lineN, startTok, endTok, text, null, "", stamp)
+        val legacy = color?.let { Pigment.legacy[it] ?: it }
+        val next = base.copy(
+            color = legacy,
+            pigment = if (color != null && color != legacy) color else null,
+            text = text,
+            updatedAt = stamp,
+            group = base.group ?: group,
+        )
+        val drop = existing != null && next.color == null && !next.hasNote
 
-        fun subsumed(a: Annotation) = a.id != next.id && a.lineN == lineN && a.startTok >= startTok && a.endTok <= endTok && a.note.trim().isEmpty()
-        val kept = p.annotations.filter { !(next.color != null && subsumed(it)) }
+        fun subsumed(a: Annotation) = a.id != next.id && a.lineN == lineN && a.startTok >= startTok && a.endTok <= endTok && !a.hasNote
+        val gone = p.annotations.filter { (next.color != null && subsumed(it)) || (drop && it.id == next.id) }
+        val goneIds = gone.map { it.id }.toSet()
+        val kept = p.annotations.filter { it.id !in goneIds }
         val annotations = when {
-            drop -> kept.filter { it.id != next.id }
+            drop -> kept
             existing != null -> kept.map { if (it.id == next.id) next else it }
             else -> kept + next
         }
         updatePassage(passageId, p.copy(annotations = annotations))
+        recordRemoved(passageId, gone.map { removedKey("a", it.lineN, it.startTok, it.endTok) }, stamp)
         return next
     }
 
-    fun setAnnotationNote(passageId: String, annotationId: String, note: String) {
+    fun setAnnotationNote(passageId: String, annotationId: String, note: String, now: Instant = Instant.now()) {
         val p = passage(passageId)
-        val annotations = p.annotations
-            .map { if (it.id == annotationId) it.copy(note = note) else it }
-            // A colorless annotation with no note carries nothing worth keeping.
-            .filter { it.color != null || it.note.trim().isNotEmpty() }
-        updatePassage(passageId, p.copy(annotations = annotations))
+        val stamp = StudyDates.isoTimestamp(now)
+        val edited = p.annotations.map { if (it.id == annotationId) it.copy(note = note, updatedAt = stamp) else it }
+        // A colorless annotation with no note carries nothing worth keeping.
+        val gone = edited.filter { it.color == null && !it.hasNote }
+        updatePassage(passageId, p.copy(annotations = edited.filter { it.color != null || it.hasNote }))
+        recordRemoved(passageId, gone.map { removedKey("a", it.lineN, it.startTok, it.endTok) }, stamp)
     }
 
-    fun removeAnnotation(passageId: String, annotationId: String) {
+    fun removeAnnotation(passageId: String, annotationId: String, now: Instant = Instant.now()) {
         val p = passage(passageId)
+        val gone = p.annotations.filter { it.id == annotationId }
         updatePassage(passageId, p.copy(annotations = p.annotations.filter { it.id != annotationId }))
+        recordRemoved(passageId, gone.map { removedKey("a", it.lineN, it.startTok, it.endTok) }, StudyDates.isoTimestamp(now))
+    }
+
+    /** Marks exactly this token range as a part of the sentence, replacing any mark on it; null
+     *  takes it off. The web's `setMark`. */
+    fun setMark(
+        passageId: String, lineN: Int, startTok: Int, endTok: Int, text: String, role: String?,
+        now: Instant = Instant.now(), group: String? = null,
+    ): SyntaxMark? {
+        val p = passage(passageId)
+        val stamp = StudyDates.isoTimestamp(now)
+        val marks = p.marks ?: emptyList()
+        val existing = marks.firstOrNull { it.lineN == lineN && it.startTok == startTok && it.endTok == endTok }
+        if (role == null) {
+            if (existing == null) return null
+            updatePassage(passageId, p.copy(marks = marks.filter { it.id != existing.id }))
+            recordRemoved(passageId, listOf(removedKey("m", lineN, startTok, endTok)), stamp)
+            return null
+        }
+        val next = existing?.copy(role = role, text = text, updatedAt = stamp)
+            ?: SyntaxMark(uid(now), lineN, startTok, endTok, text, role, stamp, stamp, group)
+        val updated = if (existing != null) marks.map { if (it.id == next.id) next else it } else marks + next
+        updatePassage(passageId, p.copy(marks = updated))
+        return next
+    }
+
+    fun removeMark(passageId: String, markId: String, now: Instant = Instant.now()) {
+        val p = passage(passageId)
+        val marks = p.marks ?: return
+        val gone = marks.filter { it.id == markId }
+        if (gone.isEmpty()) return
+        updatePassage(passageId, p.copy(marks = marks.filter { it.id != markId }))
+        recordRemoved(passageId, gone.map { removedKey("m", it.lineN, it.startTok, it.endTok) }, StudyDates.isoTimestamp(now))
+    }
+
+    private fun removedKey(kind: String, lineN: Int, startTok: Int, endTok: Int) = "$kind:$lineN:$startTok:$endTok"
+
+    /** Records what was taken off a passage, and when, in the raw document so the records keep
+     *  their order (oldest first, capped as on the web): the web store's `withRemoved`. */
+    private fun recordRemoved(passageId: String, keys: List<String>, stamp: String) {
+        if (keys.isEmpty()) return
+        val records = raw.obj("passages").copy()
+        val record = records[passageId]?.objectValue?.copy() ?: JSONObject()
+        val removed = record["removed"]?.objectValue?.copy() ?: JSONObject()
+        for (key in keys) {
+            removed.remove(key)
+            removed[key] = JSONValue.Str(stamp)
+        }
+        if (removed.size > ProgressMerge.REMOVED_CAP) removed.removeFirst(removed.size - ProgressMerge.REMOVED_CAP)
+        record["removed"] = JSONValue.Obj(removed)
+        records[passageId] = JSONValue.Obj(record)
+        raw["passages"] = JSONValue.Obj(records)
     }
 
     /** Counts an AI call against today's usage meter: the web's `recordAiCall`. */

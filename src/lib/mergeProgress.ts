@@ -33,8 +33,10 @@
  *   haven't seen, it wins; otherwise local (about to be pushed) does.
  */
 
+import { stampOf, removedKey, REMOVED_CAP } from '@/lib/annotations';
 import type {
   Annotation,
+  SyntaxMark,
   PassageState,
   VocabCard,
   SyncableData,
@@ -277,6 +279,8 @@ function mergePassages(
       out[id] = pb;
       continue;
     }
+    const removed = mergeRemoved(pa.removed, pb.removed);
+    const marks = pa.marks || pb.marks ? mergeMarks(pa.marks ?? [], pb.marks ?? []) : undefined;
     out[id] = {
       // A free-text note or a bookmark toggle has no history to union —
       // same singleton-settings rule as theme/studyPlan above.
@@ -288,10 +292,47 @@ function mergePassages(
       flaggedLines: [...new Set([...pa.flaggedLines, ...pb.flaggedLines])].sort((x, y) => x - y),
       coldReads: Math.max(pa.coldReads, pb.coldReads),
       lastOpened: laterOf(pa.lastOpened, pb.lastOpened),
-      annotations: mergeAnnotations(pa.annotations, pb.annotations),
+      annotations: dropRemoved(mergeAnnotations(pa.annotations, pb.annotations), removed, 'a'),
+      // Since 1.2. Written only when either side has them, so a passage
+      // from an older app merges to exactly what it did before.
+      ...(marks ? { marks: dropRemoved(marks, removed, 'm') } : {}),
+      ...(removed ? { removed } : {}),
     };
   }
   return out;
+}
+
+/**
+ * Both devices' removal records: every key either side has, at the later
+ * time where both have it. Keys keep local's order, then the cloud's new
+ * ones, and the oldest-inserted go past `REMOVED_CAP`, as in the store.
+ */
+function mergeRemoved(
+  a: Record<string, string> | undefined,
+  b: Record<string, string> | undefined,
+): Record<string, string> | undefined {
+  if (!a && !b) return undefined;
+  const out: Record<string, string> = { ...(a ?? {}) };
+  for (const [k, at] of Object.entries(b ?? {})) {
+    if (!(k in out) || at > out[k]) out[k] = at;
+  }
+  const entries = Object.entries(out);
+  return Object.fromEntries(entries.slice(Math.max(0, entries.length - REMOVED_CAP)));
+}
+
+/** Drops whatever the reader removed after its last edit. Something made
+ *  (or changed) after the removal, such as the same words highlighted
+ *  again, is newer than the record and stays. */
+function dropRemoved<T extends Annotation | SyntaxMark>(
+  items: T[],
+  removed: Record<string, string> | undefined,
+  kind: 'a' | 'm',
+): T[] {
+  if (!removed) return items;
+  return items.filter((x) => {
+    const at = removed[removedKey(kind, x)];
+    return at === undefined || stampOf(x) > at;
+  });
 }
 
 function laterOf(a: string | undefined, b: string | undefined): string | undefined {
@@ -304,9 +345,15 @@ function laterOf(a: string | undefined, b: string | undefined): string | undefin
  * Two annotations covering the exact same span are the same highlight even
  * when they were made independently on two devices before ever syncing —
  * each carries its own random id, so a plain union-by-id would keep both
- * and render a duplicated mark. Spans are deduped first (keeping whichever
- * copy carries a note, or is simply newer, over the other), then what's
- * left unions normally.
+ * and render a duplicated mark. Spans are deduped first, then what's left
+ * unions normally.
+ *
+ * Which copy of a span wins:
+ *   - Two copies of the same annotation (one id, edited on two devices):
+ *     the later edit. Before 1.2 this kept whichever side came first, so a
+ *     colour changed on the phone never reached the laptop.
+ *   - Two independent ones: the one carrying a note — the reader's own
+ *     writing is never dropped for a bare colour — else the newer.
  */
 function mergeAnnotations(a: Annotation[], b: Annotation[]): Annotation[] {
   const bySpan = new Map<string, Annotation>();
@@ -321,14 +368,30 @@ function mergeAnnotations(a: Annotation[], b: Annotation[]): Annotation[] {
     const annHasNote = ann.note.trim().length > 0;
     const existingHasNote = existing.note.trim().length > 0;
     const winner =
-      annHasNote !== existingHasNote
-        ? annHasNote
+      ann.id === existing.id
+        ? stampOf(ann) > stampOf(existing)
           ? ann
           : existing
-        : ann.createdAt > existing.createdAt
-          ? ann
-          : existing;
+        : annHasNote !== existingHasNote
+          ? annHasNote
+            ? ann
+            : existing
+          : stampOf(ann) > stampOf(existing)
+            ? ann
+            : existing;
     bySpan.set(key, winner);
+  }
+  return [...bySpan.values()].sort((x, y) => x.lineN - y.lineN || x.startTok - y.startTok);
+}
+
+/** Sentence-part marks: one per span, the later edit winning, in reading order. */
+function mergeMarks(a: SyntaxMark[], b: SyntaxMark[]): SyntaxMark[] {
+  const bySpan = new Map<string, SyntaxMark>();
+  const spanKey = (x: SyntaxMark) => `${x.lineN}:${x.startTok}:${x.endTok}`;
+  for (const m of [...a, ...b]) {
+    const key = spanKey(m);
+    const existing = bySpan.get(key);
+    if (!existing || stampOf(m) > stampOf(existing)) bySpan.set(key, m);
   }
   return [...bySpan.values()].sort((x, y) => x.lineN - y.lineN || x.startTok - y.startTok);
 }

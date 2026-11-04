@@ -179,6 +179,59 @@ import Testing
         #expect(stored?["color"] == .null)
     }
 
+    @Test func aNewerPigmentKeepsAnOriginalColorForOlderApps() {
+        var doc = ProgressDocument.blank(now: now)
+        doc.setHighlight(passageId: "p", lineN: 1, startTok: 0, endTok: 0, text: "x", color: .murex, now: now)
+        let stored = doc.raw.object("passages")["p"]?["annotations"]?.arrayValue?.first
+        #expect(stored?["color"]?.stringValue == "rubric")
+        #expect(stored?["pigment"]?.stringValue == "murex")
+        #expect(doc.passage("p").annotations.first?.shownPigment == .murex)
+        // Back to one of the original four: the pigment field goes.
+        doc.setHighlight(passageId: "p", lineN: 1, startTok: 0, endTok: 0, text: "x", color: .woad, now: now)
+        let again = doc.raw.object("passages")["p"]?["annotations"]?.arrayValue?.first
+        #expect(again?["pigment"] == nil)
+        #expect(doc.passage("p").annotations.first?.shownPigment == .woad)
+    }
+
+    @Test func oneUnreadableHighlightNoLongerHidesThePassage() throws {
+        let text = """
+        {"notes":"","bookmarked":true,"flaggedLines":[],"coldReads":0,"annotations":[
+          {"id":"a","lineN":1,"startTok":0,"endTok":0,"text":"x","color":"ultraviolet","note":"","createdAt":"2026-10-01"},
+          {"id":"b","lineN":2,"startTok":0,"endTok":0,"text":"y","color":"woad","note":"","createdAt":"2026-10-01"},
+          {"broken":true}
+        ]}
+        """
+        let state: PassageState = try JSONValue.parse(text).decode()
+        #expect(state.bookmarked)
+        #expect(state.annotations.map(\.id) == ["a", "b"])
+        #expect(state.annotations.first?.color == .gilt)
+    }
+
+    @Test func removingRecordsItSoSyncCannotBringItBack() {
+        var doc = ProgressDocument.blank(now: now)
+        let a = doc.setHighlight(passageId: "p", lineN: 4, startTok: 2, endTok: 3, text: "x", color: .gilt, now: now)
+        doc.removeAnnotation(passageId: "p", annotationId: a.id, now: now.addingTimeInterval(60))
+        let removed = doc.raw.object("passages")["p"]?["removed"]?.objectValue
+        #expect(removed?["a:4:2:3"]?.stringValue == "2026-10-15T12:01:00.000Z")
+        // The other device still has the highlight: merging must not restore it.
+        var other = ProgressDocument.blank(now: now)
+        other.setHighlight(passageId: "p", lineN: 4, startTok: 2, endTok: 3, text: "x", color: .gilt, now: now)
+        let merged = ProgressMerge.merge(local: other.raw, cloud: doc.raw, cloudIsNewer: true)
+        let anns = merged.object("passages")["p"]?["annotations"]?.arrayValue ?? []
+        #expect(anns.isEmpty)
+    }
+
+    @Test func marksReplaceOnTheSameSpanAndCanBeTakenOff() {
+        var doc = ProgressDocument.blank(now: now)
+        doc.setMark(passageId: "p", lineN: 1, startTok: 0, endTok: 0, text: "Arma", role: .object, now: now)
+        doc.setMark(passageId: "p", lineN: 1, startTok: 0, endTok: 0, text: "Arma", role: .accusative, now: now)
+        doc.setMark(passageId: "p", lineN: 1, startTok: 4, endTok: 4, text: "canō", role: .verb, now: now)
+        #expect(doc.passage("p").allMarks.map(\.role) == ["accusative", "verb"])
+        doc.setMark(passageId: "p", lineN: 1, startTok: 0, endTok: 0, text: "Arma", role: nil, now: now)
+        #expect(doc.passage("p").allMarks.map(\.role) == ["verb"])
+        #expect(doc.raw.object("passages")["p"]?["removed"]?["m:1:0:0"] != nil)
+    }
+
     @Test func aiUsageCountsPerDayAndRoute() {
         var doc = ProgressDocument.blank(now: now)
         doc.recordAiCall(route: "ask", now: now)

@@ -5,8 +5,43 @@ import Foundation
 // document; edits are written back with `JSONObject.overlaid(with:)` so any
 // field this build doesn't know about survives.
 
+/// The four original highlighter colours — the only values `color` ever
+/// holds, because the 1.0 and 1.1 apps decode it as a closed set of four.
 public enum HighlightColor: String, Codable, Sendable, CaseIterable {
     case gilt, verdigris, woad, rubric
+}
+
+/// Every pigment the highlighter offers since 1.2, in the toolbar's order.
+/// A newer one is stored in `Annotation.pigment`, with `color` set to the
+/// nearest original, so an older app still shows a close colour.
+public enum Pigment: String, Codable, Sendable, CaseIterable {
+    case gilt, minium, rubric, madder, murex, woad, azurite, verdigris
+
+    public init(_ color: HighlightColor) { self = Pigment(rawValue: color.rawValue) ?? .gilt }
+
+    /// The original colour this falls back to on a 1.0 or 1.1 app — the web's `LEGACY_COLOR`.
+    public var legacy: HighlightColor {
+        switch self {
+        case .gilt, .minium: .gilt
+        case .rubric, .madder, .murex: .rubric
+        case .woad, .azurite: .woad
+        case .verdigris: .verdigris
+        }
+    }
+
+    /// The everyday name, since few readers know what minium is.
+    public var plainName: String {
+        switch self {
+        case .gilt: "gold"
+        case .minium: "orange"
+        case .rubric: "red"
+        case .madder: "pink"
+        case .murex: "purple"
+        case .woad: "blue"
+        case .azurite: "sky blue"
+        case .verdigris: "green"
+        }
+    }
 }
 
 public struct Annotation: Codable, Sendable, Hashable, Identifiable {
@@ -17,19 +52,59 @@ public struct Annotation: Codable, Sendable, Hashable, Identifiable {
     public var endTok: Int
     public var text: String
     public var color: HighlightColor?
+    /// Since 1.2: the pigment chosen when it is one of the newer four. Kept as
+    /// the raw string so a pigment a later version adds still round-trips.
+    public var pigment: String?
     public var note: String
     public var createdAt: String
+    /// Since 1.2: the last change, so the later edit wins a merge.
+    public var updatedAt: String?
+    /// Since 1.2: shared by the per-line pieces of one selection.
+    public var group: String?
 
     public init(id: String, lineN: Int, startTok: Int, endTok: Int, text: String, color: HighlightColor?,
-                note: String, createdAt: String) {
+                note: String, createdAt: String, pigment: String? = nil, updatedAt: String? = nil, group: String? = nil) {
         self.id = id
         self.lineN = lineN
         self.startTok = startTok
         self.endTok = endTok
         self.text = text
         self.color = color
+        self.pigment = pigment
         self.note = note
         self.createdAt = createdAt
+        self.updatedAt = updatedAt
+        self.group = group
+    }
+
+    /// The pigment the highlight shows, or nil for a note with no colour.
+    public var shownPigment: Pigment? {
+        guard let color else { return nil }
+        return pigment.flatMap(Pigment.init(rawValue:)) ?? Pigment(color)
+    }
+
+    public var hasNote: Bool { !note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+
+    enum CodingKeys: String, CodingKey {
+        case id, lineN, startTok, endTok, text, color, pigment, note, createdAt, updatedAt, group
+    }
+
+    /// Tolerant of a colour this build doesn't know: shown as gilt rather
+    /// than failing the whole passage, which is what hid every highlight on
+    /// a passage in 1.1 when one record didn't decode.
+    public init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        lineN = try c.decode(Int.self, forKey: .lineN)
+        startTok = try c.decode(Int.self, forKey: .startTok)
+        endTok = try c.decode(Int.self, forKey: .endTok)
+        text = try c.decodeIfPresent(String.self, forKey: .text) ?? ""
+        color = try c.decodeIfPresent(String.self, forKey: .color).map { HighlightColor(rawValue: $0) ?? .gilt }
+        pigment = try c.decodeIfPresent(String.self, forKey: .pigment)
+        note = try c.decodeIfPresent(String.self, forKey: .note) ?? ""
+        createdAt = try c.decodeIfPresent(String.self, forKey: .createdAt) ?? ""
+        updatedAt = try c.decodeIfPresent(String.self, forKey: .updatedAt)
+        group = try c.decodeIfPresent(String.self, forKey: .group)
     }
 
     // `color` is written as an explicit null, as the web does, rather than omitted.
@@ -43,7 +118,117 @@ public struct Annotation: Codable, Sendable, Hashable, Identifiable {
         try c.encode(color, forKey: .color)
         try c.encode(note, forKey: .note)
         try c.encode(createdAt, forKey: .createdAt)
+        try c.encodeIfPresent(updatedAt, forKey: .updatedAt)
+        try c.encodeIfPresent(pigment, forKey: .pigment)
+        try c.encodeIfPresent(group, forKey: .group)
     }
+}
+
+/// The parts of a sentence a reader can mark — the web's `SyntaxRole`.
+public enum SyntaxRole: String, Codable, Sendable, CaseIterable {
+    case subject, verb, object, indirect
+    case nominative, genitive, dative, accusative, ablative, vocative
+    case participle, infinitive, ablAbs, prep, clause
+
+    public enum Group: String, Sendable, CaseIterable { case sentence, `case`, construction }
+
+    /// What prints under the words: S, V, DO, abl… — the web's `ROLE_INFO`.
+    public var short: String {
+        switch self {
+        case .subject: "S"
+        case .verb: "V"
+        case .object: "DO"
+        case .indirect: "IO"
+        case .nominative: "nom"
+        case .genitive: "gen"
+        case .dative: "dat"
+        case .accusative: "acc"
+        case .ablative: "abl"
+        case .vocative: "voc"
+        case .participle: "ptc"
+        case .infinitive: "inf"
+        case .ablAbs: "abl abs"
+        case .prep: "prep"
+        case .clause: "[ ]"
+        }
+    }
+
+    public var label: String {
+        switch self {
+        case .subject: "Subject"
+        case .verb: "Verb"
+        case .object: "Direct object"
+        case .indirect: "Indirect object"
+        case .nominative: "Nominative"
+        case .genitive: "Genitive"
+        case .dative: "Dative"
+        case .accusative: "Accusative"
+        case .ablative: "Ablative"
+        case .vocative: "Vocative"
+        case .participle: "Participle"
+        case .infinitive: "Infinitive"
+        case .ablAbs: "Ablative absolute"
+        case .prep: "Prepositional phrase"
+        case .clause: "Subordinate clause"
+        }
+    }
+
+    public var hint: String {
+        switch self {
+        case .subject: "Who or what does the action; nominative"
+        case .verb: "The main verb of the clause"
+        case .object: "Receives the action; accusative"
+        case .indirect: "To or for whom; dative"
+        case .nominative: "Subject, or predicate after sum"
+        case .genitive: "of; possession, part of a whole"
+        case .dative: "to, for; also with compounds and special verbs"
+        case .accusative: "Object, extent, place to which, subject of an infinitive"
+        case .ablative: "by, with, from, in, on; means, manner, place where"
+        case .vocative: "Someone addressed directly"
+        case .participle: "A verbal adjective; find the noun it agrees with"
+        case .infinitive: "Complementary, or indirect statement"
+        case .ablAbs: "Noun and participle in the ablative, apart from the sentence"
+        case .prep: "A preposition and its object"
+        case .clause: "cum, ut, quī, sī, dum… to its verb"
+        }
+    }
+
+    public var group: Group {
+        switch self {
+        case .subject, .verb, .object, .indirect: .sentence
+        case .nominative, .genitive, .dative, .accusative, .ablative, .vocative: .case
+        case .participle, .infinitive, .ablAbs, .prep, .clause: .construction
+        }
+    }
+}
+
+/// A sentence-part mark on a run of tokens — the web's `SyntaxMark`.
+public struct SyntaxMark: Codable, Sendable, Hashable, Identifiable {
+    public var id: String
+    public var lineN: Int
+    public var startTok: Int
+    public var endTok: Int
+    public var text: String
+    /// Raw, so a role a later version adds still round-trips; see `roleValue`.
+    public var role: String
+    public var createdAt: String
+    public var updatedAt: String?
+    public var group: String?
+
+    public init(id: String, lineN: Int, startTok: Int, endTok: Int, text: String, role: SyntaxRole,
+                createdAt: String, updatedAt: String? = nil, group: String? = nil) {
+        self.id = id
+        self.lineN = lineN
+        self.startTok = startTok
+        self.endTok = endTok
+        self.text = text
+        self.role = role.rawValue
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+        self.group = group
+    }
+
+    public var roleValue: SyntaxRole? { SyntaxRole(rawValue: role) }
 }
 
 public struct PassageState: Codable, Sendable, Hashable {
@@ -53,12 +238,17 @@ public struct PassageState: Codable, Sendable, Hashable {
     public var lastOpened: String?
     public var coldReads: Int = 0
     public var annotations: [Annotation] = []
+    /// Since 1.2. Nil (and so never written) on a passage that has had none.
+    /// The `removed` records are kept in the raw document, in order — see
+    /// `ProgressDocument.recordRemoved`.
+    public var marks: [SyntaxMark]?
 
     public init() {}
 
     /// Tolerant of missing fields — an entry the web created with
     /// `updatePassage` may predate a field — filling each from the web's
-    /// `emptyPassage()` defaults.
+    /// `emptyPassage()` defaults. A highlight or mark that can't be read is
+    /// skipped rather than failing the whole passage.
     public init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         notes = try c.decodeIfPresent(String.self, forKey: .notes) ?? ""
@@ -66,8 +256,19 @@ public struct PassageState: Codable, Sendable, Hashable {
         flaggedLines = try c.decodeIfPresent([Int].self, forKey: .flaggedLines) ?? []
         lastOpened = try c.decodeIfPresent(String.self, forKey: .lastOpened)
         coldReads = try c.decodeIfPresent(Int.self, forKey: .coldReads) ?? 0
-        annotations = try c.decodeIfPresent([Annotation].self, forKey: .annotations) ?? []
+        annotations = (try c.decodeIfPresent([Lossy<Annotation>].self, forKey: .annotations) ?? []).compactMap(\.value)
+        marks = try c.decodeIfPresent([Lossy<SyntaxMark>].self, forKey: .marks)?.compactMap(\.value)
     }
+
+    /// Marks on this passage, or none.
+    public var allMarks: [SyntaxMark] { marks ?? [] }
+}
+
+/// Decodes one element of an array, or nil if it can't be read, without
+/// failing the array.
+struct Lossy<T: Decodable>: Decodable {
+    let value: T?
+    init(from decoder: any Decoder) throws { value = try? T(from: decoder) }
 }
 
 public struct QuizAttempt: Codable, Sendable, Hashable, Identifiable {

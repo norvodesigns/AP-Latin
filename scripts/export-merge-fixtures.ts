@@ -23,7 +23,7 @@ import { fileURLToPath } from 'node:url';
 
 import { mergeSyncable } from '../src/lib/mergeProgress';
 import { foldLatin, foldEnglish, checkTyped, checkTranslation, checkBuild, lessonScore } from '../src/lib/lessonCheck';
-import { sm2, newCard, currentStreak, longestStreak, blankSyncableData, scansionStatsByLine, scansionBadges, type SyncableData } from '../src/store/useStore';
+import { sm2, newCard, currentStreak, longestStreak, blankSyncableData, scansionStatsByLine, scansionBadges, type SyncableData, type Annotation } from '../src/store/useStore';
 import { unpackLine } from '../src/data/scansionCorpus';
 import { coreVocabulary } from '../src/data/vocabulary';
 import { shortGloss, speedWords } from '../src/lib/speed';
@@ -70,7 +70,7 @@ const base = (): SyncableData => ({
   studyPlan: { minutesPerDay: 30, activeDays: [0, 1, 2, 3, 4, 5, 6], startedAt: '2026-09-01' },
 });
 
-const ann = (id: string, lineN: number, s: number, e: number, note: string, createdAt: string, color: 'gilt' | 'woad' | null = 'gilt') => ({
+const ann = (id: string, lineN: number, s: number, e: number, note: string, createdAt: string, color: 'gilt' | 'woad' | 'rubric' | 'verdigris' | null = 'gilt'): Annotation => ({
   id, lineN, startTok: s, endTok: e, text: `t${s}-${e}`, color, note, createdAt,
 });
 
@@ -246,8 +246,58 @@ function capsPair(): { local: SyncableData; cloud: SyncableData } {
   return { local, cloud };
 }
 
+/** Since 1.2: newer pigments, edits of one highlight on two devices,
+ *  removals that must not come back, and sentence-part marks. */
+function marksPair(): { local: SyncableData; cloud: SyncableData } {
+  const local = base();
+  const cloud = base();
+  const at = (d: string) => `2026-10-${d}T00:00:00.000Z`;
+  local.passages = {
+    'aen-1-1-33': {
+      notes: '', bookmarked: false, flaggedLines: [], coldReads: 0,
+      annotations: [
+        // Recoloured on this device after the cloud's copy: the later edit wins.
+        { ...ann('same1', 1, 0, 2, '', at('01')), color: 'rubric', pigment: 'murex', updatedAt: at('09') },
+        // The cloud's copy is the later edit of this one.
+        { ...ann('same2', 2, 0, 0, '', at('01')), updatedAt: at('03') },
+        // Removed on the cloud's device after this was made: goes.
+        ann('gone1', 3, 0, 4, '', at('02')),
+        // Highlighted again here after the cloud removed it: stays.
+        ann('again1', 4, 2, 2, '', at('12'), 'woad'),
+        // A newer pigment with no counterpart.
+        { ...ann('azure', 5, 0, 6, '', at('04'), 'woad'), pigment: 'azurite', updatedAt: at('04'), group: 'g1' },
+      ],
+      marks: [
+        { id: 'm1', lineN: 1, startTok: 0, endTok: 0, text: 'Arma', role: 'object', createdAt: at('01'), updatedAt: at('02') },
+        { id: 'm2', lineN: 1, startTok: 4, endTok: 4, text: 'canō', role: 'verb', createdAt: at('01') },
+        { id: 'm3', lineN: 2, startTok: 0, endTok: 0, text: 'Ītaliam', role: 'accusative', createdAt: at('05') },
+      ],
+      removed: { 'm:6:0:0': at('06'), 'a:4:2:2': at('08') },
+    },
+  };
+  cloud.passages = {
+    'aen-1-1-33': {
+      notes: 'cloud', bookmarked: true, flaggedLines: [2], coldReads: 1,
+      annotations: [
+        { ...ann('same1', 1, 0, 2, '', at('01')), updatedAt: at('05') },
+        { ...ann('same2', 2, 0, 0, 'added a note', at('01')), color: 'verdigris', updatedAt: at('07') },
+        ann('cloudonly', 7, 1, 1, '', at('03'), null),
+      ],
+      marks: [
+        { id: 'm1', lineN: 1, startTok: 0, endTok: 0, text: 'Arma', role: 'accusative', createdAt: at('01'), updatedAt: at('06') },
+        { id: 'mX', lineN: 1, startTok: 4, endTok: 4, text: 'canō', role: 'verb', createdAt: at('03') },
+        { id: 'm6', lineN: 6, startTok: 0, endTok: 0, text: 'īnferretque', role: 'verb', createdAt: at('02') },
+      ],
+      removed: { 'a:3:0:4': at('05'), 'a:4:2:2': at('10'), 'm:2:0:0': at('04') },
+    },
+    // Only the cloud has this passage, with only the 1.2 fields.
+    'aen-2-40-56': { notes: '', bookmarked: false, flaggedLines: [], coldReads: 0, annotations: [], marks: [], removed: { 'a:41:0:2': at('01') } },
+  };
+  return { local, cloud };
+}
+
 const mergeCases = [];
-for (const [name, make] of [['rich', richPair], ['caps', capsPair], ['predates', predatesPair]] as const) {
+for (const [name, make] of [['rich', richPair], ['caps', capsPair], ['predates', predatesPair], ['marks', marksPair]] as const) {
   for (const cloudIsNewer of [true, false]) {
     const { local, cloud } = make();
     mergeCases.push({ name: `${name}-${cloudIsNewer ? 'cloud-newer' : 'local-newer'}`, local, cloud, cloudIsNewer, expected: mergeSyncable(local, cloud, cloudIsNewer) });
@@ -258,6 +308,11 @@ for (const [name, make] of [['rich', richPair], ['caps', capsPair], ['predates',
   const { local, cloud } = richPair();
   const once = mergeSyncable(local, cloud, true);
   mergeCases.push({ name: 'rich-remerge', local: once, cloud, cloudIsNewer: false, expected: mergeSyncable(once, cloud, false) });
+}
+{
+  const { local, cloud } = marksPair();
+  const once = mergeSyncable(local, cloud, true);
+  mergeCases.push({ name: 'marks-remerge', local: once, cloud, cloudIsNewer: false, expected: mergeSyncable(once, cloud, false) });
 }
 
 /* ------------------------------------------------------------------ */

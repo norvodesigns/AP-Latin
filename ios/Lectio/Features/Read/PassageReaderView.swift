@@ -300,7 +300,8 @@ struct PassageReaderView: View {
         // Tapping the pigment a span already has takes it off again.
         let next = existing?.color == color ? nil : color
         model.update {
-            $0.setHighlight(passageId: passage.id, lineN: s.lineN, startTok: s.start, endTok: s.end, text: text, color: next)
+            $0.setHighlight(passageId: passage.id, lineN: s.lineN, startTok: s.start, endTok: s.end, text: text,
+                            color: next.map(Pigment.init))
             $0.markStudied()
         }
         withAnimation(.spring(duration: 0.3)) { span = nil }
