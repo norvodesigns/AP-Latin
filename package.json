@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm run lint && npm run verify && npm run export:content -- --check && npm run export:fixtures -- --check && npm run export:outline -- --check && npm run build",
     "verify": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/verify-content.mjs && npm run verify:scansion && node scripts/check-eas.mjs",
     "verify:scansion": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/verify-scansion.mjs",
     "build:scansion": "node scripts/build-scansion.mjs && npm run verify:scansion",

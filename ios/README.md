@@ -11,8 +11,17 @@ ios/
   Content/            The course as JSON, exported from src/data (npm run export:content)
   LectioCore/         Swift package: content models, progress document, SM-2, streaks, sync merge
   Lectio/             The app: App/, Design/, Features/, Resources/
-  ExportOptions.plist Used by the TestFlight job in .github/workflows/ios.yml
+  ci_scripts/         What Xcode Cloud runs around each build (XCODE_CLOUD.md)
+  ExportOptions.plist Used by scripts/ios-testflight.sh and the TestFlight job in .github/workflows/ios.yml
 ```
+
+## Test builds
+
+Every push and pull request that touches the app is archived on **Xcode Cloud** (the release build, with
+the widgets, the watch app, the content and the icon checked), and pushes to `main` also run the UI tests
+there. GitHub Actions runs only LectioCore's Linux tests on each push; its Mac jobs (a full build log, UI
+tests, screenshots) run when you ask for them. What runs where, and the one-time Xcode Cloud setup, are in
+[XCODE_CLOUD.md](XCODE_CLOUD.md).
 
 ## Running it
 
@@ -97,9 +106,10 @@ that each is a thin material with a hairline edge in the page's colours. The nav
 (`App/RootView.swift`) has three forms: the Tab API with the adaptable sidebar (iOS 18 and 26), a
 classic `tabItem` tab bar for iPhone and a split view for iPad (iOS 17). Launch with
 `-legacyChrome YES`, or turn on Settings > Appearance > Classic look and relaunch, to see the older look
-on a device that has glass. CI screenshots it that way too (`*-classic-*` in the screenshots artifact).
-A new view should use the wrappers, never `glassEffect` or `.buttonStyle(.glass)` directly: CI builds
-with a deployment target of iOS 17, so an unguarded iOS 26 call fails the build.
+on a device that has glass. The screenshots show it that way too (`*-classic-*`, from
+`scripts/ios-screenshots.sh`). A new view should use the wrappers, never `glassEffect` or
+`.buttonStyle(.glass)` directly: the app builds with a deployment target of iOS 17, so an unguarded iOS 26
+call fails the build.
 
 ## Shipping to TestFlight
 
@@ -114,9 +124,10 @@ scripts/ios-testflight.sh
 archives, signs and uploads a build with a rising build number; App Store Connect processes it and you
 add it to TestFlight (or to a version for review). No Expo, no build limit.
 
-Fallbacks that don't need your Mac: Expo's EAS Build ([TESTFLIGHT.md](TESTFLIGHT.md); the free tier is
-limited), or **Actions > iOS > Run workflow** with *Upload a build to TestFlight* ticked (needs the
-`ASC_KEY_ID`, `ASC_ISSUER_ID` and `ASC_KEY_P8` secrets).
+Fallbacks that don't need your Mac: an Xcode Cloud TestFlight workflow, started from App Store Connect
+([XCODE_CLOUD.md](XCODE_CLOUD.md), optional); Expo's EAS Build ([TESTFLIGHT.md](TESTFLIGHT.md); the free
+tier is limited); or **Actions > iOS > Run workflow** with *Upload a build to TestFlight* ticked (needs the
+`ASC_KEY_ID`, `ASC_ISSUER_ID` and `ASC_KEY_P8` secrets, and uses GitHub's macOS minutes).
 
 ## What's in the app
 

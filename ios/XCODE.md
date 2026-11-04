@@ -118,14 +118,16 @@ The script prints the usual cause under its error and keeps the full log in `ios
 | *Missing package product* / *Failed to resolve* | File > Packages > Reset Package Caches, then re-run. Needs internet the first time. |
 | *Developer Mode required* (running on your phone) | Settings > Privacy & Security > Developer Mode, then restart the phone. |
 
-CI builds the same release configuration on every push (unsigned), so a failure that mentions *compiling*
-rather than *signing* is usually something just changed, and the CI log shows where.
+Xcode Cloud archives the same release configuration on every push that touches the app
+([XCODE_CLOUD.md](XCODE_CLOUD.md)), so a failure that mentions *compiling* rather than *signing* is usually
+something just changed, and that build's log shows where.
 
 ## Expo (optional fallback)
 
 `ios/package.json`, `app.json`, `eas.json` and `.eas/` are the old cloud route
 ([TESTFLIGHT.md](TESTFLIGHT.md)). Nothing depends on them, they cost nothing to leave, and
 `npm run verify` still checks them. They only matter if you want a build without a Mac, within Expo's free
-monthly allowance. The other no-Mac route is **Actions > iOS > Run workflow** with *Upload a build to
-TestFlight* ticked, which uses GitHub's own Macs and App Store Connect API keys stored as repository
-secrets.
+monthly allowance. The other no-Mac routes are an Xcode Cloud TestFlight workflow
+([XCODE_CLOUD.md](XCODE_CLOUD.md)), and **Actions > iOS > Run workflow** with *Upload a build to
+TestFlight* ticked, which uses GitHub's own Macs (and their minutes) and App Store Connect API keys stored
+as repository secrets.

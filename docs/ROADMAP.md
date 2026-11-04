@@ -14,11 +14,13 @@ take the next unchecked item. Tick items off and add a line to the log at the bo
   all in the same change.
 - **Content is written once**, in `src/data`, and reaches the app via `npm run export:content`.
   The app also picks up content changes from the website without an App Store release.
-- Before pushing, run the web checks: `npm run typecheck && npm run lint && npm run verify &&
-  npm run export:content -- --check && npm run export:fixtures -- --check`, plus `npm run build`
-  for anything under `src/app`. For Swift, run `swift test` in `ios/LectioCore` (the toolchain is
-  at `/opt/swift/swift-6.2-RELEASE-ubuntu24.04/usr/bin`). CI's macOS job is the proof that the app
-  compiles. Watch it, and check the screenshots artifact for anything visual.
+- Before pushing, run the web checks: `npm run check` (types, lint, content, the three export
+  checks and `next build`; the parts one at a time are in `package.json`). For Swift, run
+  `swift test` in `ios/LectioCore` (the toolchain is at
+  `/opt/swift/swift-6.2-RELEASE-ubuntu24.04/usr/bin`). Xcode Cloud is the proof that the app
+  compiles (`ios/XCODE_CLOUD.md`): its result is the **Xcode Cloud: Check (archive)** status on the
+  commit, with the first error in its description. For a full log, or the screenshots, run
+  Actions > iOS > Run workflow by hand; those jobs use GitHub's macOS minutes, so only when needed.
 - Latin must be right. Use classical forms with macrons in teaching text. Keep sentences simple
   and unambiguous at the level taught. Never reuse copyrighted textbook sentences.
 - The live site stays working at every commit.
@@ -496,3 +498,13 @@ finishing a lesson counts toward the streak and daily goal.
   until real IDs are pasted in (`ios/ADS.md`). The privacy policy has an Ads section; `APP_STORE.md` has
   what to change in App Store Connect when the first ad build ships.
 
+- 2026-11-04: Test builds off GitHub's Macs. The iOS workflow's Mac jobs (build, UI tests, screenshots;
+  about 70 macOS minutes a push, billed at ten times Linux) used up the month's Actions allowance in three
+  or four pushes. The app is now archived and checked on Xcode Cloud, included with the developer account:
+  `ios/ci_scripts/` installs XcodeGen, generates the project and resolves the packages after the clone,
+  checks the archive's contents after the build (the same checks as before), and posts each result to the
+  commit as a GitHub status with the first error, once a token is added. `ios.yml` runs only LectioCore's
+  Linux tests on push; its Mac jobs are manual (Run workflow, tick what to run) and can run free on a
+  self-hosted runner via the `MAC_RUNNER` variable. Screenshots moved into `scripts/ios-screenshots.sh`,
+  for the Mac and for that manual job. The website and Android stay on Linux Actions. `npm run check` runs
+  every web check. Setup and what runs where: `ios/XCODE_CLOUD.md`.

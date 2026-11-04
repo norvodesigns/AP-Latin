@@ -1,50 +1,60 @@
 name: iOS
 
-# Builds and tests the native app. Everything under ios/ is written on a Linux
-# machine that can't compile for iOS, so this workflow is the proof that the
-# Swift builds before anyone opens Xcode.
+# The iOS app's checks on GitHub.
 #
-# Manual runs (Actions → iOS → Run workflow) can also upload a TestFlight
-# build. That needs three repository secrets — ASC_KEY_ID, ASC_ISSUER_ID and
-# ASC_KEY_P8 (the contents of the App Store Connect API key's .p8 file,
-# created with the Admin role so Xcode can manage the distribution
-# certificate). See ios/README.md.
+# A push or pull request that touches ios/ runs only the Linux job here:
+# LectioCore's tests, about a minute. The app itself is built, archived and
+# UI-tested on Xcode Cloud (ios/XCODE_CLOUD.md, ios/ci_scripts/), which comes
+# with the Apple Developer Program and doesn't use GitHub's minutes. GitHub's
+# macOS minutes cost about ten times Linux ones, and one push's worth of the
+# Mac jobs below (about 70 minutes) used most of a month's allowance.
+#
+# The Mac jobs are still here for when they're wanted, run by hand:
+# Actions > iOS > Run workflow, then tick what to run. Each one uses GitHub
+# macOS minutes, unless the repository variable MAC_RUNNER names a
+# self-hosted runner on your own Mac (ios/XCODE_CLOUD.md), where it's free.
+#   Build        the simulator builds and the release archive check, with the
+#                whole log readable here (about 8 minutes)
+#   UI tests     the Reading Room tests (about 15 minutes)
+#   Screenshots  every screen, light and dark (scripts/ios-screenshots.sh,
+#                about 45 minutes)
+#   TestFlight   sign and upload. Needs three repository secrets: ASC_KEY_ID,
+#                ASC_ISSUER_ID and ASC_KEY_P8 (the contents of the App Store
+#                Connect API key's .p8 file, created with the Admin role so
+#                Xcode can manage the distribution certificate). See
+#                ios/README.md.
 
 on:
   push:
     branches: [main]
     paths:
       - 'ios/**'
-      - 'public/scansion/**'
-      - 'src/data/**'
-      - 'src/lib/latin.ts'
-      - 'src/lib/mergeProgress.ts'
-      - 'src/store/useStore.ts'
-      - 'scripts/export-*.ts'
-      - 'scripts/ios-testflight.sh'
       - '.github/workflows/ios.yml'
   pull_request:
     paths:
       - 'ios/**'
-      - 'public/scansion/**'
-      - 'src/data/**'
-      - 'src/lib/latin.ts'
-      - 'src/lib/mergeProgress.ts'
-      - 'src/store/useStore.ts'
-      - 'scripts/export-*.ts'
-      - 'scripts/ios-testflight.sh'
       - '.github/workflows/ios.yml'
   workflow_dispatch:
     inputs:
+      build:
+        description: Build (simulator builds and the release archive check)
+        type: boolean
+        default: true
+      uitests:
+        description: UI tests (Reading Room, line tutor)
+        type: boolean
+        default: false
+      screenshots:
+        description: Screenshots (iPhone, iPad, Apple Watch; about 45 minutes)
+        type: boolean
+        default: false
       testflight:
         description: Upload a build to TestFlight
         type: boolean
         default: false
 
 # Concurrency is per job, not per run: a build waits only for the build
-# before it, never for that run's long screenshot job. Pushes to main queue
-# (a newer one replaces one still waiting); a pull request's newer push
-# cancels its older one.
+# before it, never for that run's long screenshot job.
 
 jobs:
   core:
@@ -59,10 +69,11 @@ jobs:
 
   app:
     name: Build app (iPhone + iPad simulator)
-    runs-on: macos-26
+    if: github.event_name == 'workflow_dispatch' && inputs.build
+    runs-on: ${{ vars.MAC_RUNNER || 'macos-26' }}
     concurrency:
       group: ios-app-${{ github.ref }}
-      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
       - name: Toolchain
@@ -140,9 +151,8 @@ jobs:
 
   uitests:
     name: UI tests (Reading Room, line tutor)
-    if: github.event_name != 'pull_request'
-    needs: [app]
-    runs-on: macos-26
+    if: github.event_name == 'workflow_dispatch' && inputs.uitests
+    runs-on: ${{ vars.MAC_RUNNER || 'macos-26' }}
     concurrency:
       group: ios-uitests-${{ github.ref }}
       cancel-in-progress: false
@@ -189,165 +199,29 @@ jobs:
 
   screenshots:
     name: Screenshots (iPhone + iPad + Apple Watch, light + dark)
-    if: github.event_name != 'pull_request'
-    needs: [app]
-    runs-on: macos-26
+    if: github.event_name == 'workflow_dispatch' && inputs.screenshots
+    runs-on: ${{ vars.MAC_RUNNER || 'macos-26' }}
     concurrency:
       group: ios-screenshots-${{ github.ref }}
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
-      - name: Toolchain
-        run: brew install xcodegen
-      - name: Generate project
-        working-directory: ios
-        run: xcodegen generate
-      - name: Build for the simulator
-        working-directory: ios
-        run: |
-          set -o pipefail
-          xcodebuild build -project Lectio.xcodeproj -scheme Lectio \
-            -destination 'generic/platform=iOS Simulator' -derivedDataPath build CODE_SIGNING_ALLOWED=NO \
-            | grep -E 'error|BUILD (SUCCEEDED|FAILED)' || true
-          test -d build/Build/Products/Debug-iphonesimulator/Lectio.app
+      # The same script you can run on your Mac: every screen on an iPhone and
+      # an iPad, light and dark, large text, the first run, the classic look,
+      # and the Apple Watch app (which App Store Connect asks for too).
       - name: Capture
-        working-directory: ios
-        run: |
-          mkdir -p shots
-          pick() {
-            xcrun simctl list devices available -j | python3 -c "
-          import json, sys
-          want = sys.argv[1:]
-          devices = [d for runtime, ds in json.load(sys.stdin)['devices'].items() if 'iOS' in runtime for d in ds]
-          for w in want:
-              for d in devices:
-                  if w in d['name']:
-                      print(d['udid']); sys.exit()
-          " "$@"
-          }
-          shoot() {
-            local udid="$1" label="$2"
-            xcrun simctl boot "$udid" || true
-            xcrun simctl bootstatus "$udid" -b
-            xcrun simctl status_bar "$udid" override --time 9:41 --batteryState charged --batteryLevel 100 || true
-            xcrun simctl install "$udid" build/Build/Products/Debug-iphonesimulator/Lectio.app
-            for mode in light dark; do
-              xcrun simctl ui "$udid" appearance "$mode"
-              # A fresh launch per screen, opened with -startTab: a lectio://
-              # URL from simctl stops at an "Open in Lectio?" prompt.
-              for tab in today learn learn/prima-2-3 learn/verba-1-1 learn/daily learn/sentences read vocab quiz scansion forge grammar exam plan settings search laurels read/aen-1-1-33 read/pliny-6-16-a; do
-                xcrun simctl terminate "$udid" com.norvodesigns.lectio || true
-                xcrun simctl launch "$udid" com.norvodesigns.lectio -seedDemo YES -startTab "$tab"
-                sleep 8
-                xcrun simctl io "$udid" screenshot "shots/$label-$mode-${tab//\//-}.png"
-              done
-              # The course's vocabulary track.
-              xcrun simctl terminate "$udid" com.norvodesigns.lectio || true
-              xcrun simctl launch "$udid" com.norvodesigns.lectio -seedDemo YES -startTab learn -courseTrackOnLaunch vocabulary
-              sleep 8
-              xcrun simctl io "$udid" screenshot "shots/$label-$mode-learn-vocabulary.png"
-              # Today's lower panels: scrolled to by -todayScroll.
-              for scroll in jump panels end; do
-                xcrun simctl terminate "$udid" com.norvodesigns.lectio || true
-                xcrun simctl launch "$udid" com.norvodesigns.lectio -seedDemo YES -startTab today -todayScroll "$scroll"
-                sleep 10
-                xcrun simctl io "$udid" screenshot "shots/$label-$mode-today-scroll-$scroll.png"
-              done
-              # Large text (Dynamic Type, accessibility sizes), a few screens.
-              if [ "$mode" = light ]; then
-                xcrun simctl ui "$udid" content_size accessibility-extra-large || true
-                for tab in today learn/prima-2-3 learn/daily vocab; do
-                  xcrun simctl terminate "$udid" com.norvodesigns.lectio || true
-                  xcrun simctl launch "$udid" com.norvodesigns.lectio -seedDemo YES -startTab "$tab"
-                  sleep 8
-                  xcrun simctl io "$udid" screenshot "shots/$label-$mode-bigtext-${tab//\//-}.png"
-                done
-                xcrun simctl ui "$udid" content_size large || true
-              fi
-              # The first run, a step at a time, and each page of its tour.
-              for step in welcome tour track check grammar path goal reminder account ready; do
-                xcrun simctl terminate "$udid" com.norvodesigns.lectio || true
-                xcrun simctl launch "$udid" com.norvodesigns.lectio -showOnboarding YES -onboardingStep "$step"
-                sleep 8
-                xcrun simctl io "$udid" screenshot "shots/$label-$mode-onboarding-$step.png"
-              done
-              for page in 1 2; do
-                xcrun simctl terminate "$udid" com.norvodesigns.lectio || true
-                xcrun simctl launch "$udid" com.norvodesigns.lectio -showOnboarding YES -onboardingStep tour -onboardingTourPage "$page"
-                sleep 8
-                xcrun simctl io "$udid" screenshot "shots/$label-$mode-onboarding-tour-$page.png"
-              done
-              # The Home Screen, with the app closed: the app icon, light and dark.
-              xcrun simctl terminate "$udid" com.norvodesigns.lectio || true
-              sleep 4
-              xcrun simctl io "$udid" screenshot "shots/$label-$mode-homescreen.png"
-            done
-            # The look older systems get (-legacyChrome YES): no glass, a
-            # classic tab bar on iPhone and a split view on iPad.
-            xcrun simctl ui "$udid" appearance light
-            for tab in today learn learn/prima-2-3 read read/aen-1-1-33 vocab quiz scansion settings; do
-              xcrun simctl terminate "$udid" com.norvodesigns.lectio || true
-              xcrun simctl launch "$udid" com.norvodesigns.lectio -seedDemo YES -legacyChrome YES -startTab "$tab"
-              sleep 8
-              xcrun simctl io "$udid" screenshot "shots/$label-classic-${tab//\//-}.png"
-            done
-            xcrun simctl shutdown "$udid" || true
-          }
-          shoot "$(pick 'iPhone 17 Pro Max' 'Pro Max' 'iPhone')" iphone
-          shoot "$(pick '13-inch' 'iPad Pro' 'iPad')" ipad
-          ls -la shots
-      # App Store Connect asks for Apple Watch screenshots too, because the
-      # app ships a watch app. The watch shows a sample deck (-seedDemo YES)
-      # rather than waiting for a paired iPhone.
-      - name: Build the watch app for the simulator
-        working-directory: ios
-        continue-on-error: true
-        run: |
-          set -o pipefail
-          xcodebuild build -project Lectio.xcodeproj -scheme LectioWatch \
-            -destination 'generic/platform=watchOS Simulator' -derivedDataPath build CODE_SIGNING_ALLOWED=NO \
-            | grep -E 'error|BUILD (SUCCEEDED|FAILED)' || true
-          test -d build/Build/Products/Debug-watchsimulator/Lectio.app
-      - name: Capture Apple Watch
-        working-directory: ios
-        continue-on-error: true
-        run: |
-          udid=$(xcrun simctl list devices available -j | python3 -c "
-          import json, sys
-          devices = [d for runtime, ds in json.load(sys.stdin)['devices'].items() if 'watchOS' in runtime for d in ds]
-          for want in ('Series 11 (46mm)', 'Ultra 3', 'Series 10 (46mm)', 'Apple Watch'):
-              for d in devices:
-                  if want in d['name']:
-                      print(d['udid']); sys.exit()
-          ")
-          [ -n "$udid" ] || { echo "No watch simulator available"; exit 0; }
-          xcrun simctl boot "$udid" || true
-          xcrun simctl bootstatus "$udid" -b
-          xcrun simctl status_bar "$udid" override --time 9:41 || true
-          xcrun simctl install "$udid" build/Build/Products/Debug-watchsimulator/Lectio.app
-          # A first launch to warm up, unrecorded.
-          xcrun simctl launch "$udid" com.norvodesigns.lectio.watchkitapp -seedDemo YES || true
-          sleep 20
-          for screen in home review; do
-            xcrun simctl terminate "$udid" com.norvodesigns.lectio.watchkitapp || true
-            xcrun simctl launch "$udid" com.norvodesigns.lectio.watchkitapp -seedDemo YES -watchScreen "$screen"
-            # The watch simulator is slow to finish launching: wait past the
-            # icon animation, or the screenshot is of that.
-            sleep 25
-            xcrun simctl io "$udid" screenshot "shots/watch-$screen.png"
-          done
-          xcrun simctl shutdown "$udid" || true
-          ls -la shots/watch-*
+        run: scripts/ios-screenshots.sh
       - uses: actions/upload-artifact@v4
         with:
           name: screenshots
           path: ios/shots
+          retention-days: 14
 
   testflight:
     name: Upload to TestFlight
     if: github.event_name == 'workflow_dispatch' && inputs.testflight
-    needs: [core, app]
-    runs-on: macos-26
+    needs: [core]
+    runs-on: ${{ vars.MAC_RUNNER || 'macos-26' }}
     steps:
       # Fail in seconds, saying what to add, rather than after a ten-minute
       # build with an authentication error.
