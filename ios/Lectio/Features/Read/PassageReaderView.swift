@@ -38,6 +38,13 @@ nonisolated enum EnglishView: String, Sendable {
 /// word of the phrase (on any line) to take in everything between. The bar
 /// that comes up colours the words, marks what part of the sentence they
 /// are, writes a note on them, asks the tutor, or takes it all off again.
+///
+/// A cold read (the glossary off) is the Latin alone, as the exam prints it:
+/// no gloss, and none of the reader's highlights, notes or sentence marks,
+/// on the page or in the Notes sheet. They are only out of sight, and come
+/// back when it ends. Mark up ends it, and touch and hold selects nothing
+/// meanwhile; flagging a hard line still works. A printed study sheet still
+/// carries everything. As on the web.
 struct PassageReaderView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.library) private var library
@@ -302,10 +309,24 @@ struct PassageReaderView: View {
                 .font(.subheadline)
                 .foregroundStyle(Palette.inkMuted)
             Hairline(color: Palette.redLine).padding(.top, 10)
+            if coldRead {
+                ColdReadNotice(hidden: state.markupCount) { model.update { $0.toggleGlossary() } }
+                    .padding(.top, 12)
+                    .transition(.opacity)
+            }
         }
         .padding(.top, 12)
         .padding(.bottom, 18)
+        .animation(.default, value: coldRead)
+        // However the cold read starts (the More menu, the c key, Settings or
+        // a sync), it starts on the bare text: no gloss, selection or mark up.
+        .onChange(of: coldRead) { _, cold in
+            if cold { setMode(.read) }
+        }
     }
+
+    /// The glossary is off: the Latin alone, without the reader's marks.
+    private var coldRead: Bool { !model.progress.glossaryEnabled }
 
     private var footer: some View {
         let all = library?.passages ?? []
@@ -351,7 +372,8 @@ struct PassageReaderView: View {
             }
             .toggleStyle(.button)
             .accessibilityIdentifier("markup-toggle")
-            .accessibilityHint("Tap words to select them, then colour them, mark them or write a note.")
+            .accessibilityHint(coldRead ? "Ends the cold read, then tap words to select them."
+                               : "Tap words to select them, then colour them, mark them or write a note.")
 
             if hasEnglish {
                 Toggle(isOn: englishOn) {
@@ -405,10 +427,10 @@ struct PassageReaderView: View {
 
             Section("Reading") {
                 Toggle(isOn: Binding(
-                    get: { model.progress.glossaryEnabled },
+                    get: { coldRead },
                     set: { _ in model.update { $0.toggleGlossary() } }
                 )) {
-                    Label("Glossary (off for a cold read)", systemImage: "character.book.closed")
+                    Label("Cold read (no glossary or marks)", systemImage: "character.book.closed")
                 }
                 if hasEnglish {
                     Picker(selection: Binding(get: { englishView }, set: { showEnglish($0) })) {
@@ -516,6 +538,9 @@ struct PassageReaderView: View {
     }
 
     private func setMode(_ next: ReaderMode) {
+        // Marking up words whose marks can't be seen makes no sense, so mark
+        // up ends a cold read.
+        if next == .markup, coldRead { model.update { $0.toggleGlossary() } }
         mode = next
         glossShown = false
         if next == .read { clearSelection() }
@@ -559,8 +584,10 @@ struct PassageReaderView: View {
         }
     }
 
-    /// Touch and hold: select, whatever mode the page is in.
+    /// Touch and hold: select, whatever mode the page is in. Not in a cold
+    /// read, where there is nothing of the reader's on the page to work on.
     private func held(line: PassageLine, index: Int) {
+        guard !coldRead else { return }
         glossShown = false
         sel.selectFresh(at: TokenPoint(lineN: line.n, tok: index), in: passage, state: state)
         panel = .main
@@ -765,7 +792,7 @@ private struct LineRow: View {
         if opens > 0 { bracket(String(repeating: "[", count: opens)) }
         word(i, line.tokens[i])
         if closes > 0 { bracket(String(repeating: "]", count: closes)) }
-        if let noted = annotations.last(where: { $0.endTok == i && $0.hasNote }) {
+        if let noted = shownAnnotations.last(where: { $0.endTok == i && $0.hasNote }) {
             Button { onNote(noted) } label: {
                 Image(systemName: "text.bubble.fill")
                     .font(.system(size: 11))
@@ -841,7 +868,7 @@ private struct LineRow: View {
 
     private var hint: String {
         if markingUp { return "Selects the word. Tap another word to take in everything between." }
-        return glossaryEnabled ? "Shows the gloss. Touch and hold to select it." : "Touch and hold to select it."
+        return glossaryEnabled ? "Shows the gloss. Touch and hold to select it." : "Cold read: no gloss, and your marks are hidden."
     }
 
     /// What VoiceOver says after the word: its colour, marks, and whether
@@ -849,16 +876,22 @@ private struct LineRow: View {
     private func describe(_ i: Int) -> String {
         var parts: [String] = []
         if let p = winner(i)?.shownPigment { parts.append("highlighted \(p.plainName)") }
-        for m in marks where i >= m.startTok && i <= m.endTok {
+        for m in shownMarks where i >= m.startTok && i <= m.endTok {
             if let r = m.roleValue { parts.append(r.label.lowercased()) }
         }
         if selected?.contains(i) ?? false { parts.append("selected") }
         return parts.joined(separator: ", ")
     }
 
+    /// A cold read draws none of the reader's highlights, notes or marks.
+    /// They still arrive here, and are only passed over.
+    private var bare: Bool { !glossaryEnabled && !markingUp }
+    private var shownAnnotations: [Annotation] { bare ? [] : annotations }
+    private var shownMarks: [SyntaxMark] { bare ? [] : marks }
+
     /// The newest highlight covering a token is the one shown, as on the web.
     private func winner(_ i: Int) -> Annotation? {
-        annotations.last { $0.color != nil && i >= $0.startTok && i <= $0.endTok }
+        shownAnnotations.last { $0.color != nil && i >= $0.startTok && i <= $0.endTok }
     }
 
     private func wash(at i: Int) -> Wash? {
@@ -876,11 +909,11 @@ private struct LineRow: View {
     }
 
     private var underlines: [SyntaxMark] {
-        marks.filter { $0.roleValue != nil && $0.roleValue != .clause }
+        shownMarks.filter { $0.roleValue != nil && $0.roleValue != .clause }
     }
 
     private var clauses: [SyntaxMark] {
-        marks.filter { $0.roleValue == .clause }
+        shownMarks.filter { $0.roleValue == .clause }
     }
 
     /// The innermost mark decides a word's underline.
@@ -1116,5 +1149,42 @@ private struct MarkupHint: View {
         .padding(.horizontal, 16)
         .padding(.bottom, 8)
         .frame(maxWidth: 520)
+    }
+}
+
+/// Under the title in a cold read: what it hides, that nothing is lost, and
+/// the way out. The web's notice says the same.
+private struct ColdReadNotice: View {
+    /// The reader's highlights, notes and marks on this passage, kept out of sight.
+    let hidden: Int
+    let onEnd: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Cold read").rubricLabel()
+            Text(message)
+                .font(.prose(.callout))
+                .foregroundStyle(Palette.ink2)
+                .fixedSize(horizontal: false, vertical: true)
+            Button("End cold read", action: onEnd)
+                .glassButton()
+                .padding(.top, 2)
+                .accessibilityIdentifier("end-cold-read")
+        }
+        .padding(.leading, 14)
+        .overlay(alignment: .leading) {
+            Rectangle().fill(Palette.rubric).frame(width: 2)
+        }
+        .accessibilityElement(children: .contain)
+    }
+
+    private var message: String {
+        var text = "The Latin alone, as the exam prints it: no glossary, and none of your highlights, notes or sentence marks."
+        if hidden == 1 {
+            text += " Your 1 on this passage is kept, and comes back when you end the cold read."
+        } else if hidden > 1 {
+            text += " Your \(hidden) on this passage are kept, and come back when you end the cold read."
+        }
+        return text + " Tap the margin beside a line to flag it as hard."
     }
 }

@@ -20,7 +20,7 @@ Jetpack Compose, with a Wear OS watch app) does the same on Google Play. See
 | Section | What it does |
 | --- | --- |
 | **Dashboard** | Countdown, mastery by unit and skill category, recent scores, what to study next, streak |
-| **Reading Room** | Every syllabus passage with click-any-word glossary, highlights in eight colours, sentence-part marks, notes, printable study sheets, bookmarks, line flagging, cold-read toggle |
+| **Reading Room** | Every syllabus passage with click-any-word glossary, highlights in eight colours, sentence-part marks, notes, printable study sheets, bookmarks, line flagging, and a cold read that hides the glossary and all your own marks |
 | **Translate** | Literal-translation drills in the exam's own 15-segment shape, with self- and AI-grading |
 | **Sight Reading** | Timed unseen passages from the CED's recommended authors, plus an AI generator |
 | **Quiz Engine** | Configurable MCQ sets filtered by author, passage, unit, skill or question type; review queue |

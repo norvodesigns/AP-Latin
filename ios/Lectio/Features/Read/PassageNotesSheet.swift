@@ -5,6 +5,9 @@ import SwiftUI
 /// notes on it, every highlight, note and sentence mark (to jump to, edit or
 /// take off), the lines flagged as hard, and then the passage's English,
 /// context, themes and vocabulary coverage. The web Reader's side rail.
+///
+/// In a cold read the reader's own notes and marks stay out of sight here
+/// too, with the way to end it.
 struct PassageNotesSheet: View {
     @Environment(AppModel.self) private var model
     let passage: Passage
@@ -27,35 +30,47 @@ struct PassageNotesSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 28) {
-                    section("Your notes on the passage") {
-                        TextField("The sense of it, the hard spots, what to remember…", text: $draft, axis: .vertical)
-                            .lineLimit(3...14)
-                            .focused($writing)
-                            .font(.prose())
-                            .padding(12)
-                            .background(Palette.slip, in: .rect(cornerRadius: 12))
-                            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Palette.rule, lineWidth: 0.5))
-                            .accessibilityIdentifier("passage-notes")
-                    }
-
-                    if !highlights.isEmpty || !marks.isEmpty {
-                        section("On your page") {
-                            ForEach(highlights, id: \.first?.id) { group in
-                                highlightRow(group, state: state)
-                                Hairline(color: Palette.hair)
-                            }
-                            ForEach(marks, id: \.first?.id) { group in
-                                markRow(group)
-                                Hairline(color: Palette.hair)
-                            }
-                            Button("Clear the page", systemImage: "trash", role: .destructive) { confirmClear = true }
-                                .font(.footnote)
+                    if !model.progress.glossaryEnabled {
+                        section("Your notes and marks") {
+                            Text("Hidden for the cold read. Nothing is deleted: they come back when you end it.")
+                                .font(.prose(.callout))
+                                .foregroundStyle(Palette.inkMuted)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Button("End cold read") { model.update { $0.toggleGlossary() } }
+                                .glassButton()
+                                .accessibilityIdentifier("notes-end-cold-read")
                         }
                     } else {
-                        section("On your page") {
-                            Text("Nothing yet. Touch and hold a word, or turn on Mark up, to colour a phrase, mark the parts of a sentence, or write a note on it.")
-                                .font(.footnote)
-                                .foregroundStyle(Palette.inkMuted)
+                        section("Your notes on the passage") {
+                            TextField("The sense of it, the hard spots, what to remember…", text: $draft, axis: .vertical)
+                                .lineLimit(3...14)
+                                .focused($writing)
+                                .font(.prose())
+                                .padding(12)
+                                .background(Palette.slip, in: .rect(cornerRadius: 12))
+                                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Palette.rule, lineWidth: 0.5))
+                                .accessibilityIdentifier("passage-notes")
+                        }
+
+                        if !highlights.isEmpty || !marks.isEmpty {
+                            section("On your page") {
+                                ForEach(highlights, id: \.first?.id) { group in
+                                    highlightRow(group, state: state)
+                                    Hairline(color: Palette.hair)
+                                }
+                                ForEach(marks, id: \.first?.id) { group in
+                                    markRow(group)
+                                    Hairline(color: Palette.hair)
+                                }
+                                Button("Clear the page", systemImage: "trash", role: .destructive) { confirmClear = true }
+                                    .font(.footnote)
+                            }
+                        } else {
+                            section("On your page") {
+                                Text("Nothing yet. Touch and hold a word, or turn on Mark up, to colour a phrase, mark the parts of a sentence, or write a note on it.")
+                                    .font(.footnote)
+                                    .foregroundStyle(Palette.inkMuted)
+                            }
                         }
                     }
 

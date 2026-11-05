@@ -49,7 +49,7 @@ struct SettingsView: View {
                 } header: {
                     Text("Reading")
                 } footer: {
-                    Text("Turn the glossary off for a cold read, the way the exam gives you the Latin.")
+                    Text("Turn the glossary off for a cold read, the way the exam gives you the Latin: your highlights, notes and marks are hidden too, and come back when you turn it on.")
                 }
 
                 Section {

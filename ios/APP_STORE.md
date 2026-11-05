@@ -135,7 +135,7 @@ everything that matters, so a crop still works.
 ## What's New (1.2.1)
 
 Paste into App Store Connect > the 1.2.1 version > What's New in This Version. There is no What's New
-sheet in the app for it (`WhatsNew.release` stays 1.2), since the release is for iPhone Duo.
+sheet in the app for it (`WhatsNew.release` stays 1.2), since the release is mostly for iPhone Duo.
 
 > Lectio is now at home on iPhone Duo.
 >
@@ -143,6 +143,8 @@ sheet in the app for it (`WhatsNew.release` stays 1.2), since the release is for
 > • A passage spreads across the whole screen: the Latin on the left, the English beside it on the right, like a facing-page edition.
 > • Tap a word and its definition opens as the right-hand page, beside the line you're reading, not over it.
 > • Fold or unfold and you stay on the same passage, at the same line.
+>
+> On every iPhone and iPad, a cold read is now a true cold read: it hides your highlights, notes and sentence marks as well as the glossary, so the page looks like the exam's. Nothing is deleted, and it all comes back when you end the cold read.
 
 ## What's New (1.2)
 

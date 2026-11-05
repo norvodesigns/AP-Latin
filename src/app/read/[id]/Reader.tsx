@@ -13,7 +13,7 @@ import {
   type SyntaxMark,
   type SyntaxRole,
 } from '@/store/useStore';
-import { PIGMENTS, ROLE_INFO, pigmentOf } from '@/lib/annotations';
+import { PIGMENTS, ROLE_INFO, markupCount, pigmentOf } from '@/lib/annotations';
 import {
   covering,
   groupOf,
@@ -102,6 +102,14 @@ const BAR_MIN_SPACE = 230;
  *   it whole. On a wide screen, dragging across the text selects in either
  *   mode.
  *
+ * And a cold read (c), the Latin alone as the exam prints it: no glossary,
+ * and none of the reader's highlights, notes or sentence marks on the page
+ * or in the margin. They are only out of sight: nothing is changed, and they
+ * come back when the cold read ends. Mark up ends it, since marking up words
+ * you can't see the marks on makes no sense; flagging a hard line still
+ * works, because that is part of a cold read. A printed study sheet still
+ * carries everything, since that is what it was asked for.
+ *
  * Before 1.2 the two overlapped: on a phone a tap glossed and selecting was
  * nearly impossible; in the app a tap glossed or extended a highlight
  * depending on an invisible state.
@@ -143,6 +151,7 @@ export default function Reader({
   const flagged = useMemo(() => new Set(state?.flaggedLines ?? []), [state?.flaggedLines]);
   const annotations = useMemo(() => state?.annotations ?? [], [state?.annotations]);
   const marks = useMemo(() => state?.marks ?? [], [state?.marks]);
+  const coldRead = !glossaryEnabled;
 
   const [mode, setMode] = useState<'read' | 'markup'>('read');
   const [gloss, setGloss] = useState<Gloss | null>(null);
@@ -157,6 +166,8 @@ export default function Reader({
   const [englishView, setEnglishView] = useState<EnglishView>('off');
   const [lastShown, setLastShown] = useState<'rail' | 'side'>('side');
   const [printMenu, setPrintMenu] = useState(false);
+  /** The sheet being printed, while the print dialog is up. */
+  const [printing, setPrinting] = useState<'clean' | 'study' | null>(null);
   const [askLine, setAskLine] = useState<{ n: number; latin: string } | null>(null);
   const [mounted, setMounted] = useState(false);
   const popRef = useRef<HTMLDivElement>(null);
@@ -491,6 +502,8 @@ export default function Reader({
    * collapsed, so it never reaches this. */
   useEffect(() => {
     const onUp = () => {
+      // In a cold read there is nothing of the reader's on the page to work on.
+      if (coldRead) return;
       const selection = window.getSelection();
       if (!selection || selection.isCollapsed || selection.rangeCount === 0) return;
       if (!selection.toString().trim()) return;
@@ -518,7 +531,31 @@ export default function Reader({
       document.removeEventListener('mouseup', onUp);
       document.removeEventListener('touchend', onUp);
     };
-  }, [passage, range, select]);
+  }, [passage, range, select, coldRead]);
+
+  /* Cold read and mark up                                             */
+
+  /** Mark up, or back to reading. Marking up ends a cold read: its marks
+   *  would be invisible otherwise. */
+  const toggleMarkup = useCallback(() => {
+    setGloss(null);
+    if (mode === 'markup') {
+      closeBar();
+      setMode('read');
+      return;
+    }
+    if (coldRead) toggleGlossary();
+    setMode('markup');
+  }, [mode, closeBar, coldRead, toggleGlossary]);
+
+  // However the cold read starts (here, in Settings, from another tab or a
+  // sync), it starts on the bare text: no gloss, selection or mark-up mode.
+  useEffect(() => {
+    if (!coldRead) return;
+    setGloss(null);
+    clearSelection();
+    setMode('read');
+  }, [coldRead, clearSelection]);
 
   /* Shortcuts: c cold read, t (or s) translation, b bookmark, m mark up;
    * with words selected, 1–8 a pigment and Delete removes. */
@@ -545,7 +582,12 @@ export default function Reader({
           return;
         }
       }
-      if (k === 'c') { e.preventDefault(); toggleGlossary(); }
+      if (k === 'c') {
+        e.preventDefault();
+        // A note being written is kept, as when the bar is closed.
+        if (!coldRead) closeBar();
+        toggleGlossary();
+      }
       else if (k === 't' || k === 's') {
         e.preventDefault();
         if (englishView === 'off') showEnglish(lastShown);
@@ -553,8 +595,7 @@ export default function Reader({
       } else if (k === 'b') { e.preventDefault(); toggleBookmark(passage.id); }
       else if (k === 'm') {
         e.preventDefault();
-        setGloss(null);
-        setMode((m) => (m === 'markup' ? 'read' : 'markup'));
+        toggleMarkup();
       } else if (k === 'n') {
         e.preventDefault();
         document.getElementById('reader-notes')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -562,7 +603,7 @@ export default function Reader({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [passage.id, toggleGlossary, toggleBookmark, range, bar?.panel, applyPigment, hasExisting, removeSelected, englishView, lastShown, showEnglish]);
+  }, [passage.id, toggleGlossary, toggleBookmark, range, bar?.panel, applyPigment, hasExisting, removeSelected, englishView, lastShown, showEnglish, coldRead, closeBar, toggleMarkup]);
 
   /* ---------------------------------------------------------------- */
   /* Printing                                                          */
@@ -577,13 +618,17 @@ export default function Reader({
       if (withEnglish && hasEnglish) setEnglishView('side');
       else setEnglishView('off');
       document.documentElement.dataset.print = kind;
+      // A study sheet is the reader's marks on paper, cold read or not.
+      setPrinting(kind);
       const done = () => {
         delete document.documentElement.dataset.print;
+        setPrinting(null);
         setEnglishView(before);
         window.removeEventListener('afterprint', done);
       };
       window.addEventListener('afterprint', done);
-      // A frame for React to draw the English (or take it away) first.
+      // A frame for React to draw the English (or take it away), and the
+      // marks a cold read hides, first.
       requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
     },
     [clearSelection, englishView, hasEnglish],
@@ -607,6 +652,13 @@ export default function Reader({
    *  College Board's line numbers) rather than in numbered sections. */
   const lined = citesByLine(passage);
   const side = englishView === 'side' && hasEnglish;
+  /** The page shows none of the reader's own marks: a cold read, unless a
+   *  study sheet is being printed. */
+  const bare = coldRead && printing !== 'study';
+  const hiddenCount = useMemo(
+    () => (coldRead ? markupCount(annotations, marks, state?.notes ?? '') : 0),
+    [coldRead, annotations, marks, state?.notes],
+  );
 
   /** Notes numbered in reading order, for the printed study sheet. */
   const notes = useMemo(
@@ -708,13 +760,13 @@ export default function Reader({
               <button
                 type="button"
                 className={`btn ${mode === 'markup' ? 'btn-primary' : ''}`}
-                onClick={() => {
-                  setGloss(null);
-                  if (mode === 'markup') closeBar();
-                  setMode(mode === 'markup' ? 'read' : 'markup');
-                }}
+                onClick={toggleMarkup}
                 aria-pressed={mode === 'markup'}
-                title="Tap words to highlight them, mark parts of the sentence, or add a note (m)"
+                title={
+                  coldRead
+                    ? 'End the cold read and mark up the text (m)'
+                    : 'Tap words to highlight them, mark parts of the sentence, or add a note (m)'
+                }
               >
                 <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true" fill="none">
                   <path d="M10.5 2.5l3 3-7.5 7.5H3v-3l7.5-7.5z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
@@ -725,12 +777,16 @@ export default function Reader({
               </button>
               <button
                 type="button"
-                className={`btn ${!glossaryEnabled ? 'btn-primary' : ''}`}
+                className={`btn ${coldRead ? 'btn-primary' : ''}`}
                 onClick={toggleGlossary}
-                aria-pressed={!glossaryEnabled}
-                title="Hide the glossary and read the Latin cold (c)"
+                aria-pressed={coldRead}
+                title={
+                  coldRead
+                    ? 'End the cold read: the glossary and your marks come back (c)'
+                    : 'Read the Latin cold: no glossary, and your highlights, notes and marks hidden (c)'
+                }
               >
-                {glossaryEnabled ? 'Cold read' : 'Glossary off'}
+                Cold read
                 <span className="kbd" aria-hidden="true">c</span>
               </button>
               {hasEnglish && (
@@ -790,11 +846,15 @@ export default function Reader({
             </div>
           </header>
 
-          <p className="mb-8 print:hidden" style={{ margin: '0 0 2rem', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--fg-faint)' }}>
-            {mode === 'markup'
-              ? 'Mark-up mode: tap a word, then the last word of the phrase, and pick a colour, a sentence part or a note. Tap a highlight to change or remove it.'
-              : 'Tap a word for its gloss. To highlight, mark the subject and verb, or write a note, turn on Mark up (or drag across the words).'}
-          </p>
+          {mounted && coldRead ? (
+            <ColdReadNotice hidden={hiddenCount} onEnd={toggleGlossary} />
+          ) : (
+            <p className="mb-8 print:hidden" style={{ margin: '0 0 2rem', fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--fg-faint)' }}>
+              {mode === 'markup'
+                ? 'Mark-up mode: tap a word, then the last word of the phrase, and pick a colour, a sentence part or a note. Tap a highlight to change or remove it.'
+                : 'Tap a word for its gloss. To highlight, mark the subject and verb, or write a note, turn on Mark up (or drag across the words).'}
+            </p>
+          )}
 
           {!passage.required && (
             <div className="mb-8 print:hidden">
@@ -807,8 +867,8 @@ export default function Reader({
             {passage.lines.map((line, li) => {
               const isFlagged = mounted && flagged.has(line.n);
               const tokens = lineTokens(passage, line.n);
-              const lineAnns = mounted ? annotations.filter((a) => a.lineN === line.n) : [];
-              const lineMarks = mounted ? marks.filter((m) => m.lineN === line.n) : [];
+              const lineAnns = mounted && !bare ? annotations.filter((a) => a.lineN === line.n) : [];
+              const lineMarks = mounted && !bare ? marks.filter((m) => m.lineN === line.n) : [];
               const selected = range ? rangeOnLine(passage, range, line.n) : null;
               const en = english?.[line.n];
               return (
@@ -1052,22 +1112,34 @@ export default function Reader({
 
           <div id="reader-notes">
             <RailSection title="Your notes and marks" last={!(mounted && flagged.size > 0)}>
-              <ReaderNotes
-                annotations={annotations}
-                marks={marks}
-                passageNotes={state?.notes ?? ''}
-                onPassageNotes={(notesText) => updatePassage(passage.id, { notes: notesText })}
-                onJump={(n) => document.querySelector(`[data-line-n="${n}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-                onEdit={(a) => {
-                  document.querySelector(`[data-line-n="${a.lineN}"]`)?.scrollIntoView({ block: 'center' });
-                  requestAnimationFrame(() => select(rangeOfGroup(passage, a, annotations), { settled: true, panel: 'note' }));
-                }}
-                onRemove={removeGroup}
-                onClearMarks={() => {
-                  for (const m of marks) removeMark(passage.id, m.id);
-                }}
-                mounted={mounted}
-              />
+              {mounted && coldRead ? (
+                <div className="flex flex-col items-start gap-3">
+                  <p style={{ margin: 0, fontFamily: 'var(--font-latin)', fontSize: '1.125rem', fontStyle: 'italic', color: 'var(--fg-muted)' }}>
+                    Hidden for the cold read.
+                  </p>
+                  <button type="button" className="btn btn-sm" onClick={toggleGlossary}>
+                    End cold read
+                    <span className="kbd" aria-hidden="true">c</span>
+                  </button>
+                </div>
+              ) : (
+                <ReaderNotes
+                  annotations={annotations}
+                  marks={marks}
+                  passageNotes={state?.notes ?? ''}
+                  onPassageNotes={(notesText) => updatePassage(passage.id, { notes: notesText })}
+                  onJump={(n) => document.querySelector(`[data-line-n="${n}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+                  onEdit={(a) => {
+                    document.querySelector(`[data-line-n="${a.lineN}"]`)?.scrollIntoView({ block: 'center' });
+                    requestAnimationFrame(() => select(rangeOfGroup(passage, a, annotations), { settled: true, panel: 'note' }));
+                  }}
+                  onRemove={removeGroup}
+                  onClearMarks={() => {
+                    for (const m of marks) removeMark(passage.id, m.id);
+                  }}
+                  mounted={mounted}
+                />
+              )}
             </RailSection>
           </div>
 
@@ -1289,6 +1361,32 @@ export default function Reader({
       )}
 
       {askLine && <AskAboutLine passage={passage} lineN={askLine.n} latin={askLine.latin} onClose={() => setAskLine(null)} />}
+    </div>
+  );
+}
+
+/** In place of the reading hint while a cold read is on: what it hides,
+ *  that nothing is lost, and the way out. */
+function ColdReadNotice({ hidden, onEnd }: { hidden: number; onEnd: () => void }) {
+  return (
+    <div className="mb-8 border-l-2 py-1 pl-5 print:hidden" style={{ borderColor: 'var(--accent)' }} role="status">
+      <div className="slab-sm mb-1.5" style={{ color: 'var(--accent)' }}>
+        Cold read
+      </div>
+      <p
+        className="measure"
+        style={{ margin: 0, fontFamily: 'var(--font-latin)', fontSize: '1.0625rem', lineHeight: 1.55, color: 'var(--ink2)' }}
+      >
+        The Latin alone, as the exam prints it: no glossary, and none of your highlights, notes or
+        sentence marks.
+        {hidden > 0 &&
+          ` Your ${hidden} on this passage ${hidden === 1 ? 'is' : 'are'} kept, and ${hidden === 1 ? 'comes' : 'come'} back when you end the cold read.`}{' '}
+        Click a line number to flag a hard line.
+      </p>
+      <button type="button" className="btn btn-sm mt-3" onClick={onEnd}>
+        End cold read
+        <span className="kbd" aria-hidden="true">c</span>
+      </button>
     </div>
   );
 }

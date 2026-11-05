@@ -46,6 +46,28 @@ import Testing
         #expect(passage.pieces(of: TokenRange(TokenPoint(lineN: 1, tok: space))).isEmpty)
     }
 
+    @Test func markupCountCountsEachThingOnce() {
+        var state = PassageState()
+        #expect(state.markupCount == 0)
+        let group = newGroupId()
+        state.annotations = [
+            // One highlight across two lines, a note with no colour, and a
+            // colourless, noteless leftover that shows nothing.
+            Annotation(id: "a1", lineN: 1, startTok: 4, endTok: 6, text: "virumque", color: .gilt, note: "", createdAt: "t", group: group),
+            Annotation(id: "a2", lineN: 2, startTok: 0, endTok: 0, text: "Ītaliam", color: .gilt, note: "", createdAt: "t", group: group),
+            Annotation(id: "a3", lineN: 3, startTok: 0, endTok: 0, text: "lītora", color: nil, note: "acc. of place", createdAt: "t"),
+            Annotation(id: "a4", lineN: 4, startTok: 0, endTok: 0, text: "vī", color: nil, note: " ", createdAt: "t"),
+        ]
+        state.marks = [
+            SyntaxMark(id: "m1", lineN: 1, startTok: 4, endTok: 4, text: "canō", role: .verb, createdAt: "t"),
+            SyntaxMark(id: "m2", lineN: 5, startTok: 0, endTok: 2, text: "multa", role: .clause, createdAt: "t", group: "g"),
+            SyntaxMark(id: "m3", lineN: 6, startTok: 0, endTok: 2, text: "īnferret", role: .clause, createdAt: "t", group: "g"),
+        ]
+        #expect(state.markupCount == 4)
+        state.notes = "Juno's anger"
+        #expect(state.markupCount == 5)
+    }
+
     @Test func containsFollowsReadingOrder() {
         let r = passage.range(from: TokenPoint(lineN: 1, tok: 4), to: TokenPoint(lineN: 3, tok: 2))
         #expect(passage.contains(r, TokenPoint(lineN: 2, tok: 0)))

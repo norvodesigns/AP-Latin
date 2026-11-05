@@ -17,6 +17,9 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -75,8 +78,10 @@ import com.norvodesigns.lectio.core.PassageLine
 import com.norvodesigns.lectio.core.PassageState
 import com.norvodesigns.lectio.core.Token
 import com.norvodesigns.lectio.features.quiz.QuizSessionRequest
+import com.norvodesigns.lectio.ui.components.ButtonLabel
 import com.norvodesigns.lectio.ui.components.FirstVisitTip
 import com.norvodesigns.lectio.ui.components.Hairline
+import com.norvodesigns.lectio.ui.components.LectioButton
 import com.norvodesigns.lectio.ui.components.PageScaffold
 import com.norvodesigns.lectio.ui.components.QuietLabel
 import com.norvodesigns.lectio.ui.components.RubricLabel
@@ -140,13 +145,19 @@ internal fun markColor(c: LectioColors, role: String): Color = when (SyntaxRoles
  * Tap a word for its gloss. Touch and hold a word to start a highlight, tap
  * further words on the same line to extend it, and pick a pigment, add a note,
  * or ask the tutor about the line from the bar that appears.
+ *
+ * A cold read (the glossary off) is the Latin alone, as the exam prints it: no gloss, and
+ * none of the reader's highlights, notes or sentence marks, here or in the notes sheet. They
+ * are only out of sight and come back when it ends. Touch and hold starts nothing meanwhile;
+ * flagging a hard line still works. As on the web and iPhone.
  */
 @Composable
 fun PassageReader(model: AppModel, passage: Passage, onNavigate: (Passage) -> Unit = {}) {
     val c = Lectio.colors
     val library = model.content
     val state = remember(model.progress, passage.id) { model.progress.passage(passage.id) }
-    val byLine = remember(state) { state.annotations.groupBy { it.lineN } }
+    val coldRead = !model.progress.glossaryEnabled
+    val byLine = remember(state, coldRead) { if (coldRead) emptyMap<Int, List<Annotation>>() else state.annotations.groupBy { it.lineN } }
     var selection by remember { mutableStateOf<WordSelection?>(null) }
     var span by remember { mutableStateOf<SpanSelection?>(null) }
     var noteTarget by remember { mutableStateOf<NoteTarget?>(null) }
@@ -157,7 +168,7 @@ fun PassageReader(model: AppModel, passage: Passage, onNavigate: (Passage) -> Un
     // The line-by-line English, under each line, hidden until asked for.
     var showEnglish by rememberSaveable { mutableStateOf(false) }
     val hasEnglish = remember(passage) { passage.lines.any { it.english != null } }
-    val marksByLine = remember(state) { (state.marks ?: emptyList()).groupBy { it.lineN } }
+    val marksByLine = remember(state, coldRead) { if (coldRead) emptyMap<Int, List<SyntaxMark>>() else (state.marks ?: emptyList()).groupBy { it.lineN } }
     val listState = rememberLazyListState()
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     val wide = LocalConfiguration.current.screenWidthDp >= 600
@@ -167,6 +178,13 @@ fun PassageReader(model: AppModel, passage: Passage, onNavigate: (Passage) -> Un
     LaunchedEffect(passage.id) {
         model.update { it.markOpened(passage.id) }
         model.checkAI()
+    }
+    // However the cold read starts (the menu, Settings or a sync), it starts on the bare text.
+    LaunchedEffect(coldRead) {
+        if (coldRead) {
+            selection = null
+            span = null
+        }
     }
 
     fun spanText(s: SpanSelection): String =
@@ -198,6 +216,8 @@ fun PassageReader(model: AppModel, passage: Passage, onNavigate: (Passage) -> Un
     }
 
     fun held(line: PassageLine, index: Int) {
+        // Nothing of the reader's is on the page in a cold read, so there is nothing to start.
+        if (coldRead) return
         haptics.performHapticFeedback(HapticFeedbackType.LongPress)
         selection = null
         span = SpanSelection(line.n, index, index)
@@ -281,7 +301,7 @@ fun PassageReader(model: AppModel, passage: Passage, onNavigate: (Passage) -> Un
                             },
                         )
                         DropdownMenuItem(
-                            text = { Text(if (model.progress.glossaryEnabled) "Glossary on (turn off for a cold read)" else "Glossary off (turn on)") },
+                            text = { Text(if (coldRead) "End the cold read (glossary and your marks back)" else "Cold read (no glossary, your marks hidden)") },
                             leadingIcon = { Symbol("character.book.closed", size = 20.dp) },
                             onClick = {
                                 model.update { it.toggleGlossary() }
@@ -309,6 +329,7 @@ fun PassageReader(model: AppModel, passage: Passage, onNavigate: (Passage) -> Un
                     item(key = "header") {
                         Column(Modifier.widthIn(max = 760.dp).fillMaxWidth()) {
                             Header(passage)
+                            if (coldRead) ColdReadNotice(state.markupCount) { model.update { it.toggleGlossary() } }
                             FirstVisitTip(
                                 "tip.gloss", "Tap any word", symbol = "hand.tap",
                                 message = "Its meaning comes up from the vocabulary list. Touch and hold a word to highlight it, add a note, or ask about its line. Tap a line number to flag a hard line.",
@@ -396,6 +417,28 @@ private fun Header(passage: Passage) {
         Text(passage.title, style = LectioText.prose(LectioText.title2), color = c.ink)
         Text("${passage.work} · ${passage.wordCount} words", style = LectioText.subheadline, color = c.inkMuted)
         Hairline(Modifier.padding(top = 10.dp), color = c.redLine)
+    }
+}
+
+/** Under the title in a cold read: what it hides, that nothing is lost, and the way out. */
+@Composable
+private fun ColdReadNotice(hidden: Int, onEnd: () -> Unit) {
+    val c = Lectio.colors
+    val kept = when {
+        hidden == 1 -> " Your 1 on this passage is kept, and comes back when you end the cold read."
+        hidden > 1 -> " Your $hidden on this passage are kept, and come back when you end the cold read."
+        else -> ""
+    }
+    Row(Modifier.padding(bottom = 18.dp).height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+        Box(Modifier.width(2.dp).fillMaxHeight().background(c.rubric))
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            RubricLabel("Cold read")
+            Text(
+                "The Latin alone, as the exam prints it: no glossary, and none of your highlights, notes or sentence marks.$kept Tap a line number to flag a hard line.",
+                style = LectioText.prose(LectioText.callout), color = c.ink2,
+            )
+            LectioButton(onEnd) { ButtonLabel("End cold read") }
+        }
     }
 }
 

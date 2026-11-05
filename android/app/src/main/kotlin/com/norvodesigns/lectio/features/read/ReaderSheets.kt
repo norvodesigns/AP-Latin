@@ -122,7 +122,13 @@ fun PassageNotesSheet(
                     if (inRotation < total) LectioButton({ model.update { it.seedVocab(passage.vocabIds) } }) { ButtonLabel("Add all to deck") }
                 }
             }
-            if (noted.isNotEmpty()) NoteSection("Your notes") {
+            // A cold read keeps the reader's own notes out of sight here too.
+            if (!model.progress.glossaryEnabled) {
+                if (state.markupCount > 0) NoteSection("Your notes and marks") {
+                    Text("Hidden for the cold read. Nothing is deleted: they come back when you end it.", style = LectioText.footnote, color = c.inkMuted)
+                    LectioButton({ model.update { it.toggleGlossary() } }) { ButtonLabel("End cold read") }
+                }
+            } else if (noted.isNotEmpty()) NoteSection("Your notes") {
                 for (a in noted) {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Row(Modifier.clickable { onJump(a.lineN) }, horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {

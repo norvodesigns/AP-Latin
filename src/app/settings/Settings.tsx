@@ -139,8 +139,9 @@ export default function Settings({ profile }: { profile: Profile | null }) {
               Glossary on by default in the Reading Room
             </span>
             <span className="mt-1 block" style={{ color: 'var(--fg-faint)', fontSize: '0.9375rem' }}>
-              Turn it off to read cold. You can also toggle it with <span className="kbd">c</span>{' '}
-              while reading.
+              Turn it off to read cold: the Latin alone, with your highlights, notes and sentence
+              marks hidden too (they are kept, and come back when you turn it on). You can also toggle
+              it with <span className="kbd">c</span> while reading.
             </span>
           </span>
         </label>

@@ -4,7 +4,7 @@
  * Pure data and functions, so the merge (and its parity fixtures) can use it
  * without loading the store.
  */
-import type { Annotation, HighlightColor, Pigment, SyntaxRole } from '@/store/useStore';
+import type { Annotation, HighlightColor, Pigment, SyntaxMark, SyntaxRole } from '@/store/useStore';
 
 /** The original colour each pigment falls back to on a 1.0 or 1.1 app. */
 export const LEGACY_COLOR: Record<Pigment, HighlightColor> = {
@@ -35,6 +35,22 @@ export const PIGMENTS: { id: Pigment; label: string; plain: string }[] = [
 export function pigmentOf(a: Pick<Annotation, 'color' | 'pigment'>): Pigment | null {
   if (!a.color) return null;
   return a.pigment ?? a.color;
+}
+
+/**
+ * How many things of the reader's own a passage carries: each highlight or
+ * note, each sentence mark (a phrase marked across lines counts once), and
+ * the notes on the passage as a whole. A cold read hides them all and says
+ * how many it is keeping. The same count as `PassageState.markupCount` in
+ * LectioCore and on Android.
+ */
+export function markupCount(
+  annotations: Pick<Annotation, 'id' | 'group' | 'color' | 'note'>[],
+  marks: Pick<SyntaxMark, 'id' | 'group'>[],
+  passageNotes = '',
+): number {
+  const groups = (xs: { id: string; group?: string }[]) => new Set(xs.map((x) => x.group ?? x.id)).size;
+  return groups(annotations.filter((a) => a.color || a.note.trim())) + groups(marks) + (passageNotes.trim() ? 1 : 0);
 }
 
 /** Newest edit of an annotation or mark: `updatedAt`, else `createdAt`. */

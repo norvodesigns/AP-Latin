@@ -262,6 +262,18 @@ public struct PassageState: Codable, Sendable, Hashable {
 
     /// Marks on this passage, or none.
     public var allMarks: [SyntaxMark] { marks ?? [] }
+
+    /// How many things of the reader's own the passage carries: each
+    /// highlight or note, each sentence mark (a phrase marked across lines
+    /// counts once), and the notes on the passage as a whole. A cold read
+    /// hides them all and says how many it is keeping. The web's
+    /// `markupCount` in src/lib/annotations.ts.
+    public var markupCount: Int {
+        let highlights = Set(annotations.filter { $0.color != nil || $0.hasNote }.map { $0.group ?? $0.id })
+        let marked = Set(allMarks.map { $0.group ?? $0.id })
+        let passageNotes = notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0 : 1
+        return highlights.count + marked.count + passageNotes
+    }
 }
 
 /// Decodes one element of an array, or nil if it can't be read, without

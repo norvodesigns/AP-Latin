@@ -146,6 +146,16 @@ data class PassageState(
      *  records stay in the raw document, in order: see `ProgressDocument.recordRemoved`. */
     val marks: List<SyntaxMark>? = null,
 ) {
+    /** How many things of the reader's own the passage carries: each highlight or note, each
+     *  sentence mark (a phrase marked across lines counts once), and the notes on the passage
+     *  as a whole. A cold read hides them all and says how many it is keeping. The web's
+     *  `markupCount` in src/lib/annotations.ts, and `PassageState.markupCount` in LectioCore. */
+    val markupCount: Int get() {
+        val highlights = annotations.filter { it.color != null || it.hasNote }.map { it.group ?: it.id }.toSet()
+        val marked = (marks ?: emptyList()).map { it.group ?: it.id }.toSet()
+        return highlights.size + marked.size + if (notes.isBlank()) 0 else 1
+    }
+
     fun toJson(): JSONObject = JSONObject(
         "notes" to JSONValue.Str(notes),
         "bookmarked" to JSONValue.Bool(bookmarked),

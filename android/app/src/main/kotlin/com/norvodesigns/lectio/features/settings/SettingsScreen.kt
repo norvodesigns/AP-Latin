@@ -120,7 +120,7 @@ fun SettingsScreen(model: AppModel) {
             Panel(title = "Reading") {
                 ToggleRow(
                     "Glossary in the Reading Room", model.progress.glossaryEnabled, { model.update { it.toggleGlossary() } },
-                    detail = "Turn the glossary off for a cold read, the way the exam gives you the Latin.",
+                    detail = "Turn the glossary off for a cold read, the way the exam gives you the Latin: your highlights, notes and marks are hidden too, and come back when you turn it on.",
                 )
             }
             Panel(title = "Your data") {

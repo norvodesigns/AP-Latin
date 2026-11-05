@@ -65,6 +65,28 @@ class ProgressDocumentTests {
     private val now = parseISO("2026-10-15T12:00:00.000Z")
 
     @Test
+    fun markupCountCountsEachThingOnce() {
+        assertEquals(0, PassageState().markupCount)
+        val state = PassageState(
+            annotations = listOf(
+                // One highlight across two lines, a note with no colour, and a colourless,
+                // noteless leftover that shows nothing.
+                Annotation("a1", 1, 4, 6, "virumque", color = HighlightColor.GILT, group = "g1"),
+                Annotation("a2", 2, 0, 0, "Ītaliam", color = HighlightColor.GILT, group = "g1"),
+                Annotation("a3", 3, 0, 0, "lītora", note = "acc. of place"),
+                Annotation("a4", 4, 0, 0, "vī", note = " "),
+            ),
+            marks = listOf(
+                SyntaxMark("m1", 1, 4, 4, "canō", "verb"),
+                SyntaxMark("m2", 5, 0, 2, "multa", "clause", group = "g2"),
+                SyntaxMark("m3", 6, 0, 2, "īnferret", "clause", group = "g2"),
+            ),
+        )
+        assertEquals(4, state.markupCount)
+        assertEquals(5, state.copy(notes = "Juno's anger").markupCount)
+    }
+
+    @Test
     fun editsKeepFieldsThisBuildDoesNotKnow() {
         val raw = ProgressDocument.blank(now).raw.copy()
         raw["vocab"] = jobj("arma" to jobj("id" to "arma", "ef" to 2.5, "interval" to 0, "repetitions" to 0, "due" to "2026-10-15", "lapses" to 0, "reviews" to 0, "futureField" to "keep me"))
