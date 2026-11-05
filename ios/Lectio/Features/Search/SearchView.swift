@@ -10,7 +10,7 @@ import UIKit
 struct SearchView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.library) private var library
-    @Environment(\.horizontalSizeClass) private var sizeClass
+    @Environment(\.appLayout) private var layout
     @State private var query = ""
     @State private var selectedEntry: VocabEntry?
 
@@ -37,12 +37,11 @@ struct SearchView: View {
     private var trimmed: String { query.trimmingCharacters(in: .whitespaces) }
 
     /// Whether this screen has a phone's tab bar to switch, or opens the
-    /// section on its own stack. A full-width iPad has every section in its
-    /// sidebar, so there a row just selects it.
+    /// section on its own stack. A full-width iPad, and iPhone Duo opened
+    /// out, have every section in the sidebar, so there a row just selects it.
     private func pushes(_ entry: SectionEntry) -> Bool {
         guard case .tab(let tab) = entry.action else { return false }
-        let compact = sizeClass == .compact || UIDevice.current.userInterfaceIdiom == .phone
-        return compact && !model.phoneTabs.contains(tab)
+        return !layout.hasSidebar && !model.phoneTabs.contains(tab)
     }
 
     private func visible(_ entry: SectionEntry) -> Bool {

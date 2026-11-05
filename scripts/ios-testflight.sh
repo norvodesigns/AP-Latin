@@ -11,9 +11,10 @@
 #                                               CI runs to prove the release
 #                                               build compiles
 #
-# Needs: a Mac with Xcode 26.2 or later, signed in to your Apple ID under
-# Xcode > Settings > Accounts, and XcodeGen (installed for you with Homebrew
-# if missing). The app record already exists in App Store Connect.
+# Needs: a Mac with Xcode 27.1 or later (an older one builds an app that
+# iPhone Duo letterboxes), signed in to your Apple ID under Xcode > Settings >
+# Accounts, and XcodeGen (installed for you with Homebrew if missing). The app
+# record already exists in App Store Connect.
 #
 # Optional, to sign in with an App Store Connect API key instead of the Apple
 # ID Xcode is signed in with:
@@ -72,6 +73,17 @@ if [ "$MODE" != check ] && [ -z "${ALLOW_BETA_XCODE:-}" ] && printf '%s' "$DEV_D
   DEV_DIR="$RELEASE_XCODE"
 fi
 say "Using $(xcodebuild -version 2>/dev/null | head -1) ($DEV_DIR)"
+
+# iPhone Duo's inner display gives the app the whole screen (the sidebar, a
+# passage across both halves) only when it was built with the iOS 27.1 SDK or
+# later, which comes with Xcode 27.1. Built with an older one, it runs there
+# letterboxed at an iPhone's size. Since 1.2.1 that is the point of the
+# release, so stop rather than upload it; ALLOW_OLD_SDK=1 builds anyway.
+IOS_SDK="$(xcrun --sdk iphoneos --show-sdk-version 2>/dev/null || true)"
+if [ "$MODE" != check ] && [ -z "${ALLOW_OLD_SDK:-}" ] && [ -n "$IOS_SDK" ] \
+  && [ "$(printf '%s\n%s\n' 27.1 "$IOS_SDK" | sort -V | head -1)" != "27.1" ]; then
+  die "This Xcode builds with the iOS $IOS_SDK SDK, and iPhone Duo shows an app built with anything before iOS 27.1 letterboxed, without its iPhone Duo layout. Install Xcode 27.1 or later (Mac App Store, or developer.apple.com/download/all), then run this again. To upload with this Xcode anyway: ALLOW_OLD_SDK=1 scripts/ios-testflight.sh"
+fi
 
 # An Icon Composer app icon (Lectio/Resources/*.icon) needs XcodeGen 2.45.1 or
 # later to be put in the project; an older one drops it and the app keeps its

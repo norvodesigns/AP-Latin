@@ -132,6 +132,18 @@ opening of the Aeneid set faintly as a manuscript page, in the app's parchment a
 words over the art, since the App Store sets the app's name over it; the middle third holds
 everything that matters, so a crop still works.
 
+## What's New (1.2.1)
+
+Paste into App Store Connect > the 1.2.1 version > What's New in This Version. There is no What's New
+sheet in the app for it (`WhatsNew.release` stays 1.2), since the release is for iPhone Duo.
+
+> Lectio is now at home on iPhone Duo.
+>
+> • Open it out and every section is in a sidebar, as on iPad.
+> • A passage spreads across the whole screen: the Latin on the left, the English beside it on the right, like a facing-page edition.
+> • Tap a word and its definition opens as the right-hand page, beside the line you're reading, not over it.
+> • Fold or unfold and you stay on the same passage, at the same line.
+
 ## What's New (1.2)
 
 Paste into App Store Connect > the 1.2 version > What's New in This Version. It says what the

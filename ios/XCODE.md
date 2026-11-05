@@ -6,8 +6,10 @@ fallback; see the end.)
 
 ## One-time setup
 
-1. **A Mac with a release Xcode, 26.2 or later** (Mac App Store, or developer.apple.com/download/all).
-   Open it once so it finishes installing its components. **Not a beta**: Apple refuses uploads built
+1. **A Mac with a release Xcode, 27.1 or later** (Mac App Store, or developer.apple.com/download/all).
+   Open it once so it finishes installing its components. From 1.2.1 it has to be 27.1: iPhone Duo
+   only gives the app its whole inner display when it was built with the iOS 27.1 SDK, and shows one
+   built with an older Xcode letterboxed, so `scripts/ios-testflight.sh` stops if the Xcode is older. **Not a beta**: Apple refuses uploads built
    with one, even though the build itself works. If you keep a beta around for trying new iOS versions,
    point the build at the release one (see the table below).
 2. **Sign in to your Apple ID in Xcode:** Xcode > Settings > Accounts > + > Apple ID. It must be the one on
