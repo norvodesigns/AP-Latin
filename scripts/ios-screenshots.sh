@@ -2,7 +2,7 @@
 #
 # Screenshots of the iOS app on this Mac's simulators: every screen on an
 # iPhone and an iPad, light and dark, large text, the first run step by step,
-# the older "classic" look, and the Apple Watch app. They land in ios/shots/,
+# the older "classic" look, the iPhone Duo layout, and the Apple Watch app. They land in ios/shots/,
 # ready for App Store Connect or for checking a design change.
 #
 #     scripts/ios-screenshots.sh
@@ -132,6 +132,33 @@ shoot() {
 
 shoot "$(pick iOS 'iPhone 17 Pro Max' 'Pro Max' 'iPhone')" iphone
 shoot "$(pick iOS '13-inch' 'iPad Pro' 'iPad')" ipad
+
+# The iPhone Duo layout opened out: the sidebar, and a passage across the
+# spread with the English on the right half. On Xcode 27.1's iPhone Duo
+# simulator when there is one (open it out first in Device Hub); otherwise on
+# an iPad laid out the same way (-previewDuo YES), as a check of the layout
+# rather than for the App Store.
+duo() {
+  local udid="$1" label="$2"; shift 2
+  [ -n "$udid" ] || { echo "No simulator for the iPhone Duo layout; skipping it."; return 0; }
+  say "Screenshots: $label"
+  xcrun simctl boot "$udid" 2>/dev/null || true
+  xcrun simctl bootstatus "$udid" -b
+  xcrun simctl status_bar "$udid" override --time 9:41 --batteryState charged --batteryLevel 100 || true
+  xcrun simctl install "$udid" "$APP"
+  xcrun simctl ui "$udid" appearance light
+  for tab in today learn read read/aen-1-1-33 read/pliny-6-16-a vocab grammar search; do
+    snap "$udid" "$label-${tab//\//-}" 8 -seedDemo YES -startTab "$tab" "$@"
+  done
+  snap "$udid" "$label-read-aen-1-1-33-english" 8 -seedDemo YES -startTab read/aen-1-1-33 -readerEnglish side "$@"
+  xcrun simctl shutdown "$udid" || true
+}
+duo_udid="$(pick iOS 'iPhone Duo')"
+if [ -n "$duo_udid" ]; then
+  duo "$duo_udid" iphone-duo
+else
+  duo "$(pick iOS 'iPad mini' '11-inch' 'iPad')" ipad-as-duo -previewDuo YES
+fi
 
 # App Store Connect asks for Apple Watch screenshots too, because the app
 # ships a watch app. The watch shows a sample deck (-seedDemo YES) rather

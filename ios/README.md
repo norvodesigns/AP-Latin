@@ -25,7 +25,8 @@ tests, screenshots) run when you ask for them. What runs where, and the one-time
 
 ## Running it
 
-You need a Mac with Xcode 26 or later, and [XcodeGen](https://github.com/yonaskolb/XcodeGen).
+You need a Mac with Xcode 26 or later, and [XcodeGen](https://github.com/yonaskolb/XcodeGen). To ship a
+build, or to see the iPhone Duo layout on its simulator, Xcode 27.1 or later (see *iPhone Duo* below).
 
 ```bash
 brew install xcodegen      # once
@@ -97,6 +98,29 @@ for the layer that floats above it:
 - On iPad, the sidebar.
 - Toolbars, the glossary sheet, and the flashcard controls.
 
+**iPhone Duo** (Apple's foldable, from 1.2.1). Closed, its cover display is an iPhone like any other
+(a compact width) and gets the tab bar. Opened out, the inner display is the first iPhone screen with
+a regular width *and* height, so the frame is chosen by size class, never by "is this an iPhone"
+(`AppLayout` in LectioCore, tested on Linux; a Pro Max on its side still gets the tab bar). Open, it
+gets:
+
+- A sidebar of every section, as on iPad. It is a split view (`SplitSidebar` in `App/RootView.swift`),
+  not the tab view's adaptable sidebar, which a phone doesn't get.
+- A passage across the whole spread: the sidebar slides away while a Reader is open (its button
+  brings it back), so with the English side by side the Latin is on the left half and the English on
+  the right, like a facing-page edition.
+- The glossary as the right-hand page rather than a sheet (a sheet sits in the middle of that screen,
+  over the words). Tapping another word changes it; while it is open it takes the English column's
+  place, so the Latin doesn't move.
+- The Latin at the phone's size, not the iPad's step up: the Duo is held as close as a phone.
+
+Folding or unfolding builds every screen afresh, so an open passage opens again in the Reading Room
+at the line that was at the top of the screen (`App/AppModel+Reading.swift`). The full-screen app
+on the inner display needs a build made with the iOS 27.1 SDK (Xcode 27.1); an older one is
+letterboxed there, so `scripts/ios-testflight.sh` won't upload one. Without the phone, launch on an
+iPad simulator with `-previewDuo YES` to get the same layout, and `scripts/ios-screenshots.sh` takes a
+set of it (`iphone-duo-*` on Xcode's iPhone Duo simulator, else `ipad-as-duo-*`).
+
 Colours are asset-catalog sets under `Lectio/Resources/Assets.xcassets/Palette`, with light and
 dark values taken from `src/app/globals.css`.
 
@@ -114,7 +138,7 @@ call fails the build.
 ## Shipping to TestFlight
 
 Build and ship from Xcode on your Mac; the step-by-step is [XCODE.md](XCODE.md). In short, after a
-one-time setup (Xcode 26.2+, `brew install xcodegen`, your Apple ID signed in under Xcode > Settings >
+one-time setup (Xcode 27.1+, `brew install xcodegen`, your Apple ID signed in under Xcode > Settings >
 Accounts):
 
 ```bash

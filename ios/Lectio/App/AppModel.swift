@@ -61,6 +61,14 @@ final class AppModel {
     /// Today's navigation stack. On iPhone, sections outside the tab bar are
     /// pushed here (see PhoneTabs in RootView.swift).
     var todayPath = NavigationPath()
+    /// The passage open in a Reader and the line at the top of the screen,
+    /// kept so a change of frame (folding or unfolding iPhone Duo) brings the
+    /// same page back at the same line (AppModel+Reading.swift). Not
+    /// observed: it changes with every line scrolled past.
+    @ObservationIgnored var readingSpot: ReadingSpot? = nil
+    /// Whether a Reader is on screen. On iPhone Duo's inner display the
+    /// sidebar slides away for it, so the page has the whole spread.
+    var readerShowing = false
     /// The course lesson open over everything else, if any.
     var activeLesson: LessonPlace? = nil {
         didSet { if (oldValue == nil) != (activeLesson == nil) { studySectionChanged() } }

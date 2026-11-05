@@ -24,7 +24,8 @@ nonisolated enum AppTab: String, Hashable, Sendable {
 /// sections open as pages pushed onto Today, from its "Everything" list or
 /// from anywhere that selects them. On iPad `.sidebarAdaptable` turns the
 /// tabs into a glass sidebar holding every section, grouped as the website's
-/// sidebar groups them.
+/// sidebar groups them. iPhone Duo's inner display, opened out, gets a
+/// sidebar too (`AppLayout` in LectioCore says which frame a window gets).
 struct RootView: View {
     @Environment(AppModel.self) private var model
 
@@ -123,28 +124,60 @@ struct RootView: View {
     }
 }
 
-/// iPhone (and an iPad window narrow enough to be compact) gets a tab bar of
-/// the four daily places plus search; everything else opens from Today.
-/// A full-width iPad gets the sidebar holding every section.
+/// iPhone (and iPhone Duo closed, and an iPad window narrow enough to be
+/// compact) gets a tab bar of the four daily places plus search; everything
+/// else opens from Today. A full-width iPad gets the sidebar holding every
+/// section, and so does iPhone Duo opened out.
 private struct Tabs: View {
-    @Environment(\.horizontalSizeClass) private var sizeClass
+    @Environment(AppModel.self) private var model
+    @Environment(\.library) private var library
+    @Environment(\.horizontalSizeClass) private var widthClass
+    @Environment(\.verticalSizeClass) private var heightClass
 
     var body: some View {
-        let compact = sizeClass == .compact || UIDevice.current.userInterfaceIdiom == .phone
-        // iOS 18 introduced the Tab API and the adaptable sidebar; before it
-        // (and for `-legacyChrome YES`) the classic tab bar and a split view.
-        if LectioChrome.forceLegacy {
-            classic(compact: compact)
-        } else if #available(iOS 18.0, *) {
-            if compact { PhoneTabs() } else { SidebarTabs() }
-        } else {
-            classic(compact: compact)
+        // Size classes, not "is this an iPhone": iPhone Duo is an iPhone with
+        // an iPad-sized inner display (regular both ways), and Apple asks apps
+        // not to lay out by device. A Pro Max on its side (regular width,
+        // compact height) stays a phone, as it always has.
+        let layout = AppLayout(
+            regularWidth: widthClass != .compact,
+            regularHeight: heightClass != .compact,
+            isPad: UIDevice.current.userInterfaceIdiom == .pad && !Self.previewDuo
+        )
+        Group {
+            // iOS 18 introduced the Tab API and the adaptable sidebar; before
+            // it (and for `-legacyChrome YES`) the classic tab bar and a split
+            // view.
+            if LectioChrome.forceLegacy {
+                classic(layout)
+            } else if #available(iOS 18.0, *) {
+                switch layout {
+                case .phone: PhoneTabs()
+                // A tab view's sidebar is an iPad's: on a phone it stays a tab
+                // bar, and the sections kept out of the bar would be out of
+                // reach. So iPhone Duo open gets the split view, which Apple
+                // calls fully adaptive.
+                case .unfolded: SplitSidebar(spreadsReader: true)
+                case .tablet: SidebarTabs()
+                }
+            } else {
+                classic(layout)
+            }
         }
+        .environment(\.appLayout, layout)
+        // Folding or unfolding (or resizing an iPad window across the compact
+        // width) builds every screen afresh: an open passage opens again, at
+        // the line it was on (AppModel+Reading.swift).
+        .onChange(of: layout.hasSidebar) { _, _ in model.frameChanged(library: library) }
     }
 
+    /// `-previewDuo YES` lays an iPad out as iPhone Duo opened out, to check
+    /// that layout on a simulator or an iPad without the phone.
+    private static let previewDuo = UserDefaults.standard.bool(forKey: "previewDuo")
+
     @ViewBuilder
-    private func classic(compact: Bool) -> some View {
-        if compact { ClassicPhoneTabs() } else { ClassicSidebar() }
+    private func classic(_ layout: AppLayout) -> some View {
+        if layout.hasSidebar { SplitSidebar(spreadsReader: layout == .unfolded) } else { ClassicPhoneTabs() }
     }
 }
 
@@ -353,11 +386,20 @@ private struct SidebarTabs: View {
     }
 }
 
-/// The iPad sidebar before iOS 18 has no adaptable tab view: a split view
-/// with a list of every section, grouped as the website's sidebar groups
-/// them, and the section on the right.
-private struct ClassicSidebar: View {
+/// A split view with a list of every section, grouped as the website's
+/// sidebar groups them, and the section on the right. Two screens get it:
+/// iPhone Duo opened out, where a tab view's sidebar isn't offered to a
+/// phone, and an iPad before iOS 18, which has no adaptable tab view.
+///
+/// On iPhone Duo (`spreadsReader`) the sidebar slides away while a passage
+/// is open, so the page has the whole spread: the Latin on the left half and,
+/// side by side, the English on the right. The button at the top of the page
+/// brings the sidebar back; leaving the passage brings it back on its own.
+private struct SplitSidebar: View {
     @Environment(AppModel.self) private var model
+    /// Hide the sidebar while a Reader is on screen.
+    var spreadsReader = false
+    @State private var columns: NavigationSplitViewVisibility = .automatic
 
     private struct Row: Identifiable {
         let tab: AppTab
@@ -403,7 +445,7 @@ private struct ClassicSidebar: View {
             get: { model.selectedTab },
             set: { if let tab = $0 { model.selectedTab = tab } }
         )
-        NavigationSplitView {
+        NavigationSplitView(columnVisibility: $columns) {
             List(selection: selection) {
                 ForEach(Array(Self.groups.enumerated()), id: \.offset) { _, group in
                     if let title = group.title {
@@ -423,13 +465,19 @@ private struct ClassicSidebar: View {
         .animation(.spring(duration: 0.5), value: model.goalJustReached)
         // The sidebar shows every section itself; nothing is pushed on Today.
         .onAppear { model.todayPath = NavigationPath() }
+        .onChange(of: spreadsReader && model.readerShowing, initial: true) { _, reading in
+            withAnimation(.smooth(duration: 0.35)) { columns = reading ? .detailOnly : .automatic }
+        }
     }
 
     @ViewBuilder
     private func rows(_ rows: [Row]) -> some View {
+        // There's no glass pill of cards due here (that belongs to a tab
+        // view), so the Vocab row always carries the count.
+        let due = SpacedRepetition.due(model.vocab.values, on: StudyDates.today()).count
         ForEach(rows) { row in
             Label(row.title, systemImage: row.systemImage)
-                .badge(row.tab == .vocab ? dueCount(model) : 0)
+                .badge(row.tab == .vocab ? due : 0)
                 .tag(row.tab)
         }
     }
@@ -530,4 +578,7 @@ extension EnvironmentValues {
     /// The loaded course content. Only read below `RootView`, which provides
     /// it once loading finishes.
     @Entry var library: ContentLibrary? = nil
+    /// The frame round the app: a phone's tab bar, or a sidebar (iPad, and
+    /// iPhone Duo opened out). Set by `Tabs`.
+    @Entry var appLayout: AppLayout = .phone
 }

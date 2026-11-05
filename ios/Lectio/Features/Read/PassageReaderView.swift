@@ -42,6 +42,7 @@ struct PassageReaderView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.library) private var library
     @Environment(\.horizontalSizeClass) private var sizeClass
+    @Environment(\.appLayout) private var layout
     let passage: Passage
 
     @State private var mode: ReaderMode = .read
@@ -68,64 +69,92 @@ struct PassageReaderView: View {
     @State private var holds = 0
     /// The bottom of the screen, to tell when a tapped word is under a sheet.
     @State private var screenBottom: CGFloat = 0
+    /// The page's width, for the gloss's half of it on iPhone Duo.
+    @State private var pageWidth: CGFloat = 0
+    /// The line at the top of the screen, reported so a change of frame
+    /// (folding or unfolding iPhone Duo) can come back to it.
+    @State private var topLine: Int?
+    /// Where to scroll once the page is laid out, when it comes back.
+    @State private var resumeLine: Int?
+    /// This Reader, as distinct from the one the last frame had.
+    @State private var readerID = UUID()
     @AppStorage("readerEnglish") private var englishView: EnglishView = .off
     @AppStorage("readerEnglishLast") private var englishLast: EnglishView = .under
 
     var body: some View {
         let state = model.progress.passage(passage.id)
         let pick = SelectionContents(range: sel.range, in: passage, state: state)
-        ScrollViewReader { proxy in
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    header
-                    TipView(GlossTip()).lectioTipStyle().padding(.bottom, 16)
-                    if let salutation = passage.salutation {
-                        Text(salutation)
-                            .font(.latinItalic(18, relativeTo: .callout, scale: model.latinScale))
-                            .foregroundStyle(Palette.ink2)
-                            .padding(.bottom, 12)
+        HStack(spacing: 0) {
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        header
+                        TipView(GlossTip()).lectioTipStyle().padding(.bottom, 16)
+                        if let salutation = passage.salutation {
+                            Text(salutation)
+                                .font(.latinItalic(18, relativeTo: .callout, scale: model.latinScale))
+                                .foregroundStyle(Palette.ink2)
+                                .padding(.bottom, 12)
+                        }
+                        ForEach(passage.lines) { line in
+                            LineRow(
+                                passage: passage,
+                                line: line,
+                                annotations: state.annotations.filter { $0.lineN == line.n },
+                                marks: state.allMarks.filter { $0.lineN == line.n },
+                                flagged: state.flaggedLines.contains(line.n),
+                                glossed: glossShown && gloss?.lineN == line.n ? gloss?.tokenIndex : nil,
+                                selected: pick.pieces.first { $0.lineN == line.n }.map { $0.startTok...$0.endTok },
+                                english: showsEnglish && !(sideBySide && glossOpen) ? line.english : nil,
+                                sideBySide: englishBeside,
+                                markingUp: mode == .markup,
+                                glossaryEnabled: model.progress.glossaryEnabled,
+                                onTap: { tapped(line: line, index: $0, at: $1) },
+                                onHold: { held(line: line, index: $0) },
+                                onNote: { editNote($0) },
+                                onAsk: { askLine = line }
+                            )
+                            .id(line.n)
+                        }
+                        footer
                     }
-                    ForEach(passage.lines) { line in
-                        LineRow(
-                            passage: passage,
-                            line: line,
-                            annotations: state.annotations.filter { $0.lineN == line.n },
-                            marks: state.allMarks.filter { $0.lineN == line.n },
-                            flagged: state.flaggedLines.contains(line.n),
-                            glossed: glossShown && gloss?.lineN == line.n ? gloss?.tokenIndex : nil,
-                            selected: pick.pieces.first { $0.lineN == line.n }.map { $0.startTok...$0.endTok },
-                            english: showsEnglish ? line.english : nil,
-                            sideBySide: sideBySide,
-                            markingUp: mode == .markup,
-                            glossaryEnabled: model.progress.glossaryEnabled,
-                            onTap: { tapped(line: line, index: $0, at: $1) },
-                            onHold: { held(line: line, index: $0) },
-                            onNote: { editNote($0) },
-                            onAsk: { askLine = line }
-                        )
-                        .id(line.n)
-                    }
-                    footer
+                    .scrollTargetLayout()
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 60)
+                    .frame(maxWidth: englishBeside ? 1180 : 760, alignment: .leading)
+                    .frame(maxWidth: .infinity)
                 }
-                .padding(.horizontal, 20)
-                .padding(.bottom, 60)
-                .frame(maxWidth: sideBySide ? 1180 : 760, alignment: .leading)
-                .frame(maxWidth: .infinity)
+                .scrollPosition(id: topLineReport, anchor: .top)
+                // Room to scroll the last lines up above the gloss.
+                .contentMargins(.bottom, glossShown && !glossBeside ? 300 : 0, for: .scrollContent)
+                .onChange(of: scrollTarget) { _, target in
+                    guard let target else { return }
+                    withAnimation { proxy.scrollTo(target, anchor: .center) }
+                    scrollTarget = nil
+                }
+                .onChange(of: resumeLine) { _, line in
+                    guard let line else { return }
+                    proxy.scrollTo(line, anchor: .top)
+                    resumeLine = nil
+                }
             }
-            // Room to scroll the last lines up above the gloss.
-            .contentMargins(.bottom, glossShown ? 300 : 0, for: .scrollContent)
-            .onChange(of: scrollTarget) { _, target in
-                guard let target else { return }
-                withAnimation { proxy.scrollTo(target, anchor: .center) }
-                scrollTarget = nil
+            // iPhone Duo opened out: the gloss is the right-hand page.
+            if glossOpen, let word = gloss {
+                Rectangle().fill(Palette.rule).frame(width: 0.5).ignoresSafeArea()
+                glossPage(word)
+                    .frame(width: max(280, pageWidth / 2))
+                    .transition(.move(edge: .trailing).combined(with: .opacity))
             }
         }
+        .animation(.spring(duration: 0.35), value: glossOpen)
         .background {
             GeometryReader { g in
                 let bottom = g.frame(in: .global).maxY
+                let width = g.size.width
                 Color.clear
-                    .onAppear { screenBottom = bottom }
+                    .onAppear { screenBottom = bottom; pageWidth = width }
                     .onChange(of: bottom) { _, now in screenBottom = now }
+                    .onChange(of: width) { _, now in pageWidth = now }
             }
             .ignoresSafeArea()
         }
@@ -166,18 +195,9 @@ struct PassageReaderView: View {
         .animation(.spring(duration: 0.35), value: sel)
         .animation(.spring(duration: 0.35), value: mode)
         .sensoryFeedback(.impact(weight: .medium), trigger: holds)
-        .sheet(isPresented: $glossShown) {
+        .sheet(isPresented: glossSheet) {
             Group {
-                if let word = gloss {
-                    GlossarySheet(
-                        passage: passage,
-                        selection: word,
-                        onAsk: { ask(lineN: word.lineN, closingSheet: true) },
-                        onMarkUp: { markUp(from: word) },
-                        onEditNote: { editNoteFromGloss($0) }
-                    )
-                    .id(word.id)
-                }
+                if let word = gloss { glossary(word) }
             }
             .presentationDetents([.height(300), .medium, .large], selection: $glossDetent)
             .presentationBackgroundInteraction(.enabled(upThrough: .medium))
@@ -192,6 +212,79 @@ struct PassageReaderView: View {
         }
         .onAppear { model.update { $0.markOpened(passage.id) } }
         .task { await model.checkAI() }
+        .task {
+            // The same passage brought back by folding or unfolding: back
+            // to the line the student was on, once the page is laid out.
+            guard let line = model.readerAppeared(passage.id, reader: readerID, line: topLine) else { return }
+            try? await Task.sleep(for: .milliseconds(120))
+            resumeLine = line
+        }
+        .onDisappear { model.readerDisappeared(reader: readerID) }
+    }
+
+    /* -------------------------------------------------------------- */
+    /* The gloss                                                        */
+    /* -------------------------------------------------------------- */
+
+    /// Where the gloss goes: a sheet over the bottom of the page, short
+    /// enough to keep the tapped line in view, or, on iPhone Duo opened out,
+    /// the right-hand half of the spread. (There a sheet sits in the middle
+    /// of the screen, over the very words being read.)
+    private var glossBeside: Bool { layout == .unfolded && sizeClass == .regular }
+
+    /// The line at the top of the screen, passed on to the model as it
+    /// changes (not read by `body`, so scrolling doesn't redraw the page).
+    private var topLineReport: Binding<Int?> {
+        Binding(get: { topLine }, set: { line in
+            topLine = line
+            model.readerScrolled(to: line, reader: readerID)
+        })
+    }
+
+    /// The gloss is showing as the right-hand page.
+    private var glossOpen: Bool { glossShown && glossBeside && gloss != nil }
+
+    /// The English in its own column. On iPhone Duo the gloss takes that
+    /// column's place while it's open, so the Latin doesn't move.
+    private var englishBeside: Bool { sideBySide && !glossOpen }
+
+    private var glossSheet: Binding<Bool> {
+        Binding(get: { glossShown && !glossBeside }, set: { shown in
+            // Not when the sheet went because the screen unfolded: the gloss
+            // carries on as the right-hand page.
+            if !shown, !glossBeside { glossShown = false }
+        })
+    }
+
+    private func glossary(_ word: WordSelection) -> some View {
+        GlossarySheet(
+            passage: passage,
+            selection: word,
+            onAsk: { ask(lineN: word.lineN, closingSheet: true) },
+            onMarkUp: { markUp(from: word) },
+            onEditNote: { editNoteFromGloss($0) }
+        )
+        .id(word.id)
+    }
+
+    /// The gloss as the right-hand page, a slip laid beside the text. Tapping
+    /// another word changes it; the cross puts the English back.
+    private func glossPage(_ word: WordSelection) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Text("Glossary").rubricLabel()
+                Spacer(minLength: 8)
+                Button("Close the glossary", systemImage: "xmark") { glossShown = false }
+                    .labelStyle(.iconOnly)
+                    .glassButton(circle: true)
+                    .accessibilityIdentifier("gloss-close")
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 14)
+            glossary(word)
+        }
+        .frame(maxHeight: .infinity, alignment: .top)
+        .background(Palette.slip.ignoresSafeArea())
     }
 
     /* -------------------------------------------------------------- */
@@ -453,7 +546,8 @@ struct PassageReaderView: View {
             glossDetent = .height(300)
             glossShown = true
         }
-        reveal(line.n, at: location, under: glossDetent == .height(300) ? 300 : 480)
+        // Beside the page, the gloss covers nothing.
+        if !glossBeside { reveal(line.n, at: location, under: glossDetent == .height(300) ? 300 : 480) }
         // Looking a word up is how vocabulary gets tracked, exactly as on the
         // web: an exact dictionary match seeds it into the review rotation.
         // Stem matches are guesses and are not trusted enough to seed.
@@ -566,6 +660,7 @@ struct PassageReaderView: View {
 private struct LineRow: View {
     @Environment(AppModel.self) private var model
     @Environment(\.horizontalSizeClass) private var sizeClass
+    @Environment(\.appLayout) private var layout
     let passage: Passage
     let line: PassageLine
     let annotations: [Annotation]
@@ -644,8 +739,9 @@ private struct LineRow: View {
                 }
             }
         }
-        // A little larger on an iPad, where the page is held further away.
-        .font(.latin(passage.isPoetry ? 22 : 21, scale: model.latinScale * (sizeClass == .regular ? 1.2 : 1)))
+        // A little larger on an iPad, where the page is held further away
+        // (not on iPhone Duo opened out, which is held like a phone).
+        .font(.latin(passage.isPoetry ? 22 : 21, scale: model.latinScale * layout.latinBoost(regularWidth: sizeClass == .regular)))
         .foregroundStyle(Palette.ink)
         .padding(.bottom, labelled ? 20 : 0)
     }

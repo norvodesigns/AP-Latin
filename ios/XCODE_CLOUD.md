@@ -60,7 +60,8 @@ Cloud runs are in `ios/ci_scripts/`; they have to be on `main` before the first 
 
 3. **Make the first workflow "Check".** Click **Edit Workflow** and set:
    - **General:** Name `Check`.
-   - **Environment:** Xcode version *Latest Release*, macOS version *Latest Release*.
+   - **Environment:** Xcode version *Latest Release*, macOS version *Latest Release*. (Latest Release
+     is what builds the app with the iOS 27.1 SDK that iPhone Duo needs; don't pin an older Xcode.)
    - **Start Conditions:** select the *Branch Changes* condition already there. Source Branch: *Custom
      Branches*, `main`. Files and Folders: *Custom Conditions*, then **Start a Build** if **Any File**
      changes in the folder `ios`, and add a second condition for the folder `public/scansion`. Turn on
