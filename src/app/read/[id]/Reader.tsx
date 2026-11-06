@@ -732,8 +732,12 @@ export default function Reader({
 
       {/* The ref goes on the grid, so the whole Latin column arrives as one
           object rather than line by line under the reader's eye. */}
-      {/* Side by side needs the width, so the margin moves below the text. */}
-      <div ref={columns} className={`grid ${side ? '' : 'lg:grid-cols-[minmax(0,1fr)_1px_366px]'}`}>
+      {/* Side by side needs the width, so the margin moves below the text.
+          On paper it is one column whatever the window's width: Safari (and
+          the iPhone) match the screen's breakpoints while laying out the
+          page, so without print:block the hidden margin kept its 366px and
+          squeezed the notes-beside sheet to a word or two a line. */}
+      <div ref={columns} className={`grid print:block ${side ? '' : 'lg:grid-cols-[minmax(0,1fr)_1px_366px]'}`}>
         {/* ─────────── The Latin ─────────── */}
         <article className="min-w-0 px-5 py-10 sm:px-10 sm:py-14 lg:pr-12">
           <header className="mb-9">
