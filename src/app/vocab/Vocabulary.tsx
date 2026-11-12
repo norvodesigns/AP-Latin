@@ -6,6 +6,7 @@ import { coreVocabulary } from '@/data/vocabulary';
 import { supplementaryVocabulary } from '@/data/supplementaryVocabulary';
 import { allPassages, getPassage } from '@/data/passages';
 import { passageVocabIds } from '@/data/passages/vocabIds';
+import { handbookPageById } from '@/data/vocabPages';
 import { useStore, dueVocab, newCard, sm2 } from '@/store/useStore';
 import { Page, PageHeader, Empty, CedLink, SourceNote } from '@/components/ui';
 import type { VocabEntry, UnitId } from '@/data/types';
@@ -13,6 +14,21 @@ import { normalizeWord } from '@/lib/latin';
 
 type Direction = 'la-en' | 'en-la' | 'context';
 type Mode = 'idle' | 'review' | 'browse';
+
+/** Each printed CED page with words on it, and the first and last headword
+ *  there, so the picker reads like the handbook: "p. 296 · fama – fero". */
+const HANDBOOK_PAGES: { page: number; first: string; last: string }[] = (() => {
+  const byPage = new Map<number, string[]>();
+  for (const e of coreVocabulary) {
+    const p = handbookPageById[e.id];
+    if (p == null) continue;
+    if (!byPage.has(p)) byPage.set(p, []);
+    byPage.get(p)!.push(e.headword);
+  }
+  return [...byPage.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([page, words]) => ({ page, first: words[0], last: words[words.length - 1] }));
+})();
 
 /**
  * Every word this app can gloss, core and supplementary alike, as one
@@ -79,6 +95,7 @@ export default function Vocabulary() {
   const [direction, setDirection] = useState<Direction>('la-en');
   const [unit, setUnit] = useState<'all' | UnitId>('all');
   const [passageId, setPassageId] = useState<string>('all');
+  const [handbookPage, setHandbookPage] = useState<'all' | number>('all');
   const [queue, setQueue] = useState<string[]>([]);
   const [cursor, setCursor] = useState(0);
   const [shown, setShown] = useState(false);
@@ -100,8 +117,9 @@ export default function Vocabulary() {
         list = list.filter((e) => ids.has(e.id));
       }
     }
+    if (handbookPage !== 'all') list = list.filter((e) => handbookPageById[e.id] === handbookPage);
     return list;
-  }, [unit, passageId]);
+  }, [unit, passageId, handbookPage]);
 
   const due = useMemo(() => (mounted ? dueVocab(vocab) : []), [vocab, mounted]);
   const dueInScope = useMemo(() => {
@@ -118,6 +136,21 @@ export default function Vocabulary() {
     const q = [...dueIds, ...freshIds];
     if (q.length === 0) return;
     setQueue(q);
+    setCursor(0);
+    setShown(false);
+    setDone(0);
+    setMode('review');
+    markStudied();
+  }
+
+  /** Every word on the chosen handbook page, seen or not, due or not — the
+   *  "quiz me on page 296" session, which the due/new split can't express. */
+  function startPageDrill() {
+    const ids = scoped.map((e) => e.id);
+    const fresh = ids.filter((id) => !vocab[id]);
+    if (fresh.length) seedVocab(fresh);
+    if (ids.length === 0) return;
+    setQueue(ids);
     setCursor(0);
     setShown(false);
     setDone(0);
@@ -561,7 +594,7 @@ export default function Vocabulary() {
           ))}
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2">
+        <div className={`grid gap-6 ${HANDBOOK_PAGES.length ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
           <label>
             <span className="slab-sm mb-2 block">Unit</span>
             <select
@@ -570,6 +603,7 @@ export default function Vocabulary() {
               onChange={(e) => {
                 setUnit(e.target.value as 'all' | UnitId);
                 setPassageId('all');
+                setHandbookPage('all');
               }}
             >
               <option value="all">All units</option>
@@ -585,7 +619,10 @@ export default function Vocabulary() {
             <select
               className="input"
               value={passageId}
-              onChange={(e) => setPassageId(e.target.value)}
+              onChange={(e) => {
+                setPassageId(e.target.value);
+                setHandbookPage('all');
+              }}
             >
               <option value="all">Whole list</option>
               {allPassages
@@ -597,12 +634,40 @@ export default function Vocabulary() {
                 ))}
             </select>
           </label>
+          {HANDBOOK_PAGES.length > 0 && (
+            <label>
+              <span className="slab-sm mb-2 block">Handbook page</span>
+              <select
+                className="input"
+                value={handbookPage}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setHandbookPage(v === 'all' ? 'all' : Number(v));
+                  setUnit('all');
+                  setPassageId('all');
+                }}
+              >
+                <option value="all">Every page</option>
+                {HANDBOOK_PAGES.map(({ page, first, last }) => (
+                  <option key={page} value={page}>
+                    p. {page} · {first} – {last}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
         </div>
 
         <p className="slab-sm mt-5">
           {scoped.length} word{scoped.length === 1 ? '' : 's'} in scope
         </p>
       </section>
+
+      {mounted && handbookPage !== 'all' && scoped.length > 0 && (
+        <button type="button" className="btn btn-primary mb-6 self-start" onClick={startPageDrill}>
+          Study all {scoped.length} on p. {handbookPage}
+        </button>
+      )}
 
       {mounted && dueInScope.length === 0 && untouched.length === 0 ? (
         <Empty
