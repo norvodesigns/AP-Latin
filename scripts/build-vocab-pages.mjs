@@ -37,6 +37,7 @@ const info = execFileSync('pdfinfo', [pdf], { encoding: 'utf8' });
 const pageCount = Number(/Pages:\s+(\d+)/.exec(info)?.[1]);
 const norm = (s) =>
   s
+    .replace(/[\u0000-\u001f]/g, ' ')
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
     .replace(/[‐-―−]/g, '-')
@@ -71,47 +72,64 @@ for (let i = 0; i < pages.length; i++) {
 }
 
 /* ---- Appendix 2 span ---- */
+// pdftotext drops many spaces in this PDF ("abeo,-ire" for "abeo, -ire"), so
+// every comparison is made with whitespace removed.
+const squash = (s) => norm(s).replace(/\s+/g, '');
 const startIdx = pages.findIndex(
-  (p) => /appendix 2/.test(p.text) && /full required latin vocabulary list/.test(p.text) && !/contents/.test(p.text),
+  (p) => squash(p.raw).includes('appendix2:fullrequiredlatinvocabularylist') && squash(p.raw).includes('partofspeech'),
 );
 if (startIdx < 0) throw new Error('could not find the Appendix 2 heading');
-let endIdx = pages.findIndex(
-  (p, i) => i > startIdx && /appendix 3/.test(p.text) && /vocabulary list by reading/.test(p.text),
-);
-if (endIdx < 0) endIdx = pages.length;
+// Appendix 2's table is the only one with a "Suggested Reading" column; the
+// span ends at the first page without it (Appendix 3 starts there).
+let endIdx = startIdx + 1;
+while (endIdx < pages.length && squash(pages[endIdx].raw).includes('suggestedreading')) endIdx++;
 const span = pages.slice(startIdx, endIdx);
 console.log(
   `Appendix 2: PDF pages ${span[0].index}–${span.at(-1).index}, printed ${span[0].printed}–${span.at(-1).printed}`,
 );
+
+/* ---- first-column cells, in reading order ---- */
+// Each table row starts with the Latin entry in the first column, followed by
+// a run of spaces (or none, when the entry fills the column) and the part of
+// speech. A wrapped entry's second line starts with "-", so it is skipped.
+const POS = /(preposition|verb|noun|adjective|adverb|conjunction|pronoun|interjection|numeral|participle|enclitic)/;
+const cells = [];
+for (const pg of span) {
+  for (const line of pg.raw.split('\n')) {
+    const t = line.replace(/^\s+/, '');
+    if (!t || /^-/.test(t) || /^Vocabulary\s+Part of Speech/.test(t)) continue;
+    const m = POS.exec(t);
+    if (!m || m.index === 0) continue;
+    cells.push({ key: squash(t.slice(0, m.index)), page: pg.printed });
+  }
+}
 
 /* ---- place each lemma ---- */
 const out = {};
 const missing = [];
 let cursor = 0;
 for (const e of entries) {
-  const needles = [norm(e.lemma), norm(e.lemma).split(/[,(]/)[0].trim() + ',', norm(e.headword) + ','];
+  const lemma = squash(e.lemma);
+  const head = squash(e.headword);
   let found = -1;
-  for (const needle of needles) {
-    for (let k = cursor; k < span.length; k++) {
-      if (span[k].text.includes(needle)) {
-        found = k;
-        break;
-      }
+  for (let k = cursor; k < Math.min(cells.length, cursor + 8); k++) {
+    const c = cells[k].key;
+    if (!c) continue;
+    const a = c.slice(0, 12);
+    // A bare cell that is only a prefix of a longer lemma ("eo" the adverb vs
+    // "eo, ire, ivi" the verb) is a different word, not a match.
+    const full = c.length >= Math.min(lemma.length, 12) || c === lemma;
+    if ((lemma.startsWith(a) && full) || (c.startsWith(head) && c.length > head.length && lemma.startsWith(c.slice(0, head.length + 1)))) {
+      found = k;
+      break;
     }
-    if (found >= 0) break;
   }
   if (found < 0) {
     missing.push(e.id);
     continue;
   }
-  // A lemma that looks like it jumped far ahead is more likely a stray match
-  // inside a definition; only accept up to two pages forward.
-  if (found - cursor > 2) {
-    missing.push(e.id);
-    continue;
-  }
-  cursor = found;
-  out[e.id] = span[found].printed;
+  cursor = found + 1;
+  out[e.id] = cells[found].page;
 }
 
 // Words that couldn't be matched but sit between two placed neighbours on the
@@ -125,6 +143,14 @@ for (let i = 0; i < entries.length; i++) {
     out[id] = out[before.id];
     missing.splice(missing.indexOf(id), 1);
   }
+}
+
+// vocabulary.ts has two entries that are really the wrapped second line of
+// the row above them in the CED ("quicumque, quaecumque, / quodcumque" and
+// "quisque, quaeque, / quidque ..."). They sit on their parent's page.
+const CONTINUATIONS = { quodcumque: 'quicumque', quidque: 'quisque' };
+for (const [child, parent] of Object.entries(CONTINUATIONS)) {
+  if (out[parent] != null) out[child] = out[parent];
 }
 
 /* ---- report + write ---- */
