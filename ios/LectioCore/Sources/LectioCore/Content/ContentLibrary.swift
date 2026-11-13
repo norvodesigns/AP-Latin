@@ -16,6 +16,8 @@ public struct ContentLibrary: Sendable {
     public let passages: [Passage]
     public let coreVocabulary: [VocabEntry]
     public let supplementaryVocabulary: [VocabEntry]
+    /// CED vocabulary-list pages with words on them; empty if the content predates page numbers.
+    public let handbookPages: [HandbookPage]
     public let questions: [Question]
     public let questionSets: [QuestionSet]
     public let sightQuestions: [Question]
@@ -87,6 +89,7 @@ public struct ContentLibrary: Sendable {
         let vocab: VocabularyFile = try load("vocabulary.json")
         coreVocabulary = vocab.core
         supplementaryVocabulary = vocab.supplementary
+        handbookPages = HandbookPage.pages(from: vocab.core)
         let q: QuestionsFile = try load("questions.json")
         questions = q.questions
         questionSets = q.sets

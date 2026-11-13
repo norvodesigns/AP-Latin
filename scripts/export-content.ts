@@ -29,6 +29,7 @@ import { allPassages, UNIT_TITLES } from '../src/data/passages/index';
 import { passageVocabIds } from '../src/data/passages/vocabIds';
 import { englishFor } from '../src/data/english';
 import { coreVocabulary } from '../src/data/vocabulary';
+import { handbookPageById } from '../src/data/vocabPages';
 import { supplementaryVocabulary } from '../src/data/supplementaryVocabulary';
 import { questions, questionSets, QUESTION_TYPE_LABELS, SKILL_LABELS } from '../src/data/questions';
 import { grammarTopics } from '../src/data/grammar';
@@ -101,7 +102,14 @@ function exportPassages() {
 
 const files: Record<string, unknown> = {
   'passages.json': exportPassages(),
-  'vocabulary.json': { core: coreVocabulary, supplementary: supplementaryVocabulary },
+  // cedPage: the printed CED page the word sits on (src/data/vocabPages.ts),
+  // so the apps can offer the same "study page 296" filter as the website.
+  'vocabulary.json': {
+    core: coreVocabulary.map((e) =>
+      handbookPageById[e.id] != null ? { ...e, cedPage: handbookPageById[e.id] } : e,
+    ),
+    supplementary: supplementaryVocabulary,
+  },
   'questions.json': { questions, sets: questionSets },
   'grammar.json': grammarTopics,
   'devices.json': deviceCards,

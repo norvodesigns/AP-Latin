@@ -104,8 +104,32 @@ public struct VocabEntry: Codable, Sendable, Hashable, Identifiable {
     public let readings: [String]
     public let units: [String]
     public let supplementary: Bool?
+    /// Printed page of the AP Latin CED (Appendix 2) this word sits on —
+    /// src/data/vocabPages.ts. Nil for supplementary words, and for content
+    /// exported before the page numbers were added.
+    public var cedPage: Int? = nil
 
     public var isSupplementary: Bool { supplementary ?? false }
+}
+
+/// One printed page of the CED's vocabulary list, as the page picker shows it:
+/// "p. 296 · prudentia – quis".
+public struct HandbookPage: Sendable, Hashable, Identifiable {
+    public let page: Int
+    public let first: String
+    public let last: String
+    public let count: Int
+    public var id: Int { page }
+
+    /// The pages that have words on them, in order, built from the core list.
+    public static func pages(from core: [VocabEntry]) -> [HandbookPage] {
+        var byPage: [Int: [String]] = [:]
+        for e in core { if let p = e.cedPage { byPage[p, default: []].append(e.headword) } }
+        return byPage.keys.sorted().map { p in
+            let words = byPage[p]!
+            return HandbookPage(page: p, first: words.first!, last: words.last!, count: words.count)
+        }
+    }
 }
 
 struct VocabularyFile: Codable, Sendable {

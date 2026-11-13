@@ -119,6 +119,15 @@ import Testing
         #expect(library.meta.examDate == "2027-05-14")
     }
 
+    /// Every core word carries its printed CED page; page 296 of Appendix 2
+    /// runs prudentia to quis, quid — 30 rows, as in the handbook.
+    @Test func handbookPages() throws {
+        #expect(library.coreVocabulary.allSatisfy { $0.cedPage != nil })
+        #expect(library.handbookPages.first?.page == 276 && library.handbookPages.last?.page == 303)
+        let p296 = try #require(library.handbookPages.first { $0.page == 296 })
+        #expect(p296.first == "prudentia" && p296.count == 30)
+    }
+
     /// The Course Project set: cited by College Board's line numbers, prose
     /// included, under its author's name, and ready as a project passage.
     @Test func courseProjectPassages() throws {

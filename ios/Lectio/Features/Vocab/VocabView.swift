@@ -23,6 +23,8 @@ struct VocabView: View {
     @State private var direction = VocabDirection.laEn
     @State private var unit: String?
     @State private var passageId: String?
+    /// A printed CED page, e.g. 296 — every word on it, from Appendix 2.
+    @State private var handbookPage: Int?
     @State private var newBatch = 20
     @State private var session: VocabSession?
     @State private var speed = false
@@ -45,6 +47,7 @@ struct VocabView: View {
             let ids = Set(p.vocabIds)
             list = list.filter { ids.contains($0.id) }
         }
+        if let handbookPage { list = list.filter { $0.cedPage == handbookPage } }
         return list
     }
 
@@ -87,6 +90,14 @@ struct VocabView: View {
                     Text("Any passage").tag(String?.none)
                     ForEach(library.passages.filter(\.required)) { Text($0.citation).tag(Optional($0.id)) }
                 }
+                if !library.handbookPages.isEmpty {
+                    Picker("Handbook page", selection: $handbookPage) {
+                        Text("Every page").tag(Int?.none)
+                        ForEach(library.handbookPages) { p in
+                            Text("p. \(p.page) · \(p.first) – \(p.last)").tag(Optional(p.page))
+                        }
+                    }
+                }
                 Picker("New cards", selection: $newBatch) {
                     Text("None").tag(0)
                     Text("10").tag(10)
@@ -102,6 +113,20 @@ struct VocabView: View {
             .tint(Palette.rubric)
 
             Section {
+                // Every word on the chosen page, seen or not, due or not —
+                // "quiz me on page 296", which the due/new split can't say.
+                if let handbookPage, !scope.isEmpty {
+                    Button {
+                        let unseen = scope.map(\.id).filter { model.vocab[$0] == nil }
+                        if !unseen.isEmpty { model.update { $0.seedVocab(unseen) } }
+                        session = VocabSession(queue: scope.map(\.id), direction: direction)
+                    } label: {
+                        Text("Study all \(scope.count) on p. \(handbookPage)")
+                            .font(.headline).frame(maxWidth: .infinity).padding(.vertical, 6)
+                    }
+                    .glassButton(prominent: true)
+                    .listRowBackground(Color.clear)
+                }
                 Button {
                     if !fresh.isEmpty { model.update { $0.seedVocab(fresh.map(\.id)) } }
                     let queue = due.map(\.id) + fresh.map(\.id)
@@ -110,7 +135,7 @@ struct VocabView: View {
                     Text(due.isEmpty && fresh.isEmpty ? "Nothing due in this scope" : "Review \(due.count) due" + (fresh.isEmpty ? "" : " + \(fresh.count) new"))
                         .font(.headline).frame(maxWidth: .infinity).padding(.vertical, 6)
                 }
-                .glassButton(prominent: true)
+                .glassButton(prominent: handbookPage == nil)
                 .disabled(due.isEmpty && fresh.isEmpty)
                 .listRowBackground(Color.clear)
                 Button { model.openDerivatives() } label: {
@@ -132,9 +157,13 @@ struct VocabView: View {
                     VocabRow(entry: entry, card: model.vocab[entry.id], derivatives: library.derivatives[entry.id] ?? [])
                 }
             } header: {
-                Text("Browse \(unit.map { "unit \($0)" } ?? "the core list")").rubricLabel()
+                Text("Browse \(handbookPage.map { "page \($0)" } ?? unit.map { "unit \($0)" } ?? "the core list")").rubricLabel()
             }
         }
+        // The three scopes don't combine: picking one clears the others, as on the web.
+        .onChange(of: unit) { _, new in if new != nil { passageId = nil; handbookPage = nil } }
+        .onChange(of: passageId) { _, new in if new != nil { handbookPage = nil } }
+        .onChange(of: handbookPage) { _, new in if new != nil { unit = nil; passageId = nil } }
         .scrollContentBackground(.hidden)
         .readableColumn()
         .pageBackground()
