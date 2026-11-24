@@ -388,3 +388,90 @@ object ScansionStats {
         )
     }
 }
+
+/* ------------------------------------------------------------------ */
+/* History: ports of src/lib/scansionResult.ts                         */
+/* ------------------------------------------------------------------ */
+
+object ScansionHistory {
+    /** Marks as they're kept on an attempt: one character a syllable, "L" long, "S" short, "." unmarked. */
+    fun packMarks(marks: List<String?>): String = marks.joinToString("") { when (it) { "long" -> "L"; "short" -> "S"; else -> "." } }
+
+    fun unpackMarks(packed: String): List<String?> = packed.map { when (it) { 'L' -> "long"; 'S' -> "short"; else -> null } }
+
+    /** For each attempt id, which try at its line it was (1 for the first). */
+    fun tryNumbers(attempts: List<ScansionAttempt>): Map<String, Int> {
+        val seen = HashMap<String, Int>()
+        val out = HashMap<String, Int>()
+        for (a in attempts) {
+            val n = (seen[a.lineId] ?: 0) + 1
+            seen[a.lineId] = n
+            out[a.id] = n
+        }
+        return out
+    }
+
+    /** The id of the most recent attempt on each line. */
+    fun latestIds(attempts: List<ScansionAttempt>): Set<String> {
+        val byLine = LinkedHashMap<String, String>()
+        for (a in attempts) byLine[a.lineId] = a.id
+        return byLine.values.toSet()
+    }
+
+    /**
+     * The work behind an attempt, checked, if it can be known.
+     *
+     * Attempts made since the history was added keep their marks. Older ones keep only a score,
+     * but the line's checked draft holds the marks of the latest check on that line, so it stands
+     * in for the latest attempt on each line when it grades to the very score that attempt
+     * recorded. Anything that doesn't fit the line as the corpus has it now is dropped.
+     */
+    fun reviewed(attempt: ScansionAttempt, line: ScansionLine, latestOnLine: Boolean, draft: ScansionDraft?): ScansionWork? {
+        val n = line.syllables.size
+        val packed = attempt.marks
+        if (packed != null) {
+            if (packed.length != n) return null
+            return ScansionWork(line, ScansionDraft(unpackMarks(packed), attempt.divisions ?: emptyList(), true, attempt.elisions ?: emptyList()))
+        }
+        if (!latestOnLine || draft == null || draft.checked != true || draft.marks.size != n) return null
+        val work = ScansionWork(line, draft)
+        val s = work.score
+        return if (s.correct == attempt.correct && s.total == attempt.total) work else null
+    }
+
+    /** The line scanned correctly, checked, as a perfect student would leave it. */
+    fun answer(line: ScansionLine): ScansionWork {
+        val blank = ScansionWork(line, null)
+        val metrical = blank.metricalIndices
+        return ScansionWork(
+            line,
+            ScansionDraft(
+                marks = line.syllables.map { if (it.isElided) null else it.quantity },
+                divisions = blank.correctDivisions.mapNotNull { metrical.getOrNull(it) },
+                checked = true,
+                elisions = line.syllables.indices.filter { line.syllables[it].isElided },
+            ),
+        )
+    }
+
+    private val macrons = "āēīōūȳĀĒĪŌŪȲ".toSet()
+    private val consonant = Regex("[bcdfgjklmnpqrstvxz]{2}", RegexOption.IGNORE_CASE)
+
+    /** Why syllable [i] has the quantity it has, in a sentence. */
+    fun explainQuantity(line: ScansionLine, i: Int): String {
+        val syl = line.syllables[i]
+        if (syl.isAnceps) return "It closes the line, so it is anceps: it counts long whatever its real quantity is."
+        val hasMacron = syl.text.any { it in macrons }
+        val isDiphthong = Regex("ae|au|oe", RegexOption.IGNORE_CASE).containsMatchIn(syl.text)
+        if (syl.quantity == "long") {
+            if (isDiphthong) return "It contains a diphthong, which is always long by nature."
+            if (hasMacron) return "The text marks the vowel long with a macron, so it is long by nature."
+            val next = line.syllables.drop(i + 1).firstOrNull { it.text.isNotEmpty() }?.text ?: ""
+            if (consonant.matchesAt(next, 0) || (syl.text.length >= 2 && consonant.matches(syl.text.takeLast(2)))) {
+                return "The vowel is followed by two or more consonants, so it is long by position."
+            }
+            return "Nothing in the spelling shows it, but no other foot division fits the line — so this syllable has to be long by nature."
+        }
+        return "It sits in a short position, and nothing closes it or makes it long by nature."
+    }
+}

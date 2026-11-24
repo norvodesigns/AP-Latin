@@ -103,6 +103,10 @@ private class LabState(val model: AppModel) {
     var revisitMastered by mutableStateOf(false)
     var setPassage by mutableStateOf<Passage?>(null)
     var passageLines by mutableStateOf<List<ScansionLine>>(emptyList())
+
+    /** The history of checked lines, open over the lab, and the scan open in it. */
+    var showHistory by mutableStateOf(false)
+    var openScan by mutableStateOf<String?>(null)
     private val books = HashMap<Int, List<ScansionLine>>()
     private var saveJob: Job? = null
 
@@ -166,6 +170,20 @@ private class LabState(val model: AppModel) {
         }
     }
 
+    /** Back from the history to scan one of its lines again: a clean line, not the review of the last check. */
+    fun scanAgain(lineId: String) {
+        openScan = null
+        showHistory = false
+        val parsed = ScansionCorpus.parseLineId(lineId) ?: return
+        val line = lines(parsed.first).firstOrNull { it.id == lineId } ?: return
+        setPassage = null
+        passageLines = emptyList()
+        val draft = model.progress.scansionDraft(line.id)
+        work = ScansionWork(line, if (draft?.checked == true) null else draft)
+        tool = Tool.Quantity
+        rev++
+    }
+
     fun weakest() {
         setPassage = null
         passageLines = emptyList()
@@ -193,7 +211,7 @@ private class LabState(val model: AppModel) {
         val s = w.score
         rev++
         model.update {
-            it.recordScansion(w.line.id, s.correct, s.total)
+            it.recordScansion(w.line.id, s.correct, s.total, w)
             it.saveScansionDraft(w.line.id, w.draft)
             it.markStudied()
         }
@@ -256,9 +274,24 @@ fun ScansionScreen(model: AppModel) {
         model.content?.passage(id)?.let { state.openPassage(it) }
     }
 
+    val corpusReady = state.corpus
+    if (state.showHistory && corpusReady != null) {
+        androidx.activity.compose.BackHandler { if (state.openScan != null) state.openScan = null else state.showHistory = false }
+        val open = state.openScan
+        if (open != null) {
+            ScanResultScreen(model, corpusReady, open, onOpen = { state.openScan = it }, onBack = { state.openScan = null }, scanAgain = { state.scanAgain(it) })
+        } else {
+            ScansionHistoryScreen(model, corpusReady, onOpen = { state.openScan = it }, onBack = { state.showHistory = false })
+        }
+        return
+    }
+
     PageScaffold(
         "Scansion Lab",
         actions = {
+            IconButton({ state.showHistory = true }, enabled = state.corpus != null) {
+                Symbol("clock.arrow.circlepath", tint = c.ink, contentDescription = "Your scans")
+            }
             IconButton({ showRules = true }) { Symbol("book", tint = c.ink, contentDescription = "Rules") }
             Box {
                 IconButton({ menu = true }) { Symbol("ellipsis", tint = c.ink, contentDescription = "More") }
@@ -406,7 +439,16 @@ private class Place(val group: ScansionWork.Group, val isFoot: Boolean, val star
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun LineScansion(work: ScansionWork, tool: Tool, @Suppress("UNUSED_PARAMETER") rev: Int, onTap: (Int) -> Unit) {
+internal fun LineScansion(
+    work: ScansionWork,
+    tool: Tool,
+    @Suppress("UNUSED_PARAMETER") rev: Int,
+    /** Drawn as the answer, in ink, rather than a student's work marked right and wrong. */
+    isAnswer: Boolean = false,
+    /** Nothing to tap: a scan shown again from the history. */
+    readOnly: Boolean = false,
+    onTap: (Int) -> Unit,
+) {
     val wide = LocalConfiguration.current.screenWidthDp >= 600
     val groups = work.groups
     val places = HashMap<Int, Place>()
@@ -423,14 +465,14 @@ internal fun LineScansion(work: ScansionWork, tool: Tool, @Suppress("UNUSED_PARA
     FlowRow(Modifier.fillMaxWidth().padding(vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         for (word in words) {
             Row(verticalAlignment = Alignment.Top) {
-                for (i in word) places[i]?.let { Syllable(work, tool, i, it, wide, onTap) }
+                for (i in word) places[i]?.let { Syllable(work, tool, i, it, wide, isAnswer, readOnly, onTap) }
             }
         }
     }
 }
 
 @Composable
-private fun Syllable(work: ScansionWork, tool: Tool, i: Int, place: Place, wide: Boolean, onTap: (Int) -> Unit) {
+private fun Syllable(work: ScansionWork, tool: Tool, i: Int, place: Place, wide: Boolean, isAnswer: Boolean, readOnly: Boolean, onTap: (Int) -> Unit) {
     val c = Lectio.colors
     val haptics = LocalHapticFeedback.current
     val syl = work.line.syllables[i]
@@ -440,10 +482,10 @@ private fun Syllable(work: ScansionWork, tool: Tool, i: Int, place: Place, wide:
     val lead: Dp = if (i != 0 && syl.startsWord != false) 10.dp else 0.dp
     val trail: Dp = if (place.endsGroup && place.group.closed) 10.dp else 0.dp
 
-    val markColor = if (!work.checked) c.rubric else if (work.isCorrect(i)) c.correct else c.incorrect
+    val markColor = if (!work.checked || isAnswer) c.rubric else if (work.isCorrect(i)) c.correct else c.incorrect
     val textColor = when {
         showElided -> c.inkFaint
-        !work.checked -> c.ink
+        !work.checked || isAnswer -> c.ink
         else -> when (work.result(i)) {
             ScansionWork.SyllableResult.Ok -> c.correct
             ScansionWork.SyllableResult.Blank -> c.inkFaint
@@ -452,13 +494,14 @@ private fun Syllable(work: ScansionWork, tool: Tool, i: Int, place: Place, wide:
     }
     val dotColor = when {
         !elidable -> Color.Transparent
+        isAnswer -> if (syl.isElided) c.rubric else Color.Transparent
         work.checked -> if (work.elisionCorrect(i)) c.correct else c.incorrect
         i in work.elisions -> c.rubric
         tool == Tool.Elision -> c.ruleStrong
         else -> c.hair
     }
-    val bracketColor = if (!work.checked) c.ruleStrong else if (place.group.closed && !work.boundaryCorrect(place.group.endsAt)) c.incorrect else c.ruleStrong
-    val boundaryColor = if (!work.checked) c.rubric else if (work.boundaryCorrect(place.group.endsAt)) c.correct else c.incorrect
+    val bracketColor = if (!work.checked || isAnswer) c.ruleStrong else if (place.group.closed && !work.boundaryCorrect(place.group.endsAt)) c.incorrect else c.ruleStrong
+    val boundaryColor = if (!work.checked || isAnswer) c.rubric else if (work.boundaryCorrect(place.group.endsAt)) c.correct else c.incorrect
     val caesura = run {
         val shown = if (work.checked) work.line.caesurae else listOfNotNull(work.mainCaesura)
         val metrical = work.metricalIndices
@@ -466,13 +509,14 @@ private fun Syllable(work: ScansionWork, tool: Tool, i: Int, place: Place, wide:
     }
     val spoken = listOfNotNull(
         mark?.let { if (it == "long") "long" else "short" }, if (showElided) "elided" else null, if (i in work.divisions) "foot ends here" else null,
+        if (work.checked && !isAnswer && !showElided) (if (work.result(i) == ScansionWork.SyllableResult.Ok) "right" else "wrong") else null,
     ).joinToString(", ")
 
     Column(
-        Modifier.clickable(role = Role.Button) {
+        (if (readOnly) Modifier else Modifier.clickable(role = Role.Button) {
             haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
             onTap(i)
-        }.semantics(mergeDescendants = true) { contentDescription = syl.text; stateDescription = spoken },
+        }).semantics(mergeDescendants = true) { contentDescription = syl.text; stateDescription = spoken },
     ) {
         Box(
             Modifier.drawBehind {

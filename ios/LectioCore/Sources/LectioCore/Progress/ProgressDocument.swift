@@ -422,9 +422,16 @@ public struct ProgressDocument: Sendable, Equatable {
         raw["projectPassages"] = .array(raw.array("projectPassages").filter { $0["id"]?.stringValue != id })
     }
 
-    public mutating func recordScansion(lineId: String, correct: Int, total: Int, now: Date = Date()) {
-        let attempt = ScansionAttempt(id: Self.uid(now: now), lineId: lineId, at: StudyDates.isoTimestamp(now),
+    /// Records a checked line, with the work behind it when given, so the
+    /// history can show the result again.
+    public mutating func recordScansion(lineId: String, correct: Int, total: Int, work: ScansionWork? = nil, now: Date = Date()) {
+        var attempt = ScansionAttempt(id: Self.uid(now: now), lineId: lineId, at: StudyDates.isoTimestamp(now),
                                       correct: correct, total: total)
+        if let work {
+            attempt.marks = ScansionHistory.packMarks(work.marks)
+            attempt.divisions = work.divisions.sorted()
+            attempt.elisions = work.elisions.sorted()
+        }
         append(attempt, to: "scansionAttempts", cap: ProgressMerge.Caps.scansionAttempts)
     }
 

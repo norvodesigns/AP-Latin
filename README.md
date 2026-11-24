@@ -26,7 +26,7 @@ Jetpack Compose, with a Wear OS watch app) does the same on Google Play. See
 | **Quiz Engine** | Configurable MCQ sets filtered by author, passage, unit, skill or question type; review queue |
 | **Vocabulary** | SM-2 spaced repetition over all 990 words of the official required list |
 | **Grammar & Syntax** | The constructions AP tests, with examples from the real passages |
-| **Scansion Lab** | Interactive dactylic hexameter with a rules tutorial |
+| **Scansion Lab** | Interactive dactylic hexameter with a rules tutorial, and a history of every line you check: your marks beside the right scansion |
 | **Literary Devices** | Reference cards plus a spot-the-device drill |
 | **Context & Culture** | Vergil, Augustan Rome, Pliny's world, Vesuvius, provincial administration |
 | **FRQ Workshop** | All five free-response types, timed, with official rubrics and a Course Project mode |

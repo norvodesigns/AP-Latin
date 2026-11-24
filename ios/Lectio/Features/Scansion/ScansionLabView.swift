@@ -45,6 +45,7 @@ struct ScansionLabView: View {
     /// The set passage being worked through in order, and its scannable lines.
     @State private var setPassage: Passage?
     @State private var passageLines: [ScansionLine] = []
+    @State private var showHistory = false
 
     var body: some View {
         SectionStack {
@@ -61,6 +62,8 @@ struct ScansionLabView: View {
             .navigationTitle("Scansion Lab")
             .toolbar {
                 ToolbarItemGroup(placement: .topBarTrailing) {
+                    Button("Your scans", systemImage: "clock.arrow.circlepath") { showHistory = true }
+                        .disabled(corpus == nil)
                     Button("Rules", systemImage: "book") { showRules = true }
                     Menu("More", systemImage: "ellipsis") {
                         Menu("Set passages", systemImage: "text.book.closed") {
@@ -77,6 +80,11 @@ struct ScansionLabView: View {
                 }
             }
             .sheet(isPresented: $showRules) { ScansionRules() }
+            .navigationDestination(isPresented: $showHistory) {
+                if let corpus {
+                    ScansionHistoryView(corpus: corpus) { lineId in scanAgain(lineId) }
+                }
+            }
             .task { await load() }
         }
     }
@@ -202,7 +210,7 @@ struct ScansionLabView: View {
         let s = w.score
         work = w
         model.update {
-            $0.recordScansion(lineId: w.line.id, correct: s.correct, total: s.total)
+            $0.recordScansion(lineId: w.line.id, correct: s.correct, total: s.total, work: w)
             $0.saveScansionDraft(lineId: w.line.id, draft: w.draft)
             $0.markStudied()
         }
@@ -312,6 +320,20 @@ struct ScansionLabView: View {
         open(line)
     }
 
+    /// Back from the history to scan one of its lines again.
+    private func scanAgain(_ lineId: String) {
+        showHistory = false
+        guard let parsed = ScansionCorpus.parseLineId(lineId),
+              let line = lines(for: parsed.book).first(where: { $0.id == lineId })
+        else { return }
+        setPassage = nil
+        passageLines = []
+        // A clean line, not the review of the last check (a draft still in progress is kept).
+        let draft = model.progress.scansionDraft(line.id)
+        work = ScansionWork(line: line, draft: draft?.checked == true ? nil : draft)
+        tool = .quantity
+    }
+
     private func open(_ line: ScansionLine) {
         work = ScansionWork(line: line, draft: model.progress.scansionDraft(line.id))
         tool = .quantity
@@ -322,10 +344,14 @@ struct ScansionLabView: View {
 /* The line itself                                                     */
 /* ------------------------------------------------------------------ */
 
-private struct LineScansion: View {
+struct LineScansion: View {
     @Environment(\.horizontalSizeClass) private var sizeClass
     let work: ScansionWork
     let tool: ScansionLabView.Tool
+    /// Drawn as the answer, in ink, rather than a student's work marked right and wrong.
+    var isAnswer = false
+    /// Nothing to tap: a scan shown again from the history.
+    var readOnly = false
     let onTap: (Int) -> Void
 
     /// Where each syllable sits among the student's feet.
@@ -378,6 +404,7 @@ private struct LineScansion: View {
         let elidable = work.elidableIndices.contains(i)
         let lead: CGFloat = i != 0 && syl.startsWord != false ? 10 : 0
         let trail: CGFloat = place.endsGroup && place.group.closed ? 10 : 0
+        let verdict: String? = work.checked && !isAnswer && !showElided ? (work.result(i) == .ok ? "right" : "wrong") : nil
         VStack(alignment: .leading, spacing: 4) {
             VStack(spacing: 2) {
                 Text(mark == "long" ? "–" : mark == "short" ? "⏑" : " ")
@@ -435,12 +462,12 @@ private struct LineScansion: View {
                 }
         }
         .contentShape(Rectangle())
-        .onTapGesture { onTap(i) }
+        .onTapGesture { if !readOnly { onTap(i) } }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(syl.text)
         .accessibilityValue([mark.map { $0 == "long" ? "long" : "short" }, showElided ? "elided" : nil,
-                             work.divisions.contains(i) ? "foot ends here" : nil].compactMap { $0 }.joined(separator: ", "))
-        .accessibilityAddTraits(.isButton)
+                             work.divisions.contains(i) ? "foot ends here" : nil, verdict].compactMap { $0 }.joined(separator: ", "))
+        .accessibilityAddTraits(readOnly ? [] : .isButton)
         .sensoryFeedback(.selection, trigger: mark)
     }
 
@@ -451,7 +478,7 @@ private struct LineScansion: View {
     }
 
     private func textColor(_ i: Int, elided: Bool) -> Color {
-        guard work.checked, !elided else { return elided ? Palette.inkFaint : Palette.ink }
+        guard work.checked, !isAnswer, !elided else { return elided ? Palette.inkFaint : Palette.ink }
         switch work.result(i) {
         case .ok: return Palette.correct
         case .blank: return Palette.inkFaint
@@ -460,24 +487,25 @@ private struct LineScansion: View {
     }
 
     private func markColor(_ i: Int) -> Color {
-        guard work.checked else { return Palette.rubric }
+        guard work.checked, !isAnswer else { return Palette.rubric }
         return work.isCorrect(i) ? Palette.correct : Palette.incorrect
     }
 
     private func elisionColor(_ i: Int, elidable: Bool) -> Color {
         guard elidable else { return .clear }
+        if isAnswer { return work.line.syllables[i].isElided ? Palette.rubric : .clear }
         if work.checked { return work.elisionCorrect(i) ? Palette.correct : Palette.incorrect }
         if work.elisions.contains(i) { return Palette.rubric }
         return tool == .elision ? Palette.ruleStrong : Palette.hair
     }
 
     private func bracketColor(_ group: ScansionWork.Group) -> Color {
-        guard work.checked else { return Palette.ruleStrong }
+        guard work.checked, !isAnswer else { return Palette.ruleStrong }
         return group.closed && !work.boundaryCorrect(after: group.endsAt) ? Palette.incorrect : Palette.ruleStrong
     }
 
     private func boundaryColor(_ group: ScansionWork.Group) -> Color {
-        guard work.checked else { return Palette.rubric }
+        guard work.checked, !isAnswer else { return Palette.rubric }
         return work.boundaryCorrect(after: group.endsAt) ? Palette.correct : Palette.incorrect
     }
 }

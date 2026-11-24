@@ -115,6 +115,81 @@ import Testing
         #expect(ScansionCorpus.parseLineId(book1[0].id)?.book == 1)
     }
 
+    @Test func historyMatchesTheWebApp() throws {
+        let fixture = try Paths.fixture("scansion.json")
+        for c in try #require(fixture["results"]?.arrayValue) {
+            let name = c["name"]?.stringValue ?? ""
+            let packed: ScansionCorpus.PackedLine = try #require(c["packed"]).decode()
+            let line = ScansionCorpus.unpack(book: try #require(c["book"]?.intValue), packed)
+            let given = try #require(c["work"])
+            let marks: [String?] = try #require(given["marks"]).decode()
+            let draft = ScansionDraft(marks: marks, divisions: try #require(given["divisions"]).decode(), checked: true,
+                                      elisions: try #require(given["elisions"]).decode())
+            let work = ScansionWork(line: line, draft: draft)
+            // What an attempt keeps.
+            let stored = try #require(c["stored"])
+            #expect(ScansionHistory.packMarks(work.marks) == stored["marks"]?.stringValue, "\(name): packed marks")
+            #expect(ScansionHistory.unpackMarks(ScansionHistory.packMarks(work.marks)) == work.marks, "\(name): round trip")
+            // The score.
+            let score = try #require(c["score"])
+            let s = work.score
+            #expect([s.syllables, s.syllablesTotal, s.boundaries, s.boundariesTotal, s.elisions, s.elisionsTotal, s.correct, s.total]
+                == ["syllables", "syllablesTotal", "boundaries", "boundariesTotal", "elisions", "elisionsTotal", "correct", "total"]
+                .map { score[$0]?.intValue ?? -1 }, "\(name): score")
+            let results = try #require(c["syllables"]?.arrayValue).compactMap(\.stringValue)
+            #expect(line.syllables.indices.map { i -> String in
+                switch work.result(i) { case .ok: "ok"; case .wrong: "wrong"; case .blank: "blank"; case .wrongElision: "wrong-elision" }
+            } == results, "\(name): per syllable")
+            // The answer.
+            let answer = ScansionWork.answer(for: line)
+            let expected = try #require(c["answer"])
+            #expect(answer.marks == (try #require(expected["marks"]).decode() as [String?]), "\(name): answer marks")
+            #expect(answer.divisions == (try #require(expected["divisions"]).decode() as [Int]), "\(name): answer feet")
+            #expect(answer.elisions.sorted() == (try #require(expected["elisions"]).decode() as [Int]), "\(name): answer elisions")
+            #expect(answer.score.correct == answer.score.total, "\(name): the answer scores full marks")
+            #expect(line.syllables.indices.map(work.explainQuantity)
+                == (try #require(c["explanations"]).decode() as [String]), "\(name): explanations")
+        }
+        for c in try #require(fixture["recovery"]?.arrayValue) {
+            let name = c["name"]?.stringValue ?? ""
+            let packed: ScansionCorpus.PackedLine = try #require(c["packed"]).decode()
+            let line = ScansionCorpus.unpack(book: try #require(c["book"]?.intValue), packed)
+            let attempt: ScansionAttempt = try #require(c["attempt"]).decode()
+            let draft: ScansionDraft? = try c["draft"].map { try $0.decode() }
+            let got = ScansionWork.reviewed(attempt, line: line, latestOnLine: c["latestOnLine"]?.boolValue ?? false, draft: draft)
+            if let expected = c["expected"], expected != .null {
+                let work = try #require(got, "\(name): expected the work")
+                #expect(work.checked)
+                #expect(work.marks == (try #require(expected["marks"]).decode() as [String?]), "\(name)")
+                #expect(work.divisions == (try #require(expected["divisions"]).decode() as [Int]), "\(name)")
+                #expect(work.elisions.sorted() == (try #require(expected["elisions"]).decode() as [Int]), "\(name)")
+            } else {
+                #expect(got == nil, "\(name): expected nothing")
+            }
+        }
+    }
+
+    @Test func attemptsKeepTheirWork() throws {
+        var doc = ProgressDocument.blank()
+        let packed: ScansionCorpus.PackedLine = try #require(Paths.fixture("scansion.json")["recovery"]?.arrayValue?.first?["packed"]).decode()
+        let line = ScansionCorpus.unpack(book: 1, packed)
+        let answer = ScansionWork.answer(for: line)
+        doc.recordScansion(lineId: line.id, correct: 3, total: 4, work: answer)
+        doc.recordScansion(lineId: line.id, correct: 1, total: 4)
+        let attempts = doc.scansionAttempts
+        #expect(attempts.count == 2)
+        #expect(attempts[0].marks == ScansionHistory.packMarks(answer.marks))
+        #expect(attempts[0].divisions == answer.divisions)
+        #expect(attempts[0].elisions == answer.elisions.sorted())
+        #expect(attempts[1].marks == nil)
+        // Without the work, nothing about it is written.
+        #expect(doc.raw.array("scansionAttempts")[1]["marks"] == nil)
+        // A field in some other shape costs only that field.
+        let odd: ScansionAttempt = try JSONValue.object(JSONObject([("id", "x"), ("lineId", "l"), ("at", "t"), ("correct", 1),
+                                                                    ("total", 2), ("marks", [])])).decode()
+        #expect(odd.marks == nil && odd.total == 2)
+    }
+
     @Test func gradingFollowsTheWebRules() throws {
         let dir = Paths.testsDir.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
             .deletingLastPathComponent().appendingPathComponent("public/scansion")

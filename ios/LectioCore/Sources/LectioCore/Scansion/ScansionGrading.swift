@@ -283,3 +283,105 @@ public enum ScansionStats {
         ]
     }
 }
+
+/* ------------------------------------------------------------------ */
+/* History — ports of src/lib/scansionResult.ts                        */
+/* ------------------------------------------------------------------ */
+
+public enum ScansionHistory {
+    /// Marks as they're kept on an attempt: one character a syllable, "L"
+    /// long, "S" short, "." unmarked.
+    public static func packMarks(_ marks: [String?]) -> String {
+        String(marks.map { $0 == "long" ? "L" : $0 == "short" ? "S" : "." })
+    }
+
+    public static func unpackMarks(_ packed: String) -> [String?] {
+        packed.map { $0 == "L" ? "long" : $0 == "S" ? "short" : nil }
+    }
+
+    /// For each attempt id, which try at its line it was (1 for the first).
+    public static func tryNumbers(_ attempts: [ScansionAttempt]) -> [String: Int] {
+        var seen: [String: Int] = [:]
+        var out: [String: Int] = [:]
+        for a in attempts {
+            let n = (seen[a.lineId] ?? 0) + 1
+            seen[a.lineId] = n
+            out[a.id] = n
+        }
+        return out
+    }
+
+    /// The id of the most recent attempt on each line.
+    public static func latestIds(_ attempts: [ScansionAttempt]) -> Set<String> {
+        var byLine: [String: String] = [:]
+        for a in attempts { byLine[a.lineId] = a.id }
+        return Set(byLine.values)
+    }
+}
+
+extension ScansionWork {
+    /// The work behind an attempt, checked, if it can be known.
+    ///
+    /// Attempts made since the history was added keep their marks. Older ones
+    /// keep only a score, but the line's checked draft holds the marks of the
+    /// latest check on that line, so it stands in for the latest attempt on
+    /// each line when it grades to the very score that attempt recorded.
+    /// Anything that doesn't fit the line as the corpus has it now is dropped.
+    public static func reviewed(_ attempt: ScansionAttempt, line: ScansionLine, latestOnLine: Bool,
+                                draft: ScansionDraft?) -> ScansionWork? {
+        let n = line.syllables.count
+        if let packed = attempt.marks {
+            guard packed.count == n else { return nil }
+            return ScansionWork(line: line, draft: ScansionDraft(marks: ScansionHistory.unpackMarks(packed),
+                                                                 divisions: attempt.divisions ?? [], checked: true,
+                                                                 elisions: attempt.elisions ?? []))
+        }
+        guard latestOnLine, let draft, draft.checked == true, draft.marks.count == n else { return nil }
+        let work = ScansionWork(line: line, draft: draft)
+        let s = work.score
+        return s.correct == attempt.correct && s.total == attempt.total ? work : nil
+    }
+
+    /// The line scanned correctly, checked, as a perfect student would leave it.
+    public static func answer(for line: ScansionLine) -> ScansionWork {
+        var work = ScansionWork(line: line, draft: nil)
+        let metrical = work.metricalIndices
+        work.marks = line.syllables.map { $0.isElided ? nil : $0.quantity }
+        work.divisions = work.correctDivisions.compactMap { $0 < metrical.count ? metrical[$0] : nil }
+        work.elisions = Set(line.syllables.indices.filter { line.syllables[$0].isElided })
+        work.checked = true
+        return work
+    }
+
+    /// Why syllable `i` has the quantity it has, in a sentence.
+    public func explainQuantity(_ i: Int) -> String {
+        let syl = line.syllables[i]
+        if syl.isAnceps { return "It closes the line, so it is anceps: it counts long whatever its real quantity is." }
+        let text = syl.text
+        let hasMacron = text.contains { "āēīōūȳĀĒĪŌŪȲ".contains($0) }
+        let lower = text.lowercased()
+        let isDiphthong = lower.contains("ae") || lower.contains("au") || lower.contains("oe")
+        if syl.quantity == "long" {
+            if isDiphthong { return "It contains a diphthong, which is always long by nature." }
+            if hasMacron { return "The text marks the vowel long with a macron, so it is long by nature." }
+            let next = line.syllables[(i + 1)...].first { !$0.text.isEmpty }?.text ?? ""
+            if Self.startsWithTwoConsonants(next) || Self.endsWithTwoConsonants(text) {
+                return "The vowel is followed by two or more consonants, so it is long by position."
+            }
+            return "Nothing in the spelling shows it, but no other foot division fits the line — so this syllable has to be long by nature."
+        }
+        return "It sits in a short position, and nothing closes it or makes it long by nature."
+    }
+
+    private static let consonants = Set("bcdfgjklmnpqrstvxzBCDFGJKLMNPQRSTVXZ")
+
+    private static func startsWithTwoConsonants(_ s: String) -> Bool {
+        let chars = Array(s.prefix(2))
+        return chars.count == 2 && chars.allSatisfy { consonants.contains($0) }
+    }
+
+    private static func endsWithTwoConsonants(_ s: String) -> Bool {
+        let chars = Array(s.suffix(2))
+        return chars.count == 2 && chars.allSatisfy { consonants.contains($0) }
+    }
+}

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   useStore,
@@ -17,6 +18,7 @@ import {
 } from '@/data/scansionCorpus';
 import { Page, PageHeader, Empty, Roman, SourceNote } from '@/components/ui';
 import { useRevealChildren } from '@/hooks/useRevealChildren';
+import { explainQuantity, workFields } from '@/lib/scansionResult';
 import type { ScansionLine, ScannedSyllable } from '@/data/types';
 
 type Mark = 'long' | 'short' | null;
@@ -238,6 +240,8 @@ export default function ScansionLab() {
   /* Open on a random line once the index says what the corpus holds, or on a
      set passage when the link asked for one (/scansion?passage=aen-1-1-33). */
   const started = useRef(false);
+  /** A line opened to be scanned again from scratch, not reviewed. */
+  const freshLine = useRef<string | null>(null);
   useEffect(() => {
     if (!corpus || started.current) return;
     started.current = true;
@@ -257,7 +261,27 @@ export default function ScansionLab() {
           setLoading(false);
         });
     };
-    const wanted = new URLSearchParams(window.location.search).get('passage');
+    const params = new URLSearchParams(window.location.search);
+    // One line, as when the history sends a student back to scan it again
+    // (/scansion?line=scan-aen-1-23).
+    const wantedLine = params.get('line');
+    const parsedLine = wantedLine ? parseLineId(wantedLine) : null;
+    if (wantedLine && parsedLine) {
+      setLoading(true);
+      loadBook(parsedLine.book)
+        .then((ls) => {
+          const i = ls.findIndex((l) => l.id === wantedLine);
+          if (i < 0) return startRandom();
+          freshLine.current = wantedLine;
+          setBook(parsedLine.book);
+          setLines(ls);
+          setIndex(i);
+          setLoading(false);
+        })
+        .catch(startRandom);
+      return;
+    }
+    const wanted = params.get('passage');
     if (!wanted) return startRandom();
     loadSetPassages()
       .then((list) => {
@@ -280,8 +304,12 @@ export default function ScansionLab() {
    */
   useEffect(() => {
     if (!line) return;
+    // Sent back from the history to scan it again: a clean line, not the
+    // review of the last check (a draft still in progress is kept).
+    const fresh = freshLine.current === line.id;
+    freshLine.current = null;
     const draft = scansionDrafts[line.id];
-    if (draft && draft.marks.length === line.syllables.length) {
+    if (draft && draft.marks.length === line.syllables.length && !(fresh && draft.checked)) {
       setMarks(draft.marks);
       setDivisions(draft.divisions);
       setStudentElisions(new Set(draft.elisions ?? []));
@@ -575,6 +603,9 @@ export default function ScansionLab() {
 
   const active: ScansionLine = line;
   const lineStats = mounted ? stats.get(active.id) : undefined;
+  const lastScanOfLine = lineStats
+    ? scansionAttempts.findLast((a) => a.lineId === active.id)?.id
+    : undefined;
 
   /**
    * The final syllable is anceps — it counts long however it really scans — so
@@ -626,6 +657,8 @@ export default function ScansionLab() {
       active.id,
       syllablesRight + boundariesRight + elisionsCorrectCount,
       metricalIdx.length + correctDivisions.length + elidableIdx.length,
+      // What was on the line, so the history can show this result again.
+      workFields({ marks, divisions, elisions: [...studentElisions] }),
     );
     saveScansionDraft(active.id, { marks, divisions, elisions: [...studentElisions], checked: true });
   }
@@ -698,6 +731,9 @@ export default function ScansionLab() {
           <span className="slab-sm hidden sm:inline">
             {checked ? 'Reviewed' : 'Mark each syllable'}
           </span>
+          <Link href="/scansion/history" className="btn btn-ghost btn-sm">
+            History
+          </Link>
           <button
             type="button"
             className="btn btn-ghost btn-sm"
@@ -1171,6 +1207,17 @@ export default function ScansionLab() {
                 this line · {lineStats.attempts} attempt{lineStats.attempts === 1 ? '' : 's'} ·{' '}
                 best {Math.round(lineStats.bestAccuracy * 100)}%
                 {lineStats.mastered && ' · mastered'}
+                {lastScanOfLine && (
+                  <>
+                    {' · '}
+                    <Link
+                      href={`/scansion/history?scan=${encodeURIComponent(lastScanOfLine)}`}
+                      className="underline underline-offset-2"
+                    >
+                      see your scans
+                    </Link>
+                  </>
+                )}
               </p>
             )}
           </div>
@@ -1339,7 +1386,7 @@ function Verdict({
                 {active.syllables[i].text}
               </span>{' '}
               is <span style={{ color: 'var(--accent)' }}>{active.syllables[i].quantity}</span>
-              {marks[i] && <> — you marked it {marks[i]}</>}. {explain(active, i)}
+              {marks[i] && <> — you marked it {marks[i]}</>}. {explainQuantity(active, i)}
             </li>
           ))}
         </ul>
@@ -1413,26 +1460,6 @@ function Verdict({
  * answer is that the metre settles it — which is exactly the reasoning a
  * student uses, and worth saying plainly rather than dressing up.
  */
-function explain(line: ScansionLine, i: number): string {
-  const syl = line.syllables[i];
-  if (syl.anceps) {
-    return 'It closes the line, so it is anceps: it counts long whatever its real quantity is.';
-  }
-  const hasMacron = /[āēīōūȳĀĒĪŌŪȲ]/.test(syl.text);
-  const isDiphthong = /ae|au|oe/i.test(syl.text);
-
-  if (syl.quantity === 'long') {
-    if (isDiphthong) return 'It contains a diphthong, which is always long by nature.';
-    if (hasMacron) return 'The text marks the vowel long with a macron, so it is long by nature.';
-    const next = line.syllables.slice(i + 1).find((s) => s.text)?.text ?? '';
-    if (/^[bcdfgjklmnpqrstvxz]{2}/i.test(next) || /[bcdfgjklmnpqrstvxz]{2}$/i.test(syl.text)) {
-      return 'The vowel is followed by two or more consonants, so it is long by position.';
-    }
-    return 'Nothing in the spelling shows it, but no other foot division fits the line — so this syllable has to be long by nature.';
-  }
-  return 'It sits in a short position, and nothing closes it or makes it long by nature.';
-}
-
 function Tutorial() {
   const items: Array<{ title: string; body: React.ReactNode }> = [
     {

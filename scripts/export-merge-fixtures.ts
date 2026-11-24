@@ -25,6 +25,7 @@ import { mergeSyncable } from '../src/lib/mergeProgress';
 import { foldLatin, foldEnglish, checkTyped, checkTranslation, checkBuild, lessonScore } from '../src/lib/lessonCheck';
 import { sm2, newCard, currentStreak, longestStreak, blankSyncableData, scansionStatsByLine, scansionBadges, type SyncableData, type Annotation } from '../src/store/useStore';
 import { unpackLine } from '../src/data/scansionCorpus';
+import { answerFor, explainQuantity, gradeScansion, workFields, workForAttempt, type ScansionWork } from '../src/lib/scansionResult';
 import { coreVocabulary } from '../src/data/vocabulary';
 import { shortGloss, speedWords } from '../src/lib/speed';
 import { nearMiss, otherForms, sentenceWords } from '../src/lib/sentences';
@@ -359,6 +360,68 @@ const scansionAttempts = [
 const scansionStats = Object.fromEntries(scansionStatsByLine(scansionAttempts));
 const scansionBadgeCases = [[], scansionAttempts].map((attempts) => ({ attempts, poolSize: 7, badges: scansionBadges(attempts, 7) }));
 
+// A checked line shown again from the history: the marks kept on an attempt,
+// the score they grade to, the right answer, and when a line's draft can
+// stand in for an attempt made before marks were kept.
+function scansionResultCases() {
+  const packedBook = JSON.parse(readFileSync(join(root, 'public', 'scansion', 'aen1.json'), 'utf8')).l as Array<Parameters<typeof unpackLine>[1]>;
+  const lines = packedBook.map((p) => ({ packed: p, line: unpackLine(1, p) }));
+  const plain = lines.find((l) => !l.line.syllables.some((s) => s.elides))!;
+  const elided = lines.find((l) => l.line.syllables.filter((s) => s.elides).length >= 2)!;
+  const cases: Array<{ name: string; book: number; packed: unknown; work: ScansionWork }> = [];
+  for (const { packed, line } of [plain, elided]) {
+    const answer = answerFor(line);
+    cases.push({ name: `${line.id} right`, book: 1, packed, work: answer });
+    // Every mark flipped on the first foot, a boundary one syllable late, and
+    // no elisions claimed (the elided syllables marked long instead).
+    const wrong: ScansionWork = {
+      marks: answer.marks.map((m, i) => (line.syllables[i].elides ? 'long' : i < 3 ? (m === 'long' ? 'short' : 'long') : m)),
+      divisions: answer.divisions.map((d, i) => (i === 1 ? d + 1 : d)),
+      elisions: [],
+    };
+    cases.push({ name: `${line.id} wrong`, book: 1, packed, work: wrong });
+    // Half done: only the odd syllables marked, two boundaries, a false elision.
+    const partial: ScansionWork = {
+      marks: answer.marks.map((m, i) => (i % 2 ? m : null)),
+      divisions: answer.divisions.slice(0, 2),
+      elisions: [line.syllables.findIndex((s, i) => !s.elides && i < line.syllables.length - 1 && line.syllables[i + 1]?.startsWord !== false)],
+    };
+    cases.push({ name: `${line.id} partial`, book: 1, packed, work: partial });
+  }
+  const results = cases.map((c) => {
+    const line = unpackLine(c.book, c.packed as Parameters<typeof unpackLine>[1]);
+    const graded = gradeScansion(line, c.work);
+    return {
+      ...c,
+      stored: workFields(c.work),
+      score: graded.score,
+      syllables: graded.syllables,
+      correctDivisions: graded.correctDivisions,
+      answer: answerFor(line),
+      explanations: line.syllables.map((_, i) => explainQuantity(line, i)),
+    };
+  });
+
+  // Recovering the work behind an attempt.
+  const { packed, line } = elided;
+  const wrong = results.find((r) => r.name === `${line.id} wrong`)!;
+  const attempt = (id: string, score: { correct: number; total: number }, extra = {}) => ({
+    id, lineId: line.id, at: '2026-10-01T00:00:00.000Z', correct: score.correct, total: score.total, ...extra,
+  });
+  const draft = { ...wrong.work, checked: true };
+  const recovery = [
+    { name: 'kept on the attempt', attempt: attempt('k', wrong.score, wrong.stored), latestOnLine: false, draft: undefined },
+    { name: 'kept, but the line has changed', attempt: attempt('c', wrong.score, { ...wrong.stored, marks: wrong.stored.marks + 'L' }), latestOnLine: true, draft },
+    { name: 'from the checked draft', attempt: attempt('d', wrong.score), latestOnLine: true, draft },
+    { name: 'not the latest on the line', attempt: attempt('n', wrong.score), latestOnLine: false, draft },
+    { name: 'draft not checked', attempt: attempt('u', wrong.score), latestOnLine: true, draft: { ...wrong.work } },
+    { name: 'draft from another score', attempt: attempt('s', { correct: wrong.score.correct + 1, total: wrong.score.total }), latestOnLine: true, draft },
+  ].map((r) => ({ ...r, book: 1, packed, expected: workForAttempt(r.attempt, line, { latestOnLine: r.latestOnLine, draft: r.draft }) }));
+
+  return { results, recovery };
+}
+const scansionResults = scansionResultCases();
+
 /* ------------------------------------------------------------------ */
 /* Course: checking answers                                            */
 /* ------------------------------------------------------------------ */
@@ -569,7 +632,7 @@ const rendered: Record<string, string> = {
   'merge.json': JSON.stringify({ cases: mergeCases }) + '\n',
   'sm2.json': JSON.stringify({ now: new RealDate(FIXED_NOW).toISOString(), cases: sm2Cases }, null, 1) + '\n',
   'streaks.json': JSON.stringify({ now: new RealDate(FIXED_NOW).toISOString(), cases: streakCases }, null, 1) + '\n',
-  'scansion.json': JSON.stringify({ lines: scansionLines, attempts: scansionAttempts, stats: scansionStats, badgeCases: scansionBadgeCases }) + '\n',
+  'scansion.json': JSON.stringify({ lines: scansionLines, attempts: scansionAttempts, stats: scansionStats, badgeCases: scansionBadgeCases, ...scansionResults }) + '\n',
   'lessonCheck.json': JSON.stringify(lessonCheckFixture, null, 1) + '\n',
   'speed.json': JSON.stringify(speedFixture) + '\n',
   'sentences.json': JSON.stringify(sentencesFixture) + '\n',

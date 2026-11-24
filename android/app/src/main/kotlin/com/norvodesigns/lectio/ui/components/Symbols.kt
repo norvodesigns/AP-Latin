@@ -28,6 +28,8 @@ import androidx.compose.material.icons.outlined.Pause
 import androidx.compose.material.icons.outlined.People
 import androidx.compose.material.icons.outlined.ManageAccounts
 import androidx.compose.material.icons.outlined.WorkspacePremium
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Cancel
@@ -214,6 +216,8 @@ object Symbols {
         "minus" -> Icons.Outlined.Remove
         "rectangle.split.3x1" -> Icons.Outlined.ViewColumn
         "arrow.right.to.line" -> Icons.AutoMirrored.Outlined.KeyboardTab
+        "clock.arrow.circlepath" -> Icons.Outlined.History
+        "star.fill" -> Icons.Filled.Star
         else -> Icons.Outlined.Book
     }
 }

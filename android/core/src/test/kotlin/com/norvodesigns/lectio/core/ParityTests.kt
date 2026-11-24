@@ -116,6 +116,85 @@ class ParityTests {
     }
 
     @Test
+    fun scansionHistoryMatchesTheWebApp() {
+        val fixture = Paths.fixture("scansion.json")
+        for (c in fixture["results"]!!.arrayValue!!) {
+            val name = c["name"]?.stringValue
+            val line = ScansionCorpus.unpack(c["book"]!!.intValue!!, c["packed"]!!.decode())
+            val given = c["work"]!!
+            val marks: List<String?> = given["marks"]!!.decode()
+            val work = ScansionWork(line, ScansionDraft(marks, given["divisions"]!!.decode(), true, given["elisions"]!!.decode()))
+            // What an attempt keeps.
+            assertEquals(c["stored"]!!["marks"]?.stringValue, ScansionHistory.packMarks(work.marks), "$name: packed marks")
+            assertEquals(work.marks.toList(), ScansionHistory.unpackMarks(ScansionHistory.packMarks(work.marks)), "$name: round trip")
+            // The score.
+            val score = c["score"]!!
+            val s = work.score
+            assertEquals(
+                listOf("syllables", "syllablesTotal", "boundaries", "boundariesTotal", "elisions", "elisionsTotal", "correct", "total").map { score[it]?.intValue },
+                listOf(s.syllables, s.syllablesTotal, s.boundaries, s.boundariesTotal, s.elisions, s.elisionsTotal, s.correct, s.total),
+                "$name: score",
+            )
+            val results = line.syllables.indices.map {
+                when (work.result(it)) {
+                    ScansionWork.SyllableResult.Ok -> "ok"
+                    ScansionWork.SyllableResult.Wrong -> "wrong"
+                    ScansionWork.SyllableResult.Blank -> "blank"
+                    ScansionWork.SyllableResult.WrongElision -> "wrong-elision"
+                }
+            }
+            assertEquals(c["syllables"]!!.arrayValue!!.map { it.stringValue }, results, "$name: per syllable")
+            // The answer.
+            val answer = ScansionHistory.answer(line)
+            val expected = c["answer"]!!
+            assertEquals(expected["marks"]!!.decode<List<String?>>(), answer.marks.toList(), "$name: answer marks")
+            assertEquals(expected["divisions"]!!.decode<List<Int>>(), answer.divisions.toList(), "$name: answer feet")
+            assertEquals(expected["elisions"]!!.decode<List<Int>>(), answer.elisions.sorted(), "$name: answer elisions")
+            assertEquals(answer.score.total, answer.score.correct, "$name: the answer scores full marks")
+            assertEquals(c["explanations"]!!.decode<List<String>>(), line.syllables.indices.map { ScansionHistory.explainQuantity(line, it) }, "$name: explanations")
+        }
+        for (c in fixture["recovery"]!!.arrayValue!!) {
+            val name = c["name"]?.stringValue
+            val line = ScansionCorpus.unpack(c["book"]!!.intValue!!, c["packed"]!!.decode())
+            val attempt: ScansionAttempt = c["attempt"]!!.decode()
+            val draft: ScansionDraft? = c["draft"]?.decode()
+            val got = ScansionHistory.reviewed(attempt, line, c["latestOnLine"]?.boolValue ?: false, draft)
+            val expected = c["expected"]
+            if (expected != null && expected != JSONValue.Null) {
+                val work = assertNotNull(got, "$name: expected the work")
+                assertTrue(work.checked)
+                assertEquals(expected["marks"]!!.decode<List<String?>>(), work.marks.toList(), "$name")
+                assertEquals(expected["divisions"]!!.decode<List<Int>>(), work.divisions.toList(), "$name")
+                assertEquals(expected["elisions"]!!.decode<List<Int>>(), work.elisions.sorted(), "$name")
+            } else {
+                assertNull(got, "$name: expected nothing")
+            }
+        }
+    }
+
+    @Test
+    fun scansionAttemptsKeepTheirWork() {
+        val doc = ProgressDocument.blank()
+        val line = ScansionCorpus.unpack(1, Paths.fixture("scansion.json")["recovery"]!!.arrayValue!!.first()["packed"]!!.decode())
+        val answer = ScansionHistory.answer(line)
+        doc.recordScansion(line.id, 3, 4, answer)
+        doc.recordScansion(line.id, 1, 4)
+        val attempts = doc.scansionAttempts
+        assertEquals(2, attempts.size)
+        assertEquals(ScansionHistory.packMarks(answer.marks), attempts[0].marks)
+        assertEquals(answer.divisions.toList(), attempts[0].divisions)
+        assertEquals(answer.elisions.sorted(), attempts[0].elisions)
+        assertNull(attempts[1].marks)
+        // Without the work, nothing about it is written.
+        assertNull(doc.raw.array("scansionAttempts")[1]["marks"])
+        // A field in some other shape costs only that field.
+        doc.raw["scansionAttempts"] = JSONValue.Arr(listOf(JSONValue.parse("""{"id":"x","lineId":"l","at":"t","correct":1,"total":2,"marks":[]}""")))
+        val odd = doc.scansionAttempts.single()
+        assertNull(odd.marks)
+        assertEquals(2, odd.total)
+    }
+
+    @Test
     fun corpusLoadsFromTheWebsitesFiles() {
         val corpus = ScansionCorpus(DirectorySource(Paths.scansion))
         assertTrue(corpus.index.total > 6000)

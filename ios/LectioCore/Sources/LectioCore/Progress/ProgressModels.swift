@@ -428,7 +428,7 @@ extension ProjectPassage {
 public struct ScansionDraft: Codable, Sendable, Hashable {
     /// One per syllable, elided ones included: "long", "short" or null.
     public var marks: [String?]
-    /// Metrical indices after which the student placed a foot boundary.
+    /// Raw syllable indices after which the student placed a foot boundary.
     public var divisions: [Int]
     public var checked: Bool?
     /// Syllable indices the student claims elide.
@@ -452,12 +452,41 @@ public struct ScansionDraft: Codable, Sendable, Hashable {
     }
 }
 
+/// One check of a single hexameter, for the history, stats and badges.
 public struct ScansionAttempt: Codable, Sendable, Hashable, Identifiable {
     public var id: String
     public var lineId: String
     public var at: String
     public var correct: Int
     public var total: Int
+    /// The student's own work when they checked, so the history can show the
+    /// result again (src/lib/scansionResult.ts). Nil on attempts made before
+    /// the history existed. Marks are one character a syllable: "L" long,
+    /// "S" short, "." unmarked.
+    public var marks: String? = nil
+    /// Raw syllable indices after which a foot boundary was ruled.
+    public var divisions: [Int]? = nil
+    /// Syllable indices claimed to elide.
+    public var elisions: [Int]? = nil
+
+    private enum CodingKeys: String, CodingKey { case id, lineId, at, correct, total, marks, divisions, elisions }
+}
+
+extension ScansionAttempt {
+
+    /// The kept work is read leniently: a field another version wrote in some
+    /// other shape costs only that field, never the attempt and its score.
+    public init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        lineId = try c.decode(String.self, forKey: .lineId)
+        at = try c.decode(String.self, forKey: .at)
+        correct = try c.decode(Int.self, forKey: .correct)
+        total = try c.decode(Int.self, forKey: .total)
+        marks = try? c.decodeIfPresent(String.self, forKey: .marks)
+        divisions = try? c.decodeIfPresent([Int].self, forKey: .divisions)
+        elisions = try? c.decodeIfPresent([Int].self, forKey: .elisions)
+    }
 }
 
 /* ------------------------------------------------------------------ */

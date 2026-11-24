@@ -223,7 +223,6 @@ export interface AiUsageDay {
   byRoute: Record<string, number>;
 }
 
-/** One attempt at scanning a single hexameter, for persistent stats and badges. */
 /**
  * A line in progress: the marks and foot boundaries a student has set but not
  * yet checked. Kept so that navigating away from a line and coming back does
@@ -233,7 +232,7 @@ export interface AiUsageDay {
 export interface ScansionDraft {
   /** One entry per syllable, including elided ones. */
   marks: Array<'long' | 'short' | null>;
-  /** Metrical indices after which the student placed a foot boundary. */
+  /** Raw syllable indices after which the student placed a foot boundary. */
   divisions: number[];
   /** Set once the line has been checked, so the review state can be restored. */
   checked?: boolean;
@@ -245,12 +244,24 @@ export interface ScansionDraft {
   elisions?: number[];
 }
 
+/** One check of a single hexameter, for the history, stats and badges. */
 export interface ScansionAttempt {
   id: string;
   lineId: string;
   at: string;
   correct: number;
   total: number;
+  /*
+   * The student's own work at the moment of checking, so the result can be
+   * shown again from the history (src/lib/scansionResult.ts). Absent on
+   * attempts made before the history existed.
+   */
+  /** One character a syllable: `L` long, `S` short, `.` unmarked. */
+  marks?: string;
+  /** Raw syllable indices after which a foot boundary was ruled. */
+  divisions?: number[];
+  /** Syllable indices claimed to elide. */
+  elisions?: number[];
 }
 
 /**
@@ -486,7 +497,12 @@ export interface StoreState {
   setStudyPlan: (s: Partial<StudyPlanSettings>) => void;
   recordAiCall: (route: string) => void;
 
-  recordScansion: (lineId: string, correct: number, total: number) => void;
+  recordScansion: (
+    lineId: string,
+    correct: number,
+    total: number,
+    work?: Pick<ScansionAttempt, 'marks' | 'divisions' | 'elisions'>,
+  ) => void;
   scansionDrafts: Record<string, ScansionDraft>;
   saveScansionDraft: (lineId: string, draft: ScansionDraft) => void;
   markStudied: () => void;
@@ -994,11 +1010,11 @@ export const useStore = create<StoreState>()(
           return { aiUsage: days.slice(-90) };
         }),
 
-      recordScansion: (lineId, correct, total) =>
+      recordScansion: (lineId, correct, total, work) =>
         set((s) => ({
           scansionAttempts: [
             ...s.scansionAttempts,
-            { id: uid(), lineId, at: new Date().toISOString(), correct, total },
+            { id: uid(), lineId, at: new Date().toISOString(), correct, total, ...work },
           ].slice(-1000),
         })),
 

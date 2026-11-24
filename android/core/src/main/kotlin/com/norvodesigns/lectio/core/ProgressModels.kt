@@ -270,7 +270,7 @@ fun projectPassageFromSet(p: Passage): ProjectPassage = ProjectPassage(
 data class ScansionDraft(
     /** One per syllable, elided ones included: "long", "short" or null. */
     val marks: List<String?>,
-    /** Metrical indices after which the student placed a foot boundary. */
+    /** Raw syllable indices after which the student placed a foot boundary. */
     val divisions: List<Int>,
     val checked: Boolean? = null,
     /** Syllable indices the student claims elide. */
@@ -288,6 +288,7 @@ data class ScansionDraft(
     }
 }
 
+/** One check of a single hexameter, for the history, stats and badges. */
 @Serializable
 data class ScansionAttempt(
     val id: String,
@@ -295,6 +296,16 @@ data class ScansionAttempt(
     val at: String,
     val correct: Int,
     val total: Int,
+    /**
+     * The student's own work when they checked, so the history can show the result again
+     * (src/lib/scansionResult.ts). Null on attempts made before the history existed. One
+     * character a syllable: "L" long, "S" short, "." unmarked.
+     */
+    val marks: String? = null,
+    /** Raw syllable indices after which a foot boundary was ruled. */
+    val divisions: List<Int>? = null,
+    /** Syllable indices claimed to elide. */
+    val elisions: List<Int>? = null,
 )
 
 /** One finished lesson of the course (web: `LessonProgress`). */

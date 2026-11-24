@@ -165,7 +165,7 @@ Every section of the website, rebuilt natively:
 | **Quiz Engine** | Filters by author, passage, unit, skill and type; explanations; review queue |
 | **Translate** | FRQ 2 drills, AI-graded per segment or self-scored against the requirements |
 | **Sight Reading** | Vetted passages against the clock, plus the AI generator (labelled machine-selected) |
-| **Scansion Lab** | The whole Aeneid: quantities, feet and elisions, each asked and scored |
+| **Scansion Lab** | The whole Aeneid: quantities, feet and elisions, each asked and scored; Your scans shows every checked line again, your marks beside the answer |
 | **Grammar, Devices, Context** | References, study decks, spot-the-device, context quiz |
 | **FRQ Workshop** | All five types, timed, official rubric rows, AI essay and short-answer feedback, Course Project passages |
 | **Practice Exam** | 52 MCQ / 65 min, 5 FRQ / 115 min, scored report |

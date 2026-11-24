@@ -93,7 +93,15 @@ class ProgressDocument(raw: JSONObject, now: Instant = Instant.now()) {
     val frqResponses: List<FrqResponse> get() = raw.array("frqResponses").mapNotNull { it.decodeOrNull<FrqResponse>() }
     val examResults: List<ExamResult> get() = raw.array("examResults").mapNotNull { it.decodeOrNull<ExamResult>() }
     val projectPassages: List<ProjectPassage> get() = raw.array("projectPassages").mapNotNull { it.decodeOrNull<ProjectPassage>() }
-    val scansionAttempts: List<ScansionAttempt> get() = raw.array("scansionAttempts").mapNotNull { it.decodeOrNull<ScansionAttempt>() }
+    /** The kept work is read leniently: a field in some other shape costs only that field, never the attempt. */
+    val scansionAttempts: List<ScansionAttempt>
+        get() = raw.array("scansionAttempts").mapNotNull { value ->
+            value.decodeOrNull<ScansionAttempt>() ?: value.objectValue?.let { o ->
+                val bare = o.copy()
+                for (key in listOf("marks", "divisions", "elisions")) bare.remove(key)
+                JSONValue.Obj(bare).decodeOrNull<ScansionAttempt>()
+            }
+        }
 
     fun scansionDraft(lineId: String): ScansionDraft? = raw.obj("scansionDrafts")[lineId].decodeOrNull<ScansionDraft>()
 
@@ -373,8 +381,14 @@ class ProgressDocument(raw: JSONObject, now: Instant = Instant.now()) {
         raw["projectPassages"] = JSONValue.Arr(raw.array("projectPassages").filter { it["id"]?.stringValue != id })
     }
 
-    fun recordScansion(lineId: String, correct: Int, total: Int, now: Instant = Instant.now()) {
-        val attempt = ScansionAttempt(uid(now), lineId, StudyDates.isoTimestamp(now), correct, total)
+    /** Records a checked line, with the work behind it when given, so the history can show the result again. */
+    fun recordScansion(lineId: String, correct: Int, total: Int, work: ScansionWork? = null, now: Instant = Instant.now()) {
+        val attempt = ScansionAttempt(
+            uid(now), lineId, StudyDates.isoTimestamp(now), correct, total,
+            marks = work?.let { ScansionHistory.packMarks(it.marks) },
+            divisions = work?.divisions?.sorted(),
+            elisions = work?.elisions?.sorted(),
+        )
         append("scansionAttempts", JSONValue.encoding(serializer<ScansionAttempt>(), attempt), ProgressMerge.Caps.scansionAttempts)
     }
 
