@@ -42,7 +42,8 @@ extension AppModel {
     /// on a list.
     func frameChanged(library: ContentLibrary?) {
         guard let spot = readingSpot, spot.isCurrent(at: .now),
-              let passage = library?.passage(spot.passageId) else { return }
+              let passage = library?.passage(spot.passageId)
+                ?? progress.importedText(spot.passageId).map(Passage.init(imported:)) else { return }
         selectedTab = .read
         if readPath.last?.id != passage.id { readPath = [passage] }
     }

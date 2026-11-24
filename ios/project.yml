@@ -91,6 +91,8 @@ targets:
         LSApplicationCategoryType: public.app-category.education
         # A timed practice-exam section shows as a Live Activity.
         NSSupportsLiveActivities: true
+        # Reading Room › Import a text scans a page of Latin; it is read on the phone.
+        NSCameraUsageDescription: Lectio uses the camera to scan a page of Latin to import into the Reading Room. The page is read on your iPhone.
         ITSAppUsesNonExemptEncryption: false
         UILaunchScreen:
           UIColorName: LaunchBackground

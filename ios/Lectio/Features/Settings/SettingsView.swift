@@ -77,7 +77,7 @@ struct SettingsView: View {
                 } header: {
                     Text("AI features")
                 } footer: {
-                    Text("AI grading, the line tutor and sight-passage selection send the Latin and what you wrote or asked to an AI provider (Google Gemini, or Groq as a backup). Nothing is sent until you press an AI button. With AI off, every feature still has its self-graded path.")
+                    Text("AI grading, the line tutor, sight-passage selection and glossing the texts you import send the Latin and what you wrote or asked to an AI provider (Google Gemini, or Groq as a backup). Nothing is sent until you press an AI button. With AI off, every feature still has its self-graded path, and an imported text is glossed from Lectio’s dictionary alone.")
                 }
 
                 // Only in a build that can show ads at all (App/Ads/AdConfig.swift).

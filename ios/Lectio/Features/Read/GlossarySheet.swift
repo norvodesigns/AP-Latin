@@ -20,6 +20,12 @@ struct GlossarySheet: View {
     var onMarkUp: (() -> Void)? = nil
     /// Selects a note's words and opens its editor.
     var onEditNote: ((Annotation) -> Void)? = nil
+    /// In a text the reader imported: the AI's gloss for this word, written
+    /// for this text, when the dictionary has no exact entry for it.
+    var ai: AiGloss? = nil
+    /// In a text the reader imported: asks for the words still unglossed.
+    var onGlossRest: (() -> Void)? = nil
+    var glossingRest = false
 
     var body: some View {
         let state = model.progress.passage(passage.id)
@@ -43,10 +49,21 @@ struct GlossarySheet: View {
                     }
                 }
 
-                if entries.isEmpty {
-                    Text("Not on the vocabulary lists. The exam would gloss a word like this in the margin.")
-                        .font(.prose(.callout))
-                        .foregroundStyle(Palette.inkMuted)
+                if let ai {
+                    AiGlossView(gloss: ai)
+                    if !entries.isEmpty {
+                        Hairline(color: Palette.hair)
+                        Text("The dictionary’s guesses").quietLabel()
+                    }
+                }
+                if entries.isEmpty, ai == nil {
+                    if passage.isImported {
+                        notGlossedYet
+                    } else {
+                        Text("Not on the vocabulary lists. The exam would gloss a word like this in the margin.")
+                            .font(.prose(.callout))
+                            .foregroundStyle(Palette.inkMuted)
+                    }
                 } else {
                     ForEach(Array(entries.enumerated()), id: \.offset) { index, item in
                         if index > 0 { Hairline(color: Palette.hair) }
@@ -79,6 +96,29 @@ struct GlossarySheet: View {
             .padding(.top, 28)
             .padding(.bottom, 16)
             .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    /// A word of an imported text that neither the dictionary nor the AI
+    /// has glossed yet (the AI was off, busy or unreachable).
+    private var notGlossedYet: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Not glossed yet. Lectio’s dictionary doesn’t have this word, and the AI hasn’t glossed it.")
+                .font(.prose(.callout))
+                .foregroundStyle(Palette.inkMuted)
+            if let onGlossRest {
+                Button(action: onGlossRest) {
+                    HStack(spacing: 8) {
+                        if glossingRest { ProgressView() }
+                        Text(glossingRest ? "Glossing…" : "Gloss the words still missing")
+                            .font(.subheadline.weight(.semibold))
+                    }
+                }
+                .glassButton()
+                .tint(Palette.rubric)
+                .disabled(glossingRest)
+                .accessibilityIdentifier("gloss-rest")
+            }
         }
     }
 
@@ -197,6 +237,30 @@ private struct EntryView: View {
                 }
             }
             Text(entry.definition)
+                .font(.prose())
+                .foregroundStyle(Palette.ink2)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// The AI's gloss for a word of an imported text: marked as the AI's, so the
+/// reader knows to check it.
+private struct AiGlossView: View {
+    let gloss: AiGloss
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Label("Glossed by AI for this text: check it", systemImage: "sparkles")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Palette.rubric)
+            Text(gloss.lemma)
+                .font(.latinItalic(22, relativeTo: .title3))
+                .foregroundStyle(Palette.ink)
+            Text([gloss.pos, gloss.form].compactMap { $0?.isEmpty == false ? $0 : nil }.joined(separator: " · "))
+                .quietLabel()
+            Text(gloss.meaning)
                 .font(.prose())
                 .foregroundStyle(Palette.ink2)
                 .fixedSize(horizontal: false, vertical: true)

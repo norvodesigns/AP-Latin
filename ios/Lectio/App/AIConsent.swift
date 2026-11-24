@@ -58,7 +58,7 @@ struct AIConsentSheet: View {
                     Text("Before you use AI")
                         .font(.system(.title, design: .serif))
                         .foregroundStyle(Palette.ink)
-                    Text("Lectio’s AI grading, line tutor and sight-passage selection are written by an AI service outside Lectio. Here is what that means.")
+                    Text("Lectio’s AI grading, line tutor, sight-passage selection and the glosses for texts you import are written by an AI service outside Lectio. Here is what that means.")
                         .font(.prose(.body))
                         .foregroundStyle(Palette.ink2)
                     GlassPanel {

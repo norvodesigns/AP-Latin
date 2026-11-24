@@ -136,12 +136,26 @@ struct AskAboutLineSheet: View {
         task?.cancel()
         task = Task {
             defer { streaming = false }
-            let body: JSONValue = [
-                "passageId": .string(passage.id),
-                "lineN": .number(Double(line.n)),
-                "latin": .string(line.latin),
-                "question": .string(q),
-            ]
+            var fields = JSONObject([
+                ("passageId", .string(passage.id)),
+                ("lineN", .number(Double(line.n))),
+                ("latin", .string(line.latin)),
+                ("question", .string(q)),
+            ])
+            // A text the reader imported isn't on the server: send its name
+            // and the lines around this one, as the web does.
+            if passage.isImported {
+                let context = passage.lines
+                    .filter { abs($0.n - line.n) <= 2 && $0.n != line.n }
+                    .map { "[\($0.n)] \($0.latin)" }
+                    .joined(separator: "\n")
+                fields["imported"] = [
+                    "title": .string(passage.title),
+                    "genre": .string(passage.genre),
+                    "context": .string(context),
+                ]
+            }
+            let body = JSONValue.object(fields)
             do {
                 var first = true
                 for try await chunk in model.ai.stream("ask", body) {

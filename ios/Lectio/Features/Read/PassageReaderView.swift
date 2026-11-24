@@ -51,6 +51,9 @@ struct PassageReaderView: View {
     @Environment(\.horizontalSizeClass) private var sizeClass
     @Environment(\.appLayout) private var layout
     let passage: Passage
+    /// The text, when the reader imported this one: its AI glosses, and the
+    /// More menu's gloss the rest, edit and delete.
+    var imported: ImportedText? = nil
 
     @State private var mode: ReaderMode = .read
     /// The word whose gloss is showing. The sheet stays up while the reader
@@ -85,6 +88,9 @@ struct PassageReaderView: View {
     @State private var resumeLine: Int?
     /// This Reader, as distinct from the one the last frame had.
     @State private var readerID = UUID()
+    /// An imported text's actions: glossing the words still missing, editing
+    /// its details, deleting it.
+    @State private var importedActions = ImportedActions.Flags()
     @AppStorage("readerEnglish") private var englishView: EnglishView = .off
     @AppStorage("readerEnglishLast") private var englishLast: EnglishView = .under
 
@@ -227,6 +233,7 @@ struct PassageReaderView: View {
             resumeLine = line
         }
         .onDisappear { model.readerDisappeared(reader: readerID) }
+        .modifier(ImportedActions(text: imported, state: $importedActions))
     }
 
     /* -------------------------------------------------------------- */
@@ -269,7 +276,10 @@ struct PassageReaderView: View {
             selection: word,
             onAsk: { ask(lineN: word.lineN, closingSheet: true) },
             onMarkUp: { markUp(from: word) },
-            onEditNote: { editNoteFromGloss($0) }
+            onEditNote: { editNoteFromGloss($0) },
+            ai: imported?.words[word.token.text]?.ai,
+            onGlossRest: imported == nil ? nil : { importedActions.glossRest = true },
+            glossingRest: importedActions.glossing
         )
         .id(word.id)
     }
@@ -300,14 +310,19 @@ struct PassageReaderView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(passage.required ? "CED reading \(passage.cedReading ?? "")"
+            Text(passage.isImported ? "Your text"
+                 : passage.required ? "CED reading \(passage.cedReading ?? "")"
                  : passage.project.map { "Course Project · \($0)" } ?? "Supplementary").rubricLabel()
             Text(passage.title)
                 .font(.system(.title2, design: .serif))
                 .foregroundStyle(Palette.ink)
-            Text("\(passage.project != nil ? "\(passage.authorLabel), " : "")\(passage.work) · \(passage.wordCount) words")
+            Text(byline)
                 .font(.subheadline)
                 .foregroundStyle(Palette.inkMuted)
+            if let imported {
+                ImportedSummary(text: imported, glossing: importedActions.glossing) { importedActions.glossRest = true }
+                    .padding(.top, 6)
+            }
             Hairline(color: Palette.redLine).padding(.top, 10)
             if coldRead {
                 ColdReadNotice(hidden: state.markupCount) { model.update { $0.toggleGlossary() } }
@@ -323,6 +338,15 @@ struct PassageReaderView: View {
         .onChange(of: coldRead) { _, cold in
             if cold { setMode(.read) }
         }
+    }
+
+    private var byline: String {
+        if passage.isImported {
+            let parts = [passage.authorName, passage.citation == passage.title ? nil : passage.citation]
+                .compactMap { $0 } + ["\(passage.wordCount) words"]
+            return parts.joined(separator: " · ")
+        }
+        return "\(passage.project != nil ? "\(passage.authorLabel), " : "")\(passage.work) · \(passage.wordCount) words"
     }
 
     /// The glossary is off: the Latin alone, without the reader's marks.
@@ -403,6 +427,20 @@ struct PassageReaderView: View {
         let scannable = passage.isPoetry && passage.author == "vergil" && passage.required
         return Menu("More", systemImage: "ellipsis.circle") {
             if sizeClass != .regular { bookmarkButton(state) }
+
+            if let imported {
+                Section("Your text") {
+                    let missing = imported.unglossedWords.count
+                    if missing > 0 {
+                        Button("Gloss the other \(missing) word\(missing == 1 ? "" : "s")", systemImage: "sparkles") {
+                            importedActions.glossRest = true
+                        }
+                        .disabled(importedActions.glossing)
+                    }
+                    Button("Edit title and source", systemImage: "pencil") { importedActions.editing = true }
+                    Button("Delete this text", systemImage: "trash", role: .destructive) { importedActions.confirmDelete = true }
+                }
+            }
 
             if !questions.isEmpty || scannable {
                 Section("Practice") {
@@ -728,7 +766,7 @@ private struct LineRow: View {
                 }
             }
         }
-        .padding(.vertical, passage.citesByLine ? 3 : 8)
+        .padding(.vertical, passage.setsOutLines ? 3 : 8)
     }
 
     private var number: some View {
@@ -924,7 +962,7 @@ private struct LineRow: View {
     }
 
     private var showNumber: Bool {
-        !passage.citesByLine || english != nil || line.n % 5 == 0 || line.n == passage.lines.first?.n
+        !passage.setsOutLines || english != nil || line.n % 5 == 0 || line.n == passage.lines.first?.n
     }
 
     /// Token index ranges, each a word plus the punctuation and space after

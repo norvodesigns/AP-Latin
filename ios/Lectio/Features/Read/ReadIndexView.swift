@@ -8,11 +8,13 @@ struct ReadIndexView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.library) private var library
     @State private var showSupplementary = true
+    @State private var importing = false
 
     var body: some View {
         @Bindable var model = model
         NavigationStack(path: $model.readPath) {
             List {
+                YourTexts { importing = true }
                 if let library {
                     ForEach(library.passagesByUnit) { group in
                         let order = Dictionary(uniqueKeysWithValues: library.passages.enumerated().map { ($1.id, $0) })
@@ -43,8 +45,24 @@ struct ReadIndexView: View {
             .readableColumn()
             .pageBackground()
             .navigationTitle("Reading Room")
-            .navigationDestination(for: Passage.self) { PassageReaderView(passage: $0) }
+            .navigationDestination(for: Passage.self) { passage in
+                if passage.isImported {
+                    ImportedReaderView(id: passage.id)
+                } else {
+                    PassageReaderView(passage: passage)
+                }
+            }
+            .sheet(isPresented: $importing) {
+                ImportTextView { id in
+                    importing = false
+                    if let text = model.progress.importedText(id) { model.readPath = [Passage(imported: text)] }
+                }
+            }
             .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Import a text", systemImage: "doc.viewfinder") { importing = true }
+                        .accessibilityIdentifier("read-import")
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu("Filter", systemImage: "line.3.horizontal.decrease") {
                         Toggle("Show supplementary passages", isOn: $showSupplementary)
@@ -52,6 +70,58 @@ struct ReadIndexView: View {
                 }
             }
         }
+    }
+}
+
+/// The texts the reader imported, newest first, above the syllabus, with a
+/// way to bring in another.
+private struct YourTexts: View {
+    @Environment(AppModel.self) private var model
+    let onImport: () -> Void
+
+    var body: some View {
+        let texts = model.progress.importedTexts
+        Section {
+            ForEach(texts) { text in
+                NavigationLink(value: Passage(imported: text)) { ImportedRow(text: text) }
+                    .listRowBackground(Color.clear)
+            }
+            Button(action: onImport) {
+                Label(texts.isEmpty ? "Import a text: scan a page or paste any Latin, and every word comes glossed"
+                      : "Import another text", systemImage: "doc.viewfinder")
+                    .font(.prose(.subheadline))
+            }
+            .tint(Palette.rubric)
+            .listRowBackground(Color.clear)
+            .accessibilityIdentifier("read-import-row")
+        } header: {
+            Text("Your texts").rubricLabel()
+        }
+    }
+}
+
+private struct ImportedRow: View {
+    let text: ImportedText
+
+    var body: some View {
+        let coverage = text.glossCoverage
+        let words = coverage.total
+        VStack(alignment: .leading, spacing: 3) {
+            Text(text.title)
+                .font(.latin(19, relativeTo: .headline))
+                .foregroundStyle(Palette.ink)
+                .lineLimit(2)
+            let by = [text.author, text.source].map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+            if !by.isEmpty {
+                Text(by.joined(separator: ", "))
+                    .font(.prose(.subheadline))
+                    .foregroundStyle(Palette.inkMuted)
+                    .lineLimit(1)
+            }
+            Text("\(text.genre == "poetry" ? "Verse" : "Prose") · \(text.lines.count) \(text.layout == "lines" ? "lines" : "sentences") · \(words) words · \(words == 0 ? 100 : coverage.glossed * 100 / words)% glossed")
+                .quietLabel()
+        }
+        .padding(.vertical, 4)
     }
 }
 
