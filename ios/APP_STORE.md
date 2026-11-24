@@ -136,6 +136,7 @@ everything that matters, so a crop still works.
 
 Paste into App Store Connect > the 1.2.1 version > What's New in This Version. There is no What's New
 sheet in the app for it (`WhatsNew.release` stays 1.2), since the release is mostly for iPhone Duo.
+Text import also asks for the camera (NSCameraUsageDescription), so App Review may try the scan.
 
 > Lectio is now at home on iPhone Duo.
 >
@@ -143,6 +144,8 @@ sheet in the app for it (`WhatsNew.release` stays 1.2), since the release is mos
 > • A passage spreads across the whole screen: the Latin on the left, the English beside it on the right, like a facing-page edition.
 > • Tap a word and its definition opens as the right-hand page, beside the line you're reading, not over it.
 > • Fold or unfold and you stay on the same passage, at the same line.
+>
+> Import any Latin into the Reading Room: scan a page with the camera, choose a photo, or paste the text, and every word comes glossed, from Lectio's dictionary first and by AI for the words it doesn't have. Then read it, mark it up and print it like any passage.
 >
 > On every iPhone and iPad, a cold read is now a true cold read: it hides your highlights, notes and sentence marks as well as the glossary, so the page looks like the exam's. Nothing is deleted, and it all comes back when you end the cold read.
 
