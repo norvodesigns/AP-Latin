@@ -41,6 +41,9 @@ import AskAboutLine from '@/components/AskAboutLine';
 import AnnotatedLine from '@/components/reader/AnnotatedLine';
 import MarkupBar, { type BarPanel } from '@/components/reader/MarkupBar';
 import ReaderNotes from '@/components/reader/ReaderNotes';
+import ImportedPanel from '@/components/reader/ImportedPanel';
+import type { AiGloss, ImportedText } from '@/lib/imports';
+import { useGlossRest } from '@/lib/importClient';
 
 interface Nav {
   id: string;
@@ -53,6 +56,8 @@ interface Gloss {
   lineN: number;
   tok: number;
   results: LookupResult[];
+  /** An imported text's gloss by the AI, for a word the dictionary lacks. */
+  ai?: AiGloss;
   x: number;
   /** The word's bottom edge when the slip opens below it, or its top edge
    *  when there isn't room below and it opens above instead. */
@@ -120,6 +125,7 @@ export default function Reader({
   next,
   quizCount = 0,
   english,
+  imported,
 }: {
   passage: Passage;
   prev: Nav | null;
@@ -128,6 +134,9 @@ export default function Reader({
   quizCount?: number;
   /** A literal translation, by line (or section) number. */
   english?: Record<number, string>;
+  /** Set when this is a text the reader imported (`passage` is made from
+   *  it): its glosses, and its own margin in place of the syllabus notes. */
+  imported?: ImportedText;
 }) {
   const columns = useRevealChildren<HTMLDivElement>();
   const glossaryEnabled = useStore((s) => s.glossaryEnabled);
@@ -170,6 +179,7 @@ export default function Reader({
   const [printing, setPrinting] = useState<'clean' | 'study' | null>(null);
   const [askLine, setAskLine] = useState<{ n: number; latin: string } | null>(null);
   const [mounted, setMounted] = useState(false);
+  const glossRest = useGlossRest(imported);
   const popRef = useRef<HTMLDivElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
   const verseRef = useRef<HTMLDivElement>(null);
@@ -458,14 +468,15 @@ export default function Reader({
       if (!glossaryEnabled) return;
       const rect = e.currentTarget.getBoundingClientRect();
       const results = disambiguateInContext(passage.id, lineN, t.text, lookup(t.text), t.index);
-      setGloss({ word: t.text, lineN, tok: t.index, results, x: rect.left + rect.width / 2, ...anchorFor(rect, 260) });
+      const ai = imported?.words[t.text]?.ai;
+      setGloss({ word: t.text, lineN, tok: t.index, results, ai, x: rect.left + rect.width / 2, ...anchorFor(rect, 260) });
       // Reading is the primary way vocabulary gets tracked here: an exact
       // dictionary match seeds the word into the SM-2 rotation. Stem
       // matches are heuristic guesses and are not trusted enough to seed.
       const top = results[0];
       if (top?.match === 'exact') encounterWord(top.entry.id, passage.id);
     },
-    [mode, markupTap, range, clearSelection, glossaryEnabled, encounterWord, passage.id],
+    [mode, markupTap, range, clearSelection, glossaryEnabled, encounterWord, passage.id, imported],
   );
 
   /* Dismiss on an outside click, and Escape. */
@@ -650,7 +661,7 @@ export default function Reader({
   const isVerse = passage.genre === 'poetry';
   /** Set out line by line (verse, and the Course Project's prose, cited by
    *  College Board's line numbers) rather than in numbered sections. */
-  const lined = citesByLine(passage);
+  const lined = passage.imported ? Boolean(passage.lineLayout) : citesByLine(passage);
   const side = englishView === 'side' && hasEnglish;
   /** The page shows none of the reader's own marks: a cold read, unless a
    *  study sheet is being printed. */
@@ -713,7 +724,7 @@ export default function Reader({
         </div>
         <div className="flex items-center gap-4">
           <span className="slab-sm hidden sm:inline">
-            {passage.work} · Unit {passage.unit}
+            {passage.imported ? 'Your text' : `${passage.work} · Unit ${passage.unit}`}
           </span>
           <div className="flex items-center gap-1">
             {prev && (
@@ -744,8 +755,9 @@ export default function Reader({
             {/* On paper: who it belongs to, and where the text comes from. */}
             <div className="hidden print:mb-6 print:flex print:items-baseline print:justify-between print:gap-8">
               <span className="slab-sm">
-                {authorLabel(passage)},{' '}
-                {passage.citation}
+                {passage.imported
+                  ? [passage.authorName, passage.citation].filter(Boolean).join(', ')
+                  : `${authorLabel(passage)}, ${passage.citation}`}
               </span>
               <span className="print-clean-only" style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem' }}>
                 Name ______________________ Date __________
@@ -862,7 +874,13 @@ export default function Reader({
 
           {!passage.required && (
             <div className="mb-8 print:hidden">
-              {passage.project ? <CourseProjectNotice year={passage.project} /> : <SupplementaryNotice />}
+              {passage.imported ? (
+                <ImportedNotice />
+              ) : passage.project ? (
+                <CourseProjectNotice year={passage.project} />
+              ) : (
+                <SupplementaryNotice />
+              )}
             </div>
           )}
 
@@ -963,15 +981,17 @@ export default function Reader({
             className="measure mt-10 border-t pt-5 print:hidden"
             style={{ borderColor: 'var(--hair)', fontFamily: 'var(--font-latin)', fontSize: '1rem', lineHeight: 1.5, color: 'var(--fg-muted)' }}
           >
-            {passage.project
-              ? `Latin text as College Board prints it for the ${passage.project} Course Project (the Latin is public domain), with its line numbers. `
-              : 'Latin text from The Latin Library (public domain). '}
-            {passage.macronized
+            {passage.imported
+              ? 'A text you imported. Words in Lectio’s dictionary are glossed from it; the rest were glossed by AI for this text, and say so. '
+              : passage.project
+                ? `Latin text as College Board prints it for the ${passage.project} Course Project (the Latin is public domain), with its line numbers. `
+                : 'Latin text from The Latin Library (public domain). '}
+            {passage.imported ? null : passage.macronized
               ? 'This passage carries vowel-quantity macrons from the source.'
               : 'This source does not mark vowel quantity; macrons are not shown because they would have to be invented.'}{' '}
             {hasEnglish && 'The English is a literal translation in the exam’s own style, written for this app. '}
             Click a line number to flag it as hard.{' '}
-            {passage.project ? (
+            {passage.imported ? null : passage.project ? (
               <>
                 College Board publishes each year&rsquo;s Course Project passages on{' '}
                 <a href={AP_LATIN_COURSE} target="_blank" rel="noreferrer">AP Central</a>.
@@ -994,7 +1014,7 @@ export default function Reader({
             lineWord={lineWord(passage)}
             newPage={side}
           />
-          <PrintVocabulary passage={passage} ids={vocabIds} />
+          <PrintVocabulary passage={passage} ids={vocabIds} imported={imported} />
         </article>
 
         {/* The ruling */}
@@ -1005,6 +1025,13 @@ export default function Reader({
           className={`flex min-w-0 flex-col gap-8 border-t px-5 py-10 sm:px-10 lg:py-14 print:hidden ${side ? 'lg:grid lg:grid-cols-2 lg:gap-x-14' : 'lg:border-t-0 lg:pl-9 lg:pr-10'}`}
           style={{ borderColor: 'var(--rule)' }}
         >
+          {imported && (
+            <RailSection title="Your text">
+              <ImportedPanel text={imported} />
+            </RailSection>
+          )}
+
+          {!imported && (
           <RailSection title={hasEnglish ? 'English translation' : 'English summary'}>
             {hasEnglish ? (
               englishView === 'off' ? (
@@ -1073,21 +1100,27 @@ export default function Reader({
             )}
           </RailSection>
 
-          <RailSection title="Context notes">
-            <p style={{ margin: 0, fontFamily: 'var(--font-latin)', fontSize: '1.125rem', lineHeight: 1.55, color: 'var(--ink2)' }}>
-              {passage.context}
-            </p>
-          </RailSection>
+          )}
 
-          <RailSection title="Themes">
-            <div className="flex flex-wrap gap-2">
-              {passage.themes.map((t) => (
-                <span key={t} className="chip chip-accent">
-                  {t}
-                </span>
-              ))}
-            </div>
-          </RailSection>
+          {!imported && (
+            <RailSection title="Context notes">
+              <p style={{ margin: 0, fontFamily: 'var(--font-latin)', fontSize: '1.125rem', lineHeight: 1.55, color: 'var(--ink2)' }}>
+                {passage.context}
+              </p>
+            </RailSection>
+          )}
+
+          {!imported && (
+            <RailSection title="Themes">
+              <div className="flex flex-wrap gap-2">
+                {passage.themes.map((t) => (
+                  <span key={t} className="chip chip-accent">
+                    {t}
+                  </span>
+                ))}
+              </div>
+            </RailSection>
+          )}
 
           {vocabIds.length > 0 && (
             <RailSection
@@ -1185,13 +1218,44 @@ export default function Reader({
             </button>
           </div>
 
+          {gloss.ai && (
+            <div className={gloss.results.length > 0 ? 'mb-5' : undefined}>
+              <div style={{ fontFamily: 'var(--font-latin)', fontSize: '1.6875rem', lineHeight: 1.15, color: 'var(--fg)' }}>{gloss.ai.lemma}</div>
+              <div className="mt-2 mb-3" style={{ fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--fg-muted)' }}>
+                {gloss.ai.pos}
+                {gloss.ai.form && <> · {gloss.ai.form}</>}
+                <span style={{ color: 'var(--fg-faint)' }}> · glossed by AI for this text, check it</span>
+              </div>
+              <div style={{ fontFamily: 'var(--font-latin)', fontSize: '1.1875rem', lineHeight: 1.5, color: 'var(--fg)' }}>{gloss.ai.meaning}</div>
+              {gloss.results.length > 0 && (
+                <div className="slab-sm mt-5" style={{ color: 'var(--fg-faint)' }}>
+                  The dictionary&rsquo;s guesses
+                </div>
+              )}
+            </div>
+          )}
+
           {gloss.results.length === 0 ? (
-            <>
-              <div style={{ fontFamily: 'var(--font-latin)', fontSize: '1.6875rem', lineHeight: 1.15, color: 'var(--fg)' }}>{gloss.word}</div>
-              <p style={{ margin: '0.75rem 0 0', fontFamily: 'var(--font-latin)', fontSize: '1.125rem', lineHeight: 1.5, color: 'var(--ink2)' }}>
-                No entry found for this word.
-              </p>
-            </>
+            gloss.ai ? null : (
+              <>
+                <div style={{ fontFamily: 'var(--font-latin)', fontSize: '1.6875rem', lineHeight: 1.15, color: 'var(--fg)' }}>{gloss.word}</div>
+                <p style={{ margin: '0.75rem 0 0', fontFamily: 'var(--font-latin)', fontSize: '1.125rem', lineHeight: 1.5, color: 'var(--ink2)' }}>
+                  {imported ? 'Not glossed yet: Lectio’s dictionary doesn’t have this word.' : 'No entry found for this word.'}
+                </p>
+                {imported && (
+                  <div className="mt-3 flex flex-col items-start gap-2">
+                    <button type="button" className="btn btn-sm" onClick={glossRest.run} disabled={glossRest.working}>
+                      {glossRest.working ? 'Glossing…' : 'Gloss the words still missing'}
+                    </button>
+                    {glossRest.error && (
+                      <p role="status" style={{ margin: 0, fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--accent)' }}>
+                        {glossRest.error}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </>
+            )
           ) : (
             <ul className="flex flex-col gap-5">
               {gloss.results.map((r) => (
@@ -1523,15 +1587,35 @@ function PrintStudyNotes({
 
 /**
  * The passage's vocabulary, printed after the Latin as a handout's word list
- * and never shown on screen, where every word glosses on a tap instead.
+ * and never shown on screen, where every word glosses on a tap instead. For
+ * a text the reader imported, it is every word: the dictionary's entry, or
+ * the AI's gloss where the dictionary had none.
  */
-function PrintVocabulary({ passage, ids }: { passage: Passage; ids: string[] }) {
+function PrintVocabulary({ passage, ids, imported }: { passage: Passage; ids: string[]; imported?: ImportedText }) {
   // The reading's word list covers more than this passage, so it is narrowed
   // to the words the glossary actually finds in the Latin on the page. Only
   // paper uses it, so it is worked out once the page is idle, not on load.
-  const [entries, setEntries] = useState<typeof coreVocabulary>([]);
+  const [entries, setEntries] = useState<Array<{ id: string; lemma: string; definition: string; sort: string }>>([]);
   useEffect(() => {
     const work = () => {
+      if (imported) {
+        const byLemma = new Map<string, { id: string; lemma: string; definition: string; sort: string }>();
+        for (const line of passage.lines) {
+          for (const t of lineTokens(passage, line.n)) {
+            if (!t.isWord) continue;
+            const ai = imported.words[t.text]?.ai;
+            const exact = lookup(t.text).find((r) => r.match === 'exact');
+            const item = exact
+              ? { id: exact.entry.id, lemma: exact.entry.lemma, definition: exact.entry.definition, sort: exact.entry.headword }
+              : ai
+                ? { id: `ai:${ai.lemma}`, lemma: ai.lemma, definition: ai.meaning, sort: ai.lemma }
+                : null;
+            if (item && !byLemma.has(item.lemma)) byLemma.set(item.lemma, item);
+          }
+        }
+        setEntries([...byLemma.values()].sort((a, b) => a.sort.localeCompare(b.sort, 'la', { sensitivity: 'base' })));
+        return;
+      }
       const listed = new Set(ids);
       const found = new Set<string>();
       for (const line of passage.lines) {
@@ -1541,7 +1625,12 @@ function PrintVocabulary({ passage, ids }: { passage: Passage; ids: string[] }) 
           if (best && listed.has(best.entry.id)) found.add(best.entry.id);
         }
       }
-      setEntries(coreVocabulary.filter((e) => found.has(e.id)).sort((a, b) => a.headword.localeCompare(b.headword, 'la')));
+      setEntries(
+        coreVocabulary
+          .filter((e) => found.has(e.id))
+          .sort((a, b) => a.headword.localeCompare(b.headword, 'la'))
+          .map((e) => ({ id: e.id, lemma: e.lemma, definition: e.definition, sort: e.headword })),
+      );
     };
     if ('requestIdleCallback' in window) {
       const handle = window.requestIdleCallback(work);
@@ -1549,7 +1638,7 @@ function PrintVocabulary({ passage, ids }: { passage: Passage; ids: string[] }) 
     }
     const timer = setTimeout(work, 200);
     return () => clearTimeout(timer);
-  }, [passage, ids]);
+  }, [passage, ids, imported]);
   if (entries.length === 0) return null;
   return (
     <section className="print-clean-only hidden print:mt-8 print:block">
@@ -1562,8 +1651,29 @@ function PrintVocabulary({ passage, ids }: { passage: Passage; ids: string[] }) 
         ))}
       </ul>
       <p className="mt-4" style={{ fontSize: '0.75rem' }}>
-        Latin text: The Latin Library (public domain). Printed from Lectio, lectio.norvodesigns.com.
+        {imported
+          ? 'Glosses from Lectio’s dictionary, and by AI for words it doesn’t have. Printed from Lectio, lectio.norvodesigns.com.'
+          : 'Latin text: The Latin Library (public domain). Printed from Lectio, lectio.norvodesigns.com.'}
       </p>
     </section>
+  );
+}
+
+/** The Reader's note on a text the reader imported themselves. */
+function ImportedNotice() {
+  return (
+    <div className="border-l-2 py-1 pl-5" style={{ borderColor: 'var(--rule-strong)' }}>
+      <div className="slab-sm mb-1.5" style={{ color: 'var(--fg-muted)' }}>
+        Your text
+      </div>
+      <p
+        className="measure"
+        style={{ margin: 0, fontFamily: 'var(--font-latin)', fontSize: '1.0625rem', lineHeight: 1.55, color: 'var(--ink2)' }}
+      >
+        A text you imported. Tap any word for its gloss: from Lectio&rsquo;s dictionary where it has the
+        word, and otherwise written by AI for this text and marked as such, so check those against the
+        context. Everything else works as on a syllabus passage.
+      </p>
+    </div>
   );
 }

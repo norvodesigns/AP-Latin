@@ -543,6 +543,7 @@ class ProgressDocument(raw: JSONObject, now: Instant = Instant.now()) {
             "lessons" to JSONValue.Obj(JSONObject()),
             "learner" to JSONValue.Null,
             "daily" to JSONValue.Obj(JSONObject()),
+            "importedTexts" to JSONValue.Obj(JSONObject()),
         )
 
         /** Reads a Settings export file. Like the web import, the file's fields replace this document's: it's a restore, not a merge. */

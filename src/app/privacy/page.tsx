@@ -62,9 +62,17 @@ export default function PrivacyPage() {
             progress.
           </p>
           <p>
+            Importing a text into the Reading Room sends its Latin to our server, which looks every word
+            up in Lectio&rsquo;s own dictionary and has the AI gloss the words the dictionary doesn&rsquo;t
+            have. On the website, a photo you choose is sent to Google Gemini to read the Latin off it; the
+            iPhone app reads photos on the phone itself, and only the text leaves it. Lectio keeps neither
+            the photo nor the request: the imported text and its glosses are kept in your own progress,
+            and deleting the text deletes them.
+          </p>
+          <p>
             The app asks for your permission before the first AI request, and you can withdraw it at any
             time in Settings › AI features. Without it, every feature still works through its self-graded
-            path.
+            path, and an imported text is glossed from Lectio&rsquo;s dictionary alone.
           </p>
         </Section>
 
@@ -147,7 +155,7 @@ export default function PrivacyPage() {
             Write to us through the <Link href="/support">support page</Link>. If this policy changes,
             the new version is posted here with a new date.
           </p>
-          <p>Last updated 17 October 2026.</p>
+          <p>Last updated 24 November 2026.</p>
           <p style={{ fontSize: '0.9375rem', color: 'var(--fg-muted)' }}>{TRADEMARK_NOTICE}</p>
         </Section>
       </Prose>

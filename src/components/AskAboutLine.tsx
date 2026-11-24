@@ -64,7 +64,25 @@ export default function AskAboutLine({
       const res = await fetch('/api/ai/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ passageId: passage.id, lineN, latin, question: q }),
+        body: JSON.stringify({
+          passageId: passage.id,
+          lineN,
+          latin,
+          question: q,
+          // The server has the syllabus passages but not the reader's own.
+          ...(passage.imported
+            ? {
+                imported: {
+                  title: passage.title,
+                  genre: passage.genre,
+                  context: passage.lines
+                    .filter((l) => Math.abs(l.n - lineN) <= 2 && l.n !== lineN)
+                    .map((l) => `[${l.n}] ${l.latin}`)
+                    .join('\n'),
+                },
+              }
+            : {}),
+        }),
         signal: controller.signal,
       });
 

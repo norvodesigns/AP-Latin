@@ -1,10 +1,12 @@
 'use client';
 
-import { Fragment, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { allPassages, authorLabel, citesByLine, courseProjectPassages, UNIT_TITLES } from '@/data/passages';
 import { Page, PageHeader, SourceNote } from '@/components/ui';
 import type { Passage, UnitId } from '@/data/types';
+import { useStore } from '@/store/useStore';
+import { countWords, glossCoverage, importedHref, liveImports, type ImportedText } from '@/lib/imports';
 
 type View = 'text' | 'unit';
 
@@ -39,6 +41,9 @@ export default function ReadIndex() {
         }
         actions={
           <div className="flex flex-wrap gap-1.5">
+            <Link href="/read/import" className="btn btn-primary">
+              Import a text
+            </Link>
             <Link href="/read/notes" className="btn btn-ghost">
               My notes
             </Link>
@@ -60,6 +65,8 @@ export default function ReadIndex() {
         }
       />
 
+      <YourTexts />
+
       {view === 'text' ? <ByText /> : <ByUnit units={units} required={required} supplementary={supplementary} />}
 
       <SourceNote to="requiredReading">
@@ -67,6 +74,61 @@ export default function ReadIndex() {
         Library and Perseus; nothing here is paraphrased or reconstructed.
       </SourceNote>
     </Page>
+  );
+}
+
+/** The texts the reader imported, newest first, above the syllabus. Nothing
+ *  at all until there is one: the header's button is the way in. */
+function YourTexts() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const all = useStore((s) => s.importedTexts);
+  const texts = useMemo(() => liveImports(all), [all]);
+  if (!mounted || texts.length === 0) return null;
+  return (
+    <section className="mb-12">
+      <div className="mb-1 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b pb-3" style={{ borderColor: 'var(--rule)' }}>
+        <h2 className="rubric">Your texts</h2>
+        <Link href="/read/import" className="link-rule slab-sm">
+          Import another
+        </Link>
+      </div>
+      <ul>
+        {texts.map((t) => (
+          <ImportedRow key={t.id} t={t} />
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function ImportedRow({ t }: { t: ImportedText }) {
+  const words = useMemo(() => countWords(t.lines), [t.lines]);
+  const cover = useMemo(() => glossCoverage(t), [t]);
+  const pct = cover.total ? Math.round((cover.glossed / cover.total) * 100) : 0;
+  return (
+    <li>
+      <Link
+        href={importedHref(t.id)}
+        className="row-hover -mx-3 flex flex-wrap items-baseline gap-x-5 gap-y-1 border-b px-3 py-4"
+        style={{ borderColor: 'var(--hair)' }}
+      >
+        <span style={{ fontFamily: 'var(--font-latin)', fontSize: '1.375rem', lineHeight: 1.2, color: 'var(--fg)', minWidth: '9rem' }}>
+          {t.title}
+        </span>
+        <span className="min-w-0 flex-[1_1_10rem]" style={{ fontFamily: 'var(--font-latin)', fontSize: '1.125rem', color: 'var(--ink2)' }}>
+          {[t.author, t.source].filter(Boolean).join(', ')}
+        </span>
+        <span className="slab-sm flex shrink-0 items-baseline gap-3">
+          <span style={{ color: t.genre === 'poetry' ? 'var(--accent)' : undefined }}>{t.genre === 'poetry' ? 'verse' : 'prose'}</span>
+          <span>
+            {t.lines.length} {t.lines.length === 1 ? 'line' : 'lines'}
+          </span>
+          <span>{words} words</span>
+          <span style={{ color: pct < 100 ? 'var(--gilt)' : undefined }}>{pct}% glossed</span>
+        </span>
+      </Link>
+    </li>
   );
 }
 

@@ -48,6 +48,7 @@ public struct ProgressDocument: Sendable, Equatable {
             ("lessons", .object(JSONObject())),
             ("learner", .null),
             ("daily", .object(JSONObject())),
+            ("importedTexts", .object(JSONObject())),
         ])
     }
 
@@ -105,6 +106,19 @@ public struct ProgressDocument: Sendable, Equatable {
     public var learner: LearnerProfile? {
         guard let value = raw["learner"], value != .null else { return nil }
         return try? value.decode()
+    }
+
+    /// The texts the reader imported, newest first, without deleted ones.
+    public var importedTexts: [ImportedText] {
+        raw.object("importedTexts")
+            .compactMap { (_, value) -> ImportedText? in try? value.decode() }
+            .filter { !$0.isDeleted && !$0.lines.isEmpty }
+            .sorted { $0.createdAt > $1.createdAt }
+    }
+
+    public func importedText(_ id: String) -> ImportedText? {
+        guard let t: ImportedText = try? raw.object("importedTexts")[id]?.decode(), !t.isDeleted else { return nil }
+        return t
     }
 
     public var wordEncounters: [String: WordEncounter] {
@@ -511,6 +525,53 @@ public struct ProgressDocument: Sendable, Equatable {
 
     public mutating func setLearner(_ profile: LearnerProfile?) {
         raw["learner"] = profile.flatMap { try? JSONValue(encoding: $0) } ?? .null
+    }
+
+    /* -------------------------------------------------------------- */
+    /* Imported texts — ports of addImportedText / updateImportedText /  */
+    /* deleteImportedText                                               */
+    /* -------------------------------------------------------------- */
+
+    /// Adds a text the reader imported, already glossed, and returns its id.
+    @discardableResult
+    public mutating func addImportedText(title: String, author: String, source: String, genre: String, layout: String,
+                                         lines: [ImportedLine], words: [String: ImportedWord], now: Date = Date()) -> String {
+        let id = ImportedText.idPrefix + Self.uid(now: now)
+        let stamp = StudyDates.isoTimestamp(now)
+        let text = ImportedText(id: id, title: title, author: author, source: source, genre: genre, layout: layout,
+                                lines: lines, words: words, createdAt: stamp, at: stamp)
+        var all = raw.object("importedTexts")
+        all[id] = try? JSONValue(encoding: text)
+        raw["importedTexts"] = .object(all)
+        markStudied(now: now)
+        return id
+    }
+
+    /// Changes an imported text's details or glosses (never its lines, which
+    /// its marks are anchored to).
+    public mutating func updateImportedText(_ id: String, title: String? = nil, author: String? = nil, source: String? = nil,
+                                            words: [String: ImportedWord]? = nil, now: Date = Date()) {
+        guard var t = importedText(id) else { return }
+        if let title { t.title = title }
+        if let author { t.author = author }
+        if let source { t.source = source }
+        if let words { t.words = words }
+        t.at = StudyDates.isoTimestamp(now)
+        updateRecord(in: "importedTexts", key: id, with: t)
+    }
+
+    /// Deletes an imported text and everything the reader put on it, leaving
+    /// a stub so another device's copy doesn't bring it back.
+    public mutating func deleteImportedText(_ id: String, now: Date = Date()) {
+        guard let t = importedText(id) else { return }
+        let stub = ImportedText(id: id, title: "", author: "", source: "", genre: t.genre, layout: t.layout,
+                                lines: [], words: [:], createdAt: t.createdAt, at: StudyDates.isoTimestamp(now), deleted: true)
+        var all = raw.object("importedTexts")
+        all[id] = try? JSONValue(encoding: stub)
+        raw["importedTexts"] = .object(all)
+        var passages = raw.object("passages")
+        passages[id] = nil
+        raw["passages"] = .object(passages)
     }
 
     public mutating func markStudied(now: Date = Date()) {

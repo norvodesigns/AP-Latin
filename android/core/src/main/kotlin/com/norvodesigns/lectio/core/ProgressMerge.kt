@@ -34,6 +34,7 @@ object ProgressMerge {
         "theme", "glossaryEnabled", "showMacrons", "studyPlan", "passages", "vocab", "quizAttempts",
         "reviewQueue", "translationAttempts", "frqResponses", "examResults", "projectPassages", "studyDays",
         "aiUsage", "scansionAttempts", "scansionDrafts", "wordEncounters", "lessons", "learner", "daily",
+        "importedTexts",
     )
 
     fun merge(local: JSONObject, cloud: JSONObject, cloudIsNewer: Boolean): JSONObject {
@@ -64,6 +65,8 @@ object ProgressMerge {
         out["learner"] = if (cloudIsNewer) (cloudLearner ?: localLearner ?: JSONValue.Null) else (localLearner ?: cloudLearner ?: JSONValue.Null)
         // Added with the Sententia of the day; either side may predate it.
         out["daily"] = JSONValue.Obj(mergeDaily(local.obj("daily"), cloud.obj("daily")))
+        // Texts the reader imported into the Reading Room; either side may predate them.
+        out["importedTexts"] = JSONValue.Obj(mergeImportedTexts(local.obj("importedTexts"), cloud.obj("importedTexts")))
 
         // Fields this build doesn't know about, added to the web app after it
         // shipped. Carried through (newer side first) so an older build never
@@ -183,6 +186,22 @@ object ProgressMerge {
         val capped = JSONObject()
         for ((day, value) in out) if (day in keep) capped[day] = value
         return capped
+    }
+
+    /* Imported texts */
+
+    /**
+     * Every text on either side; for one on both, the copy changed last (a
+     * deletion included, which is why a deleted text stays as a stub). The
+     * web's `mergeImportedTexts`.
+     */
+    internal fun mergeImportedTexts(a: JSONObject, b: JSONObject): JSONObject {
+        val out = a.copy()
+        for ((id, tb) in b) {
+            val ta = out[id]
+            if (ta == null || (tb["at"]?.stringValue ?: "") > (ta["at"]?.stringValue ?: "")) out[id] = tb
+        }
+        return out
     }
 
     /* Course lessons */

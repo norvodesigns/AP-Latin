@@ -178,3 +178,57 @@ export type GeneratedSight = z.infer<typeof sightPassageSchema>;
 export const askSchema = z.object({
   answer: z.string(),
 });
+
+/* ---------------- g. Glossing an imported text ---------------- */
+
+/*
+ * Lean for the same reason as the translation grade: a long text means a
+ * long list, and every field is output the model can run out of room in.
+ * `form` is the one extra, because "what is this form" is what a student
+ * reading a word they don't know most needs after its meaning.
+ */
+export const textGlossSchema = z.object({
+  glosses: z
+    .array(
+      z.object({
+        word: z.string().describe('The word exactly as it was listed, copied character for character.'),
+        lemma: z
+          .string()
+          .describe(
+            'Its dictionary entry, as a Latin glossary prints it: nominative, genitive and gender for a noun ("Cicero, Ciceronis m."); the three nominatives for an adjective ("ferox, ferocis"); the principal parts for a verb ("fallo, fallere, fefelli, falsum"); the word itself for anything indeclinable.',
+          ),
+        pos: z
+          .string()
+          .describe('Part of speech in one or two words: noun, proper noun, verb, adjective, adverb, pronoun, preposition, conjunction, interjection, numeral.'),
+        meaning: z
+          .string()
+          .describe('A short English meaning that fits the word where it stands in this text, one to six words.'),
+        form: z
+          .string()
+          .describe('What this form is, abbreviated as an AP glossary would: "abl. sg. fem.", "3rd pl. perf. act. ind.", "pres. act. inf.", "perf. pass. ptcp., nom. pl. masc.". Empty for an indeclinable word.'),
+      }),
+    )
+    .describe('One entry per word listed, in the same order.'),
+});
+
+export type TextGloss = z.infer<typeof textGlossSchema>;
+
+/* ---------------- h. Reading Latin off a photo ---------------- */
+
+export const photoTextSchema = z.object({
+  hasLatin: z.boolean().describe('False when the image has no Latin text to read.'),
+  genre: z.enum(['poetry', 'prose']).describe('Verse set out line by line, or running prose.'),
+  firstLine: z
+    .number()
+    .int()
+    .nullable()
+    .describe('The first line number printed beside the Latin, when the page numbers its lines; otherwise null.'),
+  heading: z.string().describe('A title or citation printed above the Latin ("Aeneid IV", "In Catilinam I"), or an empty string.'),
+  text: z
+    .string()
+    .describe(
+      'The Latin exactly as printed. Verse: one verse per line. Prose: each paragraph as one run of text, paragraphs separated by a blank line, words hyphenated across a printed line break joined.',
+    ),
+});
+
+export type PhotoText = z.infer<typeof photoTextSchema>;

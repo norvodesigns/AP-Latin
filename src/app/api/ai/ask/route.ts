@@ -15,6 +15,9 @@ interface Body {
   lineN?: number;
   latin?: string;
   question?: string;
+  /** A text the student imported, which the server doesn't have: its name
+   *  and the lines around this one, sent by the Reader instead. */
+  imported?: { title?: string; genre?: string; context?: string };
 }
 
 /**
@@ -56,12 +59,15 @@ export async function POST(req: Request) {
 
   /* Neighbouring lines give the model enough context to parse correctly
      without letting the answer wander off the line that was asked about. */
+  const imported = !passage && parsed.data.imported && typeof parsed.data.imported === 'object' ? parsed.data.imported : null;
   const neighbours = passage
     ? passage.lines
         .filter((l) => Math.abs(l.n - lineN) <= 2 && l.n !== lineN)
         .map((l) => `[${l.n}] ${l.latin}`)
         .join('\n')
-    : '';
+    : typeof imported?.context === 'string'
+      ? imported.context.slice(0, 1_500)
+      : '';
 
   const vocab = latin
     .split(/[^A-Za-zÀ-ÿĀ-ſ]+/)
@@ -88,7 +94,9 @@ export async function POST(req: Request) {
       ? `PASSAGE: ${authorLabel(passage)}, ${passage.citation} — ${passage.title} (${
           passage.author === 'vergil' ? 'dactylic hexameter' : passage.genre === 'poetry' ? 'Latin verse' : 'prose'
         }${passage.project ? `; one of College Board's Course Project passages for ${passage.project}, lines numbered as College Board prints them` : ''})`
-      : '',
+      : imported
+        ? `PASSAGE: ${String(imported.title ?? 'a text').slice(0, 120)} (${imported.genre === 'poetry' ? 'Latin verse' : 'prose'}; a text the student imported themselves, so it may contain typing or photo-reading errors)`
+        : '',
     `LINE ${lineN}: ${latin}`,
     neighbours ? `\nSURROUNDING LINES (context only):\n${neighbours}` : '',
     vocab ? `\nDICTIONARY ENTRIES for words in this line:\n${vocab}` : '',

@@ -5,10 +5,10 @@ import type { Passage } from '../types';
  * client component can use it without shipping every passage's text.
  */
 
-/** Whether a passage is cited by line (verse, and the Course Project's
- *  prose) or by section (Pliny, Caesar). */
-export function citesByLine(p: Pick<Passage, 'genre' | 'project'>): boolean {
-  return p.genre === 'poetry' || !!p.project;
+/** Whether a passage is cited by line (verse, the Course Project's prose,
+ *  and a text the reader imported) or by section (Pliny, Caesar). */
+export function citesByLine(p: Pick<Passage, 'genre' | 'project' | 'imported'>): boolean {
+  return p.genre === 'poetry' || !!p.project || !!p.imported;
 }
 
 const AUTHOR_NAMES: Record<string, string> = { vergil: 'Vergil', pliny: 'Pliny', caesar: 'Caesar', catullus: 'Catullus' };
@@ -19,6 +19,6 @@ export function authorLabel(p: Pick<Passage, 'author' | 'authorName'>): string {
 }
 
 /** "line" or "section", as the passage is cited. */
-export function lineWord(p: Pick<Passage, 'genre' | 'project'>): 'line' | 'section' {
+export function lineWord(p: Pick<Passage, 'genre' | 'project' | 'imported'>): 'line' | 'section' {
   return citesByLine(p) ? 'line' : 'section';
 }

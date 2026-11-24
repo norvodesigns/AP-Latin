@@ -41,7 +41,7 @@ public enum StudySheet {
         // A table rather than flex rows: the print formatter's renderer is
         // most dependable with tables, and a row never splits across pages.
         let layout = english ? " with-english" : besideLines ? " with-notes" : ""
-        body += "<table class=\"text \(passage.citesByLine ? "verse" : "prose")\(layout)\">"
+        body += "<table class=\"text \(passage.setsOutLines ? "verse" : "prose")\(layout)\">"
         for line in passage.lines {
             let lineAnns = annotations.filter { $0.lineN == line.n }
             let lineMarks = marks.filter { $0.lineN == line.n }

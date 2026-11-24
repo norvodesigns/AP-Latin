@@ -78,6 +78,14 @@ export interface Passage {
    * line.
    */
   project?: string;
+  /**
+   * A text the reader imported themselves (src/lib/imports.ts), shown in the
+   * Reader like a syllabus passage. Never set on the app's own passages.
+   */
+  imported?: boolean;
+  /** Imported texts only: set out a line per row (verse, or prose kept as
+   *  printed) rather than a sentence per row. */
+  lineLayout?: boolean;
   /** Human-readable citation, e.g. "Aeneid 4.305–361". */
   citation: string;
   title: string;

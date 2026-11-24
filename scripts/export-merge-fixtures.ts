@@ -33,6 +33,8 @@ import { ALL_LESSONS } from '../src/data/curriculum';
 import { COURSE_SHAPE, LAUREL_SPECS, laurels, nextLaurel } from '../src/lib/laurels';
 import { weeklyRecap } from '../src/lib/recap';
 import { addDays, knownCard, knownVocabUnits, lessonKnown, nextWords, shakyLesson, testOut, KNOWN_INTERVAL, type PathLesson } from '../src/lib/path';
+import { tokenize } from '../src/lib/tokenize';
+import type { ImportedText } from '../src/lib/imports';
 import type { VocabEntry } from '../src/data/types';
 
 /** Every "now" the real code sees while this script runs. (The imports above
@@ -224,6 +226,41 @@ function predatesPair(): { local: SyncableData; cloud: SyncableData } {
   return { local, cloud };
 }
 
+/** Imported texts (1.3): on one side only, on both with either copy the
+ *  later, and deleted on one side. The cloud side of the second pairing
+ *  predates the field altogether. */
+function importsPair(): { local: SyncableData; cloud: SyncableData } {
+  const local = base();
+  const cloud = base();
+  const text = (id: string, title: string, at: string, extra: Partial<ImportedText> = {}): ImportedText => ({
+    id, title, author: 'Cicero', source: 'In Cat. 1.1', genre: 'prose', layout: 'sentences',
+    lines: [{ n: 1, latin: 'Quo usque tandem abutere, Catilina, patientia nostra?' }],
+    words: { Quo: { g: [{ id: 'qui', m: 'e' }] }, Catilina: { ai: { lemma: 'Catilina, Catilinae m.', pos: 'proper noun', meaning: 'Catiline', form: 'voc. sg.' } } },
+    createdAt: '2026-10-01T00:00:00.000Z', at, ...extra,
+  });
+  const stub = (id: string, at: string): ImportedText => ({ ...text(id, '', at), author: '', source: '', lines: [], words: {}, deleted: true });
+  local.importedTexts = {
+    'mine-a': text('mine-a', 'only here', '2026-10-02T00:00:00.000Z'),
+    'mine-b': text('mine-b', 'renamed here, earlier', '2026-10-03T00:00:00.000Z'),
+    'mine-c': stub('mine-c', '2026-10-09T00:00:00.000Z'),
+    'mine-e': text('mine-e', 'kept here, later', '2026-10-08T00:00:00.000Z'),
+  };
+  cloud.importedTexts = {
+    'mine-d': stub('mine-d', '2026-10-04T00:00:00.000Z'),
+    'mine-b': text('mine-b', 'renamed there, later', '2026-10-05T00:00:00.000Z'),
+    'mine-c': text('mine-c', 'deleted here since', '2026-10-06T00:00:00.000Z'),
+    'mine-e': text('mine-e', 'kept there, earlier', '2026-10-07T00:00:00.000Z'),
+  };
+  local.passages = { 'mine-a': { notes: 'on my text', bookmarked: false, flaggedLines: [1], coldReads: 0, annotations: [] } };
+  return { local, cloud };
+}
+
+function importsPredatePair(): { local: SyncableData; cloud: SyncableData } {
+  const { local, cloud } = importsPair();
+  delete (cloud as Partial<SyncableData>).importedTexts;
+  return { local, cloud };
+}
+
 function capsPair(): { local: SyncableData; cloud: SyncableData } {
   const local = base();
   const cloud = base();
@@ -298,7 +335,7 @@ function marksPair(): { local: SyncableData; cloud: SyncableData } {
 }
 
 const mergeCases = [];
-for (const [name, make] of [['rich', richPair], ['caps', capsPair], ['predates', predatesPair], ['marks', marksPair]] as const) {
+for (const [name, make] of [['rich', richPair], ['caps', capsPair], ['predates', predatesPair], ['marks', marksPair], ['imports', importsPair], ['imports-predate', importsPredatePair]] as const) {
   for (const cloudIsNewer of [true, false]) {
     const { local, cloud } = make();
     mergeCases.push({ name: `${name}-${cloudIsNewer ? 'cloud-newer' : 'local-newer'}`, local, cloud, cloudIsNewer, expected: mergeSyncable(local, cloud, cloudIsNewer) });
@@ -315,6 +352,28 @@ for (const [name, make] of [['rich', richPair], ['caps', capsPair], ['predates',
   const once = mergeSyncable(local, cloud, true);
   mergeCases.push({ name: 'marks-remerge', local: once, cloud, cloudIsNewer: false, expected: mergeSyncable(once, cloud, false) });
 }
+{
+  const { local, cloud } = importsPair();
+  const once = mergeSyncable(local, cloud, false);
+  mergeCases.push({ name: 'imports-remerge', local: once, cloud, cloudIsNewer: true, expected: mergeSyncable(once, cloud, true) });
+}
+
+/* ------------------------------------------------------------------ */
+/* Tokenizer cases                                                     */
+/* ------------------------------------------------------------------ */
+
+// An imported text's marks are anchored to token indices that each app works
+// out itself, so the apps' tokenizers must split exactly as `tokenize()` does.
+const tokenizeCases = [
+  'Arma virumque canō, Trōiae quī prīmus ab ōrīs',
+  'Quo usque tandem abutere, Catilina, patientia nostra?',
+  '“Ēheu!” inquit—et lacrimās (iterum) fūdit…',
+  'Æneas & Phœbus: ſic, naïve; 12 × 3 ÷ 4',
+  'a\u0304rma combining\u0306 marks, ἄνδρα Greek, Ḥ outside, emoji 📜 here',
+  '',
+  '   ',
+  'nec',
+].map((line) => ({ line, tokens: tokenize(line).map((t) => [t.text, t.isWord ? 1 : 0]) }));
 
 /* ------------------------------------------------------------------ */
 /* SM-2 and streak cases                                               */
@@ -639,6 +698,7 @@ const rendered: Record<string, string> = {
   'laurels.json': JSON.stringify(laurelsFixture) + '\n',
   'recap.json': JSON.stringify(recapFixture) + '\n',
   'path.json': JSON.stringify(pathFixture(), null, 1) + '\n',
+  'tokenize.json': JSON.stringify({ cases: tokenizeCases }) + '\n',
 };
 
 if (check) {

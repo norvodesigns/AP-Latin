@@ -149,6 +149,15 @@ export async function withFallback<T>(
   throw lastErr;
 }
 
+/**
+ * The model for reading a photo. Only Gemini reads images (Groq's model is
+ * text only), so there is no fallback: with no Gemini key, or Gemini out of
+ * quota, a photo can't be read and the reader types or pastes instead.
+ */
+export function visionModel(): LanguageModel | null {
+  return hasKey('google') ? model('google') : null;
+}
+
 export class AiUnavailableError extends Error {
   constructor(message: string) {
     super(message);

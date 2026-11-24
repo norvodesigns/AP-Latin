@@ -34,6 +34,7 @@
  */
 
 import { stampOf, removedKey, REMOVED_CAP } from '@/lib/annotations';
+import { mergeImportedTexts } from '@/lib/imports';
 import type {
   Annotation,
   SyntaxMark,
@@ -96,6 +97,9 @@ export function mergeSyncable(
       : (local.learner ?? cloud.learner ?? null),
     // Added with the Sententia of the day; either side may predate it.
     daily: mergeDaily(local.daily ?? {}, cloud.daily ?? {}),
+    // Added with text import (1.3); either side may predate it. Per text,
+    // the copy changed last wins, a deletion included.
+    importedTexts: mergeImportedTexts(local.importedTexts ?? {}, cloud.importedTexts ?? {}),
   };
 }
 

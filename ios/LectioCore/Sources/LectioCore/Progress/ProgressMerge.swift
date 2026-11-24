@@ -32,6 +32,7 @@ public enum ProgressMerge {
         "theme", "glossaryEnabled", "showMacrons", "studyPlan", "passages", "vocab", "quizAttempts",
         "reviewQueue", "translationAttempts", "frqResponses", "examResults", "projectPassages", "studyDays",
         "aiUsage", "scansionAttempts", "scansionDrafts", "wordEncounters", "lessons", "learner", "daily",
+        "importedTexts",
     ]
 
     public static func merge(local: JSONObject, cloud: JSONObject, cloudIsNewer: Bool) -> JSONObject {
@@ -62,6 +63,9 @@ public enum ProgressMerge {
         out["learner"] = cloudIsNewer ? (cloudLearner ?? localLearner ?? .null) : (localLearner ?? cloudLearner ?? .null)
         // Added with the Sententia of the day; either side may predate it.
         out["daily"] = .object(mergeDaily(local.object("daily"), cloud.object("daily")))
+        // Added with text import (1.3); either side may predate it. Per text,
+        // the copy changed last wins, a deletion included.
+        out["importedTexts"] = .object(mergeImportedTexts(local.object("importedTexts"), cloud.object("importedTexts")))
 
         // Fields this build doesn't know about — added to the web app after it
         // shipped. The web's own merge lists its fields explicitly, so it would

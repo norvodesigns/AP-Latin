@@ -6,7 +6,9 @@ import type { SkillCategory, QuestionType, UnitId } from '@/data/types';
 import { knownCard, testOut, type PathLesson } from '@/lib/path';
 import { bumpActivityStats } from '@/lib/supabase/sync';
 import { LEGACY_COLOR, REMOVED_CAP, removedKey } from '@/lib/annotations';
+import { IMPORTED_PREFIX, type ImportedText } from '@/lib/imports';
 export { LEGACY_COLOR, pigmentOf, stampOf, removedKey, REMOVED_CAP } from '@/lib/annotations';
+export type { ImportedText, ImportedWord, AiGloss, ImportedMatch } from '@/lib/imports';
 
 export const STORE_VERSION = 1;
 export const STORAGE_KEY = 'ap-latin-store';
@@ -355,6 +357,8 @@ export interface SyncableData {
   lessons: Record<string, LessonProgress>;
   learner: LearnerProfile | null;
   daily: Record<string, DailyResult>;
+  /** Since 1.3: texts the reader imported into the Reading Room, by id. */
+  importedTexts: Record<string, ImportedText>;
 }
 
 /* ------------------------------------------------------------------ */
@@ -400,6 +404,9 @@ export interface StoreState {
   learner: LearnerProfile | null;
   /** Local date -> the Sententia of the day, done. */
   daily: Record<string, DailyResult>;
+  /** Texts the reader imported (typed, pasted or photographed), by id; a
+   *  deleted one stays as a stub. Their marks live in `passages`. */
+  importedTexts: Record<string, ImportedText>;
 
   /**
    * The signed-in user's id, or null in solo mode / signed out. Sourced from
@@ -521,6 +528,16 @@ export interface StoreState {
    *  crosses `studyPlan.minutesPerDay` for the day. */
   addStudySeconds: (seconds: number) => void;
   dismissGoalCelebration: () => void;
+  /** Adds a text the reader imported, already glossed, and returns its id. */
+  addImportedText: (t: Omit<ImportedText, 'id' | 'createdAt' | 'at'>) => string;
+  /** Changes an imported text's details or glosses (never its lines, which
+   *  its marks are anchored to). */
+  updateImportedText: (
+    id: string,
+    patch: Partial<Pick<ImportedText, 'title' | 'author' | 'source' | 'words'>>,
+  ) => void;
+  /** Deletes an imported text and everything the reader put on it. */
+  deleteImportedText: (id: string) => void;
   exportJSON: () => string;
   importJSON: (json: string) => { ok: true } | { ok: false; error: string };
   resetAll: () => void;
@@ -617,6 +634,7 @@ const initialState = {
   lessons: {} as Record<string, LessonProgress>,
   learner: null as LearnerProfile | null,
   daily: {} as Record<string, DailyResult>,
+  importedTexts: {} as Record<string, ImportedText>,
   authUserId: null as string | null,
   lastSyncedUserId: null as string | null,
   lastSyncedAt: null as string | null,
@@ -1110,6 +1128,49 @@ export const useStore = create<StoreState>()(
         }),
       dismissGoalCelebration: () => set({ goalJustReached: false }),
 
+      addImportedText: (t) => {
+        const id = `${IMPORTED_PREFIX}${uid()}`;
+        const at = new Date().toISOString();
+        set((s) => ({
+          importedTexts: { ...(s.importedTexts ?? {}), [id]: { ...t, id, createdAt: at, at } },
+        }));
+        get().markStudied();
+        return id;
+      },
+
+      updateImportedText: (id, patch) =>
+        set((s) => {
+          const cur = s.importedTexts?.[id];
+          if (!cur || cur.deleted) return {};
+          return {
+            importedTexts: { ...s.importedTexts, [id]: { ...cur, ...patch, at: new Date().toISOString() } },
+          };
+        }),
+
+      deleteImportedText: (id) =>
+        set((s) => {
+          const cur = s.importedTexts?.[id];
+          if (!cur) return {};
+          const at = new Date().toISOString();
+          // A stub, so another device's copy of the text can't bring it back.
+          const stub: ImportedText = {
+            id,
+            title: '',
+            author: '',
+            source: '',
+            genre: cur.genre,
+            layout: cur.layout,
+            lines: [],
+            words: {},
+            createdAt: cur.createdAt,
+            at,
+            deleted: true,
+          };
+          const passages = { ...s.passages };
+          delete passages[id];
+          return { importedTexts: { ...s.importedTexts, [id]: stub }, passages };
+        }),
+
       exportJSON: () => {
         const payload = {
           app: 'ap-latin',
@@ -1191,6 +1252,7 @@ export function getSyncableData(s: SyncableData): SyncableData {
     lessons: s.lessons ?? {},
     learner: s.learner ?? null,
     daily: s.daily ?? {},
+    importedTexts: s.importedTexts ?? {},
   };
 }
 

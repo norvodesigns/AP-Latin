@@ -9,6 +9,7 @@ import AnnotatedLine from '@/components/reader/AnnotatedLine';
 import { ROLE_INFO } from '@/lib/annotations';
 import { groupText, lineTokens } from '@/lib/readerSelection';
 import { useStore, type Annotation, type PassageState } from '@/store/useStore';
+import { importedHref, importedToPassage, liveImports } from '@/lib/imports';
 
 type Scope = 'marked' | 'whole';
 
@@ -26,6 +27,7 @@ export default function StudyNotes() {
   const [scope, setScope] = useState<Scope>('marked');
   const [work, setWork] = useState<string | null>(null);
   const passages = useStore((s) => s.passages);
+  const importedTexts = useStore((s) => s.importedTexts);
 
   useEffect(() => {
     setMounted(true);
@@ -46,12 +48,13 @@ export default function StudyNotes() {
     }
   };
 
+  // The reader's own imported texts come after the syllabus, under "Your texts".
   const withNotes = useMemo(
     () =>
-      allPassages
+      [...allPassages, ...liveImports(importedTexts).map(importedToPassage)]
         .map((p) => ({ passage: p, state: passages[p.id] }))
         .filter((x): x is { passage: Passage; state: PassageState } => Boolean(x.state && hasWriting(x.state))),
-    [passages],
+    [passages, importedTexts],
   );
   const works = useMemo(() => [...new Set(withNotes.map((x) => x.passage.work))], [withNotes]);
   const shown = work ? withNotes.filter((x) => x.passage.work === work) : withNotes;
@@ -183,7 +186,7 @@ function PassageNotes({ passage, state, scope }: { passage: Passage; state: Pass
         <h2 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: '1.375rem', fontWeight: 500 }}>
           {passage.citation} <span style={{ color: 'var(--fg-muted)', fontStyle: 'italic' }}>· {passage.title}</span>
         </h2>
-        <Link href={`/read/${passage.id}`} className="btn btn-ghost btn-sm print:hidden">
+        <Link href={passage.imported ? importedHref(passage.id) : `/read/${passage.id}`} className="btn btn-ghost btn-sm print:hidden">
           Open →
         </Link>
       </header>

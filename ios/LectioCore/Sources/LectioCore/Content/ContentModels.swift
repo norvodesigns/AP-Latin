@@ -74,12 +74,21 @@ public struct Passage: Codable, Sendable, Hashable, Identifiable {
     public let lines: [PassageLine]
     /// Core vocabulary ids this passage introduces — `passageVocabIds()`.
     public let vocabIds: [String]
+    /// Since 1.3, set only on a text the reader imported (ImportedText.swift):
+    /// "lines" or "sentences", how it is set out. Never in the content bundle.
+    public var importedLayout: String? = nil
 
     public var isPoetry: Bool { genre == "poetry" }
 
-    /// Cited by line (verse, and the Course Project's prose, numbered as
-    /// College Board prints it) rather than by section (Pliny, Caesar).
-    public var citesByLine: Bool { isPoetry || project != nil }
+    /// Cited by line (verse, the Course Project's prose, numbered as College
+    /// Board prints it, and a text the reader imported) rather than by
+    /// section (Pliny, Caesar).
+    public var citesByLine: Bool { isPoetry || project != nil || importedLayout != nil }
+
+    /// Set out a line per row, close together, rather than in spaced
+    /// sections: verse and line-cited prose, but not an imported text cut
+    /// into sentences.
+    public var setsOutLines: Bool { importedLayout.map { $0 == "lines" } ?? citesByLine }
 
     /// "line" or "section", as the passage is cited.
     public var lineWord: String { citesByLine ? "line" : "section" }
