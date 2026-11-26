@@ -117,7 +117,9 @@ off there.
 `scripts/ios-testflight.sh` on your Mac stays the main way to ship. To also be able to ship without the Mac
 (from App Store Connect in a browser):
 
-1. Manage Workflows > **+**. Name `TestFlight`.
+1. Manage Workflows > **+**. Name `TestFlight`. **Environment:** Xcode *Latest Release*, as for Check.
+   This is the build that goes to the App Store, so it must use the iOS 27.1 SDK or later, or iPhone
+   Duo shows the app letterboxed; the archive check fails the build if it doesn't.
 2. **Start Conditions:** remove *Branch Changes*; add **Manual Start** for the branch `main`.
 3. **Actions:** *Archive - iOS*, Scheme `Lectio`, Distribution Preparation: the option that includes the
    App Store (*App Store Connect*), not *TestFlight (Internal Testing Only)*, so the same build can go
@@ -194,7 +196,9 @@ Xcode first). Until then, Xcode Cloud keeps building the versions in the file.
   running each target once in Xcode on your Mac registers it again.
 - **"Archive check: ...".** The build worked but the archive is missing something (the widgets, the watch
   app, the content, the icon); the message says what. These are the same checks GitHub's macOS job used to
-  run.
+  run. "built with the iOS 26.x SDK" means the workflow's Environment pins an Xcode older than 27.1: set
+  it to *Latest Release* (Manage Workflows > the workflow > Environment). The green status names the SDK
+  each archive used.
 - **Hours.** App Store Connect > Xcode Cloud > **Usage** shows the month so far. Expect about 10 to 15
   minutes for a Check and 15 to 20 for the UI tests. If they run short, change the UI tests' start
   condition to *On a Schedule for a Branch* (`main`, daily) instead of every push. A commit whose message

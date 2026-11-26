@@ -5,7 +5,8 @@
 #
 # - After an archive, it checks what the archive holds: the widgets, the
 #   watch app and its complications, the course content, the scansion
-#   corpus, iOS 17 support and the Icon Composer icon. A build can succeed
+#   corpus, iOS 17 support, the Icon Composer icon and an iOS 27.1 or later
+#   SDK (for iPhone Duo's inner display). A build can succeed
 #   and still quietly leave one of these out, so a missing one fails it.
 # - It posts the result to the commit on GitHub (github-status.sh), with the
 #   first error when there is one.
@@ -62,6 +63,13 @@ if failures:
     print("%s failed: %s%s" % (f.get("testName", "A test"), f.get("failureText", ""), more))' || true
 }
 
+# True when an SDK version such as "26.4" or "27.0" is older than 27.1.
+sdk_before_27_1() {
+  [[ "$1" =~ ^([0-9]+)(\.([0-9]+))? ]] || return 1
+  local major="${BASH_REMATCH[1]}" minor="${BASH_REMATCH[3]:-0}"
+  [ "$major" -lt 27 ] || { [ "$major" -eq 27 ] && [ "$minor" -lt 1 ]; }
+}
+
 # What a release archive must contain. Prints each problem; returns 1 if any.
 check_archive() {
   local app="${CI_ARCHIVE_PATH:-}/Products/Applications/Lectio.app"
@@ -84,6 +92,17 @@ check_archive() {
   done
   plutil -p "$app/Info.plist" 2>/dev/null | grep -q '"MinimumOSVersion" => "17.0"' \
     || problem "the app should support iOS 17 (MinimumOSVersion isn't 17.0)"
+  # iPhone Duo gives the app its whole inner display (the sidebar, the
+  # open-book Reader) only when it was built with the iOS 27.1 SDK or later,
+  # and letterboxes it otherwise. That SDK comes from the workflow's
+  # Environment: Xcode "Latest Release". The Mac script refuses the same way.
+  BUILT_SDK="$(plutil -extract DTPlatformVersion raw -o - "$app/Info.plist" 2>/dev/null || true)"
+  echo "Built with Xcode $(plutil -extract DTXcode raw -o - "$app/Info.plist" 2>/dev/null || echo '?'), iOS SDK ${BUILT_SDK:-?}"
+  if [ -z "$BUILT_SDK" ]; then
+    echo "Archive check: couldn't read which iOS SDK built the app (DTPlatformVersion)"
+  elif [ -z "${ALLOW_OLD_SDK:-}" ] && sdk_before_27_1 "$BUILT_SDK"; then
+    problem "built with the iOS $BUILT_SDK SDK, so iPhone Duo would letterbox it: set this workflow's Environment to Xcode Latest Release (27.1 or later)"
+  fi
   # The icon is an Icon Composer file (Lectio/Resources/Lectio-icon.icon). If
   # project.yml's icon name or XcodeGen's version is wrong, the build still
   # succeeds and quietly keeps the old icon.
@@ -112,7 +131,7 @@ case "$ACTION" in
   archive)
     FIRST_PROBLEM=""
     if check_archive; then
-      report_status success "Release archive built and checked (widgets, watch app, content, icon)"
+      report_status success "Release archive built and checked (widgets, watch app, content, icon, iOS ${BUILT_SDK:-?} SDK)"
     else
       report_status failure "Archive check: $FIRST_PROBLEM"
       exit 1
