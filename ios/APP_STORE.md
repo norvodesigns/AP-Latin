@@ -135,19 +135,26 @@ everything that matters, so a crop still works.
 ## What's New (1.2.1)
 
 Paste into App Store Connect > the 1.2.1 version > What's New in This Version. There is no What's New
-sheet in the app for it (`WhatsNew.release` stays 1.2), since the release is mostly for iPhone Duo.
-Text import also asks for the camera (NSCameraUsageDescription), so App Review may try the scan.
+sheet in the app for it (`WhatsNew.release` stays 1.2). It covers every app change on main after the
+1.2.0 upload: iPhone Duo (a091775), the cold read (7b8f578), vocabulary by handbook page (0fbf1e9),
+Your scans (b4209ec) and text import (2396adf, 91971aa). Submit a build made from 91971aa or later: the
+1.2.1 builds from early November don't have text import, Your scans or vocabulary by page. Text import asks
+for the camera (NSCameraUsageDescription), so App Review may try the scan; the review notes below say
+how to try it without one.
 
-> Lectio is now at home on iPhone Duo.
+> Import any Latin into the Reading Room. Scan a page with the camera, choose a photo, or paste the text, and every word comes glossed: from Lectio's dictionary first and, if you allow AI, by AI for the words it doesn't have. Then read it, mark it up and print it like any passage. The page is read on your device, and the photo isn't sent anywhere.
 >
+> Your scans. The Scansion Lab now keeps every line you check. Open Your scans to see each one again: your marks coloured right and wrong beside the correct scansion, with its feet and caesurae, and a sentence on each mistake. It also shows where your points go (syllables, feet or elisions), and you can scan any line again from there.
+>
+> Vocabulary by handbook page. Choose a page of the AP vocabulary list in the Course and Exam Description (CED) and study every word on it.
+>
+> A true cold read. A cold read now hides your highlights, notes and sentence marks as well as the glossary, so the page looks like the exam's. Nothing is deleted, and it all comes back when you end the cold read.
+>
+> At home on iPhone Duo:
 > • Open it out and every section is in a sidebar, as on iPad.
-> • A passage spreads across the whole screen: the Latin on the left, the English beside it on the right, like a facing-page edition.
+> • Turn on the English and a passage reads like a facing-page edition, the Latin on the left and the English on the right.
 > • Tap a word and its definition opens as the right-hand page, beside the line you're reading, not over it.
 > • Fold or unfold and you stay on the same passage, at the same line.
->
-> Import any Latin into the Reading Room: scan a page with the camera, choose a photo, or paste the text, and every word comes glossed, from Lectio's dictionary first and by AI for the words it doesn't have. Then read it, mark it up and print it like any passage.
->
-> On every iPhone and iPad, a cold read is now a true cold read: it hides your highlights, notes and sentence marks as well as the glossary, so the page looks like the exam's. Nothing is deleted, and it all comes back when you end the cold read.
 
 ## What's New (1.2)
 
@@ -188,11 +195,19 @@ classrooms.
 > no email confirmation is needed), so the demo accounts above stay in place for the next review.
 >
 > AI features: Translate ("Grade with AI"), the FRQ Workshop ("Grade … with AI"), Sight Reading
-> ("Generate"), and the Reading Room's line tutor (touch and hold a line › Ask about line). The first
-> AI request shows a permission sheet explaining that the Latin and the student's own text are sent to
-> our server and on to an AI provider (Google Gemini, or Groq as a backup) to write feedback; nothing
-> else about the user is sent. Declining keeps the self-graded path, and Settings › AI features
-> changes the choice at any time. AI output is labelled.
+> ("Generate"), the Reading Room's line tutor (touch and hold a line › Ask about line), and the
+> glosses for an imported text (below). The first AI request shows a permission sheet explaining that
+> the Latin and the student's own text are sent to our server and on to an AI provider (Google Gemini,
+> or Groq as a backup) to write feedback; nothing else about the user is sent. Declining keeps the
+> self-graded path, and Settings › AI features changes the choice at any time. AI output is labelled.
+>
+> New in 1.2.1, Import a text: Read › Import a text. "Scan a page" opens Apple's document scanner,
+> which is why the app asks for the camera, and "Choose a photo" uses the system photo picker; either
+> way the page is read on the device with Apple's Vision framework, and the photo is never uploaded.
+> Without a printed page to hand, tap "Try an example", then "Import and gloss". Only the Latin text
+> is sent, to our server, which looks every word up in Lectio's dictionary and, if the user allows AI,
+> has the AI gloss the words the dictionary doesn't have. If AI is declined, the text is glossed from
+> the dictionary alone.
 >
 > Classrooms: teachers create them on our website; students join with a six-character code. The
 > leaderboard shows classmates' display names and study time only, with no messaging. Swipe (or touch
@@ -216,7 +231,7 @@ Data collection: **Yes**. Tracking: **No** for every type. All purposes: **App F
 | --- | --- | --- |
 | Contact Info › Email Address | Yes | Account sign-in (only when someone creates an account) |
 | Contact Info › Name | Yes | The display name an account chooses, shown to their teacher and classmates |
-| User Content › Other User Content | Yes | Synced progress (notes, highlights, answers), and the text sent to the AI provider when an AI feature is used |
+| User Content › Other User Content | Yes | Synced progress (notes, highlights, answers, imported texts), and the text sent to the AI provider when an AI feature is used |
 | User Content › Customer Support | No | Messages sent through the support form or a name report |
 | Identifiers › User ID | Yes | The account ID |
 | Usage Data › Product Interaction | Yes | Minutes studied per section and graded-answer counts, for classrooms |
@@ -224,6 +239,8 @@ Data collection: **Yes**. Tracking: **No** for every type. All purposes: **App F
 - Not collected: location, contacts, health, financial info, browsing history, search history,
   purchases, diagnostics, device ID, and advertising data. The app has no analytics or crash-reporting
   SDK.
+- Photos are not collected either: Import a text reads a scanned or chosen page on the device, and
+  only the Latin it reads is sent (as Other User Content, above).
 - The AI text counts as collected because the providers may keep it, even though Lectio doesn't.
   The privacy policy says so, and the app asks before sending any.
 
