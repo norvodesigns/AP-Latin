@@ -115,7 +115,7 @@ enum ImportGlossing {
 /// The text on a photographed page, read on the phone with Vision, so the
 /// photo never leaves it.
 nonisolated enum PageReader {
-    struct Page: Sendable {
+    nonisolated struct Page: Sendable {
         var text: String
         /// The number of the page's first line, when the margin numbers it.
         var firstLine: Int?
@@ -132,7 +132,7 @@ nonisolated enum PageReader {
         }.value
     }
 
-    private struct Unchanging<T>: @unchecked Sendable { let value: T }
+    private nonisolated struct Unchanging<T>: @unchecked Sendable { let value: T }
 
     static func read(_ image: CGImage, orientation: CGImagePropertyOrientation) throws -> Page {
         let request = VNRecognizeTextRequest()
@@ -187,7 +187,8 @@ nonisolated enum PageReader {
 }
 
 private extension CGImagePropertyOrientation {
-    init(_ o: UIImage.Orientation) {
+    // Called while reading a page, off the main actor (this app's default).
+    nonisolated init(_ o: UIImage.Orientation) {
         switch o {
         case .up: self = .up
         case .down: self = .down
